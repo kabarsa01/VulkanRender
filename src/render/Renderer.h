@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <memory>
 #include <core/ObjectBase.h>
+#include "fwd.hpp"
 
 class Renderer : public ObjectBase
 {
@@ -14,6 +15,7 @@ public:
 
 	void Init();
 	void RenderFrame();
+	void Cleanup();
 
 	void SetResolution(int InWidth, int InHeight);
 	int GetWidth() const;
@@ -21,15 +23,19 @@ public:
 protected:
 private:
 	//======================= VARS ===============================
+	uint32_t Version;
 	int Width = 1280;
 	int Height = 720;
 
-	VkInstance Instance;
+	VULKAN_HPP_NAMESPACE::Instance VulkanInstance;
+	VULKAN_HPP_NAMESPACE::PhysicalDevice VulkanPhysicalDevice;
 
 	//std::vector<RenderPassPtr> RenderPasses;
 	//std::map<HashString, unsigned int> RenderPassMap;
 	//==================== METHODS ===============================
 
+	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& InDevices);
+	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& InPhysicalDevice);
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
 

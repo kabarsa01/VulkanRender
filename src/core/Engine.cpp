@@ -42,7 +42,9 @@ void Engine::Init()
 
 	// init modules
 	SceneInstance = ObjectBase::NewObject<Scene>();
-	//	RendererInstance = ObjectBase::NewObject<Renderer>();
+	RendererInstance = ObjectBase::NewObject<Renderer>();
+
+	RendererInstance->Init();
 }
 
 void Engine::MainLoop()
@@ -60,6 +62,7 @@ void Engine::MainLoop()
 
 void Engine::Cleanup()
 {
+	RendererInstance->Cleanup();
 	// glfw cleanup
 	glfwDestroyWindow(Window);
 	glfwTerminate();
