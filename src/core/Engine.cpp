@@ -35,6 +35,11 @@ RendererPtr Engine::GetRenderer()
 	return RendererInstance;
 }
 
+GLFWwindow* Engine::GetGlfwWindow()
+{
+	return Window;
+}
+
 void Engine::Init()
 {
 	// init glfw window

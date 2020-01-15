@@ -18,6 +18,7 @@ public:
 
 	ScenePtr GetScene();
 	RendererPtr GetRenderer();
+	GLFWwindow* GetGlfwWindow();
 protected:
 	ScenePtr SceneInstance;
 	RendererPtr RendererInstance;
