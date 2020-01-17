@@ -7,6 +7,7 @@
 
 #include <GLFW/glfw3native.h>
 #include "core/Engine.h"
+#include <vector>
 
 
 using namespace VULKAN_HPP_NAMESPACE;
@@ -85,6 +86,7 @@ void Renderer::RenderFrame()
 void Renderer::Cleanup()
 {
 	vulkanDevice.destroy();
+	vulkanInstance.destroySurfaceKHR(vulkanSurface);
 	vulkanInstance.destroy();
 }
 
@@ -126,7 +128,7 @@ void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevi
 int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
 {
 	QueueFamilyIndices families = FindQueueFamilies(inPhysicalDevice);
-	if (!families.graphicsFamily.has_value() || !families.graphicsFamily.has_value())
+	if (!families.IsComplete() || !CheckPhysicalDeviceExtensionSupport(inPhysicalDevice))
 	{
 		return 0;
 	}
@@ -140,7 +142,7 @@ int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice&
 	}
 
 	// Maximum possible size of textures affects graphics quality
-	score += physicalDeviceProperties.limits.maxImageDimension2D * 0.5f;
+	score += (int) ( physicalDeviceProperties.limits.maxImageDimension2D * 0.5f );
 
 	PhysicalDeviceFeatures physicalDeviceFeatures = inPhysicalDevice.getFeatures();
 	// Application can't function without geometry shaders
@@ -149,6 +151,24 @@ int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice&
 	}
 
 	return score;
+}
+
+bool Renderer::CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
+{
+	 ResultValue<std::vector<ExtensionProperties>> extensionPropsResult = inPhysicalDevice.enumerateDeviceExtensionProperties();
+	 if (extensionPropsResult.result != Result::eSuccess)
+	 {
+		 return false;
+	 }
+
+	 std::set<std::string> requiredExtensionsSet(requiredExtensions.begin(), requiredExtensions.end());
+
+	 for (ExtensionProperties& extension : extensionPropsResult.value)
+	 {
+		 requiredExtensionsSet.erase(extension.extensionName);
+	 }
+
+	 return requiredExtensionsSet.empty();
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
@@ -167,29 +187,51 @@ QueueFamilyIndices Renderer::FindQueueFamilies(const VULKAN_HPP_NAMESPACE::Physi
 		{
 			indices.computeFamily = familyIndex;
 		}
+		ResultValue<Bool32> surfaceSupportResult = inPhysicalDevice.getSurfaceSupportKHR(familyIndex, vulkanSurface);
+		if (surfaceSupportResult.result == Result::eSuccess && surfaceSupportResult.value)
+		{
+			indices.presentFamily = familyIndex;
+		}
+
 		familyIndex++;
 	}
 
 	return indices;
 }
 
+SwapChainSupportDetails Renderer::QuerySwapChainSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
+{
+	SwapChainSupportDetails swapChainSupportDetails;
+
+
+
+	return swapChainSupportDetails;
+}
+
 void Renderer::CreateLogicalDevice()
 {
 	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(vulkanPhysicalDevice);
 
-	DeviceQueueCreateInfo queueCreateInfo;
-	queueCreateInfo.setQueueFamilyIndex(queueFamilyIndices.graphicsFamily.value());
-	queueCreateInfo.setQueueCount(1); // magic 1
-	float priority;
-	queueCreateInfo.setPQueuePriorities(& priority);
+	std::vector<DeviceQueueCreateInfo> queueCreateInfoVector;
+	for (uint32_t queueFamiltIndex : queueFamilyIndices.GetFamiliesSet())
+	{
+		DeviceQueueCreateInfo queueCreateInfo;
+		queueCreateInfo.setQueueFamilyIndex(queueFamiltIndex);
+		queueCreateInfo.setQueueCount(1); // magic 1
+		float priority;
+		queueCreateInfo.setPQueuePriorities(&priority);
+
+		queueCreateInfoVector.push_back(queueCreateInfo);
+	}
 
 	PhysicalDeviceFeatures deviceFeatures;
 
 	DeviceCreateInfo deviceCreateInfo;
-	deviceCreateInfo.setPQueueCreateInfos(&queueCreateInfo);
-	deviceCreateInfo.setQueueCreateInfoCount(1);
+	deviceCreateInfo.setPQueueCreateInfos(queueCreateInfoVector.data());
+	deviceCreateInfo.setQueueCreateInfoCount((uint32_t)queueCreateInfoVector.size());
 	deviceCreateInfo.setPEnabledFeatures(&deviceFeatures);
-	deviceCreateInfo.setEnabledExtensionCount(0);
+	deviceCreateInfo.setEnabledExtensionCount((uint32_t)requiredExtensions.size());
+	deviceCreateInfo.setPpEnabledExtensionNames(requiredExtensions.data());
 	deviceCreateInfo.setEnabledLayerCount(0);
 
 	ResultValue<Device> deviceResult = vulkanPhysicalDevice.createDevice(deviceCreateInfo);
@@ -203,6 +245,7 @@ void Renderer::CreateLogicalDevice()
 	}
 
 	graphicsQueue = vulkanDevice.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
-//	computeQueue = vulkanDevice.getQueue(queueFamilyIndices.computeFamily.value(), 0);
+	computeQueue = vulkanDevice.getQueue(queueFamilyIndices.computeFamily.value(), 0);
+	presentQueue = vulkanDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
 }
 

@@ -5,12 +5,42 @@
 #include <optional>
 #include <core/ObjectBase.h>
 #include "fwd.hpp"
+#include <set>
+
+//-------------------------------------------------------------------------------------------------------
 
 struct QueueFamilyIndices
 {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<uint32_t> computeFamily;
+	std::optional<uint32_t> presentFamily;
+
+	bool IsComplete()
+	{
+		return graphicsFamily.has_value() && computeFamily.has_value() && presentFamily.has_value();
+	}
+
+	std::set<uint32_t> GetFamiliesSet()
+	{
+		return std::set<uint32_t>{
+			graphicsFamily.value(),
+			computeFamily.value(),
+			presentFamily.value()
+		};
+	}
 };
+
+//-------------------------------------------------------------------------------------------------------
+
+struct SwapChainSupportDetails 
+{
+	VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR capabilities;
+	std::vector<VULKAN_HPP_NAMESPACE::SurfaceFormatKHR> formats;
+	std::vector<VULKAN_HPP_NAMESPACE::PresentModeKHR> presentModes;
+};
+
+//=======================================================================================================
+//=======================================================================================================
 
 class Renderer : public ObjectBase
 {
@@ -40,15 +70,21 @@ private:
 	VULKAN_HPP_NAMESPACE::Device vulkanDevice;
 	VULKAN_HPP_NAMESPACE::Queue graphicsQueue;
 	VULKAN_HPP_NAMESPACE::Queue computeQueue;
-//	QueueFamilyIndices queueFamilies;
+	VULKAN_HPP_NAMESPACE::Queue presentQueue;
+
+	std::vector<const char*> requiredExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
 
 	//std::vector<RenderPassPtr> RenderPasses;
 	//std::map<HashString, unsigned int> RenderPassMap;
 	//==================== METHODS ===============================
 
-	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& InDevices);
-	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& InPhysicalDevice);
-	QueueFamilyIndices FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& InPhysicalDevice);
+	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices);
+	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
+	bool CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
+	QueueFamilyIndices FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
+	SwapChainSupportDetails QuerySwapChainSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
 	void CreateLogicalDevice();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
