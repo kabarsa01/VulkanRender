@@ -127,8 +127,7 @@ void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevi
 
 int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
 {
-	QueueFamilyIndices families = FindQueueFamilies(inPhysicalDevice);
-	if (!families.IsComplete() || !CheckPhysicalDeviceExtensionSupport(inPhysicalDevice))
+	if (!IsDeviceUsable(inPhysicalDevice))
 	{
 		return 0;
 	}
@@ -151,6 +150,19 @@ int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice&
 	}
 
 	return score;
+}
+
+int Renderer::IsDeviceUsable(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
+{
+	QueueFamilyIndices families = FindQueueFamilies(inPhysicalDevice);
+	bool extensionsSupported = CheckPhysicalDeviceExtensionSupport(inPhysicalDevice);
+	bool swapChainSupported = false;
+	if (extensionsSupported)
+	{
+		swapChainSupported = QuerySwapChainSupport(inPhysicalDevice).IsUsable();
+	}
+
+	return families.IsComplete() && extensionsSupported && swapChainSupported;
 }
 
 bool Renderer::CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
@@ -203,7 +215,23 @@ SwapChainSupportDetails Renderer::QuerySwapChainSupport(const VULKAN_HPP_NAMESPA
 {
 	SwapChainSupportDetails swapChainSupportDetails;
 
+	ResultValue<SurfaceCapabilitiesKHR> capabilitieResult = inPhysicalDevice.getSurfaceCapabilitiesKHR(vulkanSurface);
+	if (capabilitieResult.result != Result::eSuccess)
+		throw std::runtime_error("Error requesting surface capabilities");
 
+	swapChainSupportDetails.capabilities = capabilitieResult.value;
+
+	ResultValue<std::vector<SurfaceFormatKHR>> formatsResult = inPhysicalDevice.getSurfaceFormatsKHR(vulkanSurface);
+	if (formatsResult.result != Result::eSuccess)
+		throw std::runtime_error("Error requesting surface formats");
+
+	swapChainSupportDetails.formats = formatsResult.value;
+
+	ResultValue<std::vector<PresentModeKHR>> presentModesResult = inPhysicalDevice.getSurfacePresentModesKHR(vulkanSurface);
+	if (presentModesResult.result != Result::eSuccess)
+		throw std::runtime_error("Error requesting surface formats");
+
+	swapChainSupportDetails.presentModes = presentModesResult.value;
 
 	return swapChainSupportDetails;
 }

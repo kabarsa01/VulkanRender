@@ -37,6 +37,11 @@ struct SwapChainSupportDetails
 	VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR capabilities;
 	std::vector<VULKAN_HPP_NAMESPACE::SurfaceFormatKHR> formats;
 	std::vector<VULKAN_HPP_NAMESPACE::PresentModeKHR> presentModes;
+
+	bool IsUsable()
+	{
+		return !formats.empty() && !presentModes.empty();
+	}
 };
 
 //=======================================================================================================
@@ -82,6 +87,9 @@ private:
 
 	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices);
 	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
+
+	int IsDeviceUsable(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
+
 	bool CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
 	QueueFamilyIndices FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
 	SwapChainSupportDetails QuerySwapChainSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
