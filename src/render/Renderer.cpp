@@ -8,6 +8,7 @@
 #include <GLFW/glfw3native.h>
 #include "core/Engine.h"
 #include <vector>
+#include <algorithm>
 
 
 using namespace VULKAN_HPP_NAMESPACE;
@@ -76,6 +77,8 @@ void Renderer::Init()
 	ResultValue<std::vector<PhysicalDevice>> devicesResult = vulkanInstance.enumeratePhysicalDevices();
 	PickPhysicalDevice(devicesResult.value);
 	CreateLogicalDevice();
+	CreateSwapChain();
+	CreateImageViews();
 }
 
 void Renderer::RenderFrame()
@@ -85,6 +88,12 @@ void Renderer::RenderFrame()
 
 void Renderer::Cleanup()
 {
+	for (const ImageView& imageView : swapChainImageViews)
+	{
+		vulkanDevice.destroyImageView(imageView);
+	}
+
+	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
 	vulkanDevice.destroy();
 	vulkanInstance.destroySurfaceKHR(vulkanSurface);
 	vulkanInstance.destroy();
@@ -275,5 +284,124 @@ void Renderer::CreateLogicalDevice()
 	graphicsQueue = vulkanDevice.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
 	computeQueue = vulkanDevice.getQueue(queueFamilyIndices.computeFamily.value(), 0);
 	presentQueue = vulkanDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
+}
+
+SurfaceFormatKHR Renderer::ChooseSurfaceFormat(const std::vector<SurfaceFormatKHR>& inFormats)
+{
+	for (const SurfaceFormatKHR& surfaceFormat : inFormats)
+	{
+		if (surfaceFormat.format == Format::eR8G8B8A8Unorm && surfaceFormat.colorSpace == ColorSpaceKHR::eSrgbNonlinear)
+		{
+			return surfaceFormat;
+		}
+	}
+
+	return inFormats[0];
+}
+
+PresentModeKHR Renderer::ChooseSwapChainPresentMode(const std::vector<PresentModeKHR>& inPresentModes)
+{
+	for (const PresentModeKHR& presentMode : inPresentModes)
+	{
+		if (presentMode == PresentModeKHR::eMailbox)
+		{
+			return presentMode;
+		}
+	}
+
+	return PresentModeKHR::eFifo;
+}
+
+VULKAN_HPP_NAMESPACE::Extent2D Renderer::ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities)
+{
+	if (inCapabilities.currentExtent.width != UINT32_MAX)
+	{
+		return inCapabilities.currentExtent;
+	}
+	else
+	{
+		Extent2D extent;
+
+		
+		extent.setWidth( std::clamp<int>( width, inCapabilities.minImageExtent.width, inCapabilities.maxImageExtent.width ) );
+		extent.setHeight( std::clamp<int>( height, inCapabilities.minImageExtent.height, inCapabilities.maxImageExtent.height ) );
+
+		return extent;
+	}
+}
+
+void Renderer::CreateSwapChain()
+{
+	SwapChainSupportDetails scSupportDetails = QuerySwapChainSupport(vulkanPhysicalDevice);
+
+	SurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(scSupportDetails.formats);
+	PresentModeKHR presentMode = ChooseSwapChainPresentMode(scSupportDetails.presentModes);
+	Extent2D extent = ChooseSwapChainExtent(scSupportDetails.capabilities);
+
+	swapChainImageFormat = surfaceFormat.format;
+	swapChainExtent = extent;
+
+	SurfaceCapabilitiesKHR& capabilities = scSupportDetails.capabilities;
+
+	uint32_t imageCount = capabilities.minImageCount + 1;
+	if ( capabilities.maxImageCount > 0 && (imageCount > capabilities.maxImageCount) )
+	{
+		imageCount = capabilities.maxImageCount;
+	}
+
+	SwapchainCreateInfoKHR createInfo;
+	createInfo
+		.setSurface(vulkanSurface)
+		.setMinImageCount(imageCount)
+		.setImageFormat(surfaceFormat.format)
+		.setImageColorSpace(surfaceFormat.colorSpace)
+		.setImageExtent(extent)
+		.setImageUsage(ImageUsageFlagBits::eColorAttachment)// ImageUsageFlagBits::eTransferDst or ImageUsageFlagBits::eDepthStencilAttachment
+		.setImageArrayLayers(1)
+		.setPreTransform(capabilities.currentTransform)
+		.setCompositeAlpha(CompositeAlphaFlagBitsKHR::eOpaque)
+		.setPresentMode(presentMode)
+		.setClipped(VK_TRUE)
+		.setOldSwapchain(SwapchainKHR());
+
+	QueueFamilyIndices familyIndices = FindQueueFamilies(vulkanPhysicalDevice);
+	uint32_t queueFamilyIndices[] = { familyIndices.graphicsFamily.value(), familyIndices.presentFamily.value() };
+	if (familyIndices.graphicsFamily != familyIndices.presentFamily)
+	{
+		createInfo.setImageSharingMode(SharingMode::eConcurrent);
+		createInfo.setQueueFamilyIndexCount(2);
+		createInfo.setPQueueFamilyIndices(queueFamilyIndices);
+	}
+	else
+	{
+		createInfo.setImageSharingMode(SharingMode::eExclusive);
+	}
+
+	ResultValue<SwapchainKHR> swapChainResult = vulkanDevice.createSwapchainKHR(createInfo);
+	if (swapChainResult.result == Result::eSuccess) { vulkanSwapChain = swapChainResult.value; }
+	else { throw std::runtime_error("Failed to create a swapchain"); }
+
+	ResultValue<std::vector<Image>> imagesResult = vulkanDevice.getSwapchainImagesKHR(vulkanSwapChain);
+	if (imagesResult.result == Result::eSuccess) { swapChainImages = imagesResult.value; }
+	else { throw std::runtime_error("Failed to get swapchain images"); }
+}
+
+void Renderer::CreateImageViews()
+{
+	swapChainImageViews.resize(swapChainImages.size());
+	for (uint32_t index = 0; index < swapChainImages.size(); index++)
+	{
+		ImageViewCreateInfo createInfo;
+		createInfo
+			.setImage(swapChainImages[index])
+			.setViewType(ImageViewType::e2D)
+			.setFormat(swapChainImageFormat)
+			.setComponents(ComponentMapping())
+			.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+
+		ResultValue<ImageView> imageViewResult = vulkanDevice.createImageView(createInfo);
+		if (imageViewResult.result == Result::eSuccess) { swapChainImageViews[index] = imageViewResult.value; }
+		else { throw std::runtime_error("Failed to create swapchain image view"); }
+	}
 }
 
