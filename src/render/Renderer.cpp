@@ -405,3 +405,8 @@ void Renderer::CreateImageViews()
 	}
 }
 
+void Renderer::CreateGraphicsPipeline()
+{
+
+}
+

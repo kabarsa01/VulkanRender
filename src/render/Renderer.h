@@ -105,6 +105,8 @@ private:
 	VULKAN_HPP_NAMESPACE::Extent2D ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities);
 	void CreateSwapChain();
 	void CreateImageViews();
+
+	void CreateGraphicsPipeline();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
 

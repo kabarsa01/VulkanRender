@@ -25,6 +25,9 @@
     <Filter Include="Source Files\render">
       <UniqueIdentifier>{d9ae5b3f-2aca-4377-83d7-e297796d339b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\render\shader">
+      <UniqueIdentifier>{4cf8e07a-460d-4341-9cbd-e7a3ed99d736}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -60,6 +63,9 @@
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\shader\Shader.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -91,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="src\render\Renderer.h">
       <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\Shader.h">
+      <Filter>Source Files\render\shader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

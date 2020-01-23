@@ -12,7 +12,7 @@ TimeManager * TimeManager::GetInstance()
 void TimeManager::UpdateTime()
 {
 	double CurrentTime = glfwGetTime();
-	DeltaTime = CurrentTime - LastTimestamp;
+	DeltaTime = (float)( CurrentTime - LastTimestamp );
 	LastTimestamp = CurrentTime;
 }
 
