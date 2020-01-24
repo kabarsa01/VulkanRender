@@ -1,7 +1,6 @@
 #include "Shader.h"
 #include <fstream>
 #include <streambuf>
-#include "shaderc.h"
 
 Shader::Shader()
 	: ObjectBase()
@@ -30,16 +29,6 @@ void Shader::LoadText(const std::string& inFilePath)
 
 bool Shader::Compile()
 {
-	shaderc_compiler_t compiler = shaderc_compiler_initialize();
-	shaderc_compilation_result* result = shaderc_compile_into_spv(
-	    compiler, code.c_str(), code.length(),
-	    shaderc_glsl_vertex_shader, filePath.c_str(), "main", nullptr);
-	// Do stuff with compilation results.
-//	result->
-
-	shaderc_result_release(result);
-	shaderc_compiler_release(compiler);
-
 	return true;
 }
 

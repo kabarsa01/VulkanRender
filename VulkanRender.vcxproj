@@ -87,7 +87,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR;_HAS_ITERATOR_DEBUGGING=0;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -95,16 +95,21 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\shaderc;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
+glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Message>Compile shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR;_HAS_ITERATOR_DEBUGGING=0;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -112,9 +117,14 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\shaderc;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
+glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Message>Compile shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -123,7 +133,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR;_HAS_ITERATOR_DEBUGGING=0;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -133,9 +143,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\shaderc;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
+glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Message>Compile shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -144,7 +159,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR;_HAS_ITERATOR_DEBUGGING=0;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -154,9 +169,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\shaderc;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;C:\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
+glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Message>Compile shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\common\HashString.cpp" />
