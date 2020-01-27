@@ -99,8 +99,18 @@
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
-glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Command>call :treeProcess
+goto :eof
+
+:treeProcess
+rem Do whatever you want here over the files of this subdir, for example:
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator -V %%f -o %%~nf.spv
+for /D %%d in (*) do (
+    cd %%d
+    call :treeProcess
+    cd ..
+)
+exit /b</Command>
       <Message>Compile shaders</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -121,8 +131,18 @@ glslangValidator -V %%f -o %%~nf.spv</Command>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
-glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Command>call :treeProcess
+goto :eof
+
+:treeProcess
+rem Do whatever you want here over the files of this subdir, for example:
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator -V %%f -o %%~nf.spv
+for /D %%d in (*) do (
+    cd %%d
+    call :treeProcess
+    cd ..
+)
+exit /b</Command>
       <Message>Compile shaders</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -147,8 +167,18 @@ glslangValidator -V %%f -o %%~nf.spv</Command>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
-glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Command>call :treeProcess
+goto :eof
+
+:treeProcess
+rem Do whatever you want here over the files of this subdir, for example:
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator -V %%f -o %%~nf.spv
+for /D %%d in (*) do (
+    cd %%d
+    call :treeProcess
+    cd ..
+)
+exit /b</Command>
       <Message>Compile shaders</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -173,8 +203,18 @@ glslangValidator -V %%f -o %%~nf.spv</Command>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command> for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do
-glslangValidator -V %%f -o %%~nf.spv</Command>
+      <Command>call :treeProcess
+goto :eof
+
+:treeProcess
+rem Do whatever you want here over the files of this subdir, for example:
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator -V %%f -o %%~nf.spv
+for /D %%d in (*) do (
+    cd %%d
+    call :treeProcess
+    cd ..
+)
+exit /b</Command>
       <Message>Compile shaders</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
