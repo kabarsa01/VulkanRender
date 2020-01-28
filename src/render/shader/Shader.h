@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "vulkan\vulkan.hpp"
 
 class Shader : public ObjectBase
 {
@@ -11,12 +12,11 @@ public:
 	Shader();
 	virtual ~Shader();
 
-	void LoadText(const std::string& inFilePath);
-	bool Compile();
+	void Load(const std::string& inFilePath);
+	const std::vector<char>& GetCode() const;
 protected:
 	std::string filePath;
-	std::string code;
-	std::vector<unsigned char> binary;
+	std::vector<char> binary;
 };
 
 typedef std::shared_ptr<Shader> ShaderPtr;

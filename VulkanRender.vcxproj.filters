@@ -66,6 +66,9 @@
     <ClCompile Include="src\render\shader\Shader.cpp">
       <Filter>Source Files\render\shader</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -99,6 +102,9 @@
       <Filter>Source Files\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\shader\Shader.h">
+      <Filter>Source Files\render\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\ShaderModuleWrapper.h">
       <Filter>Source Files\render\shader</Filter>
     </ClInclude>
   </ItemGroup>

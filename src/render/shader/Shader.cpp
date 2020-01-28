@@ -13,22 +13,28 @@ Shader::~Shader()
 
 }
 
-void Shader::LoadText(const std::string& inFilePath)
+void Shader::Load(const std::string& inFilePath)
 {
 	filePath = inFilePath;
 
-	std::ifstream inputStream(filePath);
-	code.clear();
+	std::ifstream file(filePath, std::ios::binary);
+	if (!file.is_open()) {
+		throw std::runtime_error("failed to open file!");
+	}
+	binary.clear();
 
-	inputStream.seekg(0, std::ios::end);
-	code.reserve(inputStream.tellg());
-	inputStream.seekg(0, std::ios::beg);
+	file.seekg(0, std::ios::end);
+	size_t size = file.tellg();
+	binary.resize(size);
+	file.seekg(0, std::ios::beg);
 
-	code.assign((std::istreambuf_iterator<char>(inputStream)), std::istreambuf_iterator<char>());
+	file.read(binary.data(), size);
+	file.close();
 }
 
-bool Shader::Compile()
+const std::vector<char>& Shader::GetCode() const
 {
-	return true;
+	return binary;
 }
+
 

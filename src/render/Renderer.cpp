@@ -9,6 +9,8 @@
 #include "core/Engine.h"
 #include <vector>
 #include <algorithm>
+#include "shader/Shader.h"
+#include "shader/ShaderModuleWrapper.h"
 
 
 using namespace VULKAN_HPP_NAMESPACE;
@@ -49,36 +51,26 @@ void Renderer::Init()
 		.setEnabledLayerCount(0);
 
 	//ResultValueType<VULKAN_HPP_NAMESPACE::Instance>::type Result = createInstance(InstCreateInfo, );
-	ResultValue<Instance> instanceResult = createInstance(instanceCreateInfo);
-	if (instanceResult.result == Result::eSuccess)
-	{
-		vulkanInstance = instanceResult.value;
-	}
-
+	vulkanInstance = createInstance(instanceCreateInfo);
 	Win32SurfaceCreateInfoKHR surfaceCreateInfo;
 	surfaceCreateInfo.setHwnd(glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow()));
 	surfaceCreateInfo.setHinstance(GetModuleHandle(nullptr));
-	ResultValue<SurfaceKHR> surfaceResult = vulkanInstance.createWin32SurfaceKHR(surfaceCreateInfo);
-
-	if (surfaceResult.result == Result::eSuccess) { vulkanSurface = surfaceResult.value; }
-	else { throw std::runtime_error("failed to create surface!"); }
+	vulkanSurface = vulkanInstance.createWin32SurfaceKHR(surfaceCreateInfo);
 
 	//-----------------------------------------------------------------------------------------------------
 
-	ResultValue<std::vector<ExtensionProperties>> extensionsResult = enumerateInstanceExtensionProperties();
-	if (extensionsResult.result == Result::eSuccess)
+	std::vector<ExtensionProperties> extensionsResult = enumerateInstanceExtensionProperties();
+	for (ExtensionProperties extensionProperties : extensionsResult)
 	{
-		for (ExtensionProperties extensionProperties : extensionsResult.value)
-		{
-			std::cout << "\t" << extensionProperties.extensionName << std::endl;
-		}
+		std::cout << "\t" << extensionProperties.extensionName << std::endl;
 	}
 
-	ResultValue<std::vector<PhysicalDevice>> devicesResult = vulkanInstance.enumeratePhysicalDevices();
-	PickPhysicalDevice(devicesResult.value);
+	std::vector<PhysicalDevice> devices = vulkanInstance.enumeratePhysicalDevices();
+	PickPhysicalDevice(devices);
 	CreateLogicalDevice();
 	CreateSwapChain();
 	CreateImageViews();
+	CreateGraphicsPipeline();
 }
 
 void Renderer::RenderFrame()
@@ -113,6 +105,21 @@ int Renderer::GetWidth() const
 int Renderer::GetHeight() const
 {
 	return height;
+}
+
+VULKAN_HPP_NAMESPACE::PhysicalDevice Renderer::GetPhysicalDevice()
+{
+	return vulkanPhysicalDevice;
+}
+
+VULKAN_HPP_NAMESPACE::Device Renderer::GetDevice()
+{
+	return vulkanDevice;
+}
+
+VULKAN_HPP_NAMESPACE::SwapchainKHR Renderer::GetSwapChain()
+{
+	return vulkanSwapChain;
 }
 
 void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices)
@@ -176,15 +183,11 @@ int Renderer::IsDeviceUsable(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysi
 
 bool Renderer::CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
 {
-	 ResultValue<std::vector<ExtensionProperties>> extensionPropsResult = inPhysicalDevice.enumerateDeviceExtensionProperties();
-	 if (extensionPropsResult.result != Result::eSuccess)
-	 {
-		 return false;
-	 }
+	 std::vector<ExtensionProperties> extensionPropsResult = inPhysicalDevice.enumerateDeviceExtensionProperties();
 
 	 std::set<std::string> requiredExtensionsSet(requiredExtensions.begin(), requiredExtensions.end());
 
-	 for (ExtensionProperties& extension : extensionPropsResult.value)
+	 for (ExtensionProperties& extension : extensionPropsResult)
 	 {
 		 requiredExtensionsSet.erase(extension.extensionName);
 	 }
@@ -208,8 +211,8 @@ QueueFamilyIndices Renderer::FindQueueFamilies(const VULKAN_HPP_NAMESPACE::Physi
 		{
 			indices.computeFamily = familyIndex;
 		}
-		ResultValue<Bool32> surfaceSupportResult = inPhysicalDevice.getSurfaceSupportKHR(familyIndex, vulkanSurface);
-		if (surfaceSupportResult.result == Result::eSuccess && surfaceSupportResult.value)
+		Bool32 surfaceSupportResult = inPhysicalDevice.getSurfaceSupportKHR(familyIndex, vulkanSurface);
+		if (surfaceSupportResult)
 		{
 			indices.presentFamily = familyIndex;
 		}
@@ -224,23 +227,9 @@ SwapChainSupportDetails Renderer::QuerySwapChainSupport(const VULKAN_HPP_NAMESPA
 {
 	SwapChainSupportDetails swapChainSupportDetails;
 
-	ResultValue<SurfaceCapabilitiesKHR> capabilitieResult = inPhysicalDevice.getSurfaceCapabilitiesKHR(vulkanSurface);
-	if (capabilitieResult.result != Result::eSuccess)
-		throw std::runtime_error("Error requesting surface capabilities");
-
-	swapChainSupportDetails.capabilities = capabilitieResult.value;
-
-	ResultValue<std::vector<SurfaceFormatKHR>> formatsResult = inPhysicalDevice.getSurfaceFormatsKHR(vulkanSurface);
-	if (formatsResult.result != Result::eSuccess)
-		throw std::runtime_error("Error requesting surface formats");
-
-	swapChainSupportDetails.formats = formatsResult.value;
-
-	ResultValue<std::vector<PresentModeKHR>> presentModesResult = inPhysicalDevice.getSurfacePresentModesKHR(vulkanSurface);
-	if (presentModesResult.result != Result::eSuccess)
-		throw std::runtime_error("Error requesting surface formats");
-
-	swapChainSupportDetails.presentModes = presentModesResult.value;
+	swapChainSupportDetails.capabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(vulkanSurface);
+	swapChainSupportDetails.formats = inPhysicalDevice.getSurfaceFormatsKHR(vulkanSurface);
+	swapChainSupportDetails.presentModes = inPhysicalDevice.getSurfacePresentModesKHR(vulkanSurface);
 
 	return swapChainSupportDetails;
 }
@@ -271,15 +260,7 @@ void Renderer::CreateLogicalDevice()
 	deviceCreateInfo.setPpEnabledExtensionNames(requiredExtensions.data());
 	deviceCreateInfo.setEnabledLayerCount(0);
 
-	ResultValue<Device> deviceResult = vulkanPhysicalDevice.createDevice(deviceCreateInfo);
-	if (deviceResult.result == Result::eSuccess)
-	{
-		vulkanDevice = deviceResult.value;
-	}
-	else
-	{
-		throw std::runtime_error("failed to create device!");
-	}
+	vulkanDevice = vulkanPhysicalDevice.createDevice(deviceCreateInfo);
 
 	graphicsQueue = vulkanDevice.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
 	computeQueue = vulkanDevice.getQueue(queueFamilyIndices.computeFamily.value(), 0);
@@ -377,13 +358,8 @@ void Renderer::CreateSwapChain()
 		createInfo.setImageSharingMode(SharingMode::eExclusive);
 	}
 
-	ResultValue<SwapchainKHR> swapChainResult = vulkanDevice.createSwapchainKHR(createInfo);
-	if (swapChainResult.result == Result::eSuccess) { vulkanSwapChain = swapChainResult.value; }
-	else { throw std::runtime_error("Failed to create a swapchain"); }
-
-	ResultValue<std::vector<Image>> imagesResult = vulkanDevice.getSwapchainImagesKHR(vulkanSwapChain);
-	if (imagesResult.result == Result::eSuccess) { swapChainImages = imagesResult.value; }
-	else { throw std::runtime_error("Failed to get swapchain images"); }
+	vulkanSwapChain = vulkanDevice.createSwapchainKHR(createInfo);
+	swapChainImages = vulkanDevice.getSwapchainImagesKHR(vulkanSwapChain);
 }
 
 void Renderer::CreateImageViews()
@@ -399,14 +375,15 @@ void Renderer::CreateImageViews()
 			.setComponents(ComponentMapping())
 			.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
-		ResultValue<ImageView> imageViewResult = vulkanDevice.createImageView(createInfo);
-		if (imageViewResult.result == Result::eSuccess) { swapChainImageViews[index] = imageViewResult.value; }
-		else { throw std::runtime_error("Failed to create swapchain image view"); }
+		swapChainImageViews[index] = vulkanDevice.createImageView(createInfo);
 	}
 }
 
 void Renderer::CreateGraphicsPipeline()
 {
+	Shader vertShader;
+	vertShader.Load("content/shaders/BasicVert.spv");
 
+	ShaderModuleWrapper shaderModule(vertShader);
 }
 

@@ -8,6 +8,7 @@
 #include <set>
 
 // pre-build batch to compile all our shaders
+//
 //call :treeProcess
 //goto : eof
 //
@@ -76,6 +77,10 @@ public:
 	void SetResolution(int InWidth, int InHeight);
 	int GetWidth() const;
 	int GetHeight() const;
+
+	VULKAN_HPP_NAMESPACE::PhysicalDevice GetPhysicalDevice();
+	VULKAN_HPP_NAMESPACE::Device GetDevice();
+	VULKAN_HPP_NAMESPACE::SwapchainKHR GetSwapChain();
 protected:
 private:
 	//======================= VARS ===============================

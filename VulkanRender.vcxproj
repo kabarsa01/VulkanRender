@@ -87,10 +87,11 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -119,10 +120,11 @@ exit /b</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -153,10 +155,11 @@ exit /b</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -189,10 +192,11 @@ exit /b</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VULKAN_HPP_NO_EXCEPTIONS;VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\Git\VulkanRender\3rdparty\shaderc;C:\VulkanSDK\1.1.130.0\Include;E:\Git\VulkanRender\3rdparty;E:\Git\VulkanRender\3rdparty\glm;E:\Git\VulkanRender\3rdparty\glfw-3.3.1.bin.WIN64\include;E:\Git\VulkanRender\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -226,6 +230,7 @@ exit /b</Command>
     <ClCompile Include="src\core\TimeManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
+    <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneObjectBase.cpp" />
@@ -239,6 +244,7 @@ exit /b</Command>
     <ClInclude Include="src\core\ObjectBase.h" />
     <ClInclude Include="src\core\TimeManager.h" />
     <ClInclude Include="src\render\Renderer.h" />
+    <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneObjectBase.h" />
