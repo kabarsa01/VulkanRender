@@ -383,7 +383,47 @@ void Renderer::CreateGraphicsPipeline()
 {
 	Shader vertShader;
 	vertShader.Load("content/shaders/BasicVert.spv");
+	Shader fragShader;
+	fragShader.Load("content/shaders/BasicFrag.spv");
 
-	ShaderModuleWrapper shaderModule(vertShader);
+	ShaderModuleWrapper vertShaderModule(vertShader);
+	ShaderModuleWrapper fragShaderModule(fragShader);
+
+	PipelineShaderStageCreateInfo vertStageInfo;
+	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
+	vertStageInfo.setModule(vertShaderModule.GetShaderModule());
+	vertStageInfo.setPName("main");
+	//vertStageInfo.setPSpecializationInfo(); spec info to set some constants
+
+	PipelineShaderStageCreateInfo fragStageInfo;
+	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
+	fragStageInfo.setModule(fragShaderModule.GetShaderModule());
+	fragStageInfo.setPName("main");
+
+	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
+
+	PipelineVertexInputStateCreateInfo vertexInputStateInfo;
+
+	PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
+	inputAssemblyStateInfo.setTopology(PrimitiveTopology::eTriangleList);
+	inputAssemblyStateInfo.setPrimitiveRestartEnable(VK_FALSE);
+
+	Viewport viewport;
+	viewport.setX(0.0f);
+	viewport.setY(0.0f);
+	viewport.setWidth((float)swapChainExtent.width);
+	viewport.setHeight((float)swapChainExtent.height);
+	viewport.setMinDepth(0.0f);
+	viewport.setMaxDepth(1.0f);
+
+	Rect2D scissor;
+	scissor.setOffset(Offset2D(0, 0));
+	scissor.setExtent(swapChainExtent);
+
+	PipelineViewportStateCreateInfo viewportStateInfo;
+	viewportStateInfo.setViewportCount(1);
+	viewportStateInfo.setPViewports(&viewport);
+	viewportStateInfo.setScissorCount(1);
+	viewportStateInfo.setPScissors(&scissor);
 }
 

@@ -12,6 +12,8 @@ class ShaderModuleWrapper : public ObjectBase
 public:
 	ShaderModuleWrapper(const Shader& inShader);
 	virtual ~ShaderModuleWrapper();
+
+	inline VULKAN_HPP_NAMESPACE::ShaderModule GetShaderModule() { return shaderModule; }
 protected:
 	VULKAN_HPP_NAMESPACE::ShaderModule shaderModule;
 };
