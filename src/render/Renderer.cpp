@@ -80,11 +80,8 @@ void Renderer::RenderFrame()
 
 void Renderer::Cleanup()
 {
-	for (const ImageView& imageView : swapChainImageViews)
-	{
-		vulkanDevice.destroyImageView(imageView);
-	}
-
+	vulkanDevice.destroyPipelineLayout(pipelineLayout);
+	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
 	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
 	vulkanDevice.destroy();
 	vulkanInstance.destroySurfaceKHR(vulkanSurface);
@@ -402,11 +399,11 @@ void Renderer::CreateGraphicsPipeline()
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
 
-	PipelineVertexInputStateCreateInfo vertexInputStateInfo;
+	PipelineVertexInputStateCreateInfo vertexInputInfo;
 
-	PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
-	inputAssemblyStateInfo.setTopology(PrimitiveTopology::eTriangleList);
-	inputAssemblyStateInfo.setPrimitiveRestartEnable(VK_FALSE);
+	PipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+	inputAssemblyInfo.setTopology(PrimitiveTopology::eTriangleList);
+	inputAssemblyInfo.setPrimitiveRestartEnable(VK_FALSE);
 
 	Viewport viewport;
 	viewport.setX(0.0f);
@@ -420,10 +417,53 @@ void Renderer::CreateGraphicsPipeline()
 	scissor.setOffset(Offset2D(0, 0));
 	scissor.setExtent(swapChainExtent);
 
-	PipelineViewportStateCreateInfo viewportStateInfo;
-	viewportStateInfo.setViewportCount(1);
-	viewportStateInfo.setPViewports(&viewport);
-	viewportStateInfo.setScissorCount(1);
-	viewportStateInfo.setPScissors(&scissor);
+	PipelineViewportStateCreateInfo viewportInfo;
+	viewportInfo.setViewportCount(1);
+	viewportInfo.setPViewports(&viewport);
+	viewportInfo.setScissorCount(1);
+	viewportInfo.setPScissors(&scissor);
+
+	PipelineRasterizationStateCreateInfo rasterizationInfo;
+	rasterizationInfo.setDepthClampEnable(VK_FALSE);
+	rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
+	rasterizationInfo.setPolygonMode(PolygonMode::eFill);
+	rasterizationInfo.setLineWidth(1.0f);
+	rasterizationInfo.setCullMode(CullModeFlagBits::eBack);
+	rasterizationInfo.setFrontFace(FrontFace::eClockwise);
+	rasterizationInfo.setDepthBiasEnable(VK_FALSE);
+
+	PipelineMultisampleStateCreateInfo multisampleInfo;
+
+//	PipelineDepthStencilStateCreateInfo depthStencilInfo;
+
+	PipelineColorBlendAttachmentState colorBlendAttachment;
+	colorBlendAttachment.setColorWriteMask(ColorComponentFlagBits::eR | ColorComponentFlagBits::eG | ColorComponentFlagBits::eB | ColorComponentFlagBits::eA);
+	colorBlendAttachment.setBlendEnable(VK_FALSE);
+	colorBlendAttachment.setSrcColorBlendFactor(BlendFactor::eOne);
+	colorBlendAttachment.setDstColorBlendFactor(BlendFactor::eZero);
+	colorBlendAttachment.setColorBlendOp(BlendOp::eAdd);
+	colorBlendAttachment.setSrcAlphaBlendFactor(BlendFactor::eOne);
+	colorBlendAttachment.setDstAlphaBlendFactor(BlendFactor::eZero);
+	colorBlendAttachment.setAlphaBlendOp(BlendOp::eAdd);
+
+	PipelineColorBlendStateCreateInfo colorBlendInfo;
+	colorBlendInfo.setLogicOpEnable(VK_FALSE);
+	colorBlendInfo.setLogicOp(LogicOp::eCopy);
+	colorBlendInfo.setAttachmentCount(1);
+	colorBlendInfo.setPAttachments(&colorBlendAttachment);
+	colorBlendInfo.setBlendConstants( { 0.0f, 0.0f, 0.0f, 0.0f } );
+
+	std::vector<DynamicState> dynamicStates = { DynamicState::eViewport, DynamicState::eLineWidth };
+	PipelineDynamicStateCreateInfo dynamicStateInfo;
+	dynamicStateInfo.setDynamicStateCount(2);
+	dynamicStateInfo.setPDynamicStates(dynamicStates.data());
+
+	PipelineLayoutCreateInfo layoutInfo;
+	layoutInfo.setSetLayoutCount(0);
+	layoutInfo.setPSetLayouts(nullptr);
+	layoutInfo.setPushConstantRangeCount(0);
+	layoutInfo.setPPushConstantRanges(nullptr);
+
+	pipelineLayout = vulkanDevice.createPipelineLayout(layoutInfo);
 }
 

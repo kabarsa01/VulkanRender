@@ -100,6 +100,7 @@ private:
 	VULKAN_HPP_NAMESPACE::Queue graphicsQueue;
 	VULKAN_HPP_NAMESPACE::Queue computeQueue;
 	VULKAN_HPP_NAMESPACE::Queue presentQueue;
+	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
 
 	std::vector<const char*> requiredExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
