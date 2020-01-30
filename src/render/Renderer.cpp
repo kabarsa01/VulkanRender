@@ -70,6 +70,7 @@ void Renderer::Init()
 	CreateLogicalDevice();
 	CreateSwapChain();
 	CreateImageViews();
+	CreateRenderPass();
 	CreateGraphicsPipeline();
 }
 
@@ -81,6 +82,7 @@ void Renderer::RenderFrame()
 void Renderer::Cleanup()
 {
 	vulkanDevice.destroyPipelineLayout(pipelineLayout);
+	vulkanDevice.destroyRenderPass(renderPass);
 	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
 	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
 	vulkanDevice.destroy();
@@ -374,6 +376,36 @@ void Renderer::CreateImageViews()
 
 		swapChainImageViews[index] = vulkanDevice.createImageView(createInfo);
 	}
+}
+
+void Renderer::CreateRenderPass()
+{
+	AttachmentDescription colorAttachment;
+	colorAttachment.setFormat(swapChainImageFormat);
+	colorAttachment.setSamples(SampleCountFlagBits::e1);
+	colorAttachment.setLoadOp(AttachmentLoadOp::eClear);
+	colorAttachment.setStoreOp(AttachmentStoreOp::eStore);
+	colorAttachment.setStencilLoadOp(AttachmentLoadOp::eDontCare);
+	colorAttachment.setStencilStoreOp(AttachmentStoreOp::eDontCare);
+	colorAttachment.setInitialLayout(ImageLayout::eUndefined);
+	colorAttachment.setFinalLayout(ImageLayout::ePresentSrcKHR);
+
+	AttachmentReference colorAttachmentRef;
+	colorAttachmentRef.setAttachment(0);
+	colorAttachmentRef.setLayout(ImageLayout::eColorAttachmentOptimal);
+
+	SubpassDescription subpassDesc;
+	subpassDesc.setPipelineBindPoint(PipelineBindPoint::eGraphics);
+	subpassDesc.setColorAttachmentCount(1);
+	subpassDesc.setPColorAttachments(&colorAttachmentRef); // layout(location = |index| ) out vec4 outColor references attachmant by index
+
+	RenderPassCreateInfo renderPassInfo;
+	renderPassInfo.setAttachmentCount(1);
+	renderPassInfo.setPAttachments(&colorAttachment);
+	renderPassInfo.setSubpassCount(1);
+	renderPassInfo.setPSubpasses(&subpassDesc);
+
+	renderPass = vulkanDevice.createRenderPass(renderPassInfo);
 }
 
 void Renderer::CreateGraphicsPipeline()

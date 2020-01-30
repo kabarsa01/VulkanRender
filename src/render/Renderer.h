@@ -100,6 +100,7 @@ private:
 	VULKAN_HPP_NAMESPACE::Queue graphicsQueue;
 	VULKAN_HPP_NAMESPACE::Queue computeQueue;
 	VULKAN_HPP_NAMESPACE::Queue presentQueue;
+	VULKAN_HPP_NAMESPACE::RenderPass renderPass;
 	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
 
 	std::vector<const char*> requiredExtensions = {
@@ -125,7 +126,7 @@ private:
 	VULKAN_HPP_NAMESPACE::Extent2D ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities);
 	void CreateSwapChain();
 	void CreateImageViews();
-
+	void CreateRenderPass();
 	void CreateGraphicsPipeline();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
