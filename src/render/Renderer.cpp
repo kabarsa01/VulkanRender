@@ -72,6 +72,7 @@ void Renderer::Init()
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline();
+	CreateFramebuffers();
 }
 
 void Renderer::RenderFrame()
@@ -81,6 +82,7 @@ void Renderer::RenderFrame()
 
 void Renderer::Cleanup()
 {
+	vulkanDevice.destroyPipeline(pipeline);
 	vulkanDevice.destroyPipelineLayout(pipelineLayout);
 	vulkanDevice.destroyRenderPass(renderPass);
 	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
@@ -497,5 +499,29 @@ void Renderer::CreateGraphicsPipeline()
 	layoutInfo.setPPushConstantRanges(nullptr);
 
 	pipelineLayout = vulkanDevice.createPipelineLayout(layoutInfo);
+
+	GraphicsPipelineCreateInfo pipelineInfo;
+	pipelineInfo.setStageCount(2);
+	pipelineInfo.setPStages(shaderStageInfoArray.data());
+	pipelineInfo.setPVertexInputState(&vertexInputInfo);
+	pipelineInfo.setPInputAssemblyState(&inputAssemblyInfo);
+	pipelineInfo.setPViewportState(&viewportInfo);
+	pipelineInfo.setPRasterizationState(&rasterizationInfo);
+	pipelineInfo.setPMultisampleState(&multisampleInfo);
+	pipelineInfo.setPDepthStencilState(nullptr);
+	pipelineInfo.setPColorBlendState(&colorBlendInfo);
+	pipelineInfo.setPDynamicState(&dynamicStateInfo);
+	pipelineInfo.setLayout(pipelineLayout);
+	pipelineInfo.setRenderPass(renderPass);
+	pipelineInfo.setSubpass(0);
+	pipelineInfo.setBasePipelineHandle(Pipeline());
+	pipelineInfo.setBasePipelineIndex(-1);
+
+	pipeline = vulkanDevice.createGraphicsPipeline(PipelineCache(), pipelineInfo);
+}
+
+void Renderer::CreateFramebuffers()
+{
+
 }
 
