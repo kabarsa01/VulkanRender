@@ -104,6 +104,8 @@ private:
 	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
 	VULKAN_HPP_NAMESPACE::Pipeline pipeline;
 	std::vector<VULKAN_HPP_NAMESPACE::Framebuffer> swapChainFramebuffers;
+	VULKAN_HPP_NAMESPACE::CommandPool commandPool;
+	std::vector<VULKAN_HPP_NAMESPACE::CommandBuffer> commandBuffers;
 
 	std::vector<const char*> requiredExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -131,6 +133,8 @@ private:
 	void CreateRenderPass();
 	void CreateGraphicsPipeline();
 	void CreateFramebuffers();
+	void CreateCommandPool();
+	void CreateCommandBuffers();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
 

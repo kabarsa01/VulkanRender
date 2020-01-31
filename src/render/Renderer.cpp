@@ -11,6 +11,7 @@
 #include <algorithm>
 #include "shader/Shader.h"
 #include "shader/ShaderModuleWrapper.h"
+#include <array>
 
 
 using namespace VULKAN_HPP_NAMESPACE;
@@ -82,6 +83,11 @@ void Renderer::RenderFrame()
 
 void Renderer::Cleanup()
 {
+	vulkanDevice.destroyCommandPool(commandPool);
+	for (Framebuffer framebuffer : swapChainFramebuffers)
+	{
+		vulkanDevice.destroyFramebuffer(framebuffer);
+	}
 	vulkanDevice.destroyPipeline(pipeline);
 	vulkanDevice.destroyPipelineLayout(pipelineLayout);
 	vulkanDevice.destroyRenderPass(renderPass);
@@ -522,6 +528,68 @@ void Renderer::CreateGraphicsPipeline()
 
 void Renderer::CreateFramebuffers()
 {
+	swapChainFramebuffers.clear();
 
+	for (int index = 0; index < swapChainImageViews.size(); index++)
+	{
+		ImageView attachments[] = { swapChainImageViews[index] };
+
+		FramebufferCreateInfo framebufferInfo;
+		framebufferInfo.setRenderPass(renderPass);
+		framebufferInfo.setAttachmentCount(1);
+		framebufferInfo.setPAttachments(attachments);
+		framebufferInfo.setWidth(swapChainExtent.width);
+		framebufferInfo.setHeight(swapChainExtent.height);
+		framebufferInfo.setLayers(1);
+
+		swapChainFramebuffers.push_back(vulkanDevice.createFramebuffer(framebufferInfo));
+	}
+}
+
+void Renderer::CreateCommandPool()
+{
+	CommandPoolCreateInfo commandPoolInfo;
+	commandPoolInfo.setQueueFamilyIndex(FindQueueFamilies(vulkanPhysicalDevice).graphicsFamily.value());
+//	commandPoolInfo.setFlags(0);
+
+	commandPool = vulkanDevice.createCommandPool(commandPoolInfo);
+
+}
+
+void Renderer::CreateCommandBuffers()
+{
+	commandBuffers.resize(swapChainFramebuffers.size());
+
+	CommandBufferAllocateInfo allocInfo;
+	allocInfo.setCommandPool(commandPool);
+	allocInfo.setLevel(CommandBufferLevel::ePrimary);
+	allocInfo.setCommandBufferCount((uint32_t)commandBuffers.size());
+
+	commandBuffers = vulkanDevice.allocateCommandBuffers(allocInfo);
+
+	for (int index = 0; index < commandBuffers.size(); index++)
+	{
+		CommandBufferBeginInfo beginInfo;
+//		beginInfo.setFlags(0);
+		beginInfo.setPInheritanceInfo(nullptr);
+
+		commandBuffers[index].begin(beginInfo);
+
+		ClearValue clearValue;
+		clearValue.setColor(ClearColorValue( std::array<float, 4>( { 0.0f, 0.0f, 0.0f, 1.0f } )));
+
+		RenderPassBeginInfo passBeginInfo;
+		passBeginInfo.setRenderPass(renderPass);
+		passBeginInfo.setFramebuffer(swapChainFramebuffers[index]);
+		passBeginInfo.setRenderArea(Rect2D( Offset2D(0,0), swapChainExtent ));
+		passBeginInfo.setClearValueCount(1);
+		passBeginInfo.setPClearValues(&clearValue);
+
+		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
+		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
+		commandBuffers[index].draw(3, 1, 0, 0);
+		commandBuffers[index].endRenderPass();
+		commandBuffers[index].end();
+	}
 }
 
