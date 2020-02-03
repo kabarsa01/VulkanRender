@@ -107,6 +107,9 @@ private:
 	VULKAN_HPP_NAMESPACE::CommandPool commandPool;
 	std::vector<VULKAN_HPP_NAMESPACE::CommandBuffer> commandBuffers;
 
+	VULKAN_HPP_NAMESPACE::Semaphore imageAvailableSemaphore;
+	VULKAN_HPP_NAMESPACE::Semaphore renderFinishedSemaphore;
+
 	std::vector<const char*> requiredExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
@@ -135,6 +138,7 @@ private:
 	void CreateFramebuffers();
 	void CreateCommandPool();
 	void CreateCommandBuffers();
+	void CreateSemaphores();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
 

@@ -61,7 +61,7 @@ void Engine::MainLoop()
 		TimeManager::GetInstance()->UpdateTime();
 
 		SceneInstance->PerFrameUpdate();
-		//	RendererInstance->RenderFrame();
+		RendererInstance->RenderFrame();
 	}
 }
 

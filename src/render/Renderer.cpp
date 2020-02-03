@@ -74,15 +74,49 @@ void Renderer::Init()
 	CreateRenderPass();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
+	CreateCommandPool();
+	CreateCommandBuffers();
+	CreateSemaphores();
 }
 
 void Renderer::RenderFrame()
 {
+	uint32_t imageIndex;
+	imageIndex = vulkanDevice.acquireNextImageKHR(vulkanSwapChain, UINT64_MAX, imageAvailableSemaphore, Fence()).value;
 
+	SubmitInfo submitInfo;
+	Semaphore waitSemaphores[] = {imageAvailableSemaphore};
+	PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };
+	submitInfo.setWaitSemaphoreCount(1);
+	submitInfo.setPWaitSemaphores(waitSemaphores);
+	submitInfo.setPWaitDstStageMask(waitStages);
+	submitInfo.setCommandBufferCount(1);
+	submitInfo.setPCommandBuffers(&commandBuffers[imageIndex]);
+
+	Semaphore signalSemaphores[] = { renderFinishedSemaphore };
+	submitInfo.setSignalSemaphoreCount(1);
+	submitInfo.setPSignalSemaphores(signalSemaphores);
+
+	ArrayProxy<const SubmitInfo> submitInfoArray(1, &submitInfo);
+	graphicsQueue.submit(submitInfoArray, Fence());
+
+	SwapchainKHR swapChains[] = { vulkanSwapChain };
+	PresentInfoKHR presentInfo;
+	presentInfo.setWaitSemaphoreCount(1);
+	presentInfo.setPWaitSemaphores(signalSemaphores);
+	presentInfo.setSwapchainCount(1);
+	presentInfo.setPSwapchains(swapChains);
+	presentInfo.setPImageIndices(&imageIndex);
+	presentInfo.setPResults(nullptr);
+
+	presentQueue.presentKHR(presentInfo);
 }
 
 void Renderer::Cleanup()
 {
+	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
+	vulkanDevice.destroySemaphore(renderFinishedSemaphore);
+
 	vulkanDevice.destroyCommandPool(commandPool);
 	for (Framebuffer framebuffer : swapChainFramebuffers)
 	{
@@ -407,11 +441,21 @@ void Renderer::CreateRenderPass()
 	subpassDesc.setColorAttachmentCount(1);
 	subpassDesc.setPColorAttachments(&colorAttachmentRef); // layout(location = |index| ) out vec4 outColor references attachmant by index
 
+	SubpassDependency subpassDependency;
+	subpassDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
+	subpassDependency.setDstSubpass(0);
+	subpassDependency.setSrcStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
+	subpassDependency.setSrcAccessMask(AccessFlags());
+	subpassDependency.setDstStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
+	subpassDependency.setDstAccessMask(AccessFlagBits::eColorAttachmentRead | AccessFlagBits::eColorAttachmentWrite);
+
 	RenderPassCreateInfo renderPassInfo;
 	renderPassInfo.setAttachmentCount(1);
 	renderPassInfo.setPAttachments(&colorAttachment);
 	renderPassInfo.setSubpassCount(1);
 	renderPassInfo.setPSubpasses(&subpassDesc);
+	renderPassInfo.setDependencyCount(1);
+	renderPassInfo.setPDependencies(&subpassDependency);
 
 	renderPass = vulkanDevice.createRenderPass(renderPassInfo);
 }
@@ -550,7 +594,7 @@ void Renderer::CreateCommandPool()
 {
 	CommandPoolCreateInfo commandPoolInfo;
 	commandPoolInfo.setQueueFamilyIndex(FindQueueFamilies(vulkanPhysicalDevice).graphicsFamily.value());
-//	commandPoolInfo.setFlags(0);
+	commandPoolInfo.setFlags(CommandPoolCreateFlags());
 
 	commandPool = vulkanDevice.createCommandPool(commandPoolInfo);
 
@@ -570,7 +614,7 @@ void Renderer::CreateCommandBuffers()
 	for (int index = 0; index < commandBuffers.size(); index++)
 	{
 		CommandBufferBeginInfo beginInfo;
-//		beginInfo.setFlags(0);
+		beginInfo.setFlags(CommandBufferUsageFlags());
 		beginInfo.setPInheritanceInfo(nullptr);
 
 		commandBuffers[index].begin(beginInfo);
@@ -591,5 +635,13 @@ void Renderer::CreateCommandBuffers()
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
 	}
+}
+
+void Renderer::CreateSemaphores()
+{
+	SemaphoreCreateInfo semaphoreInfo;
+
+	imageAvailableSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
+	renderFinishedSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
 }
 
