@@ -324,7 +324,7 @@ void Renderer::CreateLogicalDevice()
 		DeviceQueueCreateInfo queueCreateInfo;
 		queueCreateInfo.setQueueFamilyIndex(queueFamiltIndex);
 		queueCreateInfo.setQueueCount(1); // magic 1
-		float priority;
+		float priority = 0.0f;
 		queueCreateInfo.setPQueuePriorities(&priority);
 
 		queueCreateInfoVector.push_back(queueCreateInfo);
