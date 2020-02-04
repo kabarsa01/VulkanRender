@@ -653,7 +653,7 @@ void Renderer::CreateCommandBuffers()
 	for (int index = 0; index < commandBuffers.size(); index++)
 	{
 		CommandBufferBeginInfo beginInfo;
-		beginInfo.setFlags(CommandBufferUsageFlags());
+		beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
 		beginInfo.setPInheritanceInfo(nullptr);
 
 		commandBuffers[index].begin(beginInfo);
