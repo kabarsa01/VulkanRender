@@ -88,6 +88,16 @@ private:
 	int width = 1280;
 	int height = 720;
 
+	const std::vector<const char*> validationLayers = {
+		"VK_LAYER_KHRONOS_validation"
+	};
+
+#ifdef NDEBUG
+	const bool enableValidationLayers = false;
+#else
+	const bool enableValidationLayers = true;
+#endif
+
 	VULKAN_HPP_NAMESPACE::Instance vulkanInstance;
 	VULKAN_HPP_NAMESPACE::SurfaceKHR vulkanSurface;
 	VULKAN_HPP_NAMESPACE::PhysicalDevice vulkanPhysicalDevice;
@@ -117,6 +127,10 @@ private:
 	//std::vector<RenderPassPtr> RenderPasses;
 	//std::map<HashString, unsigned int> RenderPassMap;
 	//==================== METHODS ===============================
+
+	bool CheckValidationLayerSupport();
+
+	//------------------------------------------------------------
 
 	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices);
 	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);

@@ -33,6 +33,10 @@ void Renderer::OnInitialize()
 
 void Renderer::Init()
 {
+	if (enableValidationLayers && !CheckValidationLayerSupport()) {
+		throw std::runtime_error("validation layers requested, but not available!");
+	}
+
 	ApplicationInfo applicationInfo(
 		"SimpleVulkanRenderer",
 		version,
@@ -48,8 +52,15 @@ void Renderer::Init()
 	instanceCreateInfo
 		.setPApplicationInfo(&applicationInfo)
 		.setEnabledExtensionCount(glfwInstanceExtensionsCount)
-		.setPpEnabledExtensionNames(glfwExtensions)
-		.setEnabledLayerCount(0);
+		.setPpEnabledExtensionNames(glfwExtensions);
+
+	if (enableValidationLayers) {
+		instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(validationLayers.size()));
+		instanceCreateInfo.setPpEnabledLayerNames(validationLayers.data());
+	}
+	else {
+		instanceCreateInfo.setEnabledLayerCount(0);
+	}
 
 	//ResultValueType<VULKAN_HPP_NAMESPACE::Instance>::type Result = createInstance(InstCreateInfo, );
 	vulkanInstance = createInstance(instanceCreateInfo);
@@ -86,10 +97,10 @@ void Renderer::RenderFrame()
 
 	SubmitInfo submitInfo;
 	Semaphore waitSemaphores[] = {imageAvailableSemaphore};
-	PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };
+	PipelineStageFlags waitStages = PipelineStageFlagBits::eColorAttachmentOutput;//[] = { PipelineStageFlagBits::eColorAttachmentOutput };
 	submitInfo.setWaitSemaphoreCount(1);
 	submitInfo.setPWaitSemaphores(waitSemaphores);
-	submitInfo.setPWaitDstStageMask(waitStages);
+	submitInfo.setPWaitDstStageMask(&waitStages);
 	submitInfo.setCommandBufferCount(1);
 	submitInfo.setPCommandBuffers(&commandBuffers[imageIndex]);
 
@@ -110,6 +121,7 @@ void Renderer::RenderFrame()
 	presentInfo.setPResults(nullptr);
 
 	presentQueue.presentKHR(presentInfo);
+	presentQueue.waitIdle();
 }
 
 void Renderer::Cleanup()
@@ -161,6 +173,33 @@ VULKAN_HPP_NAMESPACE::Device Renderer::GetDevice()
 VULKAN_HPP_NAMESPACE::SwapchainKHR Renderer::GetSwapChain()
 {
 	return vulkanSwapChain;
+}
+
+bool Renderer::CheckValidationLayerSupport()
+{
+	std::vector<LayerProperties> layerProps = enumerateInstanceLayerProperties();
+
+	for (std::string layer : validationLayers)
+	{
+		bool layerFound = false;
+
+		for (LayerProperties prop : layerProps)
+		{
+			std::string availableLayerName(prop.layerName);
+			if (availableLayerName == layer)
+			{
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices)
