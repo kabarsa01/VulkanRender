@@ -54,15 +54,18 @@ void Renderer::Init()
 		.setEnabledExtensionCount(glfwInstanceExtensionsCount)
 		.setPpEnabledExtensionNames(glfwExtensions);
 
-	if (enableValidationLayers) {
+	if (enableValidationLayers)
+	{
 		instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(validationLayers.size()));
 		instanceCreateInfo.setPpEnabledLayerNames(validationLayers.data());
 	}
-	else {
+	else
+	{
 		instanceCreateInfo.setEnabledLayerCount(0);
 	}
 
 	//ResultValueType<VULKAN_HPP_NAMESPACE::Instance>::type Result = createInstance(InstCreateInfo, );
+
 	vulkanInstance = createInstance(instanceCreateInfo);
 	Win32SurfaceCreateInfoKHR surfaceCreateInfo;
 	surfaceCreateInfo.setHwnd(glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow()));
