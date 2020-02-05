@@ -124,6 +124,11 @@ void Renderer::RenderFrame()
 	presentQueue.waitIdle();
 }
 
+void Renderer::WaitForDevice()
+{
+	vulkanDevice.waitIdle();
+}
+
 void Renderer::Cleanup()
 {
 	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
@@ -528,7 +533,7 @@ void Renderer::CreateGraphicsPipeline()
 	inputAssemblyInfo.setTopology(PrimitiveTopology::eTriangleList);
 	inputAssemblyInfo.setPrimitiveRestartEnable(VK_FALSE);
 
-	Viewport viewport;
+//	Viewport viewport;
 	viewport.setX(0.0f);
 	viewport.setY(0.0f);
 	viewport.setWidth((float)swapChainExtent.width);
@@ -668,6 +673,7 @@ void Renderer::CreateCommandBuffers()
 		passBeginInfo.setClearValueCount(1);
 		passBeginInfo.setPClearValues(&clearValue);
 
+		commandBuffers[index].setViewport(0, 1, &viewport);
 		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
 		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
 		commandBuffers[index].draw(3, 1, 0, 0);

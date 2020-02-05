@@ -72,6 +72,7 @@ public:
 
 	void Init();
 	void RenderFrame();
+	void WaitForDevice();
 	void Cleanup();
 
 	void SetResolution(int InWidth, int InHeight);
@@ -110,6 +111,7 @@ private:
 	VULKAN_HPP_NAMESPACE::Queue graphicsQueue;
 	VULKAN_HPP_NAMESPACE::Queue computeQueue;
 	VULKAN_HPP_NAMESPACE::Queue presentQueue;
+	VULKAN_HPP_NAMESPACE::Viewport viewport;
 	VULKAN_HPP_NAMESPACE::RenderPass renderPass;
 	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
 	VULKAN_HPP_NAMESPACE::Pipeline pipeline;

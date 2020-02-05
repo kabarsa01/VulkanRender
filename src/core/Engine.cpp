@@ -63,6 +63,8 @@ void Engine::MainLoop()
 		SceneInstance->PerFrameUpdate();
 		RendererInstance->RenderFrame();
 	}
+
+	RendererInstance->WaitForDevice();
 }
 
 void Engine::Cleanup()
