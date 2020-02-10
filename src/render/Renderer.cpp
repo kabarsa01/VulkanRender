@@ -134,19 +134,13 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
+	CleanupSwapChain();
+
 	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
 	vulkanDevice.destroySemaphore(renderFinishedSemaphore);
 
 	vulkanDevice.destroyCommandPool(commandPool);
-	for (Framebuffer framebuffer : swapChainFramebuffers)
-	{
-		vulkanDevice.destroyFramebuffer(framebuffer);
-	}
-	vulkanDevice.destroyPipeline(pipeline);
-	vulkanDevice.destroyPipelineLayout(pipelineLayout);
-	vulkanDevice.destroyRenderPass(renderPass);
-	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
-	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
+	
 	vulkanDevice.destroy();
 	vulkanInstance.destroySurfaceKHR(vulkanSurface);
 	vulkanInstance.destroy();
@@ -448,6 +442,36 @@ void Renderer::CreateSwapChain()
 
 	vulkanSwapChain = vulkanDevice.createSwapchainKHR(createInfo);
 	swapChainImages = vulkanDevice.getSwapchainImagesKHR(vulkanSwapChain);
+}
+
+void Renderer::CleanupSwapChain()
+{
+	for (Framebuffer framebuffer : swapChainFramebuffers)
+	{
+		vulkanDevice.destroyFramebuffer(framebuffer);
+	}
+	vulkanDevice.freeCommandBuffers(commandPool, commandBuffers);
+	vulkanDevice.destroyPipeline(pipeline);
+	vulkanDevice.destroyPipelineLayout(pipelineLayout);
+	vulkanDevice.destroyRenderPass(renderPass);
+
+	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
+
+	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
+}
+
+void Renderer::RecreateSwapChain()
+{
+	vulkanDevice.waitIdle();
+
+	CleanupSwapChain();
+
+	CreateSwapChain();
+	CreateImageViews();
+	CreateRenderPass();
+	CreateGraphicsPipeline();
+	CreateFramebuffers();
+	CreateCommandBuffers();
 }
 
 void Renderer::CreateImageViews()

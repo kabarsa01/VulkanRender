@@ -148,6 +148,8 @@ private:
 	VULKAN_HPP_NAMESPACE::PresentModeKHR ChooseSwapChainPresentMode(const std::vector<VULKAN_HPP_NAMESPACE::PresentModeKHR>& inPresentModes);
 	VULKAN_HPP_NAMESPACE::Extent2D ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities);
 	void CreateSwapChain();
+	void CleanupSwapChain();
+	void RecreateSwapChain();
 	void CreateImageViews();
 	void CreateRenderPass();
 	void CreateGraphicsPipeline();
