@@ -96,7 +96,19 @@ void Renderer::Init()
 void Renderer::RenderFrame()
 {
 	uint32_t imageIndex;
-	imageIndex = vulkanDevice.acquireNextImageKHR(vulkanSwapChain, UINT64_MAX, imageAvailableSemaphore, Fence()).value;
+	ResultValue<uint32_t> imageIndexResult = vulkanDevice.acquireNextImageKHR(vulkanSwapChain, UINT64_MAX, imageAvailableSemaphore, Fence());
+
+	if (imageIndexResult.result == Result::eErrorOutOfDateKHR || imageIndexResult.result == Result::eErrorIncompatibleDisplayKHR)
+	{
+		RecreateSwapChain();
+		return;
+	}
+	else if (imageIndexResult.result != Result::eSuccess && imageIndexResult.result != Result::eSuboptimalKHR)
+	{
+		throw std::runtime_error("failed to acquire swap chain image");
+	}
+
+	imageIndex = imageIndexResult.value;
 
 	SubmitInfo submitInfo;
 	Semaphore waitSemaphores[] = {imageAvailableSemaphore};
@@ -123,7 +135,21 @@ void Renderer::RenderFrame()
 	presentInfo.setPImageIndices(&imageIndex);
 	presentInfo.setPResults(nullptr);
 
-	presentQueue.presentKHR(presentInfo);
+	Result presentResult = Result::eSuccess;
+	try
+	{
+		presentResult = presentQueue.presentKHR(presentInfo);
+	}
+	catch (std::exception)
+	{
+	}
+
+	if (presentResult == Result::eErrorOutOfDateKHR || presentResult == Result::eSuboptimalKHR || framebufferResized)
+	{
+		framebufferResized = false;
+		RecreateSwapChain();
+	}
+
 	presentQueue.waitIdle();
 }
 
@@ -150,6 +176,8 @@ void Renderer::SetResolution(int inWidth, int inHeight)
 {
 	width = inWidth;
 	height = inHeight;
+
+	framebufferResized = true;
 }
 
 int Renderer::GetWidth() const
@@ -383,11 +411,14 @@ VULKAN_HPP_NAMESPACE::Extent2D Renderer::ChooseSwapChainExtent(const VULKAN_HPP_
 	}
 	else
 	{
-		Extent2D extent;
+		int windowWidth, windowHeight;
+		GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
+		glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 
+		Extent2D extent;
 		
-		extent.setWidth( std::clamp<int>( width, inCapabilities.minImageExtent.width, inCapabilities.maxImageExtent.width ) );
-		extent.setHeight( std::clamp<int>( height, inCapabilities.minImageExtent.height, inCapabilities.maxImageExtent.height ) );
+		extent.setWidth( std::clamp<int>( windowWidth/*width*/, inCapabilities.minImageExtent.width, inCapabilities.maxImageExtent.width ) );
+		extent.setHeight( std::clamp<int>( windowHeight/*height*/, inCapabilities.minImageExtent.height, inCapabilities.maxImageExtent.height ) );
 
 		return extent;
 	}

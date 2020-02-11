@@ -1,16 +1,16 @@
 #include "core/Engine.h"
 #include "core/TimeManager.h"
 
-Engine* Engine::StaticInstance = new Engine();
+Engine* Engine::staticInstance = new Engine();
 
 Engine * Engine::GetInstance()
 {
-	return StaticInstance;
+	return staticInstance;
 }
 
 ScenePtr Engine::GetSceneInstance()
 {
-	return StaticInstance->GetScene();
+	return staticInstance->GetScene();
 }
 
 void Engine::Run()
@@ -22,7 +22,7 @@ void Engine::Run()
 
 RendererPtr Engine::GetRendererInstance()
 {
-	return StaticInstance->GetRenderer();
+	return staticInstance->GetRenderer();
 }
 
 ScenePtr Engine::GetScene()
@@ -37,7 +37,7 @@ RendererPtr Engine::GetRenderer()
 
 GLFWwindow* Engine::GetGlfwWindow()
 {
-	return Window;
+	return window;
 }
 
 void Engine::Init()
@@ -54,7 +54,7 @@ void Engine::Init()
 
 void Engine::MainLoop()
 {
-	while (!glfwWindowShouldClose(Window))
+	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
@@ -71,7 +71,7 @@ void Engine::Cleanup()
 {
 	RendererInstance->Cleanup();
 	// glfw cleanup
-	glfwDestroyWindow(Window);
+	glfwDestroyWindow(window);
 	glfwTerminate();
 }
 
@@ -79,9 +79,16 @@ void Engine::InitWindow()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	Window = glfwCreateWindow(WindowWidth, WindowHeight, "Vulkan renderer", nullptr, nullptr);
+	window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan renderer", nullptr, nullptr);
+	glfwSetWindowUserPointer(window, this);
+	glfwSetFramebufferSizeCallback(window, Engine::FramebufferResizeCallback);
+}
+
+void Engine::FramebufferResizeCallback(GLFWwindow* inWindow, int inWidth, int inHeight)
+{
+	GetRendererInstance()->SetResolution(inWidth, inHeight);
 }
 
 Engine::Engine()

@@ -28,12 +28,13 @@ protected:
 	void Cleanup();
 
 	void InitWindow();
+	static void FramebufferResizeCallback(GLFWwindow* inWindow, int inWidth, int inHeight);
 private:
-	static Engine* StaticInstance;
+	static Engine* staticInstance;
 
-	GLFWwindow* Window;
-	int WindowWidth = 1280;
-	int WindowHeight = 720;
+	GLFWwindow* window;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 
 	Engine();
 	virtual ~Engine();

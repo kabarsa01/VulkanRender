@@ -88,6 +88,7 @@ private:
 	uint32_t version;
 	int width = 1280;
 	int height = 720;
+	bool framebufferResized = false;
 
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
