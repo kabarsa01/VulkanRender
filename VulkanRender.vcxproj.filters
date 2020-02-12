@@ -28,6 +28,9 @@
     <Filter Include="Source Files\render\shader">
       <UniqueIdentifier>{4cf8e07a-460d-4341-9cbd-e7a3ed99d736}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\data">
+      <UniqueIdentifier>{ccfb60d3-2519-469e-bf17-a4ed871c02bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -69,6 +72,15 @@
     <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp">
       <Filter>Source Files\render\shader</Filter>
     </ClCompile>
+    <ClCompile Include="src\data\MeshData.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\DataManager.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\Resource.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -106,6 +118,15 @@
     </ClInclude>
     <ClInclude Include="src\render\shader\ShaderModuleWrapper.h">
       <Filter>Source Files\render\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\MeshData.h">
+      <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\DataManager.h">
+      <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\Resource.h">
+      <Filter>Source Files\data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

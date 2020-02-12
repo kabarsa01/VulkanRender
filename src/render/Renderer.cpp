@@ -112,10 +112,10 @@ void Renderer::RenderFrame()
 
 	SubmitInfo submitInfo;
 	Semaphore waitSemaphores[] = {imageAvailableSemaphore};
-	PipelineStageFlags waitStages = PipelineStageFlagBits::eColorAttachmentOutput;//[] = { PipelineStageFlagBits::eColorAttachmentOutput };
+	PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };
 	submitInfo.setWaitSemaphoreCount(1);
 	submitInfo.setPWaitSemaphores(waitSemaphores);
-	submitInfo.setPWaitDstStageMask(&waitStages);
+	submitInfo.setPWaitDstStageMask(waitStages);
 	submitInfo.setCommandBufferCount(1);
 	submitInfo.setPCommandBuffers(&commandBuffers[imageIndex]);
 
