@@ -6,6 +6,7 @@
 #include <core/ObjectBase.h>
 #include "fwd.hpp"
 #include <set>
+#include "data/MeshData.h"
 
 // pre-build batch to compile all our shaders
 //
@@ -84,6 +85,8 @@ public:
 	VULKAN_HPP_NAMESPACE::SwapchainKHR GetSwapChain();
 protected:
 private:
+	// TEMP
+	MeshDataPtr meshData;
 	//======================= VARS ===============================
 	uint32_t version;
 	int width = 1280;

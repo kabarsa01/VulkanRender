@@ -585,7 +585,13 @@ void Renderer::CreateGraphicsPipeline()
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
 
+	VertexInputBindingDescription bindingDesc = meshData->GetBindingDescription();
+	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions();
 	PipelineVertexInputStateCreateInfo vertexInputInfo;
+	vertexInputInfo.setVertexBindingDescriptionCount(1);
+	vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);
+	vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>( attributeDesc.size() ));
+	vertexInputInfo.setPVertexAttributeDescriptions(attributeDesc.data());
 
 	PipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
 	inputAssemblyInfo.setTopology(PrimitiveTopology::eTriangleList);
