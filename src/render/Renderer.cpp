@@ -13,12 +13,18 @@
 #include "shader/ShaderModuleWrapper.h"
 #include <array>
 
+const std::vector<Vertex> verticesTest = {
+	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+};
 
 using namespace VULKAN_HPP_NAMESPACE;
 
 Renderer::Renderer()
 {
-
+	meshData = ObjectBase::NewObject<MeshData, std::string>("id_mesh");
+	meshData->vertices = verticesTest;
 }
 
 Renderer::~Renderer()
@@ -89,6 +95,9 @@ void Renderer::Init()
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandPool();
+
+	meshData->CreateBuffer();
+
 	CreateCommandBuffers();
 	CreateSemaphores();
 }
@@ -160,6 +169,8 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
+	meshData->DestroyBuffer();
+
 	CleanupSwapChain();
 
 	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
@@ -203,6 +214,16 @@ VULKAN_HPP_NAMESPACE::Device Renderer::GetDevice()
 VULKAN_HPP_NAMESPACE::SwapchainKHR Renderer::GetSwapChain()
 {
 	return vulkanSwapChain;
+}
+
+VULKAN_HPP_NAMESPACE::CommandPool Renderer::GetCommandPool()
+{
+	return commandPool;
+}
+
+VULKAN_HPP_NAMESPACE::Queue Renderer::GetGraphicsQueue()
+{
+	return graphicsQueue;
 }
 
 bool Renderer::CheckValidationLayerSupport()
@@ -737,10 +758,12 @@ void Renderer::CreateCommandBuffers()
 		passBeginInfo.setClearValueCount(1);
 		passBeginInfo.setPClearValues(&clearValue);
 
+		DeviceSize offset = 0;
 		commandBuffers[index].setViewport(0, 1, &viewport);
 		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
 		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
-		commandBuffers[index].draw(3, 1, 0, 0);
+		commandBuffers[index].bindVertexBuffers(0, 1, & meshData->GetVertexBuffer(), &offset);
+		commandBuffers[index].draw(meshData->GetVertexCount(), 1, 0, 0);
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
 	}

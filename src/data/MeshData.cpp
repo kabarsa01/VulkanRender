@@ -119,32 +119,26 @@ void MeshData::OnDestroy()
 
 void MeshData::CreateBuffer()
 {
-	BufferCreateInfo bufferInfo;
-	bufferInfo.setSharingMode(SharingMode::eConcurrent);
-	bufferInfo.setSize(sizeof(vertices[0]) * vertices.size());
-	bufferInfo.setUsage(BufferUsageFlagBits::eVertexBuffer);
-//	bufferInfo.setFlags(BufferCreateFlagBits::eSparseBinding);
+	MemoryBuffer stagingBuffer;
+	stagingBuffer.SetSize(static_cast<uint32_t>( sizeof(Vertex) * vertices.size() ));
+	stagingBuffer.SetUsage(BufferUsageFlagBits::eTransferSrc);
+	stagingBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+	stagingBuffer.Create();
 
-	Device device = Engine::GetRendererInstance()->GetDevice();
-	vertexBuffer = device.createBuffer(bufferInfo);
+	stagingBuffer.CopyData(vertices.data(), MemoryMapFlags(), 0);
 
-	MemoryRequirements memRequirements = device.getBufferMemoryRequirements(vertexBuffer);
-	MemoryAllocateInfo memoryInfo;
-	memoryInfo.setAllocationSize(memRequirements.size);
-	memoryInfo.setMemoryTypeIndex(FindMemoryType(memRequirements.memoryTypeBits, MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent));
-	vertexBufferMemory = device.allocateMemory(memoryInfo);
-	device.bindBufferMemory(vertexBuffer, vertexBufferMemory, 0);
+	vertexBuffer.SetSize(stagingBuffer.GetSize());
+	vertexBuffer.SetUsage(BufferUsageFlagBits::eVertexBuffer | BufferUsageFlagBits::eTransferDst);
+	vertexBuffer.SetMemProperty(MemoryPropertyFlagBits::eDeviceLocal);
+	vertexBuffer.Create();
 
-	void* data = device.mapMemory(vertexBufferMemory, 0, bufferInfo.size, MemoryMapFlags());
-	memcpy(data, vertices.data(), bufferInfo.size);
-	device.unmapMemory(vertexBufferMemory);
+	MemoryBuffer::CopyBuffer(stagingBuffer, vertexBuffer);
+//	stagingBuffer.Destroy();
 }
 
 void MeshData::DestroyBuffer()
 {
-	Device device = Engine::GetRendererInstance()->GetDevice();
-	device.destroyBuffer(vertexBuffer);
-	device.freeMemory(vertexBufferMemory);
+	vertexBuffer.Destroy();
 }
 
 void MeshData::Draw()
@@ -161,6 +155,21 @@ VULKAN_HPP_NAMESPACE::VertexInputBindingDescription MeshData::GetBindingDescript
 	bindingDescription.setInputRate(VertexInputRate::eVertex);
 
 	return bindingDescription;
+}
+
+VULKAN_HPP_NAMESPACE::Buffer MeshData::GetVertexBuffer()
+{
+	return vertexBuffer.GetBuffer();
+}
+
+uint32_t MeshData::GetSizeBytes()
+{
+	return static_cast<uint32_t>( sizeof(Vertex) * vertices.size() );
+}
+
+uint32_t MeshData::GetVertexCount()
+{
+	return static_cast<uint32_t>( vertices.size() );
 }
 
 MeshDataPtr MeshData::FullscreenQuad()

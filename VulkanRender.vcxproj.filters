@@ -81,6 +81,9 @@
     <ClCompile Include="src\data\Resource.cpp">
       <Filter>Source Files\data</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\MemoryBuffer.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -127,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="src\data\Resource.h">
       <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\MemoryBuffer.h">
+      <Filter>Source Files\render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

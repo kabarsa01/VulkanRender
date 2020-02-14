@@ -232,6 +232,7 @@ exit /b</Command>
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\render\MemoryBuffer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
@@ -249,6 +250,7 @@ exit /b</Command>
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
+    <ClInclude Include="src\render\MemoryBuffer.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
     <ClInclude Include="src\render\shader\Shader.h" />

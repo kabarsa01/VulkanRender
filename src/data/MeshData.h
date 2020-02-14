@@ -8,9 +8,11 @@
 
 #include "data/Resource.h"
 #include "vulkan/vulkan.hpp"
+#include "render/MemoryBuffer.h"
 
 using namespace std;
 using namespace glm;
+using namespace VULKAN_HPP_NAMESPACE;
 
 //packing should probably be considered, maybe in the future someday
 //#pragma pack(push, 1)
@@ -24,7 +26,7 @@ struct Vertex
 	vec3 Tangent;
 	vec3 Bitangent;
 
-	static std::array<VULKAN_HPP_NAMESPACE::VertexInputAttributeDescription, 5> GetAttributeDescriptions();
+	static std::array<VertexInputAttributeDescription, 5> GetAttributeDescriptions();
 };
 
 
@@ -48,12 +50,16 @@ public:
 	void DestroyBuffer();
 	void Draw();
 
-	VULKAN_HPP_NAMESPACE::VertexInputBindingDescription GetBindingDescription();
+	VertexInputBindingDescription GetBindingDescription();
+	Buffer GetVertexBuffer();
+	uint32_t GetSizeBytes();
+	uint32_t GetVertexCount();
 	// fullscreen quad instance to be used for screen space stuff
 	static std::shared_ptr<MeshData> FullscreenQuad();
 private:
-	VULKAN_HPP_NAMESPACE::Buffer vertexBuffer;
-	VULKAN_HPP_NAMESPACE::DeviceMemory vertexBufferMemory;
+	MemoryBuffer vertexBuffer;
+	//VULKAN_HPP_NAMESPACE::Buffer vertexBuffer;
+	//VULKAN_HPP_NAMESPACE::DeviceMemory vertexBufferMemory;
 
 	MeshData() : Resource(HashString::NONE()) {}
 	uint32_t FindMemoryType(uint32_t inTypeFilter, VULKAN_HPP_NAMESPACE::MemoryPropertyFlags inPropFlags);

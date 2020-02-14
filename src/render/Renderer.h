@@ -83,6 +83,8 @@ public:
 	VULKAN_HPP_NAMESPACE::PhysicalDevice GetPhysicalDevice();
 	VULKAN_HPP_NAMESPACE::Device GetDevice();
 	VULKAN_HPP_NAMESPACE::SwapchainKHR GetSwapChain();
+	VULKAN_HPP_NAMESPACE::CommandPool GetCommandPool();
+	VULKAN_HPP_NAMESPACE::Queue GetGraphicsQueue();
 protected:
 private:
 	// TEMP
