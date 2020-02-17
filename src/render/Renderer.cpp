@@ -19,12 +19,24 @@ const std::vector<Vertex> verticesTest = {
 	{{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
 };
 
+const std::vector<Vertex> verticesToIndex = {
+	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}}
+};
+
+const std::vector<uint32_t> indices = {
+	0, 1, 2, 2, 3, 0
+};
+
 using namespace VULKAN_HPP_NAMESPACE;
 
 Renderer::Renderer()
 {
 	meshData = ObjectBase::NewObject<MeshData, std::string>("id_mesh");
-	meshData->vertices = verticesTest;
+	meshData->vertices = verticesToIndex;
+	meshData->indices = indices;
 }
 
 Renderer::~Renderer()
@@ -763,7 +775,8 @@ void Renderer::CreateCommandBuffers()
 		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
 		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
 		commandBuffers[index].bindVertexBuffers(0, 1, & meshData->GetVertexBuffer(), &offset);
-		commandBuffers[index].draw(meshData->GetVertexCount(), 1, 0, 0);
+		commandBuffers[index].bindIndexBuffer(meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+		commandBuffers[index].drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
 	}

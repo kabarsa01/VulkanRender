@@ -119,26 +119,14 @@ void MeshData::OnDestroy()
 
 void MeshData::CreateBuffer()
 {
-	MemoryBuffer stagingBuffer;
-	stagingBuffer.SetSize(static_cast<uint32_t>( sizeof(Vertex) * vertices.size() ));
-	stagingBuffer.SetUsage(BufferUsageFlagBits::eTransferSrc);
-	stagingBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-	stagingBuffer.Create();
-
-	stagingBuffer.CopyData(vertices.data(), MemoryMapFlags(), 0);
-
-	vertexBuffer.SetSize(stagingBuffer.GetSize());
-	vertexBuffer.SetUsage(BufferUsageFlagBits::eVertexBuffer | BufferUsageFlagBits::eTransferDst);
-	vertexBuffer.SetMemProperty(MemoryPropertyFlagBits::eDeviceLocal);
-	vertexBuffer.Create();
-
-	MemoryBuffer::CopyBuffer(stagingBuffer, vertexBuffer);
-//	stagingBuffer.Destroy();
+	SetupBuffer<Vertex>(vertexBuffer, vertices, BufferUsageFlagBits::eVertexBuffer);
+	SetupBuffer<uint32_t>(indexBuffer, indices, BufferUsageFlagBits::eIndexBuffer);
 }
 
 void MeshData::DestroyBuffer()
 {
 	vertexBuffer.Destroy();
+	indexBuffer.Destroy();
 }
 
 void MeshData::Draw()
@@ -162,7 +150,7 @@ VULKAN_HPP_NAMESPACE::Buffer MeshData::GetVertexBuffer()
 	return vertexBuffer.GetBuffer();
 }
 
-uint32_t MeshData::GetSizeBytes()
+uint32_t MeshData::GetVertexBufferSizeBytes()
 {
 	return static_cast<uint32_t>( sizeof(Vertex) * vertices.size() );
 }
@@ -170,6 +158,21 @@ uint32_t MeshData::GetSizeBytes()
 uint32_t MeshData::GetVertexCount()
 {
 	return static_cast<uint32_t>( vertices.size() );
+}
+
+VULKAN_HPP_NAMESPACE::Buffer MeshData::GetIndexBuffer()
+{
+	return indexBuffer.GetBuffer();
+}
+
+uint32_t MeshData::GetIndexBufferSizeBytes()
+{
+	return static_cast<uint32_t>(sizeof(uint32_t) * indices.size());
+}
+
+uint32_t MeshData::GetIndexCount()
+{
+	return static_cast<uint32_t>(indices.size());
 }
 
 MeshDataPtr MeshData::FullscreenQuad()
