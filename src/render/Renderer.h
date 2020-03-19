@@ -119,6 +119,7 @@ private:
 	VULKAN_HPP_NAMESPACE::Queue presentQueue;
 	VULKAN_HPP_NAMESPACE::Viewport viewport;
 	VULKAN_HPP_NAMESPACE::RenderPass renderPass;
+	VULKAN_HPP_NAMESPACE::DescriptorSetLayout descriptorSetLayout;
 	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
 	VULKAN_HPP_NAMESPACE::Pipeline pipeline;
 	std::vector<VULKAN_HPP_NAMESPACE::Framebuffer> swapChainFramebuffers;
@@ -158,6 +159,7 @@ private:
 	void RecreateSwapChain();
 	void CreateImageViews();
 	void CreateRenderPass();
+	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline();
 	void CreateFramebuffers();
 	void CreateCommandPool();

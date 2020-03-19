@@ -184,6 +184,7 @@ void Renderer::Cleanup()
 	meshData->DestroyBuffer();
 
 	CleanupSwapChain();
+	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
 
 	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
 	vulkanDevice.destroySemaphore(renderFinishedSemaphore);
@@ -595,6 +596,22 @@ void Renderer::CreateRenderPass()
 	renderPass = vulkanDevice.createRenderPass(renderPassInfo);
 }
 
+void Renderer::CreateDescriptorSetLayout()
+{
+	DescriptorSetLayoutBinding descLayoutBinding;
+	descLayoutBinding.setBinding(0);
+	descLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
+	descLayoutBinding.setDescriptorCount(1);
+	descLayoutBinding.setStageFlags(ShaderStageFlagBits::eVertex);
+	descLayoutBinding.setPImmutableSamplers(nullptr);
+
+	DescriptorSetLayoutCreateInfo descSetLayoutInfo;
+	descSetLayoutInfo.setBindingCount(1);
+	descSetLayoutInfo.setPBindings(&descLayoutBinding);
+
+	descriptorSetLayout = vulkanDevice.createDescriptorSetLayout(descSetLayoutInfo);
+}
+
 void Renderer::CreateGraphicsPipeline()
 {
 	Shader vertShader;
@@ -684,8 +701,8 @@ void Renderer::CreateGraphicsPipeline()
 	dynamicStateInfo.setPDynamicStates(dynamicStates.data());
 
 	PipelineLayoutCreateInfo layoutInfo;
-	layoutInfo.setSetLayoutCount(0);
-	layoutInfo.setPSetLayouts(nullptr);
+	layoutInfo.setSetLayoutCount(1);
+	layoutInfo.setPSetLayouts(&descriptorSetLayout);
 	layoutInfo.setPushConstantRangeCount(0);
 	layoutInfo.setPPushConstantRanges(nullptr);
 
