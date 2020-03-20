@@ -181,6 +181,7 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
+//	uniformBuffer.Destroy();
 	meshData->DestroyBuffer();
 
 	CleanupSwapChain();
@@ -805,5 +806,13 @@ void Renderer::CreateSemaphores()
 
 	imageAvailableSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
 	renderFinishedSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
+}
+
+void Renderer::CreateUniformBuffers()
+{
+	uniformBuffer.SetSize(sizeof(UniformBufferObject));
+	uniformBuffer.SetUsage(BufferUsageFlagBits::eUniformBuffer);
+	uniformBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+	uniformBuffer.Create();
 }
 

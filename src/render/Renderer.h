@@ -8,6 +8,12 @@
 #include <set>
 #include "data/MeshData.h"
 
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 // pre-build batch to compile all our shaders
 //
 //call :treeProcess
@@ -89,6 +95,7 @@ protected:
 private:
 	// TEMP
 	MeshDataPtr meshData;
+	MemoryBuffer uniformBuffer;
 	//======================= VARS ===============================
 	uint32_t version;
 	int width = 1280;
@@ -165,6 +172,7 @@ private:
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSemaphores();
+	void CreateUniformBuffers();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
 };
 
