@@ -31,6 +31,12 @@
     <Filter Include="Source Files\data">
       <UniqueIdentifier>{ccfb60d3-2519-469e-bf17-a4ed871c02bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\scene\mesh">
+      <UniqueIdentifier>{b1f6becd-a816-4762-adcc-b92c29611640}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\scene\camera">
+      <UniqueIdentifier>{889fe3d3-25f4-4cad-b790-a54f702ab189}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -84,6 +90,18 @@
     <ClCompile Include="src\render\MemoryBuffer.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\mesh\MeshComponent.cpp">
+      <Filter>Source Files\scene\mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\mesh\MeshObject.cpp">
+      <Filter>Source Files\scene\mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\camera\CameraComponent.cpp">
+      <Filter>Source Files\scene\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\camera\CameraObject.cpp">
+      <Filter>Source Files\scene\camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -133,6 +151,18 @@
     </ClInclude>
     <ClInclude Include="src\render\MemoryBuffer.h">
       <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\mesh\MeshObject.h">
+      <Filter>Source Files\scene\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\mesh\MeshComponent.h">
+      <Filter>Source Files\scene\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\camera\CameraComponent.h">
+      <Filter>Source Files\scene\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\camera\CameraObject.h">
+      <Filter>Source Files\scene\camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

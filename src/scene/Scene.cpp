@@ -3,6 +3,8 @@
 #include "scene/SceneObjectComponent.h"
 
 #include "core/TimeManager.h"
+#include "camera/CameraObject.h"
+#include "mesh/MeshObject.h"
 
 Scene::Scene()
 	: ObjectBase()
@@ -16,6 +18,16 @@ Scene::~Scene()
 void Scene::OnInitialize()
 {
 	ObjectBase::OnInitialize();
+}
+
+void Scene::Init()
+{
+	// hardcoding dirty sample scene 
+	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
+	cameraObj->Transform.SetLocation({ 0.0f, 0.0f, 3.0f });
+	cameraObj->Transform.SetRotation({ 0.0f, 180.0f, 0.0f });
+	MeshObjectPtr meshObj = ObjectBase::NewObject<MeshObject>();
+	meshObj->GetMeshComponent()->SetMeshData(MeshData::FullscreenQuad());
 }
 
 void Scene::RegisterSceneObject(SceneObjectBasePtr InSceneObject)

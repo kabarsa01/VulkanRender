@@ -9,9 +9,9 @@
 #include "data/MeshData.h"
 
 struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
 };
 
 // pre-build batch to compile all our shaders
@@ -132,6 +132,8 @@ private:
 	std::vector<VULKAN_HPP_NAMESPACE::Framebuffer> swapChainFramebuffers;
 	VULKAN_HPP_NAMESPACE::CommandPool commandPool;
 	std::vector<VULKAN_HPP_NAMESPACE::CommandBuffer> commandBuffers;
+	VULKAN_HPP_NAMESPACE::DescriptorPool descriptorPool;
+	std::vector<VULKAN_HPP_NAMESPACE::DescriptorSet> descriptorSets;
 
 	VULKAN_HPP_NAMESPACE::Semaphore imageAvailableSemaphore;
 	VULKAN_HPP_NAMESPACE::Semaphore renderFinishedSemaphore;
@@ -173,7 +175,10 @@ private:
 	void CreateCommandBuffers();
 	void CreateSemaphores();
 	void CreateUniformBuffers();
+	void CreateDescriptorPool();
+	void CreateDescriptorSets();
 //	void RegisterRenderPass(RenderPassPtr InRenderPass);
+	void UpdateUniformBuffer();
 };
 
 typedef std::shared_ptr<Renderer> RendererPtr;

@@ -6,12 +6,19 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 
 #include <GLFW/glfw3native.h>
+#include "glm/gtc/matrix_transform.hpp"
+#include <chrono>
 #include "core/Engine.h"
 #include <vector>
 #include <algorithm>
 #include "shader/Shader.h"
 #include "shader/ShaderModuleWrapper.h"
 #include <array>
+#include "scene/camera/CameraComponent.h"
+#include "scene/mesh/MeshComponent.h"
+#include "scene/SceneObjectComponent.h"
+#include "scene/Transform.h"
+#include "scene/SceneObjectBase.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -104,11 +111,15 @@ void Renderer::Init()
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
+	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandPool();
 
 	meshData->CreateBuffer();
+	CreateUniformBuffers();
+	CreateDescriptorPool();
+	CreateDescriptorSets();
 
 	CreateCommandBuffers();
 	CreateSemaphores();
@@ -128,6 +139,8 @@ void Renderer::RenderFrame()
 	{
 		throw std::runtime_error("failed to acquire swap chain image");
 	}
+
+	UpdateUniformBuffer();
 
 	imageIndex = imageIndexResult.value;
 
@@ -181,11 +194,12 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
-//	uniformBuffer.Destroy();
+	uniformBuffer.Destroy();
 	meshData->DestroyBuffer();
 
 	CleanupSwapChain();
 	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
+	vulkanDevice.destroyDescriptorPool(descriptorPool);
 
 	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
 	vulkanDevice.destroySemaphore(renderFinishedSemaphore);
@@ -535,8 +549,12 @@ void Renderer::RecreateSwapChain()
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
+	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
+	CreateUniformBuffers();
+	CreateDescriptorPool();
+	CreateDescriptorSets();
 	CreateCommandBuffers();
 }
 
@@ -671,8 +689,8 @@ void Renderer::CreateGraphicsPipeline()
 	rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
 	rasterizationInfo.setPolygonMode(PolygonMode::eFill);
 	rasterizationInfo.setLineWidth(1.0f);
-	rasterizationInfo.setCullMode(CullModeFlagBits::eBack);
-	rasterizationInfo.setFrontFace(FrontFace::eClockwise);
+	rasterizationInfo.setCullMode(CullModeFlagBits::eNone);
+	rasterizationInfo.setFrontFace(FrontFace::eCounterClockwise);
 	rasterizationInfo.setDepthBiasEnable(VK_FALSE);
 
 	PipelineMultisampleStateCreateInfo multisampleInfo;
@@ -703,7 +721,8 @@ void Renderer::CreateGraphicsPipeline()
 
 	PipelineLayoutCreateInfo layoutInfo;
 	layoutInfo.setSetLayoutCount(1);
-	layoutInfo.setPSetLayouts(&descriptorSetLayout);
+	DescriptorSetLayout layoutBindings[] = { descriptorSetLayout };
+	layoutInfo.setPSetLayouts(layoutBindings);
 	layoutInfo.setPushConstantRangeCount(0);
 	layoutInfo.setPPushConstantRanges(nullptr);
 
@@ -794,6 +813,7 @@ void Renderer::CreateCommandBuffers()
 		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
 		commandBuffers[index].bindVertexBuffers(0, 1, & meshData->GetVertexBuffer(), &offset);
 		commandBuffers[index].bindIndexBuffer(meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+		commandBuffers[index].bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
 		commandBuffers[index].drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
@@ -814,5 +834,69 @@ void Renderer::CreateUniformBuffers()
 	uniformBuffer.SetUsage(BufferUsageFlagBits::eUniformBuffer);
 	uniformBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 	uniformBuffer.Create();
+}
+
+void Renderer::CreateDescriptorPool()
+{
+	DescriptorPoolSize poolSize;
+	poolSize.setDescriptorCount(1);
+	poolSize.setType(DescriptorType::eUniformBuffer);
+
+	DescriptorPoolCreateInfo descPoolInfo;
+	descPoolInfo.setPoolSizeCount(1);
+	descPoolInfo.setPPoolSizes(&poolSize);
+	descPoolInfo.setMaxSets(4);
+
+	descriptorPool = vulkanDevice.createDescriptorPool(descPoolInfo);
+}
+
+void Renderer::CreateDescriptorSets()
+{
+	std::vector<DescriptorSetLayout> layouts = {descriptorSetLayout};
+	DescriptorSetAllocateInfo descSetAllocInfo;
+	descSetAllocInfo.setDescriptorPool(descriptorPool);
+	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(layouts.size()));
+	descSetAllocInfo.setPSetLayouts(layouts.data());
+
+	descriptorSets = vulkanDevice.allocateDescriptorSets(descSetAllocInfo);
+
+	for (uint32_t index = 0; index < descriptorSets.size(); index++)
+	{
+		DescriptorBufferInfo descBufferInfo;
+		descBufferInfo.setBuffer(uniformBuffer.GetBuffer());
+		descBufferInfo.setOffset(0);
+		descBufferInfo.setRange(sizeof(UniformBufferObject));// VK_WHOLE_SIZE;
+
+		WriteDescriptorSet writeDescSet;
+		writeDescSet.setDstSet(descriptorSets[index]);
+		writeDescSet.setDstArrayElement(0);
+		writeDescSet.setDstArrayElement(0);
+		writeDescSet.setDescriptorCount(1);
+		writeDescSet.setDescriptorType(DescriptorType::eUniformBuffer);
+		writeDescSet.setPBufferInfo(&descBufferInfo);
+
+		vulkanDevice.updateDescriptorSets(1, &writeDescSet, 0, nullptr);
+	}
+}
+
+void Renderer::UpdateUniformBuffer()
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	ScenePtr scene = Engine::GetSceneInstance();
+	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
+	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+
+	meshComp->GetParent()->Transform.SetRotation({0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
+
+	UniformBufferObject ubo;
+	ubo.model = meshComp->GetParent()->Transform.GetMatrix();
+	ubo.view = camComp->CalculateViewMatrix();
+	ubo.proj = camComp->CalculateProjectionMatrix(); 
+
+	uniformBuffer.CopyData(&ubo, MemoryMapFlags(), 0);
 }
 

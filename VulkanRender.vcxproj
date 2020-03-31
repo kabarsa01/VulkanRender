@@ -236,6 +236,10 @@ exit /b</Command>
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
+    <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
+    <ClCompile Include="src\scene\camera\CameraObject.cpp" />
+    <ClCompile Include="src\scene\mesh\MeshComponent.cpp" />
+    <ClCompile Include="src\scene\mesh\MeshObject.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneObjectBase.cpp" />
     <ClCompile Include="src\scene\SceneObjectComponent.cpp" />
@@ -254,6 +258,10 @@ exit /b</Command>
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
+    <ClInclude Include="src\scene\camera\CameraComponent.h" />
+    <ClInclude Include="src\scene\camera\CameraObject.h" />
+    <ClInclude Include="src\scene\mesh\MeshComponent.h" />
+    <ClInclude Include="src\scene\mesh\MeshObject.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneObjectBase.h" />
     <ClInclude Include="src\scene\SceneObjectComponent.h" />

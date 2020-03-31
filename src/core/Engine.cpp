@@ -49,6 +49,7 @@ void Engine::Init()
 	SceneInstance = ObjectBase::NewObject<Scene>();
 	RendererInstance = ObjectBase::NewObject<Renderer>();
 
+	SceneInstance->Init();
 	RendererInstance->Init();
 }
 

@@ -21,6 +21,8 @@ public:
 	virtual ~Scene();
 
 	virtual void OnInitialize() override;
+
+	void Init();
 	
 	void RegisterSceneObject(SceneObjectBasePtr InSceneObject);
 	void RemoveSceneObject(SceneObjectBasePtr InSceneObject);
