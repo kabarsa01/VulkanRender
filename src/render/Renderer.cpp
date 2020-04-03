@@ -544,7 +544,10 @@ void Renderer::RecreateSwapChain()
 {
 	vulkanDevice.waitIdle();
 
+	uniformBuffer.Destroy();
 	CleanupSwapChain();
+	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
+	vulkanDevice.destroyDescriptorPool(descriptorPool);
 
 	CreateSwapChain();
 	CreateImageViews();
@@ -869,7 +872,6 @@ void Renderer::CreateDescriptorSets()
 
 		WriteDescriptorSet writeDescSet;
 		writeDescSet.setDstSet(descriptorSets[index]);
-		writeDescSet.setDstArrayElement(0);
 		writeDescSet.setDstArrayElement(0);
 		writeDescSet.setDescriptorCount(1);
 		writeDescSet.setDescriptorType(DescriptorType::eUniformBuffer);
