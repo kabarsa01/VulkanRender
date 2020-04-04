@@ -122,7 +122,7 @@ exit /b</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
     </ClCompile>
@@ -232,8 +232,10 @@ exit /b</Command>
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\render\MemoryBuffer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
+    <ClCompile Include="src\render\resources\DeviceMemoryWrapper.cpp" />
+    <ClCompile Include="src\render\resources\ImageWrapper.cpp" />
+    <ClCompile Include="src\render\resources\MemoryBuffer.cpp" />
     <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
     <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
@@ -244,6 +246,7 @@ exit /b</Command>
     <ClCompile Include="src\scene\SceneObjectBase.cpp" />
     <ClCompile Include="src\scene\SceneObjectComponent.cpp" />
     <ClCompile Include="src\scene\Transform.cpp" />
+    <ClCompile Include="src\stb\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h" />
@@ -254,8 +257,10 @@ exit /b</Command>
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
-    <ClInclude Include="src\render\MemoryBuffer.h" />
     <ClInclude Include="src\render\Renderer.h" />
+    <ClInclude Include="src\render\resources\DeviceMemoryWrapper.h" />
+    <ClInclude Include="src\render\resources\ImageWrapper.h" />
+    <ClInclude Include="src\render\resources\MemoryBuffer.h" />
     <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
     <ClInclude Include="src\scene\camera\CameraComponent.h" />
@@ -266,6 +271,7 @@ exit /b</Command>
     <ClInclude Include="src\scene\SceneObjectBase.h" />
     <ClInclude Include="src\scene\SceneObjectComponent.h" />
     <ClInclude Include="src\scene\Transform.h" />
+    <ClInclude Include="src\stb\stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -37,6 +37,12 @@
     <Filter Include="Source Files\scene\camera">
       <UniqueIdentifier>{889fe3d3-25f4-4cad-b790-a54f702ab189}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\render\resources">
+      <UniqueIdentifier>{aa925110-950f-4efa-912e-53198cfc9020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\stb">
+      <UniqueIdentifier>{26fe92d7-f51a-4861-b517-67f7020bda4b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -87,9 +93,6 @@
     <ClCompile Include="src\data\Resource.cpp">
       <Filter>Source Files\data</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\MemoryBuffer.cpp">
-      <Filter>Source Files\render</Filter>
-    </ClCompile>
     <ClCompile Include="src\scene\mesh\MeshComponent.cpp">
       <Filter>Source Files\scene\mesh</Filter>
     </ClCompile>
@@ -101,6 +104,18 @@
     </ClCompile>
     <ClCompile Include="src\scene\camera\CameraObject.cpp">
       <Filter>Source Files\scene\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\ImageWrapper.cpp">
+      <Filter>Source Files\render\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\MemoryBuffer.cpp">
+      <Filter>Source Files\render\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stb\stb_image.cpp">
+      <Filter>Source Files\stb</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\DeviceMemoryWrapper.cpp">
+      <Filter>Source Files\render\resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -149,9 +164,6 @@
     <ClInclude Include="src\data\Resource.h">
       <Filter>Source Files\data</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\MemoryBuffer.h">
-      <Filter>Source Files\render</Filter>
-    </ClInclude>
     <ClInclude Include="src\scene\mesh\MeshObject.h">
       <Filter>Source Files\scene\mesh</Filter>
     </ClInclude>
@@ -163,6 +175,18 @@
     </ClInclude>
     <ClInclude Include="src\scene\camera\CameraObject.h">
       <Filter>Source Files\scene\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\ImageWrapper.h">
+      <Filter>Source Files\render\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\MemoryBuffer.h">
+      <Filter>Source Files\render\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stb\stb_image.h">
+      <Filter>Source Files\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\DeviceMemoryWrapper.h">
+      <Filter>Source Files\render\resources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

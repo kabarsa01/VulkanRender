@@ -8,7 +8,7 @@
 
 #include "data/Resource.h"
 #include "vulkan/vulkan.hpp"
-#include "render/MemoryBuffer.h"
+#include "render/resources/MemoryBuffer.h"
 
 using namespace std;
 using namespace glm;
