@@ -1,25 +1,43 @@
 #include "DeviceMemoryWrapper.h"
 #include "core/Engine.h"
 
-DeviceMemoryWrapper::DeviceMemoryWrapper()
+DeviceMemoryWrapper::DeviceMemoryWrapper(bool inScoped)
+	: scoped(inScoped)
 {
 
 }
 
-DeviceMemoryWrapper::DeviceMemoryWrapper(const MemoryPropertyFlags& inMemPropertyFlags)
+DeviceMemoryWrapper::DeviceMemoryWrapper(const MemoryPropertyFlags& inMemPropertyFlags, bool inScoped)
 	: memPropertyFlags(inMemPropertyFlags)
+	, scoped(inScoped)
 {
 
 }
 
 DeviceMemoryWrapper::~DeviceMemoryWrapper()
 {
-	Free();
+	if (scoped)
+	{
+		Free();
+	}
 }
 
-void DeviceMemoryWrapper::SetMemPropertyFlags(MemoryPropertyFlags inMemPropertyFlags)
+DeviceMemoryWrapper& DeviceMemoryWrapper::SetSize(DeviceSize inSize)
+{
+	size = inSize;
+	return *this;
+}
+
+DeviceMemoryWrapper& DeviceMemoryWrapper::SetMemTypeBits(uint32_t inMemTypeBits)
+{
+	memTypeBits = inMemTypeBits;
+	return *this;
+}
+
+DeviceMemoryWrapper& DeviceMemoryWrapper::SetMemPropertyFlags(MemoryPropertyFlags inMemPropertyFlags)
 {
 	memPropertyFlags = inMemPropertyFlags;
+	return *this;
 }
 
 MemoryPropertyFlags DeviceMemoryWrapper::GetMemPropertyFlags()
@@ -27,16 +45,34 @@ MemoryPropertyFlags DeviceMemoryWrapper::GetMemPropertyFlags()
 	return memPropertyFlags;
 }
 
-void DeviceMemoryWrapper::Allocate(const MemoryRequirements& inMemRequirements)
+void DeviceMemoryWrapper::Allocate(DeviceSize inSize, uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags)
 {
-	size = inMemRequirements.size;
-	memTypeBits = inMemRequirements.memoryTypeBits;
-	AllocateInternal(inMemRequirements.size, inMemRequirements.memoryTypeBits);
+	device = Engine::GetRendererInstance()->GetDevice();
+
+	MemoryAllocateInfo memoryInfo;
+	memoryInfo.setAllocationSize(inSize);
+	memoryInfo.setMemoryTypeIndex(FindMemoryType(inMemTypeBits, inMemPropertyFlags));
+	deviceMemory = device.allocateMemory(memoryInfo);
+
+	size = inSize;
+	memTypeBits = inMemTypeBits;
+	memPropertyFlags = inMemPropertyFlags;
+}
+
+void DeviceMemoryWrapper::Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
+{
+	if (!deviceMemory)
+	{
+		Allocate(inMemRequirements.size, inMemRequirements.memoryTypeBits, inMemPropertyFlags);
+	}
 }
 
 void DeviceMemoryWrapper::Allocate()
 {
-	AllocateInternal(size, memTypeBits);
+	if (!deviceMemory)
+	{
+		Allocate(size, memTypeBits, memPropertyFlags);
+	}
 }
 
 void DeviceMemoryWrapper::Free()
@@ -89,6 +125,11 @@ DeviceMemoryWrapper::operator bool() const
 	return deviceMemory;
 }
 
+DeviceMemoryWrapper::operator DeviceMemory() const
+{
+	return deviceMemory;
+}
+
 uint32_t DeviceMemoryWrapper::FindMemoryType(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags)
 {
 	PhysicalDeviceMemoryProperties memProps;
@@ -107,13 +148,5 @@ uint32_t DeviceMemoryWrapper::FindMemoryType(uint32_t inTypeFilter, MemoryProper
 	throw std::runtime_error("No suitable memory type found");
 }
 
-void DeviceMemoryWrapper::AllocateInternal(DeviceSize inSize, uint32_t inMemTypeBits)
-{
-	device = Engine::GetRendererInstance()->GetDevice();
 
-	MemoryAllocateInfo memoryInfo;
-	memoryInfo.setAllocationSize(inSize);
-	memoryInfo.setMemoryTypeIndex(FindMemoryType(inMemTypeBits, memPropertyFlags));
-	deviceMemory = device.allocateMemory(memoryInfo);
-}
 

@@ -95,7 +95,7 @@ protected:
 private:
 	// TEMP
 	MeshDataPtr meshData;
-	MemoryBuffer uniformBuffer;
+	BufferWrapper uniformBuffer;
 	//======================= VARS ===============================
 	uint32_t version;
 	int width = 1280;

@@ -8,10 +8,35 @@ using namespace VULKAN_HPP_NAMESPACE;
 class ImageWrapper
 {
 public:
+	ImageCreateInfo createInfo;
+
 	ImageWrapper();
 	virtual ~ImageWrapper();
-protected:
 
+	void Create();
+	void Destroy();
+
+	Image& GetImage();
+	Image GetImage() const;
+	MemoryRequirements GetMemoryRequirements();
+
+	operator Image() const { return image; }
+	operator bool() const { return image; }
+protected:
+	Device device;
+	Image image;
+
+	//uint32_t width;
+	//uint32_t height;
+	//uint32_t depth;
+	//uint32_t mipLevels;
+	//uint32_t arrayLayers;
+	//Format format;
+	//ImageTiling tiling;
+	//ImageLayout initialLayout;
+	//ImageUsageFlags usage;
+	//SampleCountFlagBits samples;
+	//SharingMode sharingMode;
 };
 
 

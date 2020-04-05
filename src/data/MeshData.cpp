@@ -89,27 +89,17 @@ MeshData::MeshData(const string& inId, const std::vector<Vertex>& inVertices, co
 {
 }
 
-uint32_t MeshData::FindMemoryType(uint32_t inTypeFilter, VULKAN_HPP_NAMESPACE::MemoryPropertyFlags inPropFlags)
+void MeshData::CreateBuffer(BufferWrapper& inBuffer, DeviceSize inSize, BufferUsageFlags inUsage, SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags)
 {
-	PhysicalDeviceMemoryProperties memProps;
-	memProps = Engine::GetRendererInstance()->GetPhysicalDevice().getMemoryProperties();
-
-	for (uint32_t index = 0; index < memProps.memoryTypeCount; index++)
-	{
-		bool propFlagsSufficient = (memProps.memoryTypes[index].propertyFlags & inPropFlags) == inPropFlags;
-		bool hasTheType = inTypeFilter & (1 << index);
-		if (hasTheType && propFlagsSufficient)
-		{
-			return index;
-		}
-	}
-
-	throw std::runtime_error("No suitable memory type found");
+	inBuffer.createInfo.setSize(inSize);
+	inBuffer.createInfo.setUsage(inUsage);
+	inBuffer.createInfo.setSharingMode(inSharingMode);
+	inBuffer.Create();
+	inBuffer.BindMemory(inMemPropFlags);
 }
 
 MeshData::~MeshData()
 {
-
 }
 
 void MeshData::OnDestroy()
@@ -125,6 +115,7 @@ void MeshData::CreateBuffer()
 
 void MeshData::DestroyBuffer()
 {
+	// buffers
 	vertexBuffer.Destroy();
 	indexBuffer.Destroy();
 }
@@ -145,9 +136,9 @@ VULKAN_HPP_NAMESPACE::VertexInputBindingDescription MeshData::GetBindingDescript
 	return bindingDescription;
 }
 
-VULKAN_HPP_NAMESPACE::Buffer MeshData::GetVertexBuffer()
+Buffer MeshData::GetVertexBuffer()
 {
-	return vertexBuffer.GetBuffer();
+	return vertexBuffer;
 }
 
 uint32_t MeshData::GetVertexBufferSizeBytes()
@@ -160,9 +151,9 @@ uint32_t MeshData::GetVertexCount()
 	return static_cast<uint32_t>( vertices.size() );
 }
 
-VULKAN_HPP_NAMESPACE::Buffer MeshData::GetIndexBuffer()
+Buffer MeshData::GetIndexBuffer()
 {
-	return indexBuffer.GetBuffer();
+	return indexBuffer;
 }
 
 uint32_t MeshData::GetIndexBufferSizeBytes()

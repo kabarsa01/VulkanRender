@@ -206,6 +206,7 @@ void Renderer::Cleanup()
 
 	vulkanDevice.destroyCommandPool(commandPool);
 	
+	DeviceMemoryManager::GetInstance()->CleanupMemory();
 	vulkanDevice.destroy();
 	vulkanInstance.destroySurfaceKHR(vulkanSurface);
 	vulkanInstance.destroy();
@@ -833,10 +834,11 @@ void Renderer::CreateSemaphores()
 
 void Renderer::CreateUniformBuffers()
 {
-	uniformBuffer.SetSize(sizeof(UniformBufferObject));
-	uniformBuffer.SetUsage(BufferUsageFlagBits::eUniformBuffer);
-	uniformBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+	uniformBuffer.createInfo.setSize(sizeof(UniformBufferObject));
+	uniformBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
+	uniformBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	uniformBuffer.Create();
+	uniformBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 }
 
 void Renderer::CreateDescriptorPool()
@@ -866,7 +868,7 @@ void Renderer::CreateDescriptorSets()
 	for (uint32_t index = 0; index < descriptorSets.size(); index++)
 	{
 		DescriptorBufferInfo descBufferInfo;
-		descBufferInfo.setBuffer(uniformBuffer.GetBuffer());
+		descBufferInfo.setBuffer(uniformBuffer);
 		descBufferInfo.setOffset(0);
 		descBufferInfo.setRange(sizeof(UniformBufferObject));// VK_WHOLE_SIZE;
 
@@ -899,6 +901,8 @@ void Renderer::UpdateUniformBuffer()
 	ubo.view = camComp->CalculateViewMatrix();
 	ubo.proj = camComp->CalculateProjectionMatrix(); 
 
-	uniformBuffer.CopyData(&ubo, MemoryMapFlags(), 0);
+	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
+	memRec.memory.MapCopyUnmap(MemoryMapFlags(), memRec.memoryOffset, sizeof(UniformBufferObject), &ubo, 0, sizeof(UniformBufferObject));
+//	uniformBuffer.CopyData(&ubo, MemoryMapFlags(), 0);
 }
 

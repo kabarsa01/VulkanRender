@@ -8,7 +8,8 @@
 
 #include "data/Resource.h"
 #include "vulkan/vulkan.hpp"
-#include "render/resources/MemoryBuffer.h"
+#include "render/resources/BufferWrapper.h"
+#include "render/resources/DeviceMemoryWrapper.h"
 
 using namespace std;
 using namespace glm;
@@ -60,15 +61,17 @@ public:
 	// fullscreen quad instance to be used for screen space stuff
 	static std::shared_ptr<MeshData> FullscreenQuad();
 private:
-	MemoryBuffer vertexBuffer;
-	MemoryBuffer indexBuffer;
-	//VULKAN_HPP_NAMESPACE::Buffer vertexBuffer;
-	//VULKAN_HPP_NAMESPACE::DeviceMemory vertexBufferMemory;
+	BufferWrapper vertexBuffer;
+	BufferWrapper indexBuffer;
 
 	MeshData() : Resource(HashString::NONE()) {}
-	uint32_t FindMemoryType(uint32_t inTypeFilter, VULKAN_HPP_NAMESPACE::MemoryPropertyFlags inPropFlags);
+
+	void CreateBuffer(
+		BufferWrapper& inBuffer,
+		DeviceSize inSize, BufferUsageFlags usage, 
+		SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags);
 	template<class T>
-	static void SetupBuffer(MemoryBuffer& memBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
+	void SetupBuffer(BufferWrapper& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
 };
 
 typedef std::shared_ptr<MeshData> MeshDataPtr;
@@ -78,22 +81,19 @@ typedef std::shared_ptr<MeshData> MeshDataPtr;
 //--------------------------------------------------------------------------------------------------------------------------
 
 template<class T>
-void MeshData::SetupBuffer(MemoryBuffer& memBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
+void MeshData::SetupBuffer(BufferWrapper& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
 {
-	MemoryBuffer stagingBuffer;
-	stagingBuffer.SetSize(static_cast<uint32_t>(sizeof(T) * inDataVector.size()));
-	stagingBuffer.SetUsage(BufferUsageFlagBits::eTransferSrc);
-	stagingBuffer.SetMemProperty(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-	stagingBuffer.Create();
+	DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 
-	stagingBuffer.CopyData(inDataVector.data(), MemoryMapFlags(), 0);
+	BufferWrapper stagingBuffer;
+	DeviceMemoryWrapper stagingMemory;
+	CreateBuffer(stagingBuffer, size, BufferUsageFlagBits::eTransferSrc, SharingMode::eExclusive, MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
+	MemoryRecord& memRec = stagingBuffer.GetMemoryRecord();
+	memRec.memory.MapCopyUnmap(MemoryMapFlags(), memRec.memoryOffset, size, inDataVector.data(), 0, size);
 
-	memBuffer.SetSize(stagingBuffer.GetSize());
-	memBuffer.SetUsage(usage | BufferUsageFlagBits::eTransferDst);
-	memBuffer.SetMemProperty(MemoryPropertyFlagBits::eDeviceLocal);
-	memBuffer.Create();
+	CreateBuffer(inBuffer, size, usage | BufferUsageFlagBits::eTransferDst,	SharingMode::eExclusive, MemoryPropertyFlagBits::eDeviceLocal);
 
-	MemoryBuffer::CopyBuffer(stagingBuffer, memBuffer);
+	BufferWrapper::SubmitCopyCommand(stagingBuffer, inBuffer);
 }
 
 

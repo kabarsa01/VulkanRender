@@ -232,10 +232,12 @@ exit /b</Command>
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
+    <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
+    <ClCompile Include="src\render\resources\BufferWrapper.cpp" />
     <ClCompile Include="src\render\resources\DeviceMemoryWrapper.cpp" />
     <ClCompile Include="src\render\resources\ImageWrapper.cpp" />
-    <ClCompile Include="src\render\resources\MemoryBuffer.cpp" />
     <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
     <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
@@ -257,10 +259,12 @@ exit /b</Command>
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
+    <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
+    <ClInclude Include="src\render\memory\DeviceMemoryManager.h" />
     <ClInclude Include="src\render\Renderer.h" />
+    <ClInclude Include="src\render\resources\BufferWrapper.h" />
     <ClInclude Include="src\render\resources\DeviceMemoryWrapper.h" />
     <ClInclude Include="src\render\resources\ImageWrapper.h" />
-    <ClInclude Include="src\render\resources\MemoryBuffer.h" />
     <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
     <ClInclude Include="src\scene\camera\CameraComponent.h" />
