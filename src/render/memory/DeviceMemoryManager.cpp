@@ -45,9 +45,9 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 		}
 	}
 
-	chunkArray.push_back(DeviceMemoryChunk());
+	chunkArray.push_back(DeviceMemoryChunk(32));
 	DeviceMemoryChunk& chunk = chunkArray.back();
-	chunk.Allocate(CHUNK_ELEMENT_COUNT, inMemRequirements, inMemPropertyFlags);
+//	chunk.Allocate(CHUNK_ELEMENT_COUNT, inMemRequirements, inMemPropertyFlags);
 
 	memoryRecord.regionHash = regionHash;
 	memoryRecord.chunkIndex = chunkArray.size() - 1;
