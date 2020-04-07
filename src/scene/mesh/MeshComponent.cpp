@@ -18,8 +18,8 @@
 	};
 //}
 
-MeshComponent::MeshComponent(std::shared_ptr<SceneObjectBase> Parent)
-	: SceneObjectComponent(Parent)
+MeshComponent::MeshComponent(std::shared_ptr<SceneObjectBase> inParent)
+	: SceneObjectComponent(inParent)
 {
 
 }
@@ -28,9 +28,9 @@ MeshComponent::~MeshComponent()
 {
 }
 
-void MeshComponent::SetMeshData(MeshDataPtr InMeshData)
+void MeshComponent::SetMeshData(MeshDataPtr inMeshData)
 {
-	MeshData = InMeshData;
+	meshData = inMeshData;
 }
 
 void MeshComponent::OnInitialize()

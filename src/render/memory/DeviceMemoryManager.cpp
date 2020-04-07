@@ -53,7 +53,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 
 	MemoryRecord memoryRecord;
 
-	uint64_t memTypeIndex = DeviceMemoryWrapper::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
+	uint64_t memTypeIndex = VulkanDeviceMemory::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
 	DeviceSize requiredSize = inMemRequirements.size;
 	uint64_t rangeIndex = GetRangeIndex(requiredSize);
 	uint64_t regionHash = rangeIndex | (memTypeIndex << 32);
@@ -74,7 +74,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 				auto currentTime = std::chrono::high_resolution_clock::now();
 				double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 
-				printf("my allocation %f microseconds\n", deltaTime);
+				std::printf("my allocation of %I64u bytes for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, requiredSize, deltaTime);
 
 				return memoryRecord;
 			}
@@ -91,7 +91,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 
-	printf("vulkan allocation %f microseconds\n", deltaTime);
+	std::printf("vulkan allocation of %I64u bytes for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, requiredSize, deltaTime);
 
 	MemoryPosition pos = chunk.AcquireSegment(requiredSize);
 

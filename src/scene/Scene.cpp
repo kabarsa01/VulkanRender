@@ -5,6 +5,7 @@
 #include "core/TimeManager.h"
 #include "camera/CameraObject.h"
 #include "mesh/MeshObject.h"
+#include "import/MeshImporter.h"
 
 Scene::Scene()
 	: ObjectBase()
@@ -24,10 +25,23 @@ void Scene::Init()
 {
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-	cameraObj->Transform.SetLocation({ 0.0f, 0.0f, 3.0f });
-	cameraObj->Transform.SetRotation({ 0.0f, 180.0f, 0.0f });
-	MeshObjectPtr meshObj = ObjectBase::NewObject<MeshObject>();
-	meshObj->GetMeshComponent()->SetMeshData(MeshData::FullscreenQuad());
+	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
+	cameraObj->transform.SetRotation({ 0.0f, 180.0f, 0.0f });
+	cameraObj->GetCameraComponent()->SetFov(110.0f);
+
+	{
+		MeshImporter Importer;
+		//Importer.Import("./content/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+		Importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+		for (unsigned int MeshIndex = 0; MeshIndex < Importer.GetMeshes().size(); MeshIndex++)
+		{
+			MeshObjectPtr MO = ObjectBase::NewObject<MeshObject>();
+			MO->GetMeshComponent()->meshData = Importer.GetMeshes()[MeshIndex];
+			MO->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+			MO->transform.SetScale({ 0.3f, 0.3f, 0.3f });
+//			MO->GetMeshComponent()->meshData->CreateBuffer();
+		}
+	}
 }
 
 void Scene::RegisterSceneObject(SceneObjectBasePtr InSceneObject)
@@ -57,7 +71,7 @@ void Scene::PerFrameUpdate()
 	float DeltaTime = TimeManager::GetInstance()->GetDeltaTime();
 	for (SceneObjectBasePtr SceneObject : SceneObjectsSet)
 	{
-		if (SceneObject->IsTickEnabled)
+		if (SceneObject->isTickEnabled)
 		{
 			SceneObject->Tick(DeltaTime);
 			SceneObject->TickComponents(DeltaTime);

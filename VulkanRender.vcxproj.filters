@@ -46,6 +46,9 @@
     <Filter Include="Source Files\render\memory">
       <UniqueIdentifier>{f015e519-bf71-4fd3-bf09-7b48a6df003e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\import">
+      <UniqueIdentifier>{8bd6c7f7-8fae-4235-bfce-d07e5774401f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -84,9 +87,6 @@
     <ClCompile Include="src\render\shader\Shader.cpp">
       <Filter>Source Files\render\shader</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp">
-      <Filter>Source Files\render\shader</Filter>
-    </ClCompile>
     <ClCompile Include="src\data\MeshData.cpp">
       <Filter>Source Files\data</Filter>
     </ClCompile>
@@ -108,23 +108,32 @@
     <ClCompile Include="src\scene\camera\CameraObject.cpp">
       <Filter>Source Files\scene\camera</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\resources\ImageWrapper.cpp">
-      <Filter>Source Files\render\resources</Filter>
-    </ClCompile>
     <ClCompile Include="src\stb\stb_image.cpp">
       <Filter>Source Files\stb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\render\resources\DeviceMemoryWrapper.cpp">
-      <Filter>Source Files\render\resources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\render\resources\BufferWrapper.cpp">
-      <Filter>Source Files\render\resources</Filter>
     </ClCompile>
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp">
       <Filter>Source Files\render\memory</Filter>
     </ClCompile>
     <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp">
       <Filter>Source Files\render\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\TextureData.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\import\MeshImporter.cpp">
+      <Filter>Source Files\import</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\VulkanImage.cpp">
+      <Filter>Source Files\render\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\VulkanDeviceMemory.cpp">
+      <Filter>Source Files\render\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\resources\VulkanBuffer.cpp">
+      <Filter>Source Files\render\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\shader\VulkanShaderModule.cpp">
+      <Filter>Source Files\render\shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -161,9 +170,6 @@
     <ClInclude Include="src\render\shader\Shader.h">
       <Filter>Source Files\render\shader</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\shader\ShaderModuleWrapper.h">
-      <Filter>Source Files\render\shader</Filter>
-    </ClInclude>
     <ClInclude Include="src\data\MeshData.h">
       <Filter>Source Files\data</Filter>
     </ClInclude>
@@ -185,23 +191,32 @@
     <ClInclude Include="src\scene\camera\CameraObject.h">
       <Filter>Source Files\scene\camera</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\resources\ImageWrapper.h">
-      <Filter>Source Files\render\resources</Filter>
-    </ClInclude>
     <ClInclude Include="src\stb\stb_image.h">
       <Filter>Source Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\render\resources\DeviceMemoryWrapper.h">
-      <Filter>Source Files\render\resources</Filter>
-    </ClInclude>
-    <ClInclude Include="src\render\resources\BufferWrapper.h">
-      <Filter>Source Files\render\resources</Filter>
     </ClInclude>
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h">
       <Filter>Source Files\render\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\render\memory\DeviceMemoryManager.h">
       <Filter>Source Files\render\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\TextureData.h">
+      <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\import\MeshImporter.h">
+      <Filter>Source Files\import</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\VulkanImage.h">
+      <Filter>Source Files\render\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\VulkanDeviceMemory.h">
+      <Filter>Source Files\render\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\resources\VulkanBuffer.h">
+      <Filter>Source Files\render\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\VulkanShaderModule.h">
+      <Filter>Source Files\render\shader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

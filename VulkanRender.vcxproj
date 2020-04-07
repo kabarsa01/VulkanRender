@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -99,8 +99,8 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call :treeProcess
@@ -125,7 +125,7 @@ exit /b</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -136,8 +136,8 @@ exit /b</Command>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
@@ -165,7 +165,7 @@ exit /b</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -176,8 +176,8 @@ exit /b</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call :treeProcess
@@ -204,7 +204,7 @@ exit /b</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -215,8 +215,8 @@ exit /b</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\lib-vc2017;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call :treeProcess
@@ -243,14 +243,16 @@ exit /b</Command>
     <ClCompile Include="src\data\DataManager.cpp" />
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
+    <ClCompile Include="src\data\TextureData.cpp" />
+    <ClCompile Include="src\import\MeshImporter.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
-    <ClCompile Include="src\render\resources\BufferWrapper.cpp" />
-    <ClCompile Include="src\render\resources\DeviceMemoryWrapper.cpp" />
-    <ClCompile Include="src\render\resources\ImageWrapper.cpp" />
-    <ClCompile Include="src\render\shader\ShaderModuleWrapper.cpp" />
+    <ClCompile Include="src\render\resources\VulkanBuffer.cpp" />
+    <ClCompile Include="src\render\resources\VulkanDeviceMemory.cpp" />
+    <ClCompile Include="src\render\resources\VulkanImage.cpp" />
+    <ClCompile Include="src\render\shader\VulkanShaderModule.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
     <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
     <ClCompile Include="src\scene\camera\CameraObject.cpp" />
@@ -271,13 +273,15 @@ exit /b</Command>
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
+    <ClInclude Include="src\data\TextureData.h" />
+    <ClInclude Include="src\import\MeshImporter.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryManager.h" />
     <ClInclude Include="src\render\Renderer.h" />
-    <ClInclude Include="src\render\resources\BufferWrapper.h" />
-    <ClInclude Include="src\render\resources\DeviceMemoryWrapper.h" />
-    <ClInclude Include="src\render\resources\ImageWrapper.h" />
-    <ClInclude Include="src\render\shader\ShaderModuleWrapper.h" />
+    <ClInclude Include="src\render\resources\VulkanBuffer.h" />
+    <ClInclude Include="src\render\resources\VulkanDeviceMemory.h" />
+    <ClInclude Include="src\render\resources\VulkanImage.h" />
+    <ClInclude Include="src\render\shader\VulkanShaderModule.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
     <ClInclude Include="src\scene\camera\CameraComponent.h" />
     <ClInclude Include="src\scene\camera\CameraObject.h" />

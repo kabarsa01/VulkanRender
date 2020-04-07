@@ -7,14 +7,14 @@
 class MeshComponent : public SceneObjectComponent
 {
 public:
-	MeshDataPtr MeshData;
+	MeshDataPtr meshData;
 //	MaterialPtr Material;
-	bool CastShadows = true;
+	bool castShadows = true;
 
-	MeshComponent(std::shared_ptr<SceneObjectBase> Parent);
+	MeshComponent(std::shared_ptr<SceneObjectBase> inParent);
 	virtual ~MeshComponent();
 
-	void SetMeshData(MeshDataPtr InMeshData);
+	void SetMeshData(MeshDataPtr inMeshData);
 	virtual void OnInitialize() override;
 protected:
 };

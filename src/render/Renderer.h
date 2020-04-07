@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 #include <core/ObjectBase.h>
-#include "fwd.hpp"
+#include "glm/fwd.hpp"
 #include <set>
 #include "data/MeshData.h"
 
@@ -95,8 +95,8 @@ public:
 protected:
 private:
 	// TEMP
-	MeshDataPtr meshData;
-	BufferWrapper uniformBuffer;
+//	MeshDataPtr meshData;
+	VulkanBuffer uniformBuffer;
 	//======================= VARS ===============================
 	uint32_t version;
 	int width = 1280;

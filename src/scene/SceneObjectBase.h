@@ -14,17 +14,17 @@ class SceneObjectBase : public ObjectBase
 {
 public:
 	// fields
-	Transform Transform;
-	bool IsTickEnabled = true;
+	Transform transform;
+	bool isTickEnabled = true;
 
 	// methods
 	SceneObjectBase();
 	virtual ~SceneObjectBase();
 
 	virtual void OnInitialize() override;
-	bool RegisterComponent(std::shared_ptr<SceneObjectComponent> InComponent);
-	virtual void Tick(float DeltaTime);
-	void TickComponents(float DeltaTime);
+	bool RegisterComponent(std::shared_ptr<SceneObjectComponent> inComponent);
+	virtual void Tick(float inDeltaTime);
+	void TickComponents(float inDeltaTime);
 
 	template<class T>
 	std::shared_ptr<T> GetComponentByType();
@@ -35,7 +35,7 @@ public:
 	virtual void OnDestroy() override;
 protected:
 	// components container
-	std::vector<SceneObjectComponentPtr> Components;
+	std::vector<SceneObjectComponentPtr> components;
 
 	virtual void IntializeComponents();
 };
@@ -56,12 +56,12 @@ inline std::shared_ptr<T> SceneObjectBase::GetComponentByType()
 template<class T>
 inline SceneObjectComponentPtr SceneObjectBase::GetComponent()
 {
-	const Class& SearchedClass = Class::Get<T>();
-	for (SceneObjectComponentPtr Component : Components)
+	const Class& searchedClass = Class::Get<T>();
+	for (SceneObjectComponentPtr component : components)
 	{
-		if (SearchedClass == Component->GetClass())
+		if (searchedClass == component->GetClass())
 		{
-			return Component;
+			return component;
 		}
 	}
 

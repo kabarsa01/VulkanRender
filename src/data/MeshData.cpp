@@ -89,7 +89,7 @@ MeshData::MeshData(const string& inId, const std::vector<Vertex>& inVertices, co
 {
 }
 
-void MeshData::CreateBuffer(BufferWrapper& inBuffer, DeviceSize inSize, BufferUsageFlags inUsage, SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags)
+void MeshData::CreateBuffer(VulkanBuffer& inBuffer, DeviceSize inSize, BufferUsageFlags inUsage, SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags)
 {
 	inBuffer.createInfo.setSize(inSize);
 	inBuffer.createInfo.setUsage(inUsage);
@@ -125,7 +125,7 @@ void MeshData::Draw()
 	// bind VAO and draw
 }
 
-VULKAN_HPP_NAMESPACE::VertexInputBindingDescription MeshData::GetBindingDescription()
+VertexInputBindingDescription MeshData::GetBindingDescription()
 {
 	VertexInputBindingDescription bindingDescription;
 

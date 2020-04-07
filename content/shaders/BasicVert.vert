@@ -15,5 +15,5 @@ layout(location = 0) out vec3 fragColor;
 
 void main() {
     gl_Position = mvpBuffer.proj * mvpBuffer.view * mvpBuffer.model * vec4(inPos, 1.0);
-    fragColor = inPos + vec3(0.5, 0.5, 0.5);//inNormal;
+    fragColor = inNormal;//inPos + vec3(0.5, 0.5, 0.5);
 }

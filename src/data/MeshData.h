@@ -8,8 +8,8 @@
 
 #include "data/Resource.h"
 #include "vulkan/vulkan.hpp"
-#include "render/resources/BufferWrapper.h"
-#include "render/resources/DeviceMemoryWrapper.h"
+#include "render/resources/VulkanBuffer.h"
+#include "render/resources/VulkanDeviceMemory.h"
 
 using namespace std;
 using namespace glm;
@@ -51,27 +51,28 @@ public:
 	void DestroyBuffer();
 	void Draw();
 
-	VertexInputBindingDescription GetBindingDescription();
 	Buffer GetVertexBuffer();
 	uint32_t GetVertexBufferSizeBytes();
 	uint32_t GetVertexCount();
 	Buffer GetIndexBuffer();
 	uint32_t GetIndexBufferSizeBytes();
 	uint32_t GetIndexCount();
+
+	static VertexInputBindingDescription GetBindingDescription();
 	// fullscreen quad instance to be used for screen space stuff
 	static std::shared_ptr<MeshData> FullscreenQuad();
 private:
-	BufferWrapper vertexBuffer;
-	BufferWrapper indexBuffer;
+	VulkanBuffer vertexBuffer;
+	VulkanBuffer indexBuffer;
 
 	MeshData() : Resource(HashString::NONE()) {}
 
 	void CreateBuffer(
-		BufferWrapper& inBuffer,
+		VulkanBuffer& inBuffer,
 		DeviceSize inSize, BufferUsageFlags usage, 
 		SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags);
 	template<class T>
-	void SetupBuffer(BufferWrapper& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
+	void SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
 };
 
 typedef std::shared_ptr<MeshData> MeshDataPtr;
@@ -81,19 +82,19 @@ typedef std::shared_ptr<MeshData> MeshDataPtr;
 //--------------------------------------------------------------------------------------------------------------------------
 
 template<class T>
-void MeshData::SetupBuffer(BufferWrapper& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
+void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
 {
 	DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 
-	BufferWrapper stagingBuffer;
-	DeviceMemoryWrapper stagingMemory;
+	VulkanBuffer stagingBuffer;
+	VulkanDeviceMemory stagingMemory;
 	CreateBuffer(stagingBuffer, size, BufferUsageFlagBits::eTransferSrc, SharingMode::eExclusive, MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& memRec = stagingBuffer.GetMemoryRecord();
 	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, size, inDataVector.data(), 0, size);
 
 	CreateBuffer(inBuffer, size, usage | BufferUsageFlagBits::eTransferDst,	SharingMode::eExclusive, MemoryPropertyFlagBits::eDeviceLocal);
 
-	BufferWrapper::SubmitCopyCommand(stagingBuffer, inBuffer);
+	VulkanBuffer::SubmitCopyCommand(stagingBuffer, inBuffer);
 }
 
 

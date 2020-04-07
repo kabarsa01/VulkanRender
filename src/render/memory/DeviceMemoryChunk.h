@@ -1,7 +1,7 @@
 #pragma once
 
 #include <deque>
-#include "../resources/DeviceMemoryWrapper.h"
+#include "../resources/VulkanDeviceMemory.h"
 
 struct MemoryPosition
 {
@@ -9,7 +9,7 @@ struct MemoryPosition
 	uint32_t layer;
 	uint32_t index;
 	DeviceSize offset;
-	DeviceMemoryWrapper memory;
+	VulkanDeviceMemory memory;
 };
 
 class DeviceMemoryChunk
@@ -26,7 +26,7 @@ public:
 	MemoryPosition AcquireSegment(DeviceSize inSize);
 	void ReleaseSegment(const MemoryPosition& inMemoryPosition);
 
-	DeviceMemoryWrapper& GetMemory();
+	VulkanDeviceMemory& GetMemory();
 	bool HasFreeSpace();
 protected:
 	uint32_t treeDepth;
@@ -34,7 +34,7 @@ protected:
 	uint32_t segmentCount;
 	// flattened binary tree for memory segment tracking
 	unsigned char* memoryTree;
-	DeviceMemoryWrapper memory;
+	VulkanDeviceMemory memory;
 	DeviceSize segmentSize;
 
 	uint32_t GetLayerStartIndex(uint32_t inLayer);

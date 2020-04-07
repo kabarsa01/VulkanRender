@@ -2,9 +2,9 @@
 #include "scene/SceneObjectBase.h"
 
 
-SceneObjectComponent::SceneObjectComponent(std::shared_ptr<SceneObjectBase> InParent)
+SceneObjectComponent::SceneObjectComponent(std::shared_ptr<SceneObjectBase> inParent)
 	: ObjectBase()
-	, Parent(InParent)
+	, parent(inParent)
 {
 }
 
@@ -23,18 +23,18 @@ void SceneObjectComponent::OnInitialize()
 {
 	ObjectBase::OnInitialize();
 
-	if (Parent)
+	if (parent)
 	{
-		Parent->RegisterComponent(get_shared_from_this<SceneObjectComponent>());
+		parent->RegisterComponent(get_shared_from_this<SceneObjectComponent>());
 	}
 }
 
 std::shared_ptr<SceneObjectBase> SceneObjectComponent::GetParent()
 {
-	return Parent;
+	return parent;
 }
 
-void SceneObjectComponent::TickComponent(float DeltaTime)
+void SceneObjectComponent::TickComponent(float inDeltaTime)
 {
 }
 

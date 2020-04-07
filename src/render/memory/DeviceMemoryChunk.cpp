@@ -26,7 +26,7 @@ DeviceMemoryChunk::DeviceMemoryChunk(DeviceSize inSegmentSize, uint32_t inTreeDe
 DeviceMemoryChunk::DeviceMemoryChunk(const DeviceMemoryChunk& inOther)
 	: DeviceMemoryChunk(inOther.segmentSize, inOther.treeDepth)
 {
-
+	memory = inOther.memory;
 }
 
 DeviceMemoryChunk::~DeviceMemoryChunk()
@@ -87,7 +87,7 @@ void DeviceMemoryChunk::ReleaseSegment(const MemoryPosition& inMemoryPosition)
 	MarkFreeUp(inMemoryPosition.layer, inMemoryPosition.index);
 }
 
-DeviceMemoryWrapper& DeviceMemoryChunk::GetMemory()
+VulkanDeviceMemory& DeviceMemoryChunk::GetMemory()
 {
 	return memory;
 }

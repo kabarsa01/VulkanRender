@@ -15,40 +15,40 @@ void SceneObjectBase::OnInitialize()
 {
 	ObjectBase::OnInitialize();
 
-	ScenePtr Scene = Engine::GetInstance()->GetScene();
-	Scene->RegisterSceneObject(get_shared_from_this<SceneObjectBase>());
+	ScenePtr scene = Engine::GetInstance()->GetScene();
+	scene->RegisterSceneObject(get_shared_from_this<SceneObjectBase>());
 
 	IntializeComponents();
 }
 
-bool SceneObjectBase::RegisterComponent(std::shared_ptr<SceneObjectComponent> InComponent)
+bool SceneObjectBase::RegisterComponent(std::shared_ptr<SceneObjectComponent> inComponent)
 {
-	Components.push_back(InComponent);
+	components.push_back(inComponent);
 
-	ScenePtr Scene = Engine::GetInstance()->GetScene();
-	Scene->RegisterSceneObjectComponent(InComponent);
+	ScenePtr scene = Engine::GetInstance()->GetScene();
+	scene->RegisterSceneObjectComponent(inComponent);
 
 	return true;
 }
 
-void SceneObjectBase::Tick(float DeltaTime)
+void SceneObjectBase::Tick(float inDeltaTime)
 {
 }
 
-void SceneObjectBase::TickComponents(float DeltaTime)
+void SceneObjectBase::TickComponents(float inDeltaTime)
 {
-	for (SceneObjectComponentPtr Comp : Components)
+	for (SceneObjectComponentPtr comp : components)
 	{
-		if (Comp->IsTickEnabled)
+		if (comp->isTickEnabled)
 		{
-			Comp->TickComponent(DeltaTime);
+			comp->TickComponent(inDeltaTime);
 		}
 	}
 }
 
 std::vector<SceneObjectComponentPtr> SceneObjectBase::GetComponents() const
 {
-	return Components;
+	return components;
 }
 
 void SceneObjectBase::OnDestroy()

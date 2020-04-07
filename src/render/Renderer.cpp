@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include "shader/Shader.h"
-#include "shader/ShaderModuleWrapper.h"
+#include "shader/VulkanShaderModule.h"
 #include <array>
 #include "scene/camera/CameraComponent.h"
 #include "scene/mesh/MeshComponent.h"
@@ -41,9 +41,6 @@ using namespace VULKAN_HPP_NAMESPACE;
 
 Renderer::Renderer()
 {
-	meshData = ObjectBase::NewObject<MeshData, std::string>("id_mesh");
-	meshData->vertices = verticesToIndex;
-	meshData->indices = indices;
 }
 
 Renderer::~Renderer()
@@ -67,7 +64,7 @@ void Renderer::Init()
 		version,
 		"VulkanEngine",
 		version,
-		VK_API_VERSION_1_0
+		VK_API_VERSION_1_2
 	);
 
 	uint32_t glfwInstanceExtensionsCount;
@@ -116,7 +113,10 @@ void Renderer::Init()
 	CreateFramebuffers();
 	CreateCommandPool();
 
-	meshData->CreateBuffer();
+	ScenePtr scene = Engine::GetSceneInstance();
+	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+	meshComp->meshData->CreateBuffer();
+
 	CreateUniformBuffers();
 	CreateDescriptorPool();
 	CreateDescriptorSets();
@@ -194,8 +194,11 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
+	ScenePtr scene = Engine::GetSceneInstance();
+	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+	meshComp->meshData->DestroyBuffer();
+
 	uniformBuffer.Destroy();
-	meshData->DestroyBuffer();
 
 	CleanupSwapChain();
 	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
@@ -643,13 +646,16 @@ void Renderer::CreateDescriptorSetLayout()
 
 void Renderer::CreateGraphicsPipeline()
 {
+	ScenePtr scene = Engine::GetSceneInstance();
+	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+
 	Shader vertShader;
 	vertShader.Load("content/shaders/BasicVert.spv");
 	Shader fragShader;
 	fragShader.Load("content/shaders/BasicFrag.spv");
 
-	ShaderModuleWrapper vertShaderModule(vertShader);
-	ShaderModuleWrapper fragShaderModule(fragShader);
+	VulkanShaderModule vertShaderModule(vertShader);
+	VulkanShaderModule fragShaderModule(fragShader);
 
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
@@ -664,7 +670,7 @@ void Renderer::CreateGraphicsPipeline()
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
 
-	VertexInputBindingDescription bindingDesc = meshData->GetBindingDescription();
+	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription();
 	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions();
 	PipelineVertexInputStateCreateInfo vertexInputInfo;
 	vertexInputInfo.setVertexBindingDescriptionCount(1);
@@ -699,8 +705,8 @@ void Renderer::CreateGraphicsPipeline()
 	rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
 	rasterizationInfo.setPolygonMode(PolygonMode::eFill);
 	rasterizationInfo.setLineWidth(1.0f);
-	rasterizationInfo.setCullMode(CullModeFlagBits::eNone);
-	rasterizationInfo.setFrontFace(FrontFace::eCounterClockwise);
+	rasterizationInfo.setCullMode(CullModeFlagBits::eBack);
+	rasterizationInfo.setFrontFace(FrontFace::eClockwise);
 	rasterizationInfo.setDepthBiasEnable(VK_FALSE);
 
 	PipelineMultisampleStateCreateInfo multisampleInfo;
@@ -790,6 +796,10 @@ void Renderer::CreateCommandPool()
 
 void Renderer::CreateCommandBuffers()
 {
+	ScenePtr scene = Engine::GetSceneInstance();
+	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
+	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+
 	commandBuffers.resize(swapChainFramebuffers.size());
 
 	CommandBufferAllocateInfo allocInfo;
@@ -821,10 +831,10 @@ void Renderer::CreateCommandBuffers()
 		commandBuffers[index].setViewport(0, 1, &viewport);
 		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
 		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
-		commandBuffers[index].bindVertexBuffers(0, 1, & meshData->GetVertexBuffer(), &offset);
-		commandBuffers[index].bindIndexBuffer(meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+		commandBuffers[index].bindVertexBuffers(0, 1, & meshComp->meshData->GetVertexBuffer(), &offset);
+		commandBuffers[index].bindIndexBuffer(meshComp->meshData->GetIndexBuffer(), 0, IndexType::eUint32);
 		commandBuffers[index].bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
-		commandBuffers[index].drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+		commandBuffers[index].drawIndexed(meshComp->meshData->GetIndexCount(), 1, 0, 0, 0);
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
 	}
@@ -900,10 +910,10 @@ void Renderer::UpdateUniformBuffer()
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 
-	meshComp->GetParent()->Transform.SetRotation({0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
+	meshComp->GetParent()->transform.SetRotation({0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
 
 	UniformBufferObject ubo;
-	ubo.model = meshComp->GetParent()->Transform.GetMatrix();
+	ubo.model = meshComp->GetParent()->transform.GetMatrix();
 	ubo.view = camComp->CalculateViewMatrix();
 	ubo.proj = camComp->CalculateProjectionMatrix(); 
 
