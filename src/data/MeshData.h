@@ -89,7 +89,7 @@ void MeshData::SetupBuffer(BufferWrapper& inBuffer, std::vector<T>& inDataVector
 	DeviceMemoryWrapper stagingMemory;
 	CreateBuffer(stagingBuffer, size, BufferUsageFlagBits::eTransferSrc, SharingMode::eExclusive, MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& memRec = stagingBuffer.GetMemoryRecord();
-	memRec.memory.MapCopyUnmap(MemoryMapFlags(), memRec.memoryOffset, size, inDataVector.data(), 0, size);
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, size, inDataVector.data(), 0, size);
 
 	CreateBuffer(inBuffer, size, usage | BufferUsageFlagBits::eTransferDst,	SharingMode::eExclusive, MemoryPropertyFlagBits::eDeviceLocal);
 

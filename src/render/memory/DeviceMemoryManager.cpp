@@ -17,6 +17,31 @@ DeviceMemoryManager::~DeviceMemoryManager()
 
 }
 
+DeviceSize DeviceMemoryManager::GetRangeBase(uint32_t inIndex)
+{
+	return baseMemorySegmentSize << (inIndex * (sizeRangeShift + 1));
+}
+
+DeviceSize DeviceMemoryManager::GetRangeMax(uint32_t inIndex)
+{
+	return GetRangeBase(inIndex) << sizeRangeShift;
+}
+
+uint32_t DeviceMemoryManager::GetRangeIndex(DeviceSize inSize)
+{
+	for (uint32_t index = 0; index < maxRanges; index++)
+	{
+		DeviceSize baseRangeSize = baseMemorySegmentSize << ( index * (sizeRangeShift + 1) );
+		DeviceSize rangeUpperLimit = baseRangeSize << sizeRangeShift;
+		if (inSize < rangeUpperLimit)
+		{
+			return index;
+		}
+	}
+
+	return maxRanges - 1;
+}
+
 DeviceMemoryManager* DeviceMemoryManager::GetInstance()
 {
 	return &staticInstance;
@@ -24,11 +49,14 @@ DeviceMemoryManager* DeviceMemoryManager::GetInstance()
 
 MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
 {
+	auto startTime = std::chrono::high_resolution_clock::now();
+
 	MemoryRecord memoryRecord;
 
-	DeviceSize memTypeIndex = DeviceMemoryWrapper::FindMemoryType(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
-	DeviceSize elementSize = inMemRequirements.size;
-	uint64_t regionHash = elementSize & (memTypeIndex << 32);
+	uint64_t memTypeIndex = DeviceMemoryWrapper::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
+	DeviceSize requiredSize = inMemRequirements.size;
+	uint64_t rangeIndex = GetRangeIndex(requiredSize);
+	uint64_t regionHash = rangeIndex | (memTypeIndex << 32);
 
 	std::vector<DeviceMemoryChunk>& chunkArray = memRegions[regionHash];
 	for (uint64_t index = 0; index < chunkArray.size(); index++)
@@ -36,30 +64,50 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 		DeviceMemoryChunk& chunk = chunkArray[index];
 		if (chunk.HasFreeSpace())
 		{
-			memoryRecord.regionHash = regionHash;
-			memoryRecord.chunkIndex = index;
-			memoryRecord.chunkSlot = chunk.AcquireSlot();
-			memoryRecord.memoryOffset = chunk.GetSlotOffset(memoryRecord.chunkSlot);
-			memoryRecord.memory = chunk.GetMemory();
-			return memoryRecord;
+			MemoryPosition pos = chunk.AcquireSegment(requiredSize);
+			if (pos.valid)
+			{
+				memoryRecord.regionHash = regionHash;
+				memoryRecord.chunkIndex = index;
+				memoryRecord.pos = pos;
+
+				auto currentTime = std::chrono::high_resolution_clock::now();
+				double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+
+				printf("my allocation %f microseconds\n", deltaTime);
+
+				return memoryRecord;
+			}
 		}
 	}
 
-	chunkArray.push_back(DeviceMemoryChunk(32));
+	chunkArray.push_back(DeviceMemoryChunk(GetRangeBase(static_cast<uint32_t>(rangeIndex)), memoryTreeDepth));
+
+	startTime = std::chrono::high_resolution_clock::now();
+
 	DeviceMemoryChunk& chunk = chunkArray.back();
-//	chunk.Allocate(CHUNK_ELEMENT_COUNT, inMemRequirements, inMemPropertyFlags);
+	chunk.Allocate(inMemRequirements, inMemPropertyFlags);
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+
+	printf("vulkan allocation %f microseconds\n", deltaTime);
+
+	MemoryPosition pos = chunk.AcquireSegment(requiredSize);
 
 	memoryRecord.regionHash = regionHash;
 	memoryRecord.chunkIndex = chunkArray.size() - 1;
-	memoryRecord.chunkSlot = chunk.AcquireSlot();
-	memoryRecord.memoryOffset = chunk.GetSlotOffset(memoryRecord.chunkSlot);
-	memoryRecord.memory = chunk.GetMemory();
+	memoryRecord.pos = pos;
+
+	currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+
 	return memoryRecord;
 }
 
 void DeviceMemoryManager::ReturnMemory(const MemoryRecord& inMemoryPosition)
 {
-	memRegions[inMemoryPosition.regionHash][inMemoryPosition.chunkIndex].ReleaseSlot(inMemoryPosition.chunkSlot);
+	memRegions[inMemoryPosition.regionHash][inMemoryPosition.chunkIndex].ReleaseSegment(inMemoryPosition.pos);
 }
 
 void DeviceMemoryManager::CleanupMemory()

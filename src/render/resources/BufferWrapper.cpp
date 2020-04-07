@@ -35,7 +35,7 @@ void BufferWrapper::BindMemory(MemoryPropertyFlags inMemPropertyFlags)
 {
 	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
 	memRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemPropertyFlags);
-	device.bindBufferMemory(buffer, memRecord.memory, memRecord.memoryOffset);
+	device.bindBufferMemory(buffer, memRecord.pos.memory, memRecord.pos.offset);
 }
 
 void BufferWrapper::BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset)

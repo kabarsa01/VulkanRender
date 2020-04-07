@@ -230,17 +230,22 @@ int Renderer::GetHeight() const
 	return height;
 }
 
-VULKAN_HPP_NAMESPACE::PhysicalDevice Renderer::GetPhysicalDevice()
+PhysicalDevice Renderer::GetPhysicalDevice()
 {
 	return vulkanPhysicalDevice;
 }
 
-VULKAN_HPP_NAMESPACE::Device Renderer::GetDevice()
+PhysicalDeviceMemoryProperties Renderer::GetPhysicalDeviceMemoryProps()
+{
+	return cachedPhysMemProps;
+}
+
+Device Renderer::GetDevice()
 {
 	return vulkanDevice;
 }
 
-VULKAN_HPP_NAMESPACE::SwapchainKHR Renderer::GetSwapChain()
+SwapchainKHR Renderer::GetSwapChain()
 {
 	return vulkanSwapChain;
 }
@@ -295,6 +300,7 @@ void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevi
 	// Check if the best candidate is suitable at all
 	if (candidates.rbegin()->first > 0) {
 		vulkanPhysicalDevice = candidates.rbegin()->second;
+		cachedPhysMemProps = vulkanPhysicalDevice.getMemoryProperties();
 	}
 	else {
 		throw std::runtime_error("failed to find a suitable GPU!");
@@ -902,7 +908,7 @@ void Renderer::UpdateUniformBuffer()
 	ubo.proj = camComp->CalculateProjectionMatrix(); 
 
 	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
-	memRec.memory.MapCopyUnmap(MemoryMapFlags(), memRec.memoryOffset, sizeof(UniformBufferObject), &ubo, 0, sizeof(UniformBufferObject));
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(UniformBufferObject), &ubo, 0, sizeof(UniformBufferObject));
 //	uniformBuffer.CopyData(&ubo, MemoryMapFlags(), 0);
 }
 

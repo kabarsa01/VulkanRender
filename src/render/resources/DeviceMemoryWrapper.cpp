@@ -51,7 +51,7 @@ void DeviceMemoryWrapper::Allocate(DeviceSize inSize, uint32_t inMemTypeBits, Me
 
 	MemoryAllocateInfo memoryInfo;
 	memoryInfo.setAllocationSize(inSize);
-	memoryInfo.setMemoryTypeIndex(FindMemoryType(inMemTypeBits, inMemPropertyFlags));
+	memoryInfo.setMemoryTypeIndex(FindMemoryTypeStatic(inMemTypeBits, inMemPropertyFlags));
 	deviceMemory = device.allocateMemory(memoryInfo);
 
 	size = inSize;
@@ -130,10 +130,9 @@ DeviceMemoryWrapper::operator DeviceMemory() const
 	return deviceMemory;
 }
 
-uint32_t DeviceMemoryWrapper::FindMemoryType(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags)
+uint32_t DeviceMemoryWrapper::FindMemoryTypeStatic(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags)
 {
-	PhysicalDeviceMemoryProperties memProps;
-	memProps = Engine::GetRendererInstance()->GetPhysicalDevice().getMemoryProperties();
+	PhysicalDeviceMemoryProperties memProps = Engine::GetRendererInstance()->GetPhysicalDeviceMemoryProps();
 
 	for (uint32_t index = 0; index < memProps.memoryTypeCount; index++)
 	{

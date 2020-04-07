@@ -7,12 +7,15 @@ namespace
 	static const unsigned char splitFlag = 1 << 1;
 };
 
-DeviceMemoryChunk::DeviceMemoryChunk(DeviceSize inSegmentSize)
+DeviceMemoryChunk::DeviceMemoryChunk(DeviceSize inSegmentSize, uint32_t inTreeDepth)
 	: segmentSize(inSegmentSize)
-	, memoryTree{}
+	, treeDepth(inTreeDepth)
+	, treeSize((1 << treeDepth) - 1)
+	, segmentCount(1 << (treeDepth - 1))
 {
+	memoryTree = new unsigned char[treeSize];
 	memoryTree[0] = freeFlag;
-	for (uint64_t index = 1; index < MEM_TREE_SIZE; index++)
+	for (uint64_t index = 1; index < treeSize; index++)
 	{
 		unsigned char value = freeFlag;
 		value |= ( (index % 2) * buddyFlag );
@@ -20,14 +23,21 @@ DeviceMemoryChunk::DeviceMemoryChunk(DeviceSize inSegmentSize)
 	}
 }
 
-DeviceMemoryChunk::~DeviceMemoryChunk()
+DeviceMemoryChunk::DeviceMemoryChunk(const DeviceMemoryChunk& inOther)
+	: DeviceMemoryChunk(inOther.segmentSize, inOther.treeDepth)
 {
 
 }
 
+DeviceMemoryChunk::~DeviceMemoryChunk()
+{
+	Free();
+	delete [] memoryTree;
+}
+
 void DeviceMemoryChunk::Allocate(uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags)
 {
-	DeviceSize chunkSize = segmentSize * MEM_SEGMENTS_COUNT;
+	DeviceSize chunkSize = segmentSize * segmentCount;
 	memory.Allocate(chunkSize, inMemTypeBits, inMemPropertyFlags);
 }
 
@@ -41,7 +51,7 @@ void DeviceMemoryChunk::Free()
 	memory.Free();
 }
 
-MemoryChunkPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
+MemoryPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 {
 	DeviceSize order = 0;
 	DeviceSize requiredSize = segmentSize;
@@ -52,7 +62,7 @@ MemoryChunkPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 		layer++;
 	}
 
-	uint32_t currentLayer = MEM_LAYERS_COUNT - 1;
+	uint32_t currentLayer = treeDepth - 1;
 	uint32_t nodeIndex = GetLayerStartIndex(currentLayer);
 	uint32_t targetIndex;
 	bool success = FindSegmentIndex(currentLayer, layer, nodeIndex, targetIndex);
@@ -62,7 +72,7 @@ MemoryChunkPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 	}
 	MarkNotFreeUp(layer, targetIndex);
 
-	MemoryChunkPosition pos;
+	MemoryPosition pos;
 	pos.valid = true;
 	pos.index = targetIndex;
 	pos.layer = layer;
@@ -72,19 +82,9 @@ MemoryChunkPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 	return pos;
 }
 
-DeviceSize DeviceMemoryChunk::AcquireSlot()
+void DeviceMemoryChunk::ReleaseSegment(const MemoryPosition& inMemoryPosition)
 {
-	DeviceSize slot = 0;// = freeSlots.front();
-	return slot;
-}
-
-void DeviceMemoryChunk::ReleaseSlot(DeviceSize inSlot)
-{
-}
-
-DeviceSize DeviceMemoryChunk::GetSlotOffset(DeviceSize inSlot)
-{
-	return segmentSize * inSlot;
+	MarkFreeUp(inMemoryPosition.layer, inMemoryPosition.index);
 }
 
 DeviceMemoryWrapper& DeviceMemoryChunk::GetMemory()
@@ -94,12 +94,12 @@ DeviceMemoryWrapper& DeviceMemoryChunk::GetMemory()
 
 bool DeviceMemoryChunk::HasFreeSpace()
 {
-	return true;
+	return memoryTree[0] & freeFlag;
 }
 
 uint32_t DeviceMemoryChunk::GetLayerStartIndex(uint32_t inLayer)
 {
-	uint32_t layerInverted = MEM_LAYERS_COUNT - inLayer - 1;
+	uint32_t layerInverted = treeDepth - inLayer - 1;
 	uint32_t layerStartIndex = (1 << layerInverted) - 1;
 	return layerStartIndex;
 }
@@ -133,6 +133,11 @@ DeviceSize DeviceMemoryChunk::CalculateOffset(uint32_t inLayer, uint32_t inIndex
 
 bool DeviceMemoryChunk::FindSegmentIndex(uint32_t inCurrentLayer, uint32_t inTargetLayer, uint32_t inIndex, uint32_t& outTargetIndex)
 {
+	if (inCurrentLayer < 0)
+	{
+		return false;
+	}
+
 	const unsigned char value = memoryTree[inIndex];
 
 	bool isFree = value & freeFlag;
@@ -146,11 +151,11 @@ bool DeviceMemoryChunk::FindSegmentIndex(uint32_t inCurrentLayer, uint32_t inTar
 	{
 		memoryTree[inIndex] |= splitFlag;
 		uint32_t childBaseIndex = GetChildIndex(inIndex);
-		if (FindSegmentIndex(inCurrentLayer + 1, inTargetLayer, childBaseIndex, outTargetIndex))
+		if (FindSegmentIndex(inCurrentLayer - 1, inTargetLayer, childBaseIndex, outTargetIndex))
 		{
 			return true;
 		}
-		return FindSegmentIndex(inCurrentLayer + 1, inTargetLayer, childBaseIndex + 1, outTargetIndex);
+		return FindSegmentIndex(inCurrentLayer - 1, inTargetLayer, childBaseIndex + 1, outTargetIndex);
 	}
 
 	bool isSplit = value & splitFlag;
@@ -167,7 +172,13 @@ bool DeviceMemoryChunk::FindSegmentIndex(uint32_t inCurrentLayer, uint32_t inTar
 
 void DeviceMemoryChunk::MarkFreeUp(uint32_t inStartLayer, uint32_t inIndex)
 {
-	if (inStartLayer >= MEM_LAYERS_COUNT)
+	if (inStartLayer >= treeDepth)
+	{
+		return;
+	}
+
+	memoryTree[inIndex] |= freeFlag;
+	if (inIndex == 0)
 	{
 		return;
 	}
@@ -175,7 +186,6 @@ void DeviceMemoryChunk::MarkFreeUp(uint32_t inStartLayer, uint32_t inIndex)
 	uint32_t siblingIndex = GetSiblingIndex(inIndex);
 	uint32_t parentIndex = GetParentIndex(inIndex);
 
-	memoryTree[inIndex] |= freeFlag;
 	bool isSiblingSplit = memoryTree[siblingIndex] & splitFlag;
 	if (!isSiblingSplit)
 	{
@@ -188,7 +198,7 @@ void DeviceMemoryChunk::MarkFreeUp(uint32_t inStartLayer, uint32_t inIndex)
 
 void DeviceMemoryChunk::MarkNotFreeUp(uint32_t inStartLayer, uint32_t inIndex)
 {
-	if (inStartLayer >= MEM_LAYERS_COUNT)
+	if (inStartLayer >= treeDepth || inIndex == 0)
 	{
 		return;
 	}

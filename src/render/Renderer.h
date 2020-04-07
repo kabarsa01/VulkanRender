@@ -87,6 +87,7 @@ public:
 	int GetHeight() const;
 
 	VULKAN_HPP_NAMESPACE::PhysicalDevice GetPhysicalDevice();
+	PhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProps();
 	VULKAN_HPP_NAMESPACE::Device GetDevice();
 	VULKAN_HPP_NAMESPACE::SwapchainKHR GetSwapChain();
 	VULKAN_HPP_NAMESPACE::CommandPool GetCommandPool();
@@ -111,6 +112,7 @@ private:
 #else
 	const bool enableValidationLayers = true;
 #endif
+	PhysicalDeviceMemoryProperties cachedPhysMemProps;
 
 	VULKAN_HPP_NAMESPACE::Instance vulkanInstance;
 	VULKAN_HPP_NAMESPACE::SurfaceKHR vulkanSurface;

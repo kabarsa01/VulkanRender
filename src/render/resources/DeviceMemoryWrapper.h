@@ -36,7 +36,7 @@ public:
 	operator bool() const;
 	operator DeviceMemory() const;
 
-	static uint32_t FindMemoryType(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags);
+	static uint32_t FindMemoryTypeStatic(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags);
 protected:
 	bool scoped;
 	Device device;

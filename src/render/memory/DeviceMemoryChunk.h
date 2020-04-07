@@ -3,11 +3,7 @@
 #include <deque>
 #include "../resources/DeviceMemoryWrapper.h"
 
-static const uint64_t MEM_LAYERS_COUNT = 15;
-static const uint64_t MEM_SEGMENTS_COUNT = 1 << (MEM_LAYERS_COUNT - 1);
-static const uint64_t MEM_TREE_SIZE = (1 << MEM_LAYERS_COUNT) - 1;
-
-struct MemoryChunkPosition
+struct MemoryPosition
 {
 	bool valid;
 	uint32_t layer;
@@ -19,23 +15,25 @@ struct MemoryChunkPosition
 class DeviceMemoryChunk
 {
 public:
-	DeviceMemoryChunk(DeviceSize inSegmentSize);
+	DeviceMemoryChunk(DeviceSize inSegmentSize, uint32_t inTreeDepth);
+	DeviceMemoryChunk(const DeviceMemoryChunk& inOther);
 	virtual ~DeviceMemoryChunk();
 
 	void Allocate(uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags);
 	void Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags);
 	void Free();
 
-	MemoryChunkPosition AcquireSegment(DeviceSize inSize);
+	MemoryPosition AcquireSegment(DeviceSize inSize);
+	void ReleaseSegment(const MemoryPosition& inMemoryPosition);
 
-	DeviceSize AcquireSlot();
-	void ReleaseSlot(DeviceSize inSlot);
-	DeviceSize GetSlotOffset(DeviceSize inSlot);
 	DeviceMemoryWrapper& GetMemory();
 	bool HasFreeSpace();
 protected:
+	uint32_t treeDepth;
+	uint32_t treeSize;
+	uint32_t segmentCount;
 	// flattened binary tree for memory segment tracking
-	unsigned char memoryTree[MEM_TREE_SIZE];
+	unsigned char* memoryTree;
 	DeviceMemoryWrapper memory;
 	DeviceSize segmentSize;
 
