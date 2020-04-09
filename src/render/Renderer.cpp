@@ -37,8 +37,6 @@ const std::vector<uint32_t> indices = {
 	0, 1, 2, 2, 3, 0
 };
 
-using namespace VULKAN_HPP_NAMESPACE;
-
 Renderer::Renderer()
 {
 }
@@ -55,62 +53,13 @@ void Renderer::OnInitialize()
 
 void Renderer::Init()
 {
-	if (enableValidationLayers && !CheckValidationLayerSupport()) {
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
+	HWND hWnd = glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow());
+	device.Create("VulkanRenderer", "VulkanEngine", enableValidationLayers, hWnd);
+	swapChain.Create(&device, 2);
+	swapChain.CreateForResolution(width, height);
 
-	ApplicationInfo applicationInfo(
-		"SimpleVulkanRenderer",
-		version,
-		"VulkanEngine",
-		version,
-		VK_API_VERSION_1_2
-	);
-
-	uint32_t glfwInstanceExtensionsCount;
-	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwInstanceExtensionsCount);
-
-	InstanceCreateInfo instanceCreateInfo;
-	instanceCreateInfo
-		.setPApplicationInfo(&applicationInfo)
-		.setEnabledExtensionCount(glfwInstanceExtensionsCount)
-		.setPpEnabledExtensionNames(glfwExtensions);
-
-	if (enableValidationLayers)
-	{
-		instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(validationLayers.size()));
-		instanceCreateInfo.setPpEnabledLayerNames(validationLayers.data());
-	}
-	else
-	{
-		instanceCreateInfo.setEnabledLayerCount(0);
-	}
-
-	//ResultValueType<VULKAN_HPP_NAMESPACE::Instance>::type Result = createInstance(InstCreateInfo, );
-
-	vulkanInstance = createInstance(instanceCreateInfo);
-	Win32SurfaceCreateInfoKHR surfaceCreateInfo;
-	surfaceCreateInfo.setHwnd(glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow()));
-	surfaceCreateInfo.setHinstance(GetModuleHandle(nullptr));
-	vulkanSurface = vulkanInstance.createWin32SurfaceKHR(surfaceCreateInfo);
-
-	//-----------------------------------------------------------------------------------------------------
-
-	std::vector<ExtensionProperties> extensionsResult = enumerateInstanceExtensionProperties();
-	for (ExtensionProperties extensionProperties : extensionsResult)
-	{
-		std::cout << "\t" << extensionProperties.extensionName << std::endl;
-	}
-
-	std::vector<PhysicalDevice> devices = vulkanInstance.enumeratePhysicalDevices();
-	PickPhysicalDevice(devices);
-	CreateLogicalDevice();
-	CreateSwapChain();
-	CreateImageViews();
-	CreateRenderPass();
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
-	CreateFramebuffers();
 	CreateCommandPool();
 
 	ScenePtr scene = Engine::GetSceneInstance();
@@ -122,30 +71,16 @@ void Renderer::Init()
 	CreateDescriptorSets();
 
 	CreateCommandBuffers();
-	CreateSemaphores();
 }
 
 void Renderer::RenderFrame()
 {
-	uint32_t imageIndex;
-	ResultValue<uint32_t> imageIndexResult = vulkanDevice.acquireNextImageKHR(vulkanSwapChain, UINT64_MAX, imageAvailableSemaphore, Fence());
-
-	if (imageIndexResult.result == Result::eErrorOutOfDateKHR || imageIndexResult.result == Result::eErrorIncompatibleDisplayKHR)
-	{
-		RecreateSwapChain();
-		return;
-	}
-	else if (imageIndexResult.result != Result::eSuccess && imageIndexResult.result != Result::eSuboptimalKHR)
-	{
-		throw std::runtime_error("failed to acquire swap chain image");
-	}
+	uint32_t imageIndex = swapChain.AcquireNextImage();
 
 	UpdateUniformBuffer();
 
-	imageIndex = imageIndexResult.value;
-
 	SubmitInfo submitInfo;
-	Semaphore waitSemaphores[] = {imageAvailableSemaphore};
+	Semaphore waitSemaphores[] = { swapChain.GetImageAvailableSemaphore() };
 	PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };
 	submitInfo.setWaitSemaphoreCount(1);
 	submitInfo.setPWaitSemaphores(waitSemaphores);
@@ -153,43 +88,20 @@ void Renderer::RenderFrame()
 	submitInfo.setCommandBufferCount(1);
 	submitInfo.setPCommandBuffers(&commandBuffers[imageIndex]);
 
-	Semaphore signalSemaphores[] = { renderFinishedSemaphore };
+	Semaphore signalSemaphores[] = { swapChain.GetRenderingFinishedSemaphore() };
 	submitInfo.setSignalSemaphoreCount(1);
 	submitInfo.setPSignalSemaphores(signalSemaphores);
 
 	ArrayProxy<const SubmitInfo> submitInfoArray(1, &submitInfo);
-	graphicsQueue.submit(submitInfoArray, Fence());
+	device.GetGraphicsQueue().submit(submitInfoArray, Fence());
 
-	SwapchainKHR swapChains[] = { vulkanSwapChain };
-	PresentInfoKHR presentInfo;
-	presentInfo.setWaitSemaphoreCount(1);
-	presentInfo.setPWaitSemaphores(signalSemaphores);
-	presentInfo.setSwapchainCount(1);
-	presentInfo.setPSwapchains(swapChains);
-	presentInfo.setPImageIndices(&imageIndex);
-	presentInfo.setPResults(nullptr);
-
-	Result presentResult = Result::eSuccess;
-	try
-	{
-		presentResult = presentQueue.presentKHR(presentInfo);
-	}
-	catch (std::exception)
-	{
-	}
-
-	if (presentResult == Result::eErrorOutOfDateKHR || presentResult == Result::eSuboptimalKHR || framebufferResized)
-	{
-		framebufferResized = false;
-		RecreateSwapChain();
-	}
-
-	presentQueue.waitIdle();
+	swapChain.Present();
+	swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()
 {
-	vulkanDevice.waitIdle();
+	device.GetDevice().waitIdle();
 }
 
 void Renderer::Cleanup()
@@ -200,19 +112,15 @@ void Renderer::Cleanup()
 
 	uniformBuffer.Destroy();
 
-	CleanupSwapChain();
-	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
-	vulkanDevice.destroyDescriptorPool(descriptorPool);
-
-	vulkanDevice.destroySemaphore(imageAvailableSemaphore);
-	vulkanDevice.destroySemaphore(renderFinishedSemaphore);
-
-	vulkanDevice.destroyCommandPool(commandPool);
+	device.GetDevice().destroyDescriptorSetLayout(descriptorSetLayout);
+	device.GetDevice().destroyDescriptorPool(descriptorPool);
+	device.GetDevice().destroyCommandPool(commandPool);
+	// destroying pipelines
+	device.GetDevice().destroyPipeline(pipeline);
+	device.GetDevice().destroyPipelineLayout(pipelineLayout);
 	
-	DeviceMemoryManager::GetInstance()->CleanupMemory();
-	vulkanDevice.destroy();
-	vulkanInstance.destroySurfaceKHR(vulkanSurface);
-	vulkanInstance.destroy();
+	swapChain.Destroy();
+	device.Destroy();
 }
 
 void Renderer::SetResolution(int inWidth, int inHeight)
@@ -233,399 +141,45 @@ int Renderer::GetHeight() const
 	return height;
 }
 
-PhysicalDevice Renderer::GetPhysicalDevice()
+VulkanDevice& Renderer::GetVulkanDevice()
 {
-	return vulkanPhysicalDevice;
+	return device;
 }
 
-PhysicalDeviceMemoryProperties Renderer::GetPhysicalDeviceMemoryProps()
+VulkanSwapChain& Renderer::GetSwapChain()
 {
-	return cachedPhysMemProps;
+	return swapChain;
 }
 
-Device Renderer::GetDevice()
-{
-	return vulkanDevice;
-}
-
-SwapchainKHR Renderer::GetSwapChain()
-{
-	return vulkanSwapChain;
-}
-
-VULKAN_HPP_NAMESPACE::CommandPool Renderer::GetCommandPool()
+CommandPool Renderer::GetCommandPool()
 {
 	return commandPool;
 }
 
-VULKAN_HPP_NAMESPACE::Queue Renderer::GetGraphicsQueue()
+Queue Renderer::GetGraphicsQueue()
 {
-	return graphicsQueue;
-}
-
-bool Renderer::CheckValidationLayerSupport()
-{
-	std::vector<LayerProperties> layerProps = enumerateInstanceLayerProperties();
-
-	for (std::string layer : validationLayers)
-	{
-		bool layerFound = false;
-
-		for (LayerProperties prop : layerProps)
-		{
-			std::string availableLayerName(prop.layerName);
-			if (availableLayerName == layer)
-			{
-				layerFound = true;
-				break;
-			}
-		}
-
-		if (!layerFound)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-void Renderer::PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices)
-{
-	// Use an ordered map to automatically sort candidates by increasing score
-	std::multimap<int, PhysicalDevice> candidates;
-
-	for (const auto& device : inDevices) {
-		int score = ScoreDeviceSuitability(device);
-		candidates.insert(std::make_pair(score, device));
-	}
-
-	// Check if the best candidate is suitable at all
-	if (candidates.rbegin()->first > 0) {
-		vulkanPhysicalDevice = candidates.rbegin()->second;
-		cachedPhysMemProps = vulkanPhysicalDevice.getMemoryProperties();
-	}
-	else {
-		throw std::runtime_error("failed to find a suitable GPU!");
-	}
-}
-
-int Renderer::ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
-{
-	if (!IsDeviceUsable(inPhysicalDevice))
-	{
-		return 0;
-	}
-
-	int score = 0;
-
-	PhysicalDeviceProperties physicalDeviceProperties = inPhysicalDevice.getProperties();
-	// Discrete GPUs have a significant performance advantage
-	if (physicalDeviceProperties.deviceType == PhysicalDeviceType::eDiscreteGpu) {
-		score += 1000;
-	}
-
-	// Maximum possible size of textures affects graphics quality
-	score += (int) ( physicalDeviceProperties.limits.maxImageDimension2D * 0.5f );
-
-	PhysicalDeviceFeatures physicalDeviceFeatures = inPhysicalDevice.getFeatures();
-	// Application can't function without geometry shaders
-	if (!physicalDeviceFeatures.geometryShader) {
-		return 0;
-	}
-
-	return score;
-}
-
-int Renderer::IsDeviceUsable(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
-{
-	QueueFamilyIndices families = FindQueueFamilies(inPhysicalDevice);
-	bool extensionsSupported = CheckPhysicalDeviceExtensionSupport(inPhysicalDevice);
-	bool swapChainSupported = false;
-	if (extensionsSupported)
-	{
-		swapChainSupported = QuerySwapChainSupport(inPhysicalDevice).IsUsable();
-	}
-
-	return families.IsComplete() && extensionsSupported && swapChainSupported;
-}
-
-bool Renderer::CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
-{
-	 std::vector<ExtensionProperties> extensionPropsResult = inPhysicalDevice.enumerateDeviceExtensionProperties();
-
-	 std::set<std::string> requiredExtensionsSet(requiredExtensions.begin(), requiredExtensions.end());
-
-	 for (ExtensionProperties& extension : extensionPropsResult)
-	 {
-		 requiredExtensionsSet.erase(extension.extensionName);
-	 }
-
-	 return requiredExtensionsSet.empty();
-}
-
-QueueFamilyIndices Renderer::FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
-{
-	QueueFamilyIndices indices;
-
-	uint32_t familyIndex = 0;
-	std::vector<QueueFamilyProperties> queueFamiliesProperties = inPhysicalDevice.getQueueFamilyProperties();
-	for (QueueFamilyProperties & familyProperties : queueFamiliesProperties)
-	{
-		if (familyProperties.queueFlags & QueueFlagBits::eGraphics)
-		{
-			indices.graphicsFamily = familyIndex;
-		}
-		if (familyProperties.queueFlags & QueueFlagBits::eCompute)
-		{
-			indices.computeFamily = familyIndex;
-		}
-		Bool32 surfaceSupportResult = inPhysicalDevice.getSurfaceSupportKHR(familyIndex, vulkanSurface);
-		if (surfaceSupportResult)
-		{
-			indices.presentFamily = familyIndex;
-		}
-
-		familyIndex++;
-	}
-
-	return indices;
-}
-
-SwapChainSupportDetails Renderer::QuerySwapChainSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice)
-{
-	SwapChainSupportDetails swapChainSupportDetails;
-
-	swapChainSupportDetails.capabilities = inPhysicalDevice.getSurfaceCapabilitiesKHR(vulkanSurface);
-	swapChainSupportDetails.formats = inPhysicalDevice.getSurfaceFormatsKHR(vulkanSurface);
-	swapChainSupportDetails.presentModes = inPhysicalDevice.getSurfacePresentModesKHR(vulkanSurface);
-
-	return swapChainSupportDetails;
-}
-
-void Renderer::CreateLogicalDevice()
-{
-	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(vulkanPhysicalDevice);
-
-	std::vector<DeviceQueueCreateInfo> queueCreateInfoVector;
-	for (uint32_t queueFamiltIndex : queueFamilyIndices.GetFamiliesSet())
-	{
-		DeviceQueueCreateInfo queueCreateInfo;
-		queueCreateInfo.setQueueFamilyIndex(queueFamiltIndex);
-		queueCreateInfo.setQueueCount(1); // magic 1
-		float priority = 0.0f;
-		queueCreateInfo.setPQueuePriorities(&priority);
-
-		queueCreateInfoVector.push_back(queueCreateInfo);
-	}
-
-	PhysicalDeviceFeatures deviceFeatures;
-
-	DeviceCreateInfo deviceCreateInfo;
-	deviceCreateInfo.setPQueueCreateInfos(queueCreateInfoVector.data());
-	deviceCreateInfo.setQueueCreateInfoCount((uint32_t)queueCreateInfoVector.size());
-	deviceCreateInfo.setPEnabledFeatures(&deviceFeatures);
-	deviceCreateInfo.setEnabledExtensionCount((uint32_t)requiredExtensions.size());
-	deviceCreateInfo.setPpEnabledExtensionNames(requiredExtensions.data());
-	deviceCreateInfo.setEnabledLayerCount(0);
-
-	vulkanDevice = vulkanPhysicalDevice.createDevice(deviceCreateInfo);
-
-	graphicsQueue = vulkanDevice.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
-	computeQueue = vulkanDevice.getQueue(queueFamilyIndices.computeFamily.value(), 0);
-	presentQueue = vulkanDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
-}
-
-SurfaceFormatKHR Renderer::ChooseSurfaceFormat(const std::vector<SurfaceFormatKHR>& inFormats)
-{
-	for (const SurfaceFormatKHR& surfaceFormat : inFormats)
-	{
-		if (surfaceFormat.format == Format::eR8G8B8A8Unorm && surfaceFormat.colorSpace == ColorSpaceKHR::eSrgbNonlinear)
-		{
-			return surfaceFormat;
-		}
-	}
-
-	return inFormats[0];
-}
-
-PresentModeKHR Renderer::ChooseSwapChainPresentMode(const std::vector<PresentModeKHR>& inPresentModes)
-{
-	for (const PresentModeKHR& presentMode : inPresentModes)
-	{
-		if (presentMode == PresentModeKHR::eMailbox)
-		{
-			return presentMode;
-		}
-	}
-
-	return PresentModeKHR::eFifo;
-}
-
-VULKAN_HPP_NAMESPACE::Extent2D Renderer::ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities)
-{
-	if (inCapabilities.currentExtent.width != UINT32_MAX)
-	{
-		return inCapabilities.currentExtent;
-	}
-	else
-	{
-		int windowWidth, windowHeight;
-		GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
-		glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
-
-		Extent2D extent;
-		
-		extent.setWidth( std::clamp<int>( windowWidth/*width*/, inCapabilities.minImageExtent.width, inCapabilities.maxImageExtent.width ) );
-		extent.setHeight( std::clamp<int>( windowHeight/*height*/, inCapabilities.minImageExtent.height, inCapabilities.maxImageExtent.height ) );
-
-		return extent;
-	}
-}
-
-void Renderer::CreateSwapChain()
-{
-	SwapChainSupportDetails scSupportDetails = QuerySwapChainSupport(vulkanPhysicalDevice);
-
-	SurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(scSupportDetails.formats);
-	PresentModeKHR presentMode = ChooseSwapChainPresentMode(scSupportDetails.presentModes);
-	Extent2D extent = ChooseSwapChainExtent(scSupportDetails.capabilities);
-
-	swapChainImageFormat = surfaceFormat.format;
-	swapChainExtent = extent;
-
-	SurfaceCapabilitiesKHR& capabilities = scSupportDetails.capabilities;
-
-	uint32_t imageCount = capabilities.minImageCount + 1;
-	if ( capabilities.maxImageCount > 0 && (imageCount > capabilities.maxImageCount) )
-	{
-		imageCount = capabilities.maxImageCount;
-	}
-
-	SwapchainCreateInfoKHR createInfo;
-	createInfo
-		.setSurface(vulkanSurface)
-		.setMinImageCount(imageCount)
-		.setImageFormat(surfaceFormat.format)
-		.setImageColorSpace(surfaceFormat.colorSpace)
-		.setImageExtent(extent)
-		.setImageUsage(ImageUsageFlagBits::eColorAttachment)// ImageUsageFlagBits::eTransferDst or ImageUsageFlagBits::eDepthStencilAttachment
-		.setImageArrayLayers(1)
-		.setPreTransform(capabilities.currentTransform)
-		.setCompositeAlpha(CompositeAlphaFlagBitsKHR::eOpaque)
-		.setPresentMode(presentMode)
-		.setClipped(VK_TRUE)
-		.setOldSwapchain(SwapchainKHR());
-
-	QueueFamilyIndices familyIndices = FindQueueFamilies(vulkanPhysicalDevice);
-	uint32_t queueFamilyIndices[] = { familyIndices.graphicsFamily.value(), familyIndices.presentFamily.value() };
-	if (familyIndices.graphicsFamily != familyIndices.presentFamily)
-	{
-		createInfo.setImageSharingMode(SharingMode::eConcurrent);
-		createInfo.setQueueFamilyIndexCount(2);
-		createInfo.setPQueueFamilyIndices(queueFamilyIndices);
-	}
-	else
-	{
-		createInfo.setImageSharingMode(SharingMode::eExclusive);
-	}
-
-	vulkanSwapChain = vulkanDevice.createSwapchainKHR(createInfo);
-	swapChainImages = vulkanDevice.getSwapchainImagesKHR(vulkanSwapChain);
-}
-
-void Renderer::CleanupSwapChain()
-{
-	for (Framebuffer framebuffer : swapChainFramebuffers)
-	{
-		vulkanDevice.destroyFramebuffer(framebuffer);
-	}
-	vulkanDevice.freeCommandBuffers(commandPool, commandBuffers);
-	vulkanDevice.destroyPipeline(pipeline);
-	vulkanDevice.destroyPipelineLayout(pipelineLayout);
-	vulkanDevice.destroyRenderPass(renderPass);
-
-	for (const ImageView& imageView : swapChainImageViews) { vulkanDevice.destroyImageView(imageView); }
-
-	vulkanDevice.destroySwapchainKHR(vulkanSwapChain);
+	return device.GetGraphicsQueue();
 }
 
 void Renderer::RecreateSwapChain()
 {
-	vulkanDevice.waitIdle();
+	//device.waitIdle();
 
-	uniformBuffer.Destroy();
-	CleanupSwapChain();
-	vulkanDevice.destroyDescriptorSetLayout(descriptorSetLayout);
-	vulkanDevice.destroyDescriptorPool(descriptorPool);
+	//uniformBuffer.Destroy();
+	//CleanupSwapChain();
+	//device.destroyDescriptorSetLayout(descriptorSetLayout);
+	//device.destroyDescriptorPool(descriptorPool);
 
-	CreateSwapChain();
-	CreateImageViews();
-	CreateRenderPass();
-	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline();
-	CreateFramebuffers();
-	CreateUniformBuffers();
-	CreateDescriptorPool();
-	CreateDescriptorSets();
-	CreateCommandBuffers();
-}
-
-void Renderer::CreateImageViews()
-{
-	swapChainImageViews.resize(swapChainImages.size());
-	for (uint32_t index = 0; index < swapChainImages.size(); index++)
-	{
-		ImageViewCreateInfo createInfo;
-		createInfo
-			.setImage(swapChainImages[index])
-			.setViewType(ImageViewType::e2D)
-			.setFormat(swapChainImageFormat)
-			.setComponents(ComponentMapping())
-			.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-
-		swapChainImageViews[index] = vulkanDevice.createImageView(createInfo);
-	}
-}
-
-void Renderer::CreateRenderPass()
-{
-	AttachmentDescription colorAttachment;
-	colorAttachment.setFormat(swapChainImageFormat);
-	colorAttachment.setSamples(SampleCountFlagBits::e1);
-	colorAttachment.setLoadOp(AttachmentLoadOp::eClear);
-	colorAttachment.setStoreOp(AttachmentStoreOp::eStore);
-	colorAttachment.setStencilLoadOp(AttachmentLoadOp::eDontCare);
-	colorAttachment.setStencilStoreOp(AttachmentStoreOp::eDontCare);
-	colorAttachment.setInitialLayout(ImageLayout::eUndefined);
-	colorAttachment.setFinalLayout(ImageLayout::ePresentSrcKHR);
-
-	AttachmentReference colorAttachmentRef;
-	colorAttachmentRef.setAttachment(0);
-	colorAttachmentRef.setLayout(ImageLayout::eColorAttachmentOptimal);
-
-	SubpassDescription subpassDesc;
-	subpassDesc.setPipelineBindPoint(PipelineBindPoint::eGraphics);
-	subpassDesc.setColorAttachmentCount(1);
-	subpassDesc.setPColorAttachments(&colorAttachmentRef); // layout(location = |index| ) out vec4 outColor references attachmant by index
-
-	SubpassDependency subpassDependency;
-	subpassDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
-	subpassDependency.setDstSubpass(0);
-	subpassDependency.setSrcStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
-	subpassDependency.setSrcAccessMask(AccessFlags());
-	subpassDependency.setDstStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
-	subpassDependency.setDstAccessMask(AccessFlagBits::eColorAttachmentRead | AccessFlagBits::eColorAttachmentWrite);
-
-	RenderPassCreateInfo renderPassInfo;
-	renderPassInfo.setAttachmentCount(1);
-	renderPassInfo.setPAttachments(&colorAttachment);
-	renderPassInfo.setSubpassCount(1);
-	renderPassInfo.setPSubpasses(&subpassDesc);
-	renderPassInfo.setDependencyCount(1);
-	renderPassInfo.setPDependencies(&subpassDependency);
-
-	renderPass = vulkanDevice.createRenderPass(renderPassInfo);
+	//CreateSwapChain();
+	//CreateImageViews();
+	//CreateRenderPass();
+	//CreateDescriptorSetLayout();
+	//CreateGraphicsPipeline();
+	//CreateFramebuffers();
+	//CreateUniformBuffers();
+	//CreateDescriptorPool();
+	//CreateDescriptorSets();
+	//CreateCommandBuffers();
 }
 
 void Renderer::CreateDescriptorSetLayout()
@@ -641,7 +195,7 @@ void Renderer::CreateDescriptorSetLayout()
 	descSetLayoutInfo.setBindingCount(1);
 	descSetLayoutInfo.setPBindings(&descLayoutBinding);
 
-	descriptorSetLayout = vulkanDevice.createDescriptorSetLayout(descSetLayoutInfo);
+	descriptorSetLayout = device.GetDevice().createDescriptorSetLayout(descSetLayoutInfo);
 }
 
 void Renderer::CreateGraphicsPipeline()
@@ -685,14 +239,14 @@ void Renderer::CreateGraphicsPipeline()
 //	Viewport viewport;
 	viewport.setX(0.0f);
 	viewport.setY(0.0f);
-	viewport.setWidth((float)swapChainExtent.width);
-	viewport.setHeight((float)swapChainExtent.height);
+	viewport.setWidth((float)swapChain.GetExtent().width);
+	viewport.setHeight((float)swapChain.GetExtent().height);
 	viewport.setMinDepth(0.0f);
 	viewport.setMaxDepth(1.0f);
 
 	Rect2D scissor;
 	scissor.setOffset(Offset2D(0, 0));
-	scissor.setExtent(swapChainExtent);
+	scissor.setExtent(swapChain.GetExtent());
 
 	PipelineViewportStateCreateInfo viewportInfo;
 	viewportInfo.setViewportCount(1);
@@ -742,7 +296,7 @@ void Renderer::CreateGraphicsPipeline()
 	layoutInfo.setPushConstantRangeCount(0);
 	layoutInfo.setPPushConstantRanges(nullptr);
 
-	pipelineLayout = vulkanDevice.createPipelineLayout(layoutInfo);
+	pipelineLayout = device.GetDevice().createPipelineLayout(layoutInfo);
 
 	GraphicsPipelineCreateInfo pipelineInfo;
 	pipelineInfo.setStageCount(2);
@@ -756,41 +310,21 @@ void Renderer::CreateGraphicsPipeline()
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
 	pipelineInfo.setPDynamicState(&dynamicStateInfo);
 	pipelineInfo.setLayout(pipelineLayout);
-	pipelineInfo.setRenderPass(renderPass);
+	pipelineInfo.setRenderPass(swapChain.GetRenderPass());
 	pipelineInfo.setSubpass(0);
 	pipelineInfo.setBasePipelineHandle(Pipeline());
 	pipelineInfo.setBasePipelineIndex(-1);
 
-	pipeline = vulkanDevice.createGraphicsPipeline(PipelineCache(), pipelineInfo);
-}
-
-void Renderer::CreateFramebuffers()
-{
-	swapChainFramebuffers.clear();
-
-	for (int index = 0; index < swapChainImageViews.size(); index++)
-	{
-		ImageView attachments[] = { swapChainImageViews[index] };
-
-		FramebufferCreateInfo framebufferInfo;
-		framebufferInfo.setRenderPass(renderPass);
-		framebufferInfo.setAttachmentCount(1);
-		framebufferInfo.setPAttachments(attachments);
-		framebufferInfo.setWidth(swapChainExtent.width);
-		framebufferInfo.setHeight(swapChainExtent.height);
-		framebufferInfo.setLayers(1);
-
-		swapChainFramebuffers.push_back(vulkanDevice.createFramebuffer(framebufferInfo));
-	}
+	pipeline = device.GetDevice().createGraphicsPipeline(PipelineCache(), pipelineInfo);
 }
 
 void Renderer::CreateCommandPool()
 {
 	CommandPoolCreateInfo commandPoolInfo;
-	commandPoolInfo.setQueueFamilyIndex(FindQueueFamilies(vulkanPhysicalDevice).graphicsFamily.value());
+	commandPoolInfo.setQueueFamilyIndex(device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 	commandPoolInfo.setFlags(CommandPoolCreateFlags());
 
-	commandPool = vulkanDevice.createCommandPool(commandPoolInfo);
+	commandPool = device.GetDevice().createCommandPool(commandPoolInfo);
 
 }
 
@@ -800,14 +334,14 @@ void Renderer::CreateCommandBuffers()
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 
-	commandBuffers.resize(swapChainFramebuffers.size());
+	commandBuffers.resize(swapChain.GetFramebuffersCount());
 
 	CommandBufferAllocateInfo allocInfo;
 	allocInfo.setCommandPool(commandPool);
 	allocInfo.setLevel(CommandBufferLevel::ePrimary);
 	allocInfo.setCommandBufferCount((uint32_t)commandBuffers.size());
 
-	commandBuffers = vulkanDevice.allocateCommandBuffers(allocInfo);
+	commandBuffers = device.GetDevice().allocateCommandBuffers(allocInfo);
 
 	for (int index = 0; index < commandBuffers.size(); index++)
 	{
@@ -821,9 +355,9 @@ void Renderer::CreateCommandBuffers()
 		clearValue.setColor(ClearColorValue( std::array<float, 4>( { 0.0f, 0.0f, 0.0f, 1.0f } )));
 
 		RenderPassBeginInfo passBeginInfo;
-		passBeginInfo.setRenderPass(renderPass);
-		passBeginInfo.setFramebuffer(swapChainFramebuffers[index]);
-		passBeginInfo.setRenderArea(Rect2D( Offset2D(0,0), swapChainExtent ));
+		passBeginInfo.setRenderPass(swapChain.GetRenderPass());
+		passBeginInfo.setFramebuffer(swapChain.GetFramebuffer(index));
+		passBeginInfo.setRenderArea(Rect2D( Offset2D(0,0), swapChain.GetExtent() ));
 		passBeginInfo.setClearValueCount(1);
 		passBeginInfo.setPClearValues(&clearValue);
 
@@ -838,14 +372,6 @@ void Renderer::CreateCommandBuffers()
 		commandBuffers[index].endRenderPass();
 		commandBuffers[index].end();
 	}
-}
-
-void Renderer::CreateSemaphores()
-{
-	SemaphoreCreateInfo semaphoreInfo;
-
-	imageAvailableSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
-	renderFinishedSemaphore = vulkanDevice.createSemaphore(semaphoreInfo);
 }
 
 void Renderer::CreateUniformBuffers()
@@ -868,7 +394,7 @@ void Renderer::CreateDescriptorPool()
 	descPoolInfo.setPPoolSizes(&poolSize);
 	descPoolInfo.setMaxSets(4);
 
-	descriptorPool = vulkanDevice.createDescriptorPool(descPoolInfo);
+	descriptorPool = device.GetDevice().createDescriptorPool(descPoolInfo);
 }
 
 void Renderer::CreateDescriptorSets()
@@ -879,7 +405,7 @@ void Renderer::CreateDescriptorSets()
 	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(layouts.size()));
 	descSetAllocInfo.setPSetLayouts(layouts.data());
 
-	descriptorSets = vulkanDevice.allocateDescriptorSets(descSetAllocInfo);
+	descriptorSets = device.GetDevice().allocateDescriptorSets(descSetAllocInfo);
 
 	for (uint32_t index = 0; index < descriptorSets.size(); index++)
 	{
@@ -895,7 +421,7 @@ void Renderer::CreateDescriptorSets()
 		writeDescSet.setDescriptorType(DescriptorType::eUniformBuffer);
 		writeDescSet.setPBufferInfo(&descBufferInfo);
 
-		vulkanDevice.updateDescriptorSets(1, &writeDescSet, 0, nullptr);
+		device.GetDevice().updateDescriptorSets(1, &writeDescSet, 0, nullptr);
 	}
 }
 

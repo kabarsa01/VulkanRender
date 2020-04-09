@@ -17,7 +17,7 @@ void VulkanBuffer::Create()
 	{
 		return;
 	}
-	device = Engine::GetRendererInstance()->GetDevice();
+	device = Engine::GetRendererInstance()->GetVulkanDevice();
 	buffer = device.createBuffer(createInfo);
 }
 
@@ -70,7 +70,7 @@ void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuff
 	commandAllocInfo.setCommandBufferCount(1);
 	commandAllocInfo.setLevel(CommandBufferLevel::ePrimary);
 
-	Device device = Engine::GetRendererInstance()->GetDevice();
+	Device device = Engine::GetRendererInstance()->GetVulkanDevice();
 	CommandBuffer commandBuffer = device.allocateCommandBuffers(commandAllocInfo)[0];
 
 	CommandBufferBeginInfo commandBeginInfo;

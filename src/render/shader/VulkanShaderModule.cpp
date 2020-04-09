@@ -14,10 +14,10 @@ VulkanShaderModule::VulkanShaderModule(const Shader& inShader)
 	createInfo.setCodeSize(code.size());
 	createInfo.setPCode( reinterpret_cast<const uint32_t*>( code.data() ) );
 
-	shaderModule = Engine::GetRendererInstance()->GetDevice().createShaderModule(createInfo);
+	shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
 }
 
 VulkanShaderModule::~VulkanShaderModule()
 {
-	Engine::GetRendererInstance()->GetDevice().destroyShaderModule(shaderModule);
+	Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().destroyShaderModule(shaderModule);
 }

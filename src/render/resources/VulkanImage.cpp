@@ -18,7 +18,7 @@ void VulkanImage::Create()
 	{
 		return;
 	}
-	device = Engine::GetRendererInstance()->GetDevice();
+	device = Engine::GetRendererInstance()->GetVulkanDevice();
 	image = device.createImage(createInfo);
 }
 

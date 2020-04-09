@@ -7,6 +7,11 @@
 #include "glm/fwd.hpp"
 #include <set>
 #include "data/MeshData.h"
+#include "objects/VulkanPhysicalDevice.h"
+#include "objects/VulkanDevice.h"
+#include "objects/VulkanSwapChain.h"
+
+using namespace VULKAN_HPP_NAMESPACE;
 
 struct UniformBufferObject {
 	alignas(16) glm::mat4 model;
@@ -31,40 +36,9 @@ struct UniformBufferObject {
 
 //-------------------------------------------------------------------------------------------------------
 
-struct QueueFamilyIndices
-{
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> computeFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool IsComplete()
-	{
-		return graphicsFamily.has_value() && computeFamily.has_value() && presentFamily.has_value();
-	}
-
-	std::set<uint32_t> GetFamiliesSet()
-	{
-		return std::set<uint32_t>{
-			graphicsFamily.value(),
-			computeFamily.value(),
-			presentFamily.value()
-		};
-	}
-};
-
 //-------------------------------------------------------------------------------------------------------
 
-struct SwapChainSupportDetails 
-{
-	VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR capabilities;
-	std::vector<VULKAN_HPP_NAMESPACE::SurfaceFormatKHR> formats;
-	std::vector<VULKAN_HPP_NAMESPACE::PresentModeKHR> presentModes;
 
-	bool IsUsable()
-	{
-		return !formats.empty() && !presentModes.empty();
-	}
-};
 
 //=======================================================================================================
 //=======================================================================================================
@@ -86,16 +60,13 @@ public:
 	int GetWidth() const;
 	int GetHeight() const;
 
-	VULKAN_HPP_NAMESPACE::PhysicalDevice GetPhysicalDevice();
-	PhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProps();
-	VULKAN_HPP_NAMESPACE::Device GetDevice();
-	VULKAN_HPP_NAMESPACE::SwapchainKHR GetSwapChain();
-	VULKAN_HPP_NAMESPACE::CommandPool GetCommandPool();
-	VULKAN_HPP_NAMESPACE::Queue GetGraphicsQueue();
+	VulkanDevice& GetVulkanDevice();
+	VulkanSwapChain& GetSwapChain();
+	CommandPool GetCommandPool();
+	Queue GetGraphicsQueue();
 protected:
 private:
 	// TEMP
-//	MeshDataPtr meshData;
 	VulkanBuffer uniformBuffer;
 	//======================= VARS ===============================
 	uint32_t version;
@@ -112,74 +83,31 @@ private:
 #else
 	const bool enableValidationLayers = true;
 #endif
-	PhysicalDeviceMemoryProperties cachedPhysMemProps;
 
-	VULKAN_HPP_NAMESPACE::Instance vulkanInstance;
-	VULKAN_HPP_NAMESPACE::SurfaceKHR vulkanSurface;
-	VULKAN_HPP_NAMESPACE::PhysicalDevice vulkanPhysicalDevice;
-	VULKAN_HPP_NAMESPACE::Device vulkanDevice;
-	VULKAN_HPP_NAMESPACE::SwapchainKHR vulkanSwapChain;
-	std::vector<VULKAN_HPP_NAMESPACE::Image> swapChainImages;
-	std::vector<VULKAN_HPP_NAMESPACE::ImageView> swapChainImageViews;
-	VULKAN_HPP_NAMESPACE::Format swapChainImageFormat;
-	VULKAN_HPP_NAMESPACE::Extent2D swapChainExtent;
-	VULKAN_HPP_NAMESPACE::Queue graphicsQueue;
-	VULKAN_HPP_NAMESPACE::Queue computeQueue;
-	VULKAN_HPP_NAMESPACE::Queue presentQueue;
-	VULKAN_HPP_NAMESPACE::Viewport viewport;
-	VULKAN_HPP_NAMESPACE::RenderPass renderPass;
-	VULKAN_HPP_NAMESPACE::DescriptorSetLayout descriptorSetLayout;
-	VULKAN_HPP_NAMESPACE::PipelineLayout pipelineLayout;
-	VULKAN_HPP_NAMESPACE::Pipeline pipeline;
-	std::vector<VULKAN_HPP_NAMESPACE::Framebuffer> swapChainFramebuffers;
-	VULKAN_HPP_NAMESPACE::CommandPool commandPool;
-	std::vector<VULKAN_HPP_NAMESPACE::CommandBuffer> commandBuffers;
-	VULKAN_HPP_NAMESPACE::DescriptorPool descriptorPool;
-	std::vector<VULKAN_HPP_NAMESPACE::DescriptorSet> descriptorSets;
+	VulkanDevice device;
+	VulkanSwapChain swapChain;
 
-	VULKAN_HPP_NAMESPACE::Semaphore imageAvailableSemaphore;
-	VULKAN_HPP_NAMESPACE::Semaphore renderFinishedSemaphore;
+	Viewport viewport;
 
-	std::vector<const char*> requiredExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
-	};
+	DescriptorSetLayout descriptorSetLayout;
+	PipelineLayout pipelineLayout;
+	Pipeline pipeline;
 
-	//std::vector<RenderPassPtr> RenderPasses;
-	//std::map<HashString, unsigned int> RenderPassMap;
+	CommandPool commandPool;
+	std::vector<CommandBuffer> commandBuffers;
+	DescriptorPool descriptorPool;
+	std::vector<DescriptorSet> descriptorSets;
+
 	//==================== METHODS ===============================
 
-	bool CheckValidationLayerSupport();
-
-	//------------------------------------------------------------
-
-	void PickPhysicalDevice(std::vector<VULKAN_HPP_NAMESPACE::PhysicalDevice>& inDevices);
-	int ScoreDeviceSuitability(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
-
-	int IsDeviceUsable(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
-
-	bool CheckPhysicalDeviceExtensionSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
-	QueueFamilyIndices FindQueueFamilies(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
-	SwapChainSupportDetails QuerySwapChainSupport(const VULKAN_HPP_NAMESPACE::PhysicalDevice& inPhysicalDevice);
-	void CreateLogicalDevice();
-
-	VULKAN_HPP_NAMESPACE::SurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VULKAN_HPP_NAMESPACE::SurfaceFormatKHR>& inFormats);
-	VULKAN_HPP_NAMESPACE::PresentModeKHR ChooseSwapChainPresentMode(const std::vector<VULKAN_HPP_NAMESPACE::PresentModeKHR>& inPresentModes);
-	VULKAN_HPP_NAMESPACE::Extent2D ChooseSwapChainExtent(const VULKAN_HPP_NAMESPACE::SurfaceCapabilitiesKHR& inCapabilities);
-	void CreateSwapChain();
-	void CleanupSwapChain();
 	void RecreateSwapChain();
-	void CreateImageViews();
-	void CreateRenderPass();
 	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline();
-	void CreateFramebuffers();
 	void CreateCommandPool();
 	void CreateCommandBuffers();
-	void CreateSemaphores();
 	void CreateUniformBuffers();
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
-//	void RegisterRenderPass(RenderPassPtr InRenderPass);
 	void UpdateUniformBuffer();
 };
 

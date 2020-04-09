@@ -49,6 +49,9 @@
     <Filter Include="Source Files\import">
       <UniqueIdentifier>{8bd6c7f7-8fae-4235-bfce-d07e5774401f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\render\objects">
+      <UniqueIdentifier>{42fc3c23-577a-4619-b9b7-dd6ce13c1c8c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -135,6 +138,15 @@
     <ClCompile Include="src\render\shader\VulkanShaderModule.cpp">
       <Filter>Source Files\render\shader</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp">
+      <Filter>Source Files\render\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\objects\VulkanDevice.cpp">
+      <Filter>Source Files\render\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\objects\VulkanSwapChain.cpp">
+      <Filter>Source Files\render\objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -217,6 +229,15 @@
     </ClInclude>
     <ClInclude Include="src\render\shader\VulkanShaderModule.h">
       <Filter>Source Files\render\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h">
+      <Filter>Source Files\render\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\objects\VulkanDevice.h">
+      <Filter>Source Files\render\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\objects\VulkanSwapChain.h">
+      <Filter>Source Files\render\objects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
