@@ -96,7 +96,7 @@ void Renderer::RenderFrame()
 	device.GetGraphicsQueue().submit(submitInfoArray, Fence());
 
 	swapChain.Present();
-	swapChain.WaitForPresentQueue();
+//	swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()
@@ -200,9 +200,6 @@ void Renderer::CreateDescriptorSetLayout()
 
 void Renderer::CreateGraphicsPipeline()
 {
-	ScenePtr scene = Engine::GetSceneInstance();
-	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-
 	Shader vertShader;
 	vertShader.Load("content/shaders/BasicVert.spv");
 	Shader fragShader;
@@ -224,8 +221,8 @@ void Renderer::CreateGraphicsPipeline()
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
 
-	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription();
-	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions();
+	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
+	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);
 	PipelineVertexInputStateCreateInfo vertexInputInfo;
 	vertexInputInfo.setVertexBindingDescriptionCount(1);
 	vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);

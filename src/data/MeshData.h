@@ -27,7 +27,7 @@ struct Vertex
 	vec3 Tangent;
 	vec3 Bitangent;
 
-	static std::array<VertexInputAttributeDescription, 5> GetAttributeDescriptions();
+	static std::array<VertexInputAttributeDescription, 5> GetAttributeDescriptions(uint32_t inDesiredBinding);
 };
 
 
@@ -58,7 +58,7 @@ public:
 	uint32_t GetIndexBufferSizeBytes();
 	uint32_t GetIndexCount();
 
-	static VertexInputBindingDescription GetBindingDescription();
+	static VertexInputBindingDescription GetBindingDescription(uint32_t inDesiredBinding);
 	// fullscreen quad instance to be used for screen space stuff
 	static std::shared_ptr<MeshData> FullscreenQuad();
 private:

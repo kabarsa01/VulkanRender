@@ -36,36 +36,36 @@ namespace
 //vec3 Tangent;
 //vec3 Bitangent;
 /////////////////
-std::array<VertexInputAttributeDescription, 5> Vertex::GetAttributeDescriptions()
+std::array<VertexInputAttributeDescription, 5> Vertex::GetAttributeDescriptions(uint32_t inDesiredBinding)
 {
 	std::array<VertexInputAttributeDescription, 5> attributes = {};
 
 	// vec3 Position
-	attributes[0].setBinding(0);
+	attributes[0].setBinding(inDesiredBinding);
 	attributes[0].setLocation(0);
 	attributes[0].setFormat(Format::eR32G32B32Sfloat);
 	attributes[0].setOffset(offsetof(Vertex, Position));
 
 	// vec3 Normal
-	attributes[1].setBinding(0);
+	attributes[1].setBinding(inDesiredBinding);
 	attributes[1].setLocation(1);
 	attributes[1].setFormat(Format::eR32G32B32Sfloat);
 	attributes[1].setOffset(offsetof(Vertex, Normal));
 
 	// vec2 TexCoord
-	attributes[2].setBinding(0);
+	attributes[2].setBinding(inDesiredBinding);
 	attributes[2].setLocation(2);
 	attributes[2].setFormat(Format::eR32G32Sfloat);
 	attributes[2].setOffset(offsetof(Vertex, TexCoord));
 
 	// vec3 Tangent
-	attributes[3].setBinding(0);
+	attributes[3].setBinding(inDesiredBinding);
 	attributes[3].setLocation(3);
 	attributes[3].setFormat(Format::eR32G32B32Sfloat);
 	attributes[3].setOffset(offsetof(Vertex, Tangent));
 
 	// vec3 BiTangent
-	attributes[4].setBinding(0);
+	attributes[4].setBinding(inDesiredBinding);
 	attributes[4].setLocation(4);
 	attributes[4].setFormat(Format::eR32G32B32Sfloat);
 	attributes[4].setOffset(offsetof(Vertex, Bitangent));
@@ -125,11 +125,11 @@ void MeshData::Draw()
 	// bind VAO and draw
 }
 
-VertexInputBindingDescription MeshData::GetBindingDescription()
+VertexInputBindingDescription MeshData::GetBindingDescription(uint32_t inDesiredBinding)
 {
 	VertexInputBindingDescription bindingDescription;
 
-	bindingDescription.setBinding(0);
+	bindingDescription.setBinding(inDesiredBinding);
 	bindingDescription.setStride(sizeof(Vertex));
 	bindingDescription.setInputRate(VertexInputRate::eVertex);
 
