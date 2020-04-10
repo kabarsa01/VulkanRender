@@ -53,31 +53,45 @@ void Renderer::OnInitialize()
 
 void Renderer::Init()
 {
+	GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
+	glfwGetFramebufferSize(window, &width, &height);
+
 	HWND hWnd = glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow());
 	device.Create("VulkanRenderer", "VulkanEngine", enableValidationLayers, hWnd);
 	swapChain.Create(&device, 2);
 	swapChain.CreateForResolution(width, height);
+	commandBuffers.Create(&device, 2, 1);
 
 	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline();
-	CreateCommandPool();
-
-	ScenePtr scene = Engine::GetSceneInstance();
-	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-	meshComp->meshData->CreateBuffer();
+	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
 
 	CreateUniformBuffers();
 	CreateDescriptorPool();
 	CreateDescriptorSets();
-
-	CreateCommandBuffers();
 }
 
 void Renderer::RenderFrame()
 {
-	uint32_t imageIndex = swapChain.AcquireNextImage();
+	if (framebufferResized)
+	{
+		OnResolutionChange();
+		framebufferResized = false;
+		return;
+	}
+
+	bool outdated = false;
+	uint32_t imageIndex = swapChain.AcquireNextImage(outdated);
+	if (outdated)
+	{
+		OnResolutionChange();
+		return;
+	}
 
 	UpdateUniformBuffer();
+
+	CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
+
+	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
 
 	SubmitInfo submitInfo;
 	Semaphore waitSemaphores[] = { swapChain.GetImageAvailableSemaphore() };
@@ -86,17 +100,21 @@ void Renderer::RenderFrame()
 	submitInfo.setPWaitSemaphores(waitSemaphores);
 	submitInfo.setPWaitDstStageMask(waitStages);
 	submitInfo.setCommandBufferCount(1);
-	submitInfo.setPCommandBuffers(&commandBuffers[imageIndex]);
+	submitInfo.setPCommandBuffers(&cmdBuffer);
 
 	Semaphore signalSemaphores[] = { swapChain.GetRenderingFinishedSemaphore() };
 	submitInfo.setSignalSemaphoreCount(1);
 	submitInfo.setPSignalSemaphores(signalSemaphores);
 
 	ArrayProxy<const SubmitInfo> submitInfoArray(1, &submitInfo);
-	device.GetGraphicsQueue().submit(submitInfoArray, Fence());
+	device.GetGraphicsQueue().submit(submitInfoArray, swapChain.GetGraphicsQueueFence());
 
-	swapChain.Present();
-//	swapChain.WaitForPresentQueue();
+	if (!swapChain.Present())
+	{
+		OnResolutionChange();
+		return;
+	}
+	swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()
@@ -106,6 +124,8 @@ void Renderer::WaitForDevice()
 
 void Renderer::Cleanup()
 {
+	WaitForDevice();
+
 	ScenePtr scene = Engine::GetSceneInstance();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 	meshComp->meshData->DestroyBuffer();
@@ -114,32 +134,31 @@ void Renderer::Cleanup()
 
 	device.GetDevice().destroyDescriptorSetLayout(descriptorSetLayout);
 	device.GetDevice().destroyDescriptorPool(descriptorPool);
-	device.GetDevice().destroyCommandPool(commandPool);
 	// destroying pipelines
-	device.GetDevice().destroyPipeline(pipeline);
-	device.GetDevice().destroyPipelineLayout(pipelineLayout);
+	DestroyGraphicsPipeline();
 	
+	commandBuffers.Destroy();
 	swapChain.Destroy();
 	device.Destroy();
 }
 
 void Renderer::SetResolution(int inWidth, int inHeight)
 {
-	width = inWidth;
-	height = inHeight;
+	//width = inWidth;
+	//height = inHeight;
 
 	framebufferResized = true;
 }
 
-int Renderer::GetWidth() const
-{
-	return width;
-}
-
-int Renderer::GetHeight() const
-{
-	return height;
-}
+//int Renderer::GetWidth() const
+//{
+//	return width;
+//}
+//
+//int Renderer::GetHeight() const
+//{
+//	return height;
+//}
 
 VulkanDevice& Renderer::GetVulkanDevice()
 {
@@ -151,35 +170,14 @@ VulkanSwapChain& Renderer::GetSwapChain()
 	return swapChain;
 }
 
-CommandPool Renderer::GetCommandPool()
+VulkanCommandBuffers& Renderer::GetCommandBuffers()
 {
-	return commandPool;
+	return commandBuffers;
 }
 
 Queue Renderer::GetGraphicsQueue()
 {
 	return device.GetGraphicsQueue();
-}
-
-void Renderer::RecreateSwapChain()
-{
-	//device.waitIdle();
-
-	//uniformBuffer.Destroy();
-	//CleanupSwapChain();
-	//device.destroyDescriptorSetLayout(descriptorSetLayout);
-	//device.destroyDescriptorPool(descriptorPool);
-
-	//CreateSwapChain();
-	//CreateImageViews();
-	//CreateRenderPass();
-	//CreateDescriptorSetLayout();
-	//CreateGraphicsPipeline();
-	//CreateFramebuffers();
-	//CreateUniformBuffers();
-	//CreateDescriptorPool();
-	//CreateDescriptorSets();
-	//CreateCommandBuffers();
 }
 
 void Renderer::CreateDescriptorSetLayout()
@@ -198,7 +196,7 @@ void Renderer::CreateDescriptorSetLayout()
 	descriptorSetLayout = device.GetDevice().createDescriptorSetLayout(descSetLayoutInfo);
 }
 
-void Renderer::CreateGraphicsPipeline()
+void Renderer::CreateGraphicsPipeline(RenderPass& inRenderPass, Extent2D inExtent)
 {
 	Shader vertShader;
 	vertShader.Load("content/shaders/BasicVert.spv");
@@ -236,14 +234,14 @@ void Renderer::CreateGraphicsPipeline()
 //	Viewport viewport;
 	viewport.setX(0.0f);
 	viewport.setY(0.0f);
-	viewport.setWidth((float)swapChain.GetExtent().width);
-	viewport.setHeight((float)swapChain.GetExtent().height);
+	viewport.setWidth((float)inExtent.width);
+	viewport.setHeight((float)inExtent.height);
 	viewport.setMinDepth(0.0f);
 	viewport.setMaxDepth(1.0f);
 
 	Rect2D scissor;
 	scissor.setOffset(Offset2D(0, 0));
-	scissor.setExtent(swapChain.GetExtent());
+	scissor.setExtent(inExtent);
 
 	PipelineViewportStateCreateInfo viewportInfo;
 	viewportInfo.setViewportCount(1);
@@ -307,68 +305,52 @@ void Renderer::CreateGraphicsPipeline()
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
 	pipelineInfo.setPDynamicState(&dynamicStateInfo);
 	pipelineInfo.setLayout(pipelineLayout);
-	pipelineInfo.setRenderPass(swapChain.GetRenderPass());
+	pipelineInfo.setRenderPass(inRenderPass);
 	pipelineInfo.setSubpass(0);
 	pipelineInfo.setBasePipelineHandle(Pipeline());
 	pipelineInfo.setBasePipelineIndex(-1);
 
-	pipeline = device.GetDevice().createGraphicsPipeline(PipelineCache(), pipelineInfo);
+	pipeline = device.GetDevice().createGraphicsPipeline(device.GetPipelineCache(), pipelineInfo);
 }
 
-void Renderer::CreateCommandPool()
+void Renderer::DestroyGraphicsPipeline()
 {
-	CommandPoolCreateInfo commandPoolInfo;
-	commandPoolInfo.setQueueFamilyIndex(device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
-	commandPoolInfo.setFlags(CommandPoolCreateFlags());
-
-	commandPool = device.GetDevice().createCommandPool(commandPoolInfo);
-
+	device.GetDevice().destroyPipeline(pipeline);
+	device.GetDevice().destroyPipelineLayout(pipelineLayout);
 }
 
-void Renderer::CreateCommandBuffers()
+void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& inRenderPass, Framebuffer& inFrameBuffer, Pipeline& inPipeline, PipelineLayout& inPipelineLayout)
 {
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 
-	commandBuffers.resize(swapChain.GetFramebuffersCount());
+	CommandBufferBeginInfo beginInfo;
+	beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
+	beginInfo.setPInheritanceInfo(nullptr);
 
-	CommandBufferAllocateInfo allocInfo;
-	allocInfo.setCommandPool(commandPool);
-	allocInfo.setLevel(CommandBufferLevel::ePrimary);
-	allocInfo.setCommandBufferCount((uint32_t)commandBuffers.size());
+	inCommandBuffer.begin(beginInfo);
 
-	commandBuffers = device.GetDevice().allocateCommandBuffers(allocInfo);
+	ClearValue clearValue;
+	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
 
-	for (int index = 0; index < commandBuffers.size(); index++)
-	{
-		CommandBufferBeginInfo beginInfo;
-		beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
-		beginInfo.setPInheritanceInfo(nullptr);
+	RenderPassBeginInfo passBeginInfo;
+	passBeginInfo.setRenderPass(inRenderPass);
+	passBeginInfo.setFramebuffer(inFrameBuffer);
+	passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), swapChain.GetExtent()));
+	passBeginInfo.setClearValueCount(1);
+	passBeginInfo.setPClearValues(&clearValue);
 
-		commandBuffers[index].begin(beginInfo);
-
-		ClearValue clearValue;
-		clearValue.setColor(ClearColorValue( std::array<float, 4>( { 0.0f, 0.0f, 0.0f, 1.0f } )));
-
-		RenderPassBeginInfo passBeginInfo;
-		passBeginInfo.setRenderPass(swapChain.GetRenderPass());
-		passBeginInfo.setFramebuffer(swapChain.GetFramebuffer(index));
-		passBeginInfo.setRenderArea(Rect2D( Offset2D(0,0), swapChain.GetExtent() ));
-		passBeginInfo.setClearValueCount(1);
-		passBeginInfo.setPClearValues(&clearValue);
-
-		DeviceSize offset = 0;
-		commandBuffers[index].setViewport(0, 1, &viewport);
-		commandBuffers[index].beginRenderPass(passBeginInfo, SubpassContents::eInline);
-		commandBuffers[index].bindPipeline(PipelineBindPoint::eGraphics, pipeline);
-		commandBuffers[index].bindVertexBuffers(0, 1, & meshComp->meshData->GetVertexBuffer(), &offset);
-		commandBuffers[index].bindIndexBuffer(meshComp->meshData->GetIndexBuffer(), 0, IndexType::eUint32);
-		commandBuffers[index].bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
-		commandBuffers[index].drawIndexed(meshComp->meshData->GetIndexCount(), 1, 0, 0, 0);
-		commandBuffers[index].endRenderPass();
-		commandBuffers[index].end();
-	}
+	DeviceSize offset = 0;
+	inCommandBuffer.setViewport(0, 1, &viewport);
+	inCommandBuffer.beginRenderPass(passBeginInfo, SubpassContents::eInline);
+	inCommandBuffer.bindPipeline(PipelineBindPoint::eGraphics, inPipeline);
+	inCommandBuffer.bindVertexBuffers(0, 1, &meshComp->meshData->GetVertexBuffer(), &offset);
+	inCommandBuffer.bindIndexBuffer(meshComp->meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+	inCommandBuffer.bindDescriptorSets(PipelineBindPoint::eGraphics, inPipelineLayout, 0, descriptorSets, {});
+	inCommandBuffer.drawIndexed(meshComp->meshData->GetIndexCount(), 1, 0, 0, 0);
+	inCommandBuffer.endRenderPass();
+	inCommandBuffer.end();
 }
 
 void Renderer::CreateUniformBuffers()
@@ -420,6 +402,20 @@ void Renderer::CreateDescriptorSets()
 
 		device.GetDevice().updateDescriptorSets(1, &writeDescSet, 0, nullptr);
 	}
+}
+
+void Renderer::OnResolutionChange()
+{
+	device.GetDevice().waitIdle();
+
+	GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
+	glfwGetFramebufferSize(window, &width, &height);
+
+	DestroyGraphicsPipeline();
+	swapChain.DestroyForResolution();
+
+	swapChain.CreateForResolution(width, height);
+	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
 }
 
 void Renderer::UpdateUniformBuffer()

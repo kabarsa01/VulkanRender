@@ -18,15 +18,18 @@ public:
 	VulkanPhysicalDevice& GetPhysicalDevice() { return physicalDevice; }
 	Device& GetDevice() { return device; }
 	SurfaceKHR& GetSurface() { return surface; };
+	PipelineCache& GetPipelineCache() { return pipelineCache; };
 
 	Queue& GetGraphicsQueue() { return graphicsQueue; }
 	Queue& GetComputeQueue() { return computeQueue; }
 	Queue& GetPresentQueue() { return presentQueue; }
+	Queue& GetTransferQueue() { return transferQueue; }
 
 	operator Instance() { return instance; }
 	operator Device() { return device; }
 	operator PhysicalDevice() { return physicalDevice.GetDevice(); }
 	operator SurfaceKHR() { return surface; }
+	operator PipelineCache() { return pipelineCache; }
 protected:
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
@@ -34,11 +37,6 @@ protected:
 	std::vector<const char*> requiredExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
-//#ifdef NDEBUG
-//	const bool enableValidationLayers = false;
-//#else
-//	const bool enableValidationLayers = true;
-//#endif
 
 	Instance instance;
 	VulkanPhysicalDevice physicalDevice;
@@ -50,6 +48,9 @@ protected:
 	Queue graphicsQueue;
 	Queue computeQueue;
 	Queue presentQueue;
+	Queue transferQueue;
+
+	PipelineCache pipelineCache;
 
 	bool CheckValidationLayerSupport();
 	VulkanPhysicalDevice PickPhysicalDevice(std::vector<PhysicalDevice>& inDevices);

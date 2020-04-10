@@ -65,13 +65,7 @@ MemoryRecord& VulkanBuffer::GetMemoryRecord()
 
 void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst)
 {
-	CommandBufferAllocateInfo commandAllocInfo;
-	commandAllocInfo.setCommandPool(Engine::GetRendererInstance()->GetCommandPool());
-	commandAllocInfo.setCommandBufferCount(1);
-	commandAllocInfo.setLevel(CommandBufferLevel::ePrimary);
-
-	Device device = Engine::GetRendererInstance()->GetVulkanDevice();
-	CommandBuffer commandBuffer = device.allocateCommandBuffers(commandAllocInfo)[0];
+	CommandBuffer commandBuffer = Engine::GetRendererInstance()->GetCommandBuffers().GetNextTransferBuffer();
 
 	CommandBufferBeginInfo commandBeginInfo;
 	commandBeginInfo.setFlags(CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -89,9 +83,8 @@ void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuff
 	submitInfo.setCommandBufferCount(1);
 	submitInfo.setPCommandBuffers(&commandBuffer);
 
-	Engine::GetRendererInstance()->GetGraphicsQueue().submit({ submitInfo }, Fence());
-	Engine::GetRendererInstance()->GetGraphicsQueue().waitIdle();
-
-	device.freeCommandBuffers(Engine::GetRendererInstance()->GetCommandPool(), { commandBuffer });
+	Queue& transferQueue = Engine::GetRendererInstance()->GetVulkanDevice().GetTransferQueue();
+	transferQueue.submit({ submitInfo }, Fence());
+	transferQueue.waitIdle();
 }
 

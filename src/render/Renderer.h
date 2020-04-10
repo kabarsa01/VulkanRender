@@ -10,6 +10,7 @@
 #include "objects/VulkanPhysicalDevice.h"
 #include "objects/VulkanDevice.h"
 #include "objects/VulkanSwapChain.h"
+#include "objects/VulkanCommandBuffers.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -62,7 +63,7 @@ public:
 
 	VulkanDevice& GetVulkanDevice();
 	VulkanSwapChain& GetSwapChain();
-	CommandPool GetCommandPool();
+	VulkanCommandBuffers& GetCommandBuffers();
 	Queue GetGraphicsQueue();
 protected:
 private:
@@ -86,6 +87,7 @@ private:
 
 	VulkanDevice device;
 	VulkanSwapChain swapChain;
+	VulkanCommandBuffers commandBuffers;
 
 	Viewport viewport;
 
@@ -93,22 +95,29 @@ private:
 	PipelineLayout pipelineLayout;
 	Pipeline pipeline;
 
-	CommandPool commandPool;
-	std::vector<CommandBuffer> commandBuffers;
 	DescriptorPool descriptorPool;
 	std::vector<DescriptorSet> descriptorSets;
 
 	//==================== METHODS ===============================
 
-	void RecreateSwapChain();
+	void UpdateCommandBuffer(
+		CommandBuffer& inCommandBuffer, 
+		RenderPass& inRenderPass, 
+		Framebuffer& inFrameBuffer, 
+		Pipeline& inPipeline, 
+		PipelineLayout& inPipelineLayout);
+	void UpdateUniformBuffer();
+
 	void CreateDescriptorSetLayout();
-	void CreateGraphicsPipeline();
-	void CreateCommandPool();
-	void CreateCommandBuffers();
+
+	void CreateGraphicsPipeline(RenderPass& inRenderPass, Extent2D inExtent);
+	void DestroyGraphicsPipeline();
+
 	void CreateUniformBuffers();
 	void CreateDescriptorPool();
 	void CreateDescriptorSets();
-	void UpdateUniformBuffer();
+
+	void OnResolutionChange();
 };
 
 typedef std::shared_ptr<Renderer> RendererPtr;

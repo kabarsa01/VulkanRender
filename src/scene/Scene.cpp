@@ -39,7 +39,7 @@ void Scene::Init()
 			MO->GetMeshComponent()->meshData = Importer.GetMeshes()[MeshIndex];
 			MO->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 			MO->transform.SetScale({ 0.3f, 0.3f, 0.3f });
-//			MO->GetMeshComponent()->meshData->CreateBuffer();
+			MO->GetMeshComponent()->meshData->CreateBuffer();
 		}
 	}
 }

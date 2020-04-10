@@ -17,8 +17,8 @@ public:
 	void CreateForResolution(uint32_t inWidth, uint32_t inHeight);
 	void DestroyForResolution();
 
-	uint32_t AcquireNextImage();
-	void Present();
+	uint32_t AcquireNextImage(bool& outBecameOutdated);
+	bool Present();
 
 	void WaitForPresentQueue();
 
@@ -26,7 +26,8 @@ public:
 	uint32_t GetPrevImageIndex() { return prevImageIndex; }
 	Semaphore& GetImageAvailableSemaphore() { return imageAvailableSemaphores[prevImageIndex]; }
 	Semaphore& GetRenderingFinishedSemaphore() { return renderingFinishedSemaphores[imageIndex]; }
-	Fence& GetCmdBuffersFence() { return cmdBuffersFences[imageIndex]; }
+	Fence& GetGraphicsQueueFence();
+	Fence& GetGraphicsQueuePrevFence();
 	Framebuffer& GetFramebuffer(uint32_t inIndex) { return framebuffers[inIndex]; }
 	uint32_t GetFramebuffersCount() { return static_cast<uint32_t>(framebuffers.size()); }
 

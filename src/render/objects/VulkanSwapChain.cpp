@@ -33,20 +33,15 @@ void VulkanSwapChain::Create(VulkanDevice* inDevice, uint32_t inBackBuffersCount
 		imageAvailableSemaphores[index] = device.createSemaphore(SemaphoreCreateInfo());
 		renderingFinishedSemaphores[index] = device.createSemaphore(SemaphoreCreateInfo());
 	}
-
-	swapChainSupportDetails = vulkanDevice->GetPhysicalDevice().QuerySwapChainSupport(*vulkanDevice);
-	surfaceFormat = ChooseSurfaceFormat(swapChainSupportDetails.formats);
-	presentMode = ChooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
-
-	imageFormat = surfaceFormat.format;
 }
 
 void VulkanSwapChain::Destroy()
 {
-	DestroyForResolution();
-	DestroyRenderPass();
-
 	Device& device = vulkanDevice->GetDevice();
+	device.waitForFences(backBuffersCount, cmdBuffersFences.data(), VK_TRUE, UINT64_MAX);
+
+	DestroyForResolution();
+
 	for (uint32_t index = 0; index < imageAvailableSemaphores.size(); index++)
 	{
 		device.destroySemaphore(imageAvailableSemaphores[index]);
@@ -63,6 +58,11 @@ void VulkanSwapChain::CreateForResolution(uint32_t inWidth, uint32_t inHeight)
 {
 	Device& device = vulkanDevice->GetDevice();
 
+	swapChainSupportDetails = vulkanDevice->GetPhysicalDevice().QuerySwapChainSupport(*vulkanDevice);
+	surfaceFormat = ChooseSurfaceFormat(swapChainSupportDetails.formats);
+	presentMode = ChooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
+	imageFormat = surfaceFormat.format;
+
 	DestroyRenderPass();
 	CreateRenderPass();
 
@@ -78,19 +78,18 @@ void VulkanSwapChain::CreateForResolution(uint32_t inWidth, uint32_t inHeight)
 	//}
 
 	SwapchainCreateInfoKHR createInfo;
-	createInfo
-		.setSurface(*vulkanDevice)
-		.setMinImageCount(backBuffersCount)
-		.setImageFormat(surfaceFormat.format)
-		.setImageColorSpace(surfaceFormat.colorSpace)
-		.setImageExtent(extent)
-		.setImageUsage(ImageUsageFlagBits::eColorAttachment)// ImageUsageFlagBits::eTransferDst or ImageUsageFlagBits::eDepthStencilAttachment
-		.setImageArrayLayers(1)
-		.setPreTransform(capabilities.currentTransform)
-		.setCompositeAlpha(CompositeAlphaFlagBitsKHR::eOpaque)
-		.setPresentMode(presentMode)
-		.setClipped(VK_TRUE)
-		.setOldSwapchain(SwapchainKHR());
+	createInfo.setSurface(*vulkanDevice);
+	createInfo.setMinImageCount(backBuffersCount);
+	createInfo.setImageFormat(surfaceFormat.format);
+	createInfo.setImageColorSpace(surfaceFormat.colorSpace);
+	createInfo.setImageExtent(extent);
+	createInfo.setImageUsage(ImageUsageFlagBits::eColorAttachment);// ImageUsageFlagBits::eTransferDst or ImageUsageFlagBits::eDepthStencilAttachment
+	createInfo.setImageArrayLayers(1);
+	createInfo.setPreTransform(capabilities.currentTransform);
+	createInfo.setCompositeAlpha(CompositeAlphaFlagBitsKHR::eOpaque);
+	createInfo.setPresentMode(presentMode);
+	createInfo.setClipped(VK_TRUE);
+	createInfo.setOldSwapchain(SwapchainKHR());
 
 	QueueFamilyIndices queueFamilyIndices = vulkanDevice->GetPhysicalDevice().GetCachedQueueFamiliesIndices();
 	if (queueFamilyIndices.graphicsFamily != queueFamilyIndices.presentFamily)
@@ -113,6 +112,9 @@ void VulkanSwapChain::CreateForResolution(uint32_t inWidth, uint32_t inHeight)
 
 	CreateRTV();
 	CreateFramebuffers();
+
+	imageIndex = 0;
+	prevImageIndex = backBuffersCount - 1;
 }
 
 void VulkanSwapChain::DestroyForResolution()
@@ -127,16 +129,27 @@ void VulkanSwapChain::DestroyForResolution()
 	}
 }
 
-uint32_t VulkanSwapChain::AcquireNextImage()
+uint32_t VulkanSwapChain::AcquireNextImage(bool& outBecameOutdated)
 {
+	outBecameOutdated = false;
 	prevImageIndex = imageIndex;
 
 	Device& device = vulkanDevice->GetDevice();
-	ResultValue<uint32_t> imageIndexResult = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphores[imageIndex], Fence());
+
+	ResultValue<uint32_t> imageIndexResult = ResultValue<uint32_t>(Result::eSuccess, imageIndex);
+
+	try
+	{
+		imageIndexResult = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphores[imageIndex], Fence());
+	}
+	catch (std::exception exc)
+	{
+	}
 
 	if (imageIndexResult.result == Result::eErrorOutOfDateKHR || imageIndexResult.result == Result::eErrorIncompatibleDisplayKHR)
 	{
-//		RecreateSwapChain();
+		outBecameOutdated = true;
+//		return 0;
 	}
 	else if (imageIndexResult.result != Result::eSuccess && imageIndexResult.result != Result::eSuboptimalKHR)
 	{
@@ -144,10 +157,13 @@ uint32_t VulkanSwapChain::AcquireNextImage()
 	}
 	imageIndex = imageIndexResult.value;
 
+	vulkanDevice->GetDevice().waitForFences(1, &cmdBuffersFences[imageIndex], VK_TRUE, UINT64_MAX);
+	vulkanDevice->GetDevice().resetFences(1, &cmdBuffersFences[imageIndex]);
+
 	return imageIndex;
 }
 
-void VulkanSwapChain::Present()
+bool VulkanSwapChain::Present()
 {
 	SwapchainKHR swapChains[] = { swapChain };
 	PresentInfoKHR presentInfo;
@@ -167,17 +183,27 @@ void VulkanSwapChain::Present()
 	{
 	}
 
-	if (presentResult == Result::eErrorOutOfDateKHR || presentResult == Result::eSuboptimalKHR)// || framebufferResized)
+	if (presentResult == Result::eErrorOutOfDateKHR || presentResult == Result::eSuboptimalKHR)
 	{
-		// framebufferResized = false;
-		// RECREATE SWAPCHAIN
-		// RecreateSwapChain();
+		return false;
 	}
+
+	return true;
 }
 
 void VulkanSwapChain::WaitForPresentQueue()
 {
 	presentQueue.waitIdle();
+}
+
+Fence& VulkanSwapChain::GetGraphicsQueueFence()
+{
+	return cmdBuffersFences[imageIndex];
+}
+
+Fence& VulkanSwapChain::GetGraphicsQueuePrevFence()
+{
+	return cmdBuffersFences[prevImageIndex];
 }
 
 void VulkanSwapChain::CreateRenderPass()
@@ -235,12 +261,11 @@ void VulkanSwapChain::CreateRTV()
 	for (uint32_t index = 0; index < images.size(); index++)
 	{
 		ImageViewCreateInfo createInfo;
-		createInfo
-			.setImage(images[index])
-			.setViewType(ImageViewType::e2D)
-			.setFormat(imageFormat)
-			.setComponents(ComponentMapping())
-			.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		createInfo.setImage(images[index]);
+		createInfo.setViewType(ImageViewType::e2D);
+		createInfo.setFormat(imageFormat);
+		createInfo.setComponents(ComponentMapping());
+		createInfo.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
 		imageViews[index] = vulkanDevice->GetDevice().createImageView(createInfo);
 	}
@@ -311,7 +336,7 @@ PresentModeKHR VulkanSwapChain::ChooseSwapChainPresentMode(const std::vector<Pre
 
 Extent2D VulkanSwapChain::ChooseSwapChainExtent(const SurfaceCapabilitiesKHR& inCapabilities, uint32_t inWidth, uint32_t inHeight)
 {
-	if (inCapabilities.currentExtent.width != UINT32_MAX)
+	if (inCapabilities.currentExtent.width == UINT32_MAX)
 	{
 		return inCapabilities.currentExtent;
 	}

@@ -31,10 +31,9 @@ void VulkanDevice::Create(const char* inAppName, const char* inEngine, bool inVa
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwInstanceExtensionsCount);
 
 	InstanceCreateInfo instanceCreateInfo;
-	instanceCreateInfo
-		.setPApplicationInfo(&applicationInfo)
-		.setEnabledExtensionCount(glfwInstanceExtensionsCount)
-		.setPpEnabledExtensionNames(glfwExtensions);
+	instanceCreateInfo.setPApplicationInfo(&applicationInfo);
+	instanceCreateInfo.setEnabledExtensionCount(glfwInstanceExtensionsCount);
+	instanceCreateInfo.setPpEnabledExtensionNames(glfwExtensions);
 
 	if (inValidationEnabled)
 	{
@@ -48,7 +47,7 @@ void VulkanDevice::Create(const char* inAppName, const char* inEngine, bool inVa
 
 	instance = createInstance(instanceCreateInfo);
 	Win32SurfaceCreateInfoKHR surfaceCreateInfo;
-	surfaceCreateInfo.setHwnd(inHwnd);//glfwGetWin32Window(Engine::GetInstance()->GetGlfwWindow()));
+	surfaceCreateInfo.setHwnd(inHwnd);
 	surfaceCreateInfo.setHinstance(GetModuleHandle(nullptr));
 	surface = instance.createWin32SurfaceKHR(surfaceCreateInfo);
 
@@ -91,10 +90,17 @@ void VulkanDevice::Create(const char* inAppName, const char* inEngine, bool inVa
 	graphicsQueue = device.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
 	computeQueue = device.getQueue(queueFamilyIndices.computeFamily.value(), 0);
 	presentQueue = device.getQueue(queueFamilyIndices.presentFamily.value(), 0);
+	transferQueue = device.getQueue(queueFamilyIndices.transferFamily.value(), 0);
+
+	PipelineCacheCreateInfo pipelineCacheInfo;
+	// TODO configure initial size for cache of whatever
+	pipelineCache = device.createPipelineCache(pipelineCacheInfo);
 }
 
 void VulkanDevice::Destroy()
 {
+	device.destroyPipelineCache(pipelineCache);
+
 	DeviceMemoryManager::GetInstance()->CleanupMemory();
 	device.destroy();
 

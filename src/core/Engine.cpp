@@ -46,11 +46,11 @@ void Engine::Init()
 	InitWindow();
 
 	// init modules
-	SceneInstance = ObjectBase::NewObject<Scene>();
 	RendererInstance = ObjectBase::NewObject<Renderer>();
+	SceneInstance = ObjectBase::NewObject<Scene>();
 
-	SceneInstance->Init();
 	RendererInstance->Init();
+	SceneInstance->Init();
 }
 
 void Engine::MainLoop()
