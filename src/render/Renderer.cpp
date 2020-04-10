@@ -114,7 +114,6 @@ void Renderer::RenderFrame()
 		OnResolutionChange();
 		return;
 	}
-	swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()
