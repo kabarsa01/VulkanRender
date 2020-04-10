@@ -24,11 +24,11 @@ public:
 
 	void Init();
 	
-	void RegisterSceneObject(SceneObjectBasePtr InSceneObject);
-	void RemoveSceneObject(SceneObjectBasePtr InSceneObject);
+	void RegisterSceneObject(SceneObjectBasePtr inSceneObject);
+	void RemoveSceneObject(SceneObjectBasePtr inSceneObject);
 
-	void RegisterSceneObjectComponent(SceneObjectComponentPtr InSceneObjectComponent);
-	void RemoveSceneObjectComponent(SceneObjectComponentPtr InSceneObjectComponent);
+	void RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
+	void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
 
 	void PerFrameUpdate();
 
@@ -39,9 +39,9 @@ public:
 	template<class T>
 	std::shared_ptr<T> GetSceneComponent();
 protected:
-	std::set<SceneObjectBasePtr> SceneObjectsSet;
-	std::map<HashString, std::set<SceneObjectBasePtr>> SceneObjectsMap;
-	std::map<HashString, std::set<SceneObjectComponentPtr>> SceneObjectComponents;
+	std::set<SceneObjectBasePtr> sceneObjectsSet;
+	std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
+	std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
 };
 
 typedef std::shared_ptr<Scene> ScenePtr;
@@ -54,7 +54,7 @@ template<class T>
 inline std::set<SceneObjectComponentPtr> Scene::GetSceneComponents()
 {
 	HashString Key = Class::Get<T>().GetName();
-	return SceneObjectComponents[Key];
+	return sceneObjectComponents[Key];
 }
 
 //-------------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ inline std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
 {
 	HashString Key = Class::Get<T>().GetName();
 	std::vector<std::shared_ptr<T>> Components;
-	for (SceneObjectComponentPtr Comp : SceneObjectComponents[Key])
+	for (SceneObjectComponentPtr Comp : sceneObjectComponents[Key])
 	{
 		Components.push_back(ObjectBase::Cast<T, SceneObjectComponent>( Comp ));
 	}
@@ -77,7 +77,7 @@ template<class T>
 inline std::shared_ptr<T> Scene::GetSceneComponent()
 {
 	HashString Key = Class::Get<T>().GetName();
-	std::set<SceneObjectComponentPtr>& Components = SceneObjectComponents[Key];
+	std::set<SceneObjectComponentPtr>& Components = sceneObjectComponents[Key];
 	if (Components.size() > 0)
 	{
 		return ObjectBase::Cast<T, SceneObjectComponent>( * Components.begin() );

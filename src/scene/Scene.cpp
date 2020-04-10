@@ -44,37 +44,41 @@ void Scene::Init()
 	}
 }
 
-void Scene::RegisterSceneObject(SceneObjectBasePtr InSceneObject)
+void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)
 {
-	SceneObjectsSet.insert(InSceneObject);
-	SceneObjectsMap[InSceneObject->GetClass().GetName()].insert(InSceneObject);
+	sceneObjectsSet.insert(inSceneObject);
+	sceneObjectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
 }
 
-void Scene::RemoveSceneObject(SceneObjectBasePtr InSceneObject)
+void Scene::RemoveSceneObject(SceneObjectBasePtr inSceneObject)
 {
-	SceneObjectsSet.erase(InSceneObject);
-	SceneObjectsMap[InSceneObject->GetClass().GetName()].erase(InSceneObject);
+	sceneObjectsSet.erase(inSceneObject);
+	sceneObjectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
 }
 
-void Scene::RegisterSceneObjectComponent(SceneObjectComponentPtr InSceneObjectComponent)
+void Scene::RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 {
-	SceneObjectComponents[InSceneObjectComponent->GetClass().GetName()].insert(InSceneObjectComponent);
+	sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
 }
 
-void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr InSceneObjectComponent)
+void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 {
-	SceneObjectComponents[InSceneObjectComponent->GetClass().GetName()].erase(InSceneObjectComponent);
+	sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
 }
 
 void Scene::PerFrameUpdate()
 {
-	float DeltaTime = TimeManager::GetInstance()->GetDeltaTime();
-	for (SceneObjectBasePtr SceneObject : SceneObjectsSet)
+	float deltaTime = TimeManager::GetInstance()->GetDeltaTime();
+	for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
 	{
-		if (SceneObject->isTickEnabled)
+		if (sceneObject->isTickEnabled)
 		{
-			SceneObject->Tick(DeltaTime);
-			SceneObject->TickComponents(DeltaTime);
+			sceneObject->Tick(deltaTime);
+			sceneObject->TickComponents(deltaTime);
 		}
 	}
+
+	// DIRTY TESTING SCENE
+	MeshComponentPtr meshComp = GetSceneComponent<MeshComponent>();
+	meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
 }

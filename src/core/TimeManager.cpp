@@ -1,28 +1,28 @@
 #include "TimeManager.h"
 
-#include <GLFW/glfw3.h>
-
-TimeManager* TimeManager::StaticInstance = new TimeManager();
+TimeManager* TimeManager::staticInstance = new TimeManager();
 
 TimeManager * TimeManager::GetInstance()
 {
-	return StaticInstance;
+	return staticInstance;
 }
 
 void TimeManager::UpdateTime()
 {
-	double CurrentTime = glfwGetTime();
-	DeltaTime = (float)( CurrentTime - LastTimestamp );
-	LastTimestamp = CurrentTime;
+	auto currentTime = std::chrono::high_resolution_clock::now();
+
+	deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTimestamp).count();
+	lastTimestamp = currentTime;
 }
 
 float TimeManager::GetDeltaTime()
 {
-	return DeltaTime;
+	return deltaTime;
 }
 
 TimeManager::TimeManager()
 {
+	lastTimestamp = std::chrono::high_resolution_clock::now();
 }
 
 TimeManager::~TimeManager()

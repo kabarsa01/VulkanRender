@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 class TimeManager
 {
 public:
@@ -8,10 +10,10 @@ public:
 	void UpdateTime();
 	float GetDeltaTime();
 protected:
-	static TimeManager* StaticInstance;
+	static TimeManager* staticInstance;
 
-	float DeltaTime;
-	double LastTimestamp;
+	float deltaTime;
+	std::chrono::time_point<std::chrono::steady_clock> lastTimestamp;
 private:
 	TimeManager();
 	virtual ~TimeManager();

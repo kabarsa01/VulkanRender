@@ -55,6 +55,9 @@ void Engine::Init()
 
 void Engine::MainLoop()
 {
+	// in case of a long resources initialization make the first delta time really small
+	TimeManager::GetInstance()->UpdateTime();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();

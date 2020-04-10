@@ -420,16 +420,9 @@ void Renderer::OnResolutionChange()
 
 void Renderer::UpdateUniformBuffer()
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-
-	meshComp->GetParent()->transform.SetRotation({0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
 
 	UniformBufferObject ubo;
 	ubo.model = meshComp->GetParent()->transform.GetMatrix();
@@ -438,6 +431,5 @@ void Renderer::UpdateUniformBuffer()
 
 	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
 	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(UniformBufferObject), &ubo, 0, sizeof(UniformBufferObject));
-//	uniformBuffer.CopyData(&ubo, MemoryMapFlags(), 0);
 }
 

@@ -4,11 +4,11 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 Transform::Transform()
-	: Location()
-	, Rotation()
-	, Scale(1.0f)
-	, Matrix(1.0f)
-	, IsDirty(true)
+	: location()
+	, rotation()
+	, scale(1.0f)
+	, matrix(1.0f)
+	, isDirty(true)
 {
 }
 
@@ -16,54 +16,72 @@ Transform::~Transform()
 {
 }
 
-void Transform::SetLocation(const glm::vec3 & InLocation)
+void Transform::SetLocation(const glm::vec3 & inLocation)
 {
-	this->Location = InLocation;
+	this->location = inLocation;
 	MarkDirty();
 }
 
-void Transform::SetRotation(const glm::vec3 & InRotation)
+void Transform::AddLocation(const glm::vec3 & inLocation)
 {
-	this->Rotation = InRotation;
+	location += inLocation;
 	MarkDirty();
 }
 
-void Transform::SetScale(const glm::vec3 & InScale)
+void Transform::SetRotation(const glm::vec3 & inRotation)
 {
-	this->Scale = InScale;
+	this->rotation = inRotation;
+	MarkDirty();
+}
+
+void Transform::AddRotation(const glm::vec3 & inRotation)
+{
+	rotation += inRotation;
+	MarkDirty();
+}
+
+void Transform::SetScale(const glm::vec3 & inScale)
+{
+	this->scale = inScale;
+	MarkDirty();
+}
+
+void Transform::AddScale(const glm::vec3 & inScale)
+{
+	scale += inScale;
 	MarkDirty();
 }
 
 void Transform::MarkDirty()
 {
-	IsDirty = true;
+	isDirty = true;
 }
 
 glm::mat4 Transform::GetMatrix() const
 {
-	if (IsDirty)
+	if (isDirty)
 	{
 		return CalculateMatrix();
 	}
-	return Matrix;
+	return matrix;
 }
 
 glm::mat4& Transform::GetMatrix()
 {
-	if (IsDirty)
+	if (isDirty)
 	{
-		Matrix = CalculateMatrix();
-		IsDirty = false;
+		matrix = CalculateMatrix();
+		isDirty = false;
 	}
-	return Matrix;
+	return matrix;
 }
 
 glm::mat4 Transform::CalculateRotationMatrix() const
 {
 	glm::mat4 Mat(1.0f);
-	Mat = glm::rotate(Mat, glm::radians(Rotation.z), glm::vec3(0.0f, 0.0, 1.0f));
-	Mat = glm::rotate(Mat, glm::radians(Rotation.y), glm::vec3(0.0f, 1.0, 0.0f));
-	Mat = glm::rotate(Mat, glm::radians(Rotation.x), glm::vec3(1.0f, 0.0, 0.0f));
+	Mat = glm::rotate(Mat, glm::radians(rotation.z), glm::vec3(0.0f, 0.0, 1.0f));
+	Mat = glm::rotate(Mat, glm::radians(rotation.y), glm::vec3(0.0f, 1.0, 0.0f));
+	Mat = glm::rotate(Mat, glm::radians(rotation.x), glm::vec3(1.0f, 0.0, 0.0f));
 
 	return Mat;
 }
@@ -71,17 +89,17 @@ glm::mat4 Transform::CalculateRotationMatrix() const
 glm::mat4 Transform::CalculateViewMatrix() const
 {
 	glm::vec3 Direction = GetForwardVector();
-	return glm::lookAt(Location, Location + Direction, glm::vec3{ 0.0f, 1.0f, 0.0f });
+	return glm::lookAt(location, location + Direction, glm::vec3{ 0.0f, 1.0f, 0.0f });
 }
 
 glm::mat4 Transform::CalculateMatrix() const
 {
 	glm::mat4 Mat(1.0f);
-	Mat = glm::translate(Mat, Location);
-	Mat = glm::rotate(Mat, glm::radians(Rotation.z), glm::vec3(0.0f, 0.0, 1.0f));
-	Mat = glm::rotate(Mat, glm::radians(Rotation.y), glm::vec3(0.0f, 1.0, 0.0f));
-	Mat = glm::rotate(Mat, glm::radians(Rotation.x), glm::vec3(1.0f, 0.0, 0.0f));
-	Mat = glm::scale(Mat, Scale);
+	Mat = glm::translate(Mat, location);
+	Mat = glm::rotate(Mat, glm::radians(rotation.z), glm::vec3(0.0f, 0.0, 1.0f));
+	Mat = glm::rotate(Mat, glm::radians(rotation.y), glm::vec3(0.0f, 1.0, 0.0f));
+	Mat = glm::rotate(Mat, glm::radians(rotation.x), glm::vec3(1.0f, 0.0, 0.0f));
+	Mat = glm::scale(Mat, scale);
 
 	return Mat;
 }
