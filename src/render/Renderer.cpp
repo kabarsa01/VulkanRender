@@ -112,7 +112,6 @@ void Renderer::RenderFrame()
 	if (!swapChain.Present())
 	{
 		OnResolutionChange();
-		return;
 	}
 }
 
@@ -149,15 +148,15 @@ void Renderer::SetResolution(int inWidth, int inHeight)
 	framebufferResized = true;
 }
 
-//int Renderer::GetWidth() const
-//{
-//	return width;
-//}
-//
-//int Renderer::GetHeight() const
-//{
-//	return height;
-//}
+int Renderer::GetWidth() const
+{
+	return width;
+}
+
+int Renderer::GetHeight() const
+{
+	return height;
+}
 
 VulkanDevice& Renderer::GetVulkanDevice()
 {

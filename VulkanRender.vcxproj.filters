@@ -52,6 +52,9 @@
     <Filter Include="Source Files\render\objects">
       <UniqueIdentifier>{42fc3c23-577a-4619-b9b7-dd6ce13c1c8c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\render\passes">
+      <UniqueIdentifier>{3a1b3faa-8977-41d7-acbe-c47601e02096}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -150,6 +153,9 @@
     <ClCompile Include="src\render\objects\VulkanCommandBuffers.cpp">
       <Filter>Source Files\render\objects</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\passes\VulkanPassBase.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -244,6 +250,9 @@
     </ClInclude>
     <ClInclude Include="src\render\objects\VulkanCommandBuffers.h">
       <Filter>Source Files\render\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\passes\VulkanPassBase.h">
+      <Filter>Source Files\render\passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
