@@ -11,14 +11,9 @@
 #include "objects/VulkanDevice.h"
 #include "objects/VulkanSwapChain.h"
 #include "objects/VulkanCommandBuffers.h"
+#include "passes/VulkanPassBase.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
-
-struct UniformBufferObject {
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 proj;
-};
 
 // pre-build batch to compile all our shaders
 //
@@ -98,6 +93,13 @@ private:
 	DescriptorPool descriptorPool;
 	std::vector<DescriptorSet> descriptorSets;
 
+	VulkanPassBase basePass;
+
+	Image image;
+	ImageView imageView;
+	MemoryRecord imageMemRec;
+	Sampler sampler;
+
 	//==================== METHODS ===============================
 
 	void UpdateCommandBuffer(
@@ -118,6 +120,7 @@ private:
 	void CreateDescriptorSets();
 
 	void OnResolutionChange();
+	void CreateImageAndSampler();
 };
 
 typedef std::shared_ptr<Renderer> RendererPtr;

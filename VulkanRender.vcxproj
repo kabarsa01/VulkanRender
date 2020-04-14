@@ -246,6 +246,7 @@ exit /b</Command>
     <ClCompile Include="src\data\TextureData.cpp" />
     <ClCompile Include="src\import\MeshImporter.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\render\DataStructures.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp" />
     <ClCompile Include="src\render\objects\VulkanCommandBuffers.cpp" />
@@ -280,6 +281,7 @@ exit /b</Command>
     <ClInclude Include="src\data\Resource.h" />
     <ClInclude Include="src\data\TextureData.h" />
     <ClInclude Include="src\import\MeshImporter.h" />
+    <ClInclude Include="src\render\DataStructures.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryManager.h" />
     <ClInclude Include="src\render\objects\VulkanCommandBuffers.h" />
