@@ -48,7 +48,7 @@ public:
 	static DeviceMemoryManager* GetInstance();
 
 	MemoryRecord RequestMemory(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags);
-	void ReturnMemory(const MemoryRecord& inMemoryPosition);
+	void ReturnMemory(const MemoryRecord& inMemoryRecord);
 	void CleanupMemory();
 
 	DeviceMemoryChunk& GetMemoryChunk(MemoryRecord inMemPosition);

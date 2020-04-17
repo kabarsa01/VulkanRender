@@ -5,6 +5,7 @@
 #include <vector>
 #include "../resources/VulkanBuffer.h"
 #include "../memory/DeviceMemoryManager.h"
+#include "../resources/VulkanImage.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -18,7 +19,7 @@ public:
 	void Destroy();
 
 	ImageView& GetImageView() { return imageView; }
-	Image& GetImage() { return image; }
+	Image& GetImage() { return image.GetImage(); }
 
 	void Draw(CommandBuffer* inCmdBuffer);
 protected:
@@ -31,9 +32,8 @@ protected:
 	DescriptorSetLayout descriptorSetLayout;
 	std::vector<DescriptorSet> descriptorSets;
 
-	Image image;
+	VulkanImage image;
 	ImageView imageView;
-	MemoryRecord imageMemRec;
 	Framebuffer framebuffer;
 
 	VulkanBuffer frameDataBuffer;

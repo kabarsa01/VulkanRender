@@ -152,6 +152,7 @@ void Renderer::Cleanup()
 	// destroying pipelines
 	DestroyGraphicsPipeline();
 	
+	MeshData::FullscreenQuad()->DestroyBuffer();
 	device.GetDevice().destroySampler(sampler);
 
 	commandBuffers.Destroy();
@@ -354,13 +355,7 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-	MeshDataPtr meshData = MeshData::FullscreenQuad();//meshComp->meshData;
-
-	//CommandBufferBeginInfo beginInfo;
-	//beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
-	//beginInfo.setPInheritanceInfo(nullptr);
-
-	//inCommandBuffer.begin(beginInfo);
+	MeshDataPtr meshData = MeshData::FullscreenQuad();
 
 	ImageMemoryBarrier barrier;
 	barrier.setOldLayout(ImageLayout::eUndefined);
@@ -373,10 +368,10 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	barrier.subresourceRange.setLevelCount(1);
 	barrier.subresourceRange.setBaseArrayLayer(0);
 	barrier.subresourceRange.setLayerCount(1);
-	barrier.setSrcAccessMask(AccessFlags());
-	barrier.setDstAccessMask(AccessFlags());
+	barrier.setSrcAccessMask(AccessFlagBits::eColorAttachmentWrite);
+	barrier.setDstAccessMask(AccessFlagBits::eShaderRead);
 
-	inCommandBuffer.pipelineBarrier(PipelineStageFlagBits::eAllGraphics, PipelineStageFlagBits::eAllGraphics, DependencyFlags(), 0, nullptr, 0, nullptr, 1, &barrier);
+	inCommandBuffer.pipelineBarrier(PipelineStageFlagBits::eColorAttachmentOutput, PipelineStageFlagBits::eFragmentShader, DependencyFlags(), 0, nullptr, 0, nullptr, 1, &barrier);
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
@@ -397,7 +392,6 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	inCommandBuffer.bindDescriptorSets(PipelineBindPoint::eGraphics, inPipelineLayout, 0, descriptorSets, {});
 	inCommandBuffer.drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 	inCommandBuffer.endRenderPass();
-	//inCommandBuffer.end();
 }
 
 void Renderer::CreateUniformBuffers()
@@ -405,7 +399,7 @@ void Renderer::CreateUniformBuffers()
 	uniformBuffer.createInfo.setSize(sizeof(ObjectCommonData));
 	uniformBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
 	uniformBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	uniformBuffer.Create();
+	uniformBuffer.Create(&device);
 	uniformBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 }
 
@@ -484,48 +478,42 @@ void Renderer::CreateImageAndSampler()
 {
 	uint32_t queueFailyIndices[] = { device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
 
-	ImageCreateInfo imageInfo;
-	imageInfo.setArrayLayers(1);
-	imageInfo.setFormat(Format::eR8G8B8A8Srgb);
-	imageInfo.setImageType(ImageType::e2D);
-	imageInfo.setInitialLayout(ImageLayout::eUndefined);
-	imageInfo.setSamples(SampleCountFlagBits::e1);
-	imageInfo.setMipLevels(1);
-	imageInfo.setSharingMode(SharingMode::eExclusive);
-	imageInfo.setQueueFamilyIndexCount(1);
-	imageInfo.setPQueueFamilyIndices(queueFailyIndices);
-	imageInfo.setTiling(ImageTiling::eOptimal);
-	imageInfo.setFlags(ImageCreateFlags());
-	imageInfo.setExtent(Extent3D(width, height, 1));
-	imageInfo.setUsage(ImageUsageFlagBits::eSampled);
-	image = device.GetDevice().createImage(imageInfo);
+	//image.createInfo.setArrayLayers(1);
+	//image.createInfo.setFormat(Format::eR8G8B8A8Srgb);
+	//image.createInfo.setImageType(ImageType::e2D);
+	//image.createInfo.setInitialLayout(ImageLayout::eUndefined);
+	//image.createInfo.setSamples(SampleCountFlagBits::e1);
+	//image.createInfo.setMipLevels(1);
+	//image.createInfo.setSharingMode(SharingMode::eExclusive);
+	//image.createInfo.setQueueFamilyIndexCount(1);
+	//image.createInfo.setPQueueFamilyIndices(queueFailyIndices);
+	//image.createInfo.setTiling(ImageTiling::eOptimal);
+	//image.createInfo.setFlags(ImageCreateFlags());
+	//image.createInfo.setExtent(Extent3D(width, height, 1));
+	//image.createInfo.setUsage(ImageUsageFlagBits::eSampled);
+	//image.Create(&device);
+	//image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 
-	//-----------------------------------------------------------------------
-	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
-	imageMemRec = dmm->RequestMemory(device.GetDevice().getImageMemoryRequirements(image), MemoryPropertyFlagBits::eDeviceLocal);
-	device.GetDevice().bindImageMemory(image, imageMemRec.pos.memory, imageMemRec.pos.offset);
-	//-----------------------------------------------------------------------
+	//ComponentMapping compMapping;
+	//compMapping.setR(ComponentSwizzle::eIdentity);
+	//compMapping.setG(ComponentSwizzle::eIdentity);
+	//compMapping.setB(ComponentSwizzle::eIdentity);
+	//compMapping.setA(ComponentSwizzle::eIdentity);
 
-	ComponentMapping compMapping;
-	compMapping.setR(ComponentSwizzle::eIdentity);
-	compMapping.setG(ComponentSwizzle::eIdentity);
-	compMapping.setB(ComponentSwizzle::eIdentity);
-	compMapping.setA(ComponentSwizzle::eIdentity);
+	//ImageSubresourceRange imageSubresRange;
+	//imageSubresRange.setBaseArrayLayer(0);
+	//imageSubresRange.setAspectMask(ImageAspectFlagBits::eColor);
+	//imageSubresRange.setBaseMipLevel(0);
+	//imageSubresRange.setLayerCount(1);
+	//imageSubresRange.setLevelCount(1);
 
-	ImageSubresourceRange imageSubresRange;
-	imageSubresRange.setBaseArrayLayer(0);
-	imageSubresRange.setAspectMask(ImageAspectFlagBits::eColor);
-	imageSubresRange.setBaseMipLevel(0);
-	imageSubresRange.setLayerCount(1);
-	imageSubresRange.setLevelCount(1);
-
-	ImageViewCreateInfo imageViewInfo;
-	imageViewInfo.setComponents(compMapping);
-	imageViewInfo.setFormat(Format::eR8G8B8A8Srgb);
-	imageViewInfo.setImage(image);
-	imageViewInfo.setSubresourceRange(imageSubresRange);
-	imageViewInfo.setViewType(ImageViewType::e2D);
-	imageView = device.GetDevice().createImageView(imageViewInfo);
+	//ImageViewCreateInfo imageViewInfo;
+	//imageViewInfo.setComponents(compMapping);
+	//imageViewInfo.setFormat(Format::eR8G8B8A8Srgb);
+	//imageViewInfo.setImage(image);
+	//imageViewInfo.setSubresourceRange(imageSubresRange);
+	//imageViewInfo.setViewType(ImageViewType::e2D);
+	//imageView = device.GetDevice().createImageView(imageViewInfo);
 
 	SamplerCreateInfo samplerInfo;
 	samplerInfo.setAddressModeU(SamplerAddressMode::eRepeat);

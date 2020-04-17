@@ -1,30 +1,82 @@
 #pragma once
 
 #include "vulkan/vulkan.hpp"
+#include "../objects/VulkanDevice.h"
+#include "../memory/DeviceMemoryManager.h"
+#include "VulkanBuffer.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
-// Wrapper for a Vulkan image resource, for lifetime and possibly ownership control
+// Wrapper for a Vulkan image resource
 class VulkanImage
 {
 public:
 	ImageCreateInfo createInfo;
 
-	VulkanImage();
+	VulkanImage(bool inScoped = false);
 	virtual ~VulkanImage();
 
-	void Create();
+	void Create(VulkanDevice* inDevice);
 	void Destroy();
+
+	void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
+
+	void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);
+	BufferImageCopy CreateBufferImageCopy();
+	void LayoutTransition(CommandBuffer* inCmdBuffer, ImageLayout inOldLayout, ImageLayout inNewLayout);
+
+	ImageMemoryBarrier CreateBarrier(
+		ImageLayout inOldLayout,
+		ImageLayout inNewLayout,
+		uint32_t inSrcQueue,
+		uint32_t inDstQueue,
+		AccessFlags inSrcAccessMask,
+		AccessFlags inDstAccessMask,
+		ImageAspectFlags inAspectFlags,
+		uint32_t inBaseMipLevel,
+		uint32_t inMipLevelCount,
+		uint32_t inBaseArrayLayer,
+		uint32_t inArrayLayerCount
+	);
+	ImageMemoryBarrier CreateBarrier(
+		ImageLayout inOldLayout,
+		ImageLayout inNewLayout,
+		uint32_t inSrcQueue,
+		uint32_t inDstQueue,
+		AccessFlags inSrcAccessMask,
+		AccessFlags inDstAccessMask,
+		ImageSubresourceRange inSubresourceRange
+	);
+	ImageMemoryBarrier CreateLayoutBarrier(
+		ImageLayout inOldLayout,
+		ImageLayout inNewLayout,
+		AccessFlags inSrcAccessMask,
+		AccessFlags inDstAccessMask,
+		ImageAspectFlags inAspectFlags,
+		uint32_t inBaseMipLevel,
+		uint32_t inMipLevelCount,
+		uint32_t inBaseArrayLayer,
+		uint32_t inArrayLayerCount
+	);
 
 	Image& GetImage();
 	const Image& GetImage() const;
 	MemoryRequirements GetMemoryRequirements();
+	VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex);
 
 	operator Image() const { return image; }
 	operator bool() const { return image; }
 protected:
-	Device device;
+	bool scoped;
+	VulkanDevice* vulkanDevice;
 	Image image;
+	MemoryRecord memoryRecord;
+	VulkanBuffer stagingBuffer;
+
+	char* imageData;
+	uint32_t width;
+	uint32_t height;
+	uint32_t depth;
 };
 
 

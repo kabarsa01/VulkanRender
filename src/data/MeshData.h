@@ -86,8 +86,7 @@ void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector,
 {
 	DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 
-	VulkanBuffer stagingBuffer;
-	VulkanDeviceMemory stagingMemory;
+	VulkanBuffer stagingBuffer(true);
 	CreateBuffer(stagingBuffer, size, BufferUsageFlagBits::eTransferSrc, SharingMode::eExclusive, MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& memRec = stagingBuffer.GetMemoryRecord();
 	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, size, inDataVector.data(), 0, size);

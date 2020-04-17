@@ -94,7 +94,7 @@ void MeshData::CreateBuffer(VulkanBuffer& inBuffer, DeviceSize inSize, BufferUsa
 	inBuffer.createInfo.setSize(inSize);
 	inBuffer.createInfo.setUsage(inUsage);
 	inBuffer.createInfo.setSharingMode(inSharingMode);
-	inBuffer.Create();
+	inBuffer.Create(& Engine::GetRendererInstance()->GetVulkanDevice());
 	inBuffer.BindMemory(inMemPropFlags);
 }
 

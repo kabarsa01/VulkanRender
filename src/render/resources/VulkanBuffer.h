@@ -2,6 +2,7 @@
 
 #include "vulkan/vulkan.hpp"
 #include "../memory/DeviceMemoryManager.h"
+#include "../objects/VulkanDevice.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -10,10 +11,10 @@ class VulkanBuffer
 public:
 	BufferCreateInfo createInfo;
 
-	VulkanBuffer();
+	VulkanBuffer(bool inScoped = false);
 	virtual ~VulkanBuffer();
 
-	void Create();
+	void Create(VulkanDevice* inDevice);
 	void Destroy();
 	void BindMemory(MemoryPropertyFlags inMemPropertyFlags);
 	void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
@@ -28,7 +29,8 @@ public:
 
 	static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
 protected:
-	Device device;
+	bool scoped;
+	VulkanDevice* vulkanDevice;
 	Buffer buffer;
 	MemoryRecord memRecord;
 };

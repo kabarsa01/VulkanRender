@@ -1,31 +1,35 @@
 #include "VulkanBuffer.h"
 #include "core/Engine.h"
 
-VulkanBuffer::VulkanBuffer()
+VulkanBuffer::VulkanBuffer(bool inScoped)
+	: scoped(inScoped)
 {
 
 }
 
 VulkanBuffer::~VulkanBuffer()
 {
-	Destroy();
+	if (scoped)
+	{
+		Destroy();
+	}
 }
 
-void VulkanBuffer::Create()
+void VulkanBuffer::Create(VulkanDevice* inDevice)
 {
 	if (buffer)
 	{
 		return;
 	}
-	device = Engine::GetRendererInstance()->GetVulkanDevice();
-	buffer = device.createBuffer(createInfo);
+	vulkanDevice = inDevice;
+	buffer = vulkanDevice->GetDevice().createBuffer(createInfo);
 }
 
 void VulkanBuffer::Destroy()
 {
 	if (buffer)
 	{
-		device.destroyBuffer(buffer);
+		vulkanDevice->GetDevice().destroyBuffer(buffer);
 		buffer = nullptr;
 		DeviceMemoryManager::GetInstance()->ReturnMemory(memRecord);
 	}
@@ -35,12 +39,12 @@ void VulkanBuffer::BindMemory(MemoryPropertyFlags inMemPropertyFlags)
 {
 	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
 	memRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemPropertyFlags);
-	device.bindBufferMemory(buffer, memRecord.pos.memory, memRecord.pos.offset);
+	vulkanDevice->GetDevice().bindBufferMemory(buffer, memRecord.pos.memory, memRecord.pos.offset);
 }
 
 void VulkanBuffer::BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset)
 {
-	device.bindBufferMemory(buffer, inDeviceMemory, inMemOffset);
+	vulkanDevice->GetDevice().bindBufferMemory(buffer, inDeviceMemory, inMemOffset);
 }
 
 Buffer& VulkanBuffer::GetBuffer()
@@ -55,7 +59,7 @@ Buffer VulkanBuffer::GetBuffer() const
 
 MemoryRequirements VulkanBuffer::GetMemoryRequirements()
 {
-	return device.getBufferMemoryRequirements(buffer);
+	return vulkanDevice->GetDevice().getBufferMemoryRequirements(buffer);
 }
 
 MemoryRecord& VulkanBuffer::GetMemoryRecord()

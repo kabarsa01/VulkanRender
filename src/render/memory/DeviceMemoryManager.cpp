@@ -1,4 +1,5 @@
 #include "DeviceMemoryManager.h"
+#include <algorithm>
 
 DeviceMemoryManager DeviceMemoryManager::staticInstance;
 
@@ -49,12 +50,14 @@ DeviceMemoryManager* DeviceMemoryManager::GetInstance()
 
 MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
 {
+	std::printf("allocation alignment requirement is %I64u \n", inMemRequirements.alignment);
+
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	MemoryRecord memoryRecord;
 
 	uint64_t memTypeIndex = VulkanDeviceMemory::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
-	DeviceSize requiredSize = inMemRequirements.size;
+	DeviceSize requiredSize = std::max<DeviceSize>(inMemRequirements.size, inMemRequirements.alignment); // try to honor the alignment
 	uint64_t rangeIndex = GetRangeIndex(requiredSize);
 	uint64_t regionHash = rangeIndex | (memTypeIndex << 32);
 
@@ -105,9 +108,9 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 	return memoryRecord;
 }
 
-void DeviceMemoryManager::ReturnMemory(const MemoryRecord& inMemoryPosition)
+void DeviceMemoryManager::ReturnMemory(const MemoryRecord& inMemoryRecord)
 {
-	memRegions[inMemoryPosition.regionHash][inMemoryPosition.chunkIndex].ReleaseSegment(inMemoryPosition.pos);
+	memRegions[inMemoryRecord.regionHash][inMemoryRecord.chunkIndex].ReleaseSegment(inMemoryRecord.pos);
 }
 
 void DeviceMemoryManager::CleanupMemory()

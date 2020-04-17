@@ -12,6 +12,8 @@
 #include "objects/VulkanSwapChain.h"
 #include "objects/VulkanCommandBuffers.h"
 #include "passes/VulkanPassBase.h"
+#include "memory/DeviceMemoryManager.h"
+#include "resources/VulkanImage.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -95,9 +97,6 @@ private:
 
 	VulkanPassBase basePass;
 
-	Image image;
-	ImageView imageView;
-	MemoryRecord imageMemRec;
 	Sampler sampler;
 
 	//==================== METHODS ===============================

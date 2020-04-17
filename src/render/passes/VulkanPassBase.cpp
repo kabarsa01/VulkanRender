@@ -38,13 +38,13 @@ void VulkanPassBase::Create(VulkanDevice* inDevice)
 	frameDataBuffer.createInfo.setSize(sizeof(ShaderGlobalData));
 	frameDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
 	frameDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	frameDataBuffer.Create();
+	frameDataBuffer.Create(vulkanDevice);
 	frameDataBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 
 	mvpBuffer.createInfo.setSize(sizeof(ObjectCommonData));
 	mvpBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
 	mvpBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	mvpBuffer.Create();
+	mvpBuffer.Create(vulkanDevice);
 	mvpBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 
 	UpdateDescriptorSets();
@@ -63,13 +63,10 @@ void VulkanPassBase::Destroy()
 	device.destroyRenderPass(renderPass);
 	device.destroyFramebuffer(framebuffer);
 	device.destroyImageView(imageView);
-	device.destroyImage(image);
+	image.Destroy();
 
 	frameDataBuffer.Destroy();
 	mvpBuffer.Destroy();
-
-	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
-	dmm->ReturnMemory(imageMemRec);
 }
 
 void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
@@ -79,12 +76,6 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-
-	//CommandBufferBeginInfo beginInfo;
-	//beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
-	//beginInfo.setPInheritanceInfo(nullptr);
-
-	//inCommandBuffer->begin(beginInfo);
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
@@ -97,7 +88,6 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	passBeginInfo.setPClearValues(&clearValue);
 
 	DeviceSize offset = 0;
-//	inCommandBuffer.setViewport(0, 1, &viewport);
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
 	inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipeline);
 	inCommandBuffer->bindVertexBuffers(0, 1, &meshComp->meshData->GetVertexBuffer(), &offset);
@@ -105,7 +95,6 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
 	inCommandBuffer->drawIndexed(meshComp->meshData->GetIndexCount(), 1, 0, 0, 0);
 	inCommandBuffer->endRenderPass();
-	//inCommandBuffer->end();
 }
 
 void VulkanPassBase::CreateRenderPass()
@@ -157,27 +146,21 @@ void VulkanPassBase::CreateFramebufferResources()
 
 	uint32_t queueFailyIndices[] = { vulkanDevice->GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
 
-	ImageCreateInfo imageInfo;
-	imageInfo.setArrayLayers(1);
-	imageInfo.setFormat(Format::eR16G16B16A16Sfloat);
-	imageInfo.setImageType(ImageType::e2D);
-	imageInfo.setInitialLayout(ImageLayout::eUndefined);
-	imageInfo.setSamples(SampleCountFlagBits::e1);
-	imageInfo.setMipLevels(1);
-	imageInfo.setSharingMode(SharingMode::eExclusive);
-	imageInfo.setQueueFamilyIndexCount(1);
-	imageInfo.setPQueueFamilyIndices(queueFailyIndices);
-	imageInfo.setTiling(ImageTiling::eOptimal);
-	imageInfo.setFlags(ImageCreateFlags());
-	imageInfo.setExtent(Extent3D(renderer->GetWidth(), renderer->GetHeight(), 1));
-	imageInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eInputAttachment);
-	image = device.createImage(imageInfo);
-
-	//-----------------------------------------------------------------------
-	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
-	imageMemRec = dmm->RequestMemory(device.getImageMemoryRequirements(image), MemoryPropertyFlagBits::eDeviceLocal);
-	device.bindImageMemory(image, imageMemRec.pos.memory, imageMemRec.pos.offset);
-	//-----------------------------------------------------------------------
+	image.createInfo.setArrayLayers(1);
+	image.createInfo.setFormat(Format::eR16G16B16A16Sfloat);
+	image.createInfo.setImageType(ImageType::e2D);
+	image.createInfo.setInitialLayout(ImageLayout::eUndefined);
+	image.createInfo.setSamples(SampleCountFlagBits::e1);
+	image.createInfo.setMipLevels(1);
+	image.createInfo.setSharingMode(SharingMode::eExclusive);
+	image.createInfo.setQueueFamilyIndexCount(1);
+	image.createInfo.setPQueueFamilyIndices(queueFailyIndices);
+	image.createInfo.setTiling(ImageTiling::eOptimal);
+	image.createInfo.setFlags(ImageCreateFlags());
+	image.createInfo.setExtent(Extent3D(renderer->GetWidth(), renderer->GetHeight(), 1));
+	image.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eInputAttachment);
+	image.Create(vulkanDevice);
+	image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 
 	ComponentMapping compMapping;
 	compMapping.setR(ComponentSwizzle::eIdentity);
