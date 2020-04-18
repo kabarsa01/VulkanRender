@@ -3,6 +3,7 @@
 #include "vulkan/vulkan.hpp"
 #include "../memory/DeviceMemoryManager.h"
 #include "../objects/VulkanDevice.h"
+#include <vector>
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -16,8 +17,14 @@ public:
 
 	void Create(VulkanDevice* inDevice);
 	void Destroy();
+
+	void SetData(const std::vector<char>& inData);
+	void SetData(DeviceSize inSize, char* inData);
 	void BindMemory(MemoryPropertyFlags inMemPropertyFlags);
 	void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
+
+	VulkanBuffer* CreateStagingBuffer();
+	BufferCopy CreateBufferCopy();
 
 	Buffer& GetBuffer();
 	Buffer GetBuffer() const;
@@ -29,8 +36,12 @@ public:
 
 	static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
 protected:
-	bool scoped;
 	VulkanDevice* vulkanDevice;
 	Buffer buffer;
 	MemoryRecord memRecord;
+	std::vector<char> data;
+
+	bool scoped;
+
+	VulkanBuffer* stagingBuffer;
 };

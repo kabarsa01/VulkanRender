@@ -67,10 +67,6 @@ private:
 
 	MeshData() : Resource(HashString::NONE()) {}
 
-	void CreateBuffer(
-		VulkanBuffer& inBuffer,
-		DeviceSize inSize, BufferUsageFlags usage, 
-		SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags);
 	template<class T>
 	void SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
 };
@@ -86,14 +82,14 @@ void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector,
 {
 	DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 
-	VulkanBuffer stagingBuffer(true);
-	CreateBuffer(stagingBuffer, size, BufferUsageFlagBits::eTransferSrc, SharingMode::eExclusive, MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
-	MemoryRecord& memRec = stagingBuffer.GetMemoryRecord();
-	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, size, inDataVector.data(), 0, size);
+	inBuffer.createInfo.setSize(size);
+	inBuffer.createInfo.setUsage(usage | BufferUsageFlagBits::eTransferDst);
+	inBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
+	inBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
+	inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+	inBuffer.SetData(size, reinterpret_cast<char*>( inDataVector.data() ));
 
-	CreateBuffer(inBuffer, size, usage | BufferUsageFlagBits::eTransferDst,	SharingMode::eExclusive, MemoryPropertyFlagBits::eDeviceLocal);
-
-	VulkanBuffer::SubmitCopyCommand(stagingBuffer, inBuffer);
+	VulkanBuffer::SubmitCopyCommand(*inBuffer.CreateStagingBuffer(), inBuffer);
 }
 
 

@@ -103,6 +103,9 @@ void Renderer::RenderFrame()
 	beginInfo.setPInheritanceInfo(nullptr);
 	cmdBuffer.begin(beginInfo);
 
+	// copy new data
+	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
+	// render passes
 	basePass.Draw(&cmdBuffer);
 	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
 
@@ -552,5 +555,10 @@ void Renderer::UpdateUniformBuffer()
 
 	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
 	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectCommonData), &ubo, 0, sizeof(ObjectCommonData));
+}
+
+void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)
+{
+
 }
 

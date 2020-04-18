@@ -96,7 +96,6 @@ private:
 	std::vector<DescriptorSet> descriptorSets;
 
 	VulkanPassBase basePass;
-
 	Sampler sampler;
 
 	//==================== METHODS ===============================
@@ -108,6 +107,7 @@ private:
 		Pipeline& inPipeline, 
 		PipelineLayout& inPipelineLayout);
 	void UpdateUniformBuffer();
+	void TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex);
 
 	void CreateDescriptorSetLayout();
 

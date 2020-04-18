@@ -41,6 +41,16 @@ void VulkanImage::Destroy()
 
 }
 
+void VulkanImage::SetData(const std::vector<char>& inData)
+{
+	data = inData;
+}
+
+void VulkanImage::SetData(DeviceSize inSize, char* inData)
+{
+	data.assign(inData, inData + inSize);
+}
+
 void VulkanImage::BindMemory(MemoryPropertyFlags inMemoryPropertyFlags)
 {
 	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
@@ -190,7 +200,7 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 	stagingBuffer.Create(vulkanDevice);
 	stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& rec = stagingBuffer.GetMemoryRecord();
-	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, imageData, 0, size);
+	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, data.data(), 0, size);
 
 	return &stagingBuffer;
 }

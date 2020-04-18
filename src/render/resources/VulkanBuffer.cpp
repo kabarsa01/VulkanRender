@@ -3,6 +3,7 @@
 
 VulkanBuffer::VulkanBuffer(bool inScoped)
 	: scoped(inScoped)
+	, stagingBuffer(nullptr)
 {
 
 }
@@ -25,8 +26,23 @@ void VulkanBuffer::Create(VulkanDevice* inDevice)
 	buffer = vulkanDevice->GetDevice().createBuffer(createInfo);
 }
 
+void VulkanBuffer::SetData(const std::vector<char>& inData)
+{
+	data = inData;
+}
+
+void VulkanBuffer::SetData(DeviceSize inSize, char* inData)
+{
+	data.assign(inData, inData + inSize);
+}
+
 void VulkanBuffer::Destroy()
 {
+	if (stagingBuffer)
+	{
+		stagingBuffer->Destroy();
+		delete stagingBuffer;
+	}
 	if (buffer)
 	{
 		vulkanDevice->GetDevice().destroyBuffer(buffer);
@@ -45,6 +61,35 @@ void VulkanBuffer::BindMemory(MemoryPropertyFlags inMemPropertyFlags)
 void VulkanBuffer::BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset)
 {
 	vulkanDevice->GetDevice().bindBufferMemory(buffer, inDeviceMemory, inMemOffset);
+}
+
+VulkanBuffer* VulkanBuffer::CreateStagingBuffer()
+{
+	if (stagingBuffer)
+	{
+		return stagingBuffer;
+	}
+
+	stagingBuffer = new VulkanBuffer();
+	stagingBuffer->createInfo.setSize(createInfo.size);
+	stagingBuffer->createInfo.setUsage(BufferUsageFlagBits::eTransferSrc);
+	stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
+	stagingBuffer->Create(vulkanDevice);
+	stagingBuffer->BindMemory(MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
+	MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, createInfo.size, data.data(), 0, createInfo.size);
+
+	return stagingBuffer;
+}
+
+BufferCopy VulkanBuffer::CreateBufferCopy()
+{
+	BufferCopy copyRegion;
+	copyRegion.setSize(createInfo.size);
+	copyRegion.setSrcOffset(0);
+	copyRegion.setDstOffset(0);
+
+	return copyRegion;
 }
 
 Buffer& VulkanBuffer::GetBuffer()

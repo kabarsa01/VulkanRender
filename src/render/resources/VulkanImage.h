@@ -4,6 +4,7 @@
 #include "../objects/VulkanDevice.h"
 #include "../memory/DeviceMemoryManager.h"
 #include "VulkanBuffer.h"
+#include <vector>
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -19,6 +20,8 @@ public:
 	void Create(VulkanDevice* inDevice);
 	void Destroy();
 
+	void SetData(const std::vector<char>& inData);
+	void SetData(DeviceSize inSize, char* inData);
 	void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
 
 	void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);
@@ -67,13 +70,13 @@ public:
 	operator Image() const { return image; }
 	operator bool() const { return image; }
 protected:
-	bool scoped;
 	VulkanDevice* vulkanDevice;
 	Image image;
 	MemoryRecord memoryRecord;
 	VulkanBuffer stagingBuffer;
+	std::vector<char> data;
 
-	char* imageData;
+	bool scoped;
 	uint32_t width;
 	uint32_t height;
 	uint32_t depth;

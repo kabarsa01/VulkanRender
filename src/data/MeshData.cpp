@@ -89,15 +89,6 @@ MeshData::MeshData(const string& inId, const std::vector<Vertex>& inVertices, co
 {
 }
 
-void MeshData::CreateBuffer(VulkanBuffer& inBuffer, DeviceSize inSize, BufferUsageFlags inUsage, SharingMode inSharingMode, MemoryPropertyFlags inMemPropFlags)
-{
-	inBuffer.createInfo.setSize(inSize);
-	inBuffer.createInfo.setUsage(inUsage);
-	inBuffer.createInfo.setSharingMode(inSharingMode);
-	inBuffer.Create(& Engine::GetRendererInstance()->GetVulkanDevice());
-	inBuffer.BindMemory(inMemPropFlags);
-}
-
 MeshData::~MeshData()
 {
 }
