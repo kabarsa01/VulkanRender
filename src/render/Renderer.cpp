@@ -100,14 +100,15 @@ void Renderer::RenderFrame()
 	CommandBufferBeginInfo beginInfo;
 	beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
 	beginInfo.setPInheritanceInfo(nullptr);
-	cmdBuffer.begin(beginInfo);
 
+	// begin command buffer record
+	cmdBuffer.begin(beginInfo);
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 	// render passes
 	basePass.Draw(&cmdBuffer);
 	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
-
+	// end commands recording
 	cmdBuffer.end();
 
 	SubmitInfo submitInfo;
