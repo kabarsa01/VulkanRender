@@ -53,6 +53,10 @@ void VulkanBuffer::Destroy()
 
 void VulkanBuffer::BindMemory(MemoryPropertyFlags inMemPropertyFlags)
 {
+	if (memRecord.pos.valid)
+	{
+		return;
+	}
 	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
 	memRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemPropertyFlags);
 	vulkanDevice->GetDevice().bindBufferMemory(buffer, memRecord.pos.memory, memRecord.pos.offset);
@@ -65,19 +69,24 @@ void VulkanBuffer::BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inM
 
 VulkanBuffer* VulkanBuffer::CreateStagingBuffer()
 {
+	return CreateStagingBuffer(createInfo.size, data.data());
+}
+
+VulkanBuffer* VulkanBuffer::CreateStagingBuffer(DeviceSize inSize, char* inData)
+{
 	if (stagingBuffer)
 	{
 		return stagingBuffer;
 	}
 
 	stagingBuffer = new VulkanBuffer();
-	stagingBuffer->createInfo.setSize(createInfo.size);
+	stagingBuffer->createInfo.setSize(inSize);
 	stagingBuffer->createInfo.setUsage(BufferUsageFlagBits::eTransferSrc);
 	stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
 	stagingBuffer->Create(vulkanDevice);
 	stagingBuffer->BindMemory(MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
-	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, createInfo.size, data.data(), 0, createInfo.size);
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
 
 	return stagingBuffer;
 }
@@ -90,6 +99,21 @@ BufferCopy VulkanBuffer::CreateBufferCopy()
 	copyRegion.setDstOffset(0);
 
 	return copyRegion;
+}
+
+BufferMemoryBarrier VulkanBuffer::CreateMemoryBarrier(uint32_t inSrcQueue, uint32_t inDstQueue, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask)
+{
+	BufferMemoryBarrier barrier;
+
+	barrier.setBuffer(buffer);
+	barrier.setSize(createInfo.size);
+	barrier.setOffset(0);
+	barrier.setSrcQueueFamilyIndex(inSrcQueue);
+	barrier.setDstQueueFamilyIndex(inDstQueue);
+	barrier.setSrcAccessMask(inSrcAccessMask);
+	barrier.setDstAccessMask(inDstAccessMask);
+
+	return barrier;
 }
 
 Buffer& VulkanBuffer::GetBuffer()
@@ -111,29 +135,29 @@ MemoryRecord& VulkanBuffer::GetMemoryRecord()
 {
 	return memRecord;
 }
-
-void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst)
-{
-	CommandBuffer commandBuffer = Engine::GetRendererInstance()->GetCommandBuffers().GetNextTransferBuffer();
-
-	CommandBufferBeginInfo commandBeginInfo;
-	commandBeginInfo.setFlags(CommandBufferUsageFlagBits::eOneTimeSubmit);
-
-	BufferCopy copyRegion;
-	copyRegion.setSize(std::min<DeviceSize>(inSrc.createInfo.size, inDst.createInfo.size));
-	copyRegion.setSrcOffset(0);
-	copyRegion.setDstOffset(0);
-
-	commandBuffer.begin(commandBeginInfo);
-	commandBuffer.copyBuffer(inSrc, inDst, 1, &copyRegion);
-	commandBuffer.end();
-
-	SubmitInfo submitInfo;
-	submitInfo.setCommandBufferCount(1);
-	submitInfo.setPCommandBuffers(&commandBuffer);
-
-	Queue& transferQueue = Engine::GetRendererInstance()->GetVulkanDevice().GetTransferQueue();
-	transferQueue.submit({ submitInfo }, Fence());
-	transferQueue.waitIdle();
-}
+//
+//void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst)
+//{
+//	CommandBuffer commandBuffer = Engine::GetRendererInstance()->GetCommandBuffers().GetNextTransferBuffer();
+//
+//	CommandBufferBeginInfo commandBeginInfo;
+//	commandBeginInfo.setFlags(CommandBufferUsageFlagBits::eOneTimeSubmit);
+//
+//	BufferCopy copyRegion;
+//	copyRegion.setSize(std::min<DeviceSize>(inSrc.createInfo.size, inDst.createInfo.size));
+//	copyRegion.setSrcOffset(0);
+//	copyRegion.setDstOffset(0);
+//
+//	commandBuffer.begin(commandBeginInfo);
+//	commandBuffer.copyBuffer(inSrc, inDst, 1, &copyRegion);
+//	commandBuffer.end();
+//
+//	SubmitInfo submitInfo;
+//	submitInfo.setCommandBufferCount(1);
+//	submitInfo.setPCommandBuffers(&commandBuffer);
+//
+//	Queue& transferQueue = Engine::GetRendererInstance()->GetVulkanDevice().GetTransferQueue();
+//	transferQueue.submit({ submitInfo }, Fence());
+//	transferQueue.waitIdle();
+//}
 

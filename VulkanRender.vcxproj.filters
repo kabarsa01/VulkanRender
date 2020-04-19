@@ -159,6 +159,9 @@
     <ClCompile Include="src\render\DataStructures.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\TransferList.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -258,6 +261,9 @@
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
     <ClInclude Include="src\render\DataStructures.h">
+      <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\TransferList.h">
       <Filter>Source Files\render</Filter>
     </ClInclude>
   </ItemGroup>

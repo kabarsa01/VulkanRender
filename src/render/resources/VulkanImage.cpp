@@ -53,6 +53,10 @@ void VulkanImage::SetData(DeviceSize inSize, char* inData)
 
 void VulkanImage::BindMemory(MemoryPropertyFlags inMemoryPropertyFlags)
 {
+	if (memoryRecord.pos.valid)
+	{
+		return;
+	}
 	DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
 	memoryRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemoryPropertyFlags);
 	vulkanDevice->GetDevice().bindImageMemory(image, memoryRecord.pos.memory, memoryRecord.pos.offset);
@@ -185,6 +189,11 @@ MemoryRequirements VulkanImage::GetMemoryRequirements()
 
 VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex)
 {
+	return CreateStagingBuffer(inSharingMode, inQueueFamilyIndex, data.data());
+}
+
+VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData)
+{
 	if (stagingBuffer)
 	{
 		return &stagingBuffer;
@@ -200,7 +209,7 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 	stagingBuffer.Create(vulkanDevice);
 	stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible);
 	MemoryRecord& rec = stagingBuffer.GetMemoryRecord();
-	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, data.data(), 0, size);
+	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, inData, 0, size);
 
 	return &stagingBuffer;
 }

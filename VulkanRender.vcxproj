@@ -260,6 +260,7 @@ exit /b</Command>
     <ClCompile Include="src\render\resources\VulkanImage.cpp" />
     <ClCompile Include="src\render\shader\VulkanShaderModule.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
+    <ClCompile Include="src\render\TransferList.cpp" />
     <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
     <ClCompile Include="src\scene\camera\CameraObject.cpp" />
     <ClCompile Include="src\scene\mesh\MeshComponent.cpp" />
@@ -295,6 +296,7 @@ exit /b</Command>
     <ClInclude Include="src\render\resources\VulkanImage.h" />
     <ClInclude Include="src\render\shader\VulkanShaderModule.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
+    <ClInclude Include="src\render\TransferList.h" />
     <ClInclude Include="src\scene\camera\CameraComponent.h" />
     <ClInclude Include="src\scene\camera\CameraObject.h" />
     <ClInclude Include="src\scene\mesh\MeshComponent.h" />

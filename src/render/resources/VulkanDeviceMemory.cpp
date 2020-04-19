@@ -3,6 +3,7 @@
 
 VulkanDeviceMemory::VulkanDeviceMemory(bool inScoped)
 	: scoped(inScoped)
+	, deviceMemory(nullptr)
 {
 
 }
@@ -10,6 +11,7 @@ VulkanDeviceMemory::VulkanDeviceMemory(bool inScoped)
 VulkanDeviceMemory::VulkanDeviceMemory(const MemoryPropertyFlags& inMemPropertyFlags, bool inScoped)
 	: memPropertyFlags(inMemPropertyFlags)
 	, scoped(inScoped)
+	, deviceMemory(nullptr)
 {
 
 }

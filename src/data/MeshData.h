@@ -51,10 +51,10 @@ public:
 	void DestroyBuffer();
 	void Draw();
 
-	Buffer GetVertexBuffer();
+	VulkanBuffer& GetVertexBuffer();
 	uint32_t GetVertexBufferSizeBytes();
 	uint32_t GetVertexCount();
-	Buffer GetIndexBuffer();
+	VulkanBuffer& GetIndexBuffer();
 	uint32_t GetIndexBufferSizeBytes();
 	uint32_t GetIndexCount();
 
@@ -80,6 +80,11 @@ typedef std::shared_ptr<MeshData> MeshDataPtr;
 template<class T>
 void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
 {
+	if (indexBuffer)
+	{
+		return;
+	}
+
 	DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 
 	inBuffer.createInfo.setSize(size);
@@ -89,7 +94,7 @@ void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector,
 	inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 	inBuffer.SetData(size, reinterpret_cast<char*>( inDataVector.data() ));
 
-	VulkanBuffer::SubmitCopyCommand(*inBuffer.CreateStagingBuffer(), inBuffer);
+//	VulkanBuffer::SubmitCopyCommand(*inBuffer.CreateStagingBuffer(), inBuffer);
 }
 
 

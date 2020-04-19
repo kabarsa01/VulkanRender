@@ -24,7 +24,9 @@ public:
 	void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
 
 	VulkanBuffer* CreateStagingBuffer();
+	VulkanBuffer* CreateStagingBuffer(DeviceSize inSize, char* inData);
 	BufferCopy CreateBufferCopy();
+	BufferMemoryBarrier CreateMemoryBarrier(uint32_t inSrcQueue, uint32_t inDstQueue, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask);
 
 	Buffer& GetBuffer();
 	Buffer GetBuffer() const;
@@ -34,14 +36,14 @@ public:
 	operator Buffer() const { return buffer; }
 	operator bool() const { return buffer; }
 
-	static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
+	//static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
 protected:
 	VulkanDevice* vulkanDevice;
 	Buffer buffer;
 	MemoryRecord memRecord;
 	std::vector<char> data;
 
-	bool scoped;
+	bool scoped = false;
 
 	VulkanBuffer* stagingBuffer;
 };

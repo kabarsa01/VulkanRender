@@ -127,7 +127,7 @@ VertexInputBindingDescription MeshData::GetBindingDescription(uint32_t inDesired
 	return bindingDescription;
 }
 
-Buffer MeshData::GetVertexBuffer()
+VulkanBuffer& MeshData::GetVertexBuffer()
 {
 	return vertexBuffer;
 }
@@ -142,7 +142,7 @@ uint32_t MeshData::GetVertexCount()
 	return static_cast<uint32_t>( vertices.size() );
 }
 
-Buffer MeshData::GetIndexBuffer()
+VulkanBuffer& MeshData::GetIndexBuffer()
 {
 	return indexBuffer;
 }

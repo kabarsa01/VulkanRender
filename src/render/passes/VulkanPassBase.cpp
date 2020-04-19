@@ -90,8 +90,8 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	DeviceSize offset = 0;
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
 	inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipeline);
-	inCommandBuffer->bindVertexBuffers(0, 1, &meshComp->meshData->GetVertexBuffer(), &offset);
-	inCommandBuffer->bindIndexBuffer(meshComp->meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+	inCommandBuffer->bindVertexBuffers(0, 1, &meshComp->meshData->GetVertexBuffer().GetBuffer(), &offset);
+	inCommandBuffer->bindIndexBuffer(meshComp->meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
 	inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
 	inCommandBuffer->drawIndexed(meshComp->meshData->GetIndexCount(), 1, 0, 0, 0);
 	inCommandBuffer->endRenderPass();

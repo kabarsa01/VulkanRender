@@ -38,7 +38,7 @@ public:
 
 	static uint32_t FindMemoryTypeStatic(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags);
 protected:
-	bool scoped;
+	bool scoped = false;
 	Device device;
 	DeviceMemory deviceMemory;
 	DeviceSize size;

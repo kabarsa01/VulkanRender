@@ -20,6 +20,7 @@
 #include "scene/Transform.h"
 #include "scene/SceneObjectBase.h"
 #include "DataStructures.h"
+#include "TransferList.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -73,8 +74,6 @@ void Renderer::Init()
 
 	CreateImageAndSampler();
 	CreateDescriptorSets();
-
-	MeshData::FullscreenQuad()->CreateBuffer();
 }
 
 void Renderer::RenderFrame()
@@ -390,8 +389,8 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	inCommandBuffer.beginRenderPass(passBeginInfo, SubpassContents::eInline);
 	inCommandBuffer.bindPipeline(PipelineBindPoint::eGraphics, inPipeline);
 	inCommandBuffer.setViewport(0, 1, &viewport);
-	inCommandBuffer.bindVertexBuffers(0, 1, &meshData->GetVertexBuffer(), &offset);
-	inCommandBuffer.bindIndexBuffer(meshData->GetIndexBuffer(), 0, IndexType::eUint32);
+	inCommandBuffer.bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
+	inCommandBuffer.bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
 	inCommandBuffer.bindDescriptorSets(PipelineBindPoint::eGraphics, inPipelineLayout, 0, descriptorSets, {});
 	inCommandBuffer.drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 	inCommandBuffer.endRenderPass();
@@ -559,6 +558,83 @@ void Renderer::UpdateUniformBuffer()
 
 void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)
 {
+	TransferList* TL = TransferList::GetInstance();
 
+	// get new resources to copy
+	std::vector<VulkanBuffer*> buffers = TL->GetBuffers();
+	std::vector<VulkanImage*> images = TL->GetImages();
+	TL->ClearBuffers();
+	TL->ClearImages();
+
+	if ( (buffers.size() == 0) && (images.size() == 0) )
+	{
+		return;
+	}
+
+	// buffers
+	std::vector<BufferMemoryBarrier> buffersTransferBarriers;
+	for (VulkanBuffer* buffer : buffers)
+	{
+		inCmdBuffer.copyBuffer(*buffer->CreateStagingBuffer(), *buffer, 1, &buffer->CreateBufferCopy());
+		buffersTransferBarriers.push_back(buffer->CreateMemoryBarrier(
+			VK_QUEUE_FAMILY_IGNORED, 
+			VK_QUEUE_FAMILY_IGNORED, 
+			AccessFlagBits::eTransferWrite, 
+			AccessFlagBits::eVertexAttributeRead));
+	}
+
+	// images
+	// prepare memory barriers first
+	std::vector<ImageMemoryBarrier> beforeTransferBarriers;
+	std::vector<ImageMemoryBarrier> afterTransferBarriers;
+	beforeTransferBarriers.resize(images.size());
+	afterTransferBarriers.resize(images.size());
+	for (uint32_t index = 0; index < images.size(); index++)
+	{
+		beforeTransferBarriers[index] = images[index]->CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eTransferDstOptimal,
+			AccessFlagBits::eHostWrite,
+			AccessFlagBits::eTransferWrite | AccessFlagBits::eTransferRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+
+		afterTransferBarriers[index] = images[index]->CreateLayoutBarrier(
+			ImageLayout::eTransferDstOptimal,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eTransferWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+	}
+
+	inCmdBuffer.pipelineBarrier(
+		PipelineStageFlagBits::eTopOfPipe,
+		PipelineStageFlagBits::eTransfer,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		static_cast<uint32_t>( beforeTransferBarriers.size() ), 
+		beforeTransferBarriers.data());
+
+	//submit copy
+	for (VulkanImage* image : images)
+	{
+		// copy
+		inCmdBuffer.copyBufferToImage(
+			*image->CreateStagingBuffer(SharingMode::eExclusive, inQueueFamilyIndex), 
+			*image, ImageLayout::eTransferDstOptimal, 
+			1, &image->CreateBufferImageCopy());
+	}
+
+	// final barriers for buffers and images
+	inCmdBuffer.pipelineBarrier(
+		PipelineStageFlagBits::eTransfer,
+		PipelineStageFlagBits::eVertexInput,
+		DependencyFlags(),
+		0, nullptr, 
+		static_cast<uint32_t>( buffersTransferBarriers.size() ),
+		buffersTransferBarriers.data(),
+		static_cast<uint32_t>( afterTransferBarriers.size() ),
+		afterTransferBarriers.data());
 }
 

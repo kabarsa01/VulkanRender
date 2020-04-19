@@ -6,6 +6,7 @@
 #include "camera/CameraObject.h"
 #include "mesh/MeshObject.h"
 #include "import/MeshImporter.h"
+#include "render/TransferList.h"
 
 Scene::Scene()
 	: ObjectBase()
@@ -23,6 +24,8 @@ void Scene::OnInitialize()
 
 void Scene::Init()
 {
+	TransferList* TL = TransferList::GetInstance();
+
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
@@ -40,8 +43,13 @@ void Scene::Init()
 			MO->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 			MO->transform.SetScale({ 0.3f, 0.3f, 0.3f });
 			MO->GetMeshComponent()->meshData->CreateBuffer();
+
+			TL->PushBuffers(MO->GetMeshComponent()->meshData);
 		}
 	}
+
+	MeshData::FullscreenQuad()->CreateBuffer();
+	TL->PushBuffers(MeshData::FullscreenQuad());
 }
 
 void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)

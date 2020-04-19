@@ -68,7 +68,7 @@ MemoryPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 	bool success = FindSegmentIndex(currentLayer, layer, nodeIndex, targetIndex);
 	if (!success)
 	{
-		return {false};
+		return {};
 	}
 	MarkNotFreeUp(layer, targetIndex);
 
