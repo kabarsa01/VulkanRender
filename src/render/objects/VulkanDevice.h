@@ -24,6 +24,10 @@ public:
 	Queue& GetComputeQueue() { return computeQueue; }
 	Queue& GetPresentQueue() { return presentQueue; }
 	Queue& GetTransferQueue() { return transferQueue; }
+	uint32_t GetGraphicsQueueIndex() { return queueFamilyIndices.graphicsFamily.value(); }
+	uint32_t GetComputeQueueIndex() { return queueFamilyIndices.computeFamily.value(); }
+	uint32_t GetPresentQueueIndex() { return queueFamilyIndices.presentFamily.value(); }
+	uint32_t GetTransferQueueIndex() { return queueFamilyIndices.transferFamily.value(); }
 
 	operator Instance() { return instance; }
 	operator Device() { return device; }

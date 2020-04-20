@@ -244,6 +244,7 @@ exit /b</Command>
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
     <ClCompile Include="src\data\TextureData.cpp" />
+    <ClCompile Include="src\import\ImageImporter.cpp" />
     <ClCompile Include="src\import\MeshImporter.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\DataStructures.cpp" />
@@ -281,6 +282,7 @@ exit /b</Command>
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
     <ClInclude Include="src\data\TextureData.h" />
+    <ClInclude Include="src\import\ImageImporter.h" />
     <ClInclude Include="src\import\MeshImporter.h" />
     <ClInclude Include="src\render\DataStructures.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />

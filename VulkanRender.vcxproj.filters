@@ -162,6 +162,9 @@
     <ClCompile Include="src\render\TransferList.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\import\ImageImporter.cpp">
+      <Filter>Source Files\import</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -265,6 +268,9 @@
     </ClInclude>
     <ClInclude Include="src\render\TransferList.h">
       <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\import\ImageImporter.h">
+      <Filter>Source Files\import</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

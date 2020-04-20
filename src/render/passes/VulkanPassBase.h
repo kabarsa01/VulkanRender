@@ -18,8 +18,8 @@ public:
 	void Create(VulkanDevice* inDevice);
 	void Destroy();
 
-	ImageView& GetImageView() { return imageView; }
-	Image& GetImage() { return image.GetImage(); }
+	ImageView& GetImageView() { return colorAttachmentImageView; }
+	Image& GetImage() { return colorAttachmentImage.GetImage(); }
 
 	void Draw(CommandBuffer* inCmdBuffer);
 protected:
@@ -32,12 +32,14 @@ protected:
 	DescriptorSetLayout descriptorSetLayout;
 	std::vector<DescriptorSet> descriptorSets;
 
-	VulkanImage image;
-	ImageView imageView;
+	VulkanImage colorAttachmentImage;
+	ImageView colorAttachmentImageView;
 	Framebuffer framebuffer;
 
 	VulkanBuffer frameDataBuffer;
 	VulkanBuffer mvpBuffer;
+
+	VulkanImage diffuseTexture;
 
 	uint32_t width;
 	uint32_t height;
@@ -50,4 +52,6 @@ protected:
 	void AllocateDescriptorSets();
 	void UpdateDescriptorSets();
 	void UpdateUniformBuffers();
+
+	void CreateTextures();
 };
