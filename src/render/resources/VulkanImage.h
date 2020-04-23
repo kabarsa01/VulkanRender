@@ -65,8 +65,10 @@ public:
 	Image& GetImage();
 	const Image& GetImage() const;
 	MemoryRequirements GetMemoryRequirements();
+	VulkanBuffer* CreateStagingBuffer(char* inData);
 	VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex);
 	VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData);
+	void DestroyStagingBuffer();
 
 	operator Image() const { return image; }
 	operator bool() const { return image; }

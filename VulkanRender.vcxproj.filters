@@ -165,6 +165,9 @@
     <ClCompile Include="src\import\ImageImporter.cpp">
       <Filter>Source Files\import</Filter>
     </ClCompile>
+    <ClCompile Include="src\data\Texture2D.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -271,6 +274,9 @@
     </ClInclude>
     <ClInclude Include="src\import\ImageImporter.h">
       <Filter>Source Files\import</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\Texture2D.h">
+      <Filter>Source Files\data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

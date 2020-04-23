@@ -28,10 +28,7 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 
 void VulkanImage::Destroy()
 {
-	if (stagingBuffer)
-	{
-		stagingBuffer.Destroy();
-	}
+	DestroyStagingBuffer();
 	if (image && vulkanDevice)
 	{
 		vulkanDevice->GetDevice().destroyImage(image);
@@ -187,6 +184,11 @@ MemoryRequirements VulkanImage::GetMemoryRequirements()
 	return vulkanDevice->GetDevice().getImageMemoryRequirements(image);
 }
 
+VulkanBuffer* VulkanImage::CreateStagingBuffer(char* inData)
+{
+	return CreateStagingBuffer(SharingMode::eExclusive, 0, data.data());
+}
+
 VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex)
 {
 	return CreateStagingBuffer(inSharingMode, inQueueFamilyIndex, data.data());
@@ -212,5 +214,13 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, inData, 0, size);
 
 	return &stagingBuffer;
+}
+
+void VulkanImage::DestroyStagingBuffer()
+{
+	if (stagingBuffer)
+	{
+		stagingBuffer.Destroy();
+	}
 }
 

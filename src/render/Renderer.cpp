@@ -479,7 +479,7 @@ void Renderer::OnResolutionChange()
 
 void Renderer::CreateImageAndSampler()
 {
-	uint32_t queueFailyIndices[] = { device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
+	uint32_t queueFamilyIndices[] = { device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
 
 	//image.createInfo.setArrayLayers(1);
 	//image.createInfo.setFormat(Format::eR8G8B8A8Srgb);
