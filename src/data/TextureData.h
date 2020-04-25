@@ -24,8 +24,6 @@ protected:
 	int height;
 	int numChannels;
 
-	unsigned char* data;
-
 	virtual ImageCreateInfo GetImageInfo() = 0;
 private:
 	TextureData();
