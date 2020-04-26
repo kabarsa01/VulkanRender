@@ -6,29 +6,24 @@ namespace
 	size_t NONEHash = std::hash<std::string>{}(NONE);
 }
 
-std::shared_ptr<std::string> WrapString(const std::string& InStr)
+std::map<size_t, std::string> HashString::stringsMap { { ::NONEHash, ::NONE } };
+
+HashString::HashString(const std::string& inString)
+	: hashValue{ NONEHash }
+	, cachedString{ &stringsMap[NONEHash] }
 {
-	return std::make_shared<std::string>( InStr );
-}
+	std::hash<std::string> hash;
+	hashValue = hash(inString);
 
-std::map<size_t, std::shared_ptr<std::string>> HashString::StringsMap { { NONEHash, WrapString(::NONE) } };
-
-HashString::HashString(std::string InString)
-	: HashValue{ NONEHash }
-	, CachedString{ StringsMap[NONEHash] }
-{
-	std::hash<std::string> Hash;
-	HashValue = Hash(InString);
-
-	if (StringsMap.find(HashValue) == StringsMap.end())
+	if (stringsMap.find(hashValue) == stringsMap.end())
 	{
-		StringsMap.insert(std::pair<size_t, std::shared_ptr<std::string>> ( HashValue, WrapString(InString) ) );
+		stringsMap.insert(std::pair<size_t, std::string> ( hashValue, inString ) );
 	}
-	CachedString = StringsMap[HashValue];
+	cachedString = &stringsMap[hashValue];
 }
 
-HashString::HashString(const char* InString)
-	: HashString( std::string(InString) )
+HashString::HashString(const char* inString)
+	: HashString( std::string(inString) )
 {
 }
 
@@ -43,51 +38,51 @@ HashString HashString::NONE()
 
 const size_t HashString::GetHash() const
 {
-	return HashValue;
+	return hashValue;
 }
 
 const std::string & HashString::GetString() const
 {
-	return * CachedString;
+	return * cachedString;
 }
 
 bool HashString::operator==(const HashString & rhs) const noexcept
 {
-	return this->HashValue == rhs.HashValue;
+	return this->hashValue == rhs.hashValue;
 }
 
 bool HashString::operator!=(const HashString & rhs) const noexcept
 {
-	return this->HashValue != rhs.HashValue;
+	return this->hashValue != rhs.hashValue;
 }
 
-bool HashString::operator<(const HashString & Other) const noexcept
+bool HashString::operator<(const HashString & other) const noexcept
 {
-	return this->HashValue < Other.HashValue;
+	return this->hashValue < other.hashValue;
 }
 
-bool HashString::operator>(const HashString & Other) const noexcept
+bool HashString::operator>(const HashString & other) const noexcept
 {
-	return this->HashValue > Other.HashValue;
+	return this->hashValue > other.hashValue;
 }
 
-bool HashString::operator<=(const HashString & Other) const noexcept
+bool HashString::operator<=(const HashString & other) const noexcept
 {
-	return this->HashValue <= Other.HashValue;
+	return this->hashValue <= other.hashValue;
 }
 
-bool HashString::operator>=(const HashString & Other) const noexcept
+bool HashString::operator>=(const HashString & other) const noexcept
 {
-	return this->HashValue >= Other.HashValue;
+	return this->hashValue >= other.hashValue;
 }
 
 const std::string & HashString::operator*() const
 {
-	return * CachedString;
+	return * cachedString;
 }
 
 HashString::HashString()
-	: HashValue{ NONEHash }
-	, CachedString{ StringsMap[NONEHash] }
+	: hashValue{ NONEHash }
+	, cachedString{ &stringsMap[NONEHash] }
 {
 }

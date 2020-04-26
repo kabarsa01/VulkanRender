@@ -9,6 +9,7 @@
 #include "scene/SceneObjectBase.h"
 #include "../DataStructures.h"
 #include "scene/Transform.h"
+#include "data/DataManager.h"
 
 VulkanPassBase::VulkanPassBase()
 {
@@ -240,23 +241,21 @@ void VulkanPassBase::CreateGraphicsPipeline()
 {
 	Device& device = vulkanDevice->GetDevice();
 
-	Shader vertShader;
-	vertShader.Load("content/shaders/BasePassVert.spv");
-	Shader fragShader;
-	fragShader.Load("content/shaders/BasePassFrag.spv");
-
-	VulkanShaderModule vertShaderModule(vertShader);
-	VulkanShaderModule fragShaderModule(fragShader);
+	DataManager* DM = DataManager::GetInstance();
+	ShaderPtr vertShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasePassVert.spv"));
+	vertShader->Load();
+	ShaderPtr fragShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasePassFrag.spv"));
+	fragShader->Load();
 
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(vertShaderModule.GetShaderModule());
+	vertStageInfo.setModule(vertShader->GetShaderModule());
 	vertStageInfo.setPName("main");
 	//vertStageInfo.setPSpecializationInfo(); spec info to set some constants
 
 	PipelineShaderStageCreateInfo fragStageInfo;
 	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
-	fragStageInfo.setModule(fragShaderModule.GetShaderModule());
+	fragStageInfo.setModule(fragShader->GetShaderModule());
 	fragStageInfo.setPName("main");
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };

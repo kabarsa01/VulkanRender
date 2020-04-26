@@ -11,8 +11,8 @@
 class HashString
 {
 public:
-	HashString(std::string InString);
-	HashString(const char* InString);
+	HashString(const std::string& inString);
+	HashString(const char* inString);
 	virtual ~HashString();
 
 	static HashString NONE();
@@ -22,16 +22,16 @@ public:
 
 	bool operator== (const HashString& rhs) const noexcept;
 	bool operator!= (const HashString& rhs) const noexcept;
-	bool operator<(const HashString& Other) const noexcept;
-	bool operator>(const HashString& Other) const noexcept;
-	bool operator<=(const HashString& Other) const noexcept;
-	bool operator>=(const HashString& Other) const noexcept;
+	bool operator<(const HashString& other) const noexcept;
+	bool operator>(const HashString& other) const noexcept;
+	bool operator<=(const HashString& other) const noexcept;
+	bool operator>=(const HashString& other) const noexcept;
 	const std::string& operator*() const;
 private:
-	static std::map<size_t, std::shared_ptr<std::string>> StringsMap;
+	static std::map<size_t, std::string> stringsMap;
 
-	size_t HashValue;
-	std::shared_ptr< std::string > CachedString;
+	size_t hashValue;
+	std::string* cachedString;
 
 	HashString();
 };

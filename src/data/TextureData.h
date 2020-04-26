@@ -7,7 +7,7 @@
 class TextureData : public Resource
 {
 public:
-	TextureData(const std::string& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true);
+	TextureData(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true);
 	virtual ~TextureData();
 
 	virtual bool Load() override;

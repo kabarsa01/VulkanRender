@@ -168,6 +168,9 @@
     <ClCompile Include="src\data\Texture2D.cpp">
       <Filter>Source Files\data</Filter>
     </ClCompile>
+    <ClCompile Include="src\data\MaterialData.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -276,6 +279,9 @@
       <Filter>Source Files\import</Filter>
     </ClInclude>
     <ClInclude Include="src\data\Texture2D.h">
+      <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\MaterialData.h">
       <Filter>Source Files\data</Filter>
     </ClInclude>
   </ItemGroup>

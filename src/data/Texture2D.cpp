@@ -1,6 +1,6 @@
 #include "Texture2D.h"
 
-Texture2D::Texture2D(const std::string& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
+Texture2D::Texture2D(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
 	: TextureData(inPath, inUsesAlpha, inFlipVertical, inLinear)
 {
 

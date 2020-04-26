@@ -77,7 +77,7 @@ inline shared_ptr<T> DataManager::RequestResourceByType(HashString InKey, ArgTyp
 	{
 		return dynamic_pointer_cast<T>(GetResource(InKey, ResourceTypeMap));
 	}
-	shared_ptr<T> Resource = ObjectBase::NewObject<T, ArgTypes...>(Args...);
+	shared_ptr<T> Resource = ObjectBase::NewObject<T, HashString, ArgTypes...>(InKey, Args...);
 	if (Resource.get())
 	{
 		Resource->Load();

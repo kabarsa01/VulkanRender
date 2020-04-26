@@ -37,8 +37,8 @@ public:
 	vector<Vertex> vertices;
 	vector<uint32_t> indices;
 
-	MeshData(const string& InId);
-	MeshData(const string& InId, const std::vector<Vertex>& inVertices, const std::vector<unsigned int>& inIndices);
+	MeshData(const HashString& InId);
+	MeshData(const HashString& InId, const std::vector<Vertex>& inVertices, const std::vector<unsigned int>& inIndices);
 	virtual ~MeshData();
 
 	virtual void OnDestroy() override;

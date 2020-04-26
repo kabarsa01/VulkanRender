@@ -2,22 +2,22 @@
 #include <fstream>
 #include <streambuf>
 #include "spirv_cross/spirv_glsl.hpp"
+#include "core/Engine.h"
 
-Shader::Shader()
-	: ObjectBase()
+Shader::Shader(const HashString& inPath)
+	: Resource(inPath)
 {
-
+	filePath = inPath.GetString();
+	shaderModule = nullptr;
 }
 
 Shader::~Shader()
 {
-
+	DestroyShaderModule();
 }
 
-void Shader::Load(const std::string& inFilePath)
+bool Shader::Load()
 {
-	filePath = inFilePath;
-
 	std::ifstream file(filePath, std::ios::binary);
 	if (!file.is_open()) {
 		throw std::runtime_error("failed to open file!");
@@ -33,27 +33,43 @@ void Shader::Load(const std::string& inFilePath)
 	file.close();
 
 	/*const uint32_t *ir_, size_t word_count*/
-	spirv_cross::Compiler glsl(reinterpret_cast<const uint32_t*>( binary.data() ), size / sizeof(uint32_t));
-	spirv_cross::ShaderResources resources = glsl.get_shader_resources();
+	SPIRV_CROSS_NAMESPACE::CompilerGLSL spirv(reinterpret_cast<const uint32_t*>( binary.data() ), size / sizeof(uint32_t));
+	SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
 
 	// Get all sampled images in the shader.
 	for (SPIRV_CROSS_NAMESPACE::Resource& resource : resources.uniform_buffers)
 	{
 		printf("uniform buffer name is %s \n", resource.name.c_str());
-		unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-		unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
+		unsigned set = spirv.get_decoration(resource.id, spv::DecorationDescriptorSet);
+		unsigned binding = spirv.get_decoration(resource.id, spv::DecorationBinding);
 
-		std::string name = glsl.get_name(resource.id);
-		//uint32_t index = glsl.get_decoration(resource.id, spv::DecorationIndex);
-		//std::string memberName = glsl.get_member_name(resource.type_id, index);
+		std::string name = spirv.get_name(resource.id);
 		printf("UBO %s at set = %u, binding = %u\n", name.c_str(), set, binding);
-		glsl.get_decoration(resource.id, spv::DecorationUserSemantic);
 
-		//// Modify the decoration to prepare it for GLSL.
-		//glsl.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+		// Some arbitrary remapping if we want.
+		//spirv.set_decoration(resource.id, spv::DecorationBinding, set * 16 + binding);
+	}
 
-		//// Some arbitrary remapping if we want.
-		//glsl.set_decoration(resource.id, spv::DecorationBinding, set * 16 + binding);
+	CreateShaderModule();
+	return true;
+}
+
+bool Shader::Unload()
+{
+	return true;
+}
+
+ShaderModule Shader::GetShaderModule()
+{
+	return shaderModule;
+}
+
+void Shader::DestroyShaderModule()
+{
+	if (shaderModule)
+	{
+		Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().destroyShaderModule(shaderModule);
+		shaderModule = nullptr;
 	}
 }
 
@@ -62,4 +78,18 @@ const std::vector<char>& Shader::GetCode() const
 	return binary;
 }
 
+void Shader::CreateShaderModule()
+{
+	if (shaderModule)
+	{
+		return;
+	}
+
+	ShaderModuleCreateInfo createInfo;
+	// size in bytes, even though code is uint32_t*
+	createInfo.setCodeSize(binary.size());
+	createInfo.setPCode(reinterpret_cast<const uint32_t*>(binary.data()));
+
+	shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
+}
 

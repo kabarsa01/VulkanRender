@@ -76,13 +76,13 @@ std::array<VertexInputAttributeDescription, 5> Vertex::GetAttributeDescriptions(
 //-------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-MeshData::MeshData(const string& inId)
+MeshData::MeshData(const HashString& inId)
 	: Resource{inId}
 {
 
 }
 
-MeshData::MeshData(const string& inId, const std::vector<Vertex>& inVertices, const std::vector<unsigned int>& inIndices)
+MeshData::MeshData(const HashString& inId, const std::vector<Vertex>& inVertices, const std::vector<unsigned int>& inIndices)
 	: Resource{ inId }
 	, vertices( inVertices )
 	, indices( inIndices )
@@ -159,8 +159,7 @@ uint32_t MeshData::GetIndexCount()
 
 MeshDataPtr MeshData::FullscreenQuad()
 {
-	return DataManager::GetInstance()->RequestResourceByType<MeshData, const string&, const std::vector<Vertex>&, const std::vector<unsigned int>&>(
-		FullscreenQuadId,
+	return DataManager::GetInstance()->RequestResourceByType<MeshData, const std::vector<Vertex>&, const std::vector<unsigned int>&>(
 		FullscreenQuadId,
 		QuadVertices,
 		QuadIndices

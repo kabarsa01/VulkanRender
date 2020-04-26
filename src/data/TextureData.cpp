@@ -2,10 +2,10 @@
 #include "stb/stb_image.h"
 #include "core/Engine.h"
 
-TextureData::TextureData(const std::string& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
+TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
 	: Resource(inPath)
 {
-	path = inPath;
+	path = inPath.GetString();
 	usedAlpha = inUsesAlpha;
 	flipVertical = inFlipVertical;
 	linear = inLinear;

@@ -21,6 +21,7 @@
 #include "scene/SceneObjectBase.h"
 #include "DataStructures.h"
 #include "TransferList.h"
+#include "data/DataManager.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -232,23 +233,21 @@ void Renderer::CreateDescriptorSetLayout()
 
 void Renderer::CreateGraphicsPipeline(RenderPass& inRenderPass, Extent2D inExtent)
 {
-	Shader vertShader;
-	vertShader.Load("content/shaders/BasicVert.spv");
-	Shader fragShader;
-	fragShader.Load("content/shaders/BasicFrag.spv");
-
-	VulkanShaderModule vertShaderModule(vertShader);
-	VulkanShaderModule fragShaderModule(fragShader);
+	DataManager* DM = DataManager::GetInstance();
+	ShaderPtr vertShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasicVert.spv"));
+	vertShader->Load();
+	ShaderPtr fragShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasicFrag.spv"));
+	fragShader->Load();
 
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(vertShaderModule.GetShaderModule());
+	vertStageInfo.setModule(vertShader->GetShaderModule());
 	vertStageInfo.setPName("main");
 	//vertStageInfo.setPSpecializationInfo(); spec info to set some constants
 
 	PipelineShaderStageCreateInfo fragStageInfo;
 	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
-	fragStageInfo.setModule(fragShaderModule.GetShaderModule());
+	fragStageInfo.setModule(fragShader->GetShaderModule());
 	fragStageInfo.setPName("main");
 
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
