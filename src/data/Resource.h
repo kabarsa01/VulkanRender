@@ -9,7 +9,7 @@
 class Resource : public ObjectBase
 {
 public:
-	Resource(HashString InId);
+	Resource(HashString inId);
 	virtual ~Resource();
 
 	virtual void OnInitialize() override;
@@ -17,14 +17,14 @@ public:
 	HashString GetResourceId();
 
 	virtual bool Load() = 0;
-	virtual bool Unload() = 0;
+	virtual bool Cleanup() = 0;
 	bool IsValid();
 protected:
-	HashString Id;
+	HashString id;
 
-	void SetValid(bool InValid);
+	void SetValid(bool inValid);
 private:
-	bool IsValidFlag = false;
+	bool isValidFlag = false;
 
 	Resource();
 };

@@ -17,29 +17,30 @@ class DataManager
 public:
 	static DataManager* GetInstance();
 	static void ShutdownInstance();
+	void CleanupResources();
 
-	bool AddResource(HashString InKey, shared_ptr<Resource> InValue);
-	bool AddResource(ResourcePtr InValue);
-	bool DeleteResource(HashString InKey, shared_ptr<Resource> InValue);
-	bool DeleteResource(ResourcePtr InValue);
-	bool IsResourcePresent(HashString InKey);
-	shared_ptr<Resource> GetResource(HashString InKey);
+	bool AddResource(HashString inKey, shared_ptr<Resource> inValue);
+	bool AddResource(ResourcePtr inValue);
+	bool DeleteResource(HashString inKey, shared_ptr<Resource> inValue);
+	bool DeleteResource(ResourcePtr inValue);
+	bool IsResourcePresent(HashString inKey);
+	shared_ptr<Resource> GetResource(HashString inKey);
 	template<class T>
-	shared_ptr<T> GetResource(HashString InKey);
+	shared_ptr<T> GetResource(HashString inKey);
 	template<class T>
-	shared_ptr<T> GetResourceByType(HashString InKey);
+	shared_ptr<T> GetResourceByType(HashString inKey);
 	template<class T, typename ...ArgTypes>
-	shared_ptr<T> RequestResourceByType(HashString InKey, ArgTypes ...Args);
+	shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes ...args);
 protected:
-	map<HashString, ResourcePtr> ResourcesTable;
-	map<HashString, map<HashString, ResourcePtr>> ResourcesMap;
+	map<HashString, ResourcePtr> resourcesTable;
+	map<HashString, map<HashString, ResourcePtr>> resourcesMap;
 private:
-	static DataManager* Instance;
+	static DataManager* instance;
 
 	DataManager();
 	virtual ~DataManager();
 
-	ResourcePtr GetResource(HashString InKey, map<HashString, ResourcePtr>& InMap);
+	ResourcePtr GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap);
 };
 
 //===========================================================================================
@@ -47,20 +48,20 @@ private:
 //===========================================================================================
 
 template<class T>
-inline shared_ptr<T> DataManager::GetResource(HashString InKey)
+inline shared_ptr<T> DataManager::GetResource(HashString inKey)
 {
-	return dynamic_pointer_cast<T>(GetResource(InKey));
+	return dynamic_pointer_cast<T>(GetResource(inKey));
 }
 
 //-----------------------------------------------------------------------------------
 
 template<class T>
-inline shared_ptr<T> DataManager::GetResourceByType(HashString InKey)
+inline shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
 {
-	map<HashString, map<HashString, ResourcePtr>>::iterator It = ResourcesMap.find(Class::Get<T>().GetName());
-	if (It != ResourcesMap.end())
+	map<HashString, map<HashString, ResourcePtr>>::iterator it = resourcesMap.find(Class::Get<T>().GetName());
+	if (it != resourcesMap.end())
 	{
-		return dynamic_pointer_cast<T>( GetResource(InKey, ResourcesMap[InKey]) );
+		return dynamic_pointer_cast<T>( GetResource(inKey, resourcesMap[inKey]) );
 	}
 	return nullptr;
 }
@@ -68,20 +69,20 @@ inline shared_ptr<T> DataManager::GetResourceByType(HashString InKey)
 //-----------------------------------------------------------------------------------
 
 template<class T, typename ...ArgTypes>
-inline shared_ptr<T> DataManager::RequestResourceByType(HashString InKey, ArgTypes ...Args)
+inline shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes ...args)
 {
-	HashString ClassName = Class::Get<T>().GetName();
-	map<HashString, ResourcePtr>& ResourceTypeMap = ResourcesMap[ClassName];
-	map<HashString, ResourcePtr>::iterator It = ResourceTypeMap.find(InKey);
-	if (It != ResourceTypeMap.end())
+	HashString className = Class::Get<T>().GetName();
+	map<HashString, ResourcePtr>& resourceTypeMap = resourcesMap[className];
+	map<HashString, ResourcePtr>::iterator it = resourceTypeMap.find(inKey);
+	if (it != resourceTypeMap.end())
 	{
-		return dynamic_pointer_cast<T>(GetResource(InKey, ResourceTypeMap));
+		return dynamic_pointer_cast<T>(GetResource(inKey, resourceTypeMap));
 	}
-	shared_ptr<T> Resource = ObjectBase::NewObject<T, HashString, ArgTypes...>(InKey, Args...);
-	if (Resource.get())
+	shared_ptr<T> resource = ObjectBase::NewObject<T, HashString, ArgTypes...>(inKey, args...);
+	if (resource.get())
 	{
-		Resource->Load();
+		resource->Load();
 	}
-	return Resource;
+	return resource;
 }
 

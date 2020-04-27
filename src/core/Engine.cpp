@@ -1,5 +1,6 @@
 #include "core/Engine.h"
 #include "core/TimeManager.h"
+#include "data/DataManager.h"
 
 Engine* Engine::staticInstance = new Engine();
 
@@ -27,12 +28,12 @@ RendererPtr Engine::GetRendererInstance()
 
 ScenePtr Engine::GetScene()
 {
-	return SceneInstance;
+	return sceneInstance;
 }
 
 RendererPtr Engine::GetRenderer()
 {
-	return RendererInstance;
+	return rendererInstance;
 }
 
 GLFWwindow* Engine::GetGlfwWindow()
@@ -46,11 +47,11 @@ void Engine::Init()
 	InitWindow();
 
 	// init modules
-	RendererInstance = ObjectBase::NewObject<Renderer>();
-	SceneInstance = ObjectBase::NewObject<Scene>();
+	rendererInstance = ObjectBase::NewObject<Renderer>();
+	sceneInstance = ObjectBase::NewObject<Scene>();
 
-	RendererInstance->Init();
-	SceneInstance->Init();
+	rendererInstance->Init();
+	sceneInstance->Init();
 }
 
 void Engine::MainLoop()
@@ -64,16 +65,17 @@ void Engine::MainLoop()
 
 		TimeManager::GetInstance()->UpdateTime();
 
-		SceneInstance->PerFrameUpdate();
-		RendererInstance->RenderFrame();
+		sceneInstance->PerFrameUpdate();
+		rendererInstance->RenderFrame();
 	}
 
-	RendererInstance->WaitForDevice();
+	rendererInstance->WaitForDevice();
 }
 
 void Engine::Cleanup()
 {
-	RendererInstance->Cleanup();
+	DataManager::ShutdownInstance();
+	rendererInstance->Cleanup();
 	// glfw cleanup
 	glfwDestroyWindow(window);
 	glfwTerminate();

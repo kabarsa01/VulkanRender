@@ -54,8 +54,9 @@ bool Shader::Load()
 	return true;
 }
 
-bool Shader::Unload()
+bool Shader::Cleanup()
 {
+	DestroyShaderModule();
 	return true;
 }
 

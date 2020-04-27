@@ -45,7 +45,7 @@ public:
 
 	// Inherited via Resource
 	virtual bool Load() override;
-	virtual bool Unload() override;
+	virtual bool Cleanup() override;
 
 	void CreateBuffer();
 	void DestroyBuffer();

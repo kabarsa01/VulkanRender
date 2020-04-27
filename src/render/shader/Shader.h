@@ -16,7 +16,7 @@ public:
 	virtual ~Shader();
 
 	virtual bool Load() override;
-	virtual bool Unload() override;
+	virtual bool Cleanup() override;
 
 	ShaderModule GetShaderModule();
 	void DestroyShaderModule();

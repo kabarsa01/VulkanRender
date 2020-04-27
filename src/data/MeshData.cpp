@@ -10,7 +10,7 @@ using namespace VULKAN_HPP_NAMESPACE;
 
 namespace
 {
-	std::vector<Vertex> QuadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+	std::vector<Vertex> quadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
 	// positions            // normals           // texCoords
 	{{-1.0f,  1.0f,  0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
 	{{-1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
@@ -18,12 +18,12 @@ namespace
 	{{ 1.0f,  1.0f,  0.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}
 	};
 
-	std::vector<unsigned int> QuadIndices = {
+	std::vector<unsigned int> quadIndices = {
 		0, 1, 2,
 		0, 2, 3
 	};
 
-	std::string FullscreenQuadId = "MeshData_FullscreenQuad";
+	std::string fullscreenQuadId = "MeshData_FullscreenQuad";
 };
 
 //-------------------------------------------------------------------------------------------------------------------------------------
@@ -160,20 +160,21 @@ uint32_t MeshData::GetIndexCount()
 MeshDataPtr MeshData::FullscreenQuad()
 {
 	return DataManager::GetInstance()->RequestResourceByType<MeshData, const std::vector<Vertex>&, const std::vector<unsigned int>&>(
-		FullscreenQuadId,
-		QuadVertices,
-		QuadIndices
+		fullscreenQuadId,
+		quadVertices,
+		quadIndices
 	);
 }
 
 bool MeshData::Load()
 {
-	return false;
+	return true;
 }
 
-bool MeshData::Unload()
+bool MeshData::Cleanup()
 {
-	return false;
+	DestroyBuffer();
+	return true;
 }
 
 

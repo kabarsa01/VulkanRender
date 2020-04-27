@@ -2,20 +2,20 @@
 #include "data/Resource.h"
 #include "data/DataManager.h"
 
-Resource::Resource(HashString InId)
+Resource::Resource(HashString inId)
 	: ObjectBase()
-	, Id{ InId }
+	, id{ inId }
 {
 }
 
-void Resource::SetValid(bool InValid)
+void Resource::SetValid(bool inValid)
 {
-	IsValidFlag = InValid;
+	isValidFlag = inValid;
 }
 
 Resource::Resource()
 	: ObjectBase{}
-	, Id{HashString::NONE()}
+	, id{HashString::NONE()}
 {
 
 }
@@ -27,24 +27,24 @@ Resource::~Resource()
 void Resource::OnInitialize()
 {
 	ObjectBase::OnInitialize();
-	DataManager::GetInstance()->AddResource(Id, get_shared_from_this<Resource>());
+	DataManager::GetInstance()->AddResource(id, get_shared_from_this<Resource>());
 }
 
 void Resource::OnDestroy()
 {
-	Unload();
-	IsValidFlag = false;
+	Cleanup();
+	isValidFlag = false;
 	// ask data manager to destroy this resource ???
 	ObjectBase::OnDestroy();
 }
 
 HashString Resource::GetResourceId()
 {
-	return Id;
+	return id;
 }
 
 bool Resource::IsValid()
 {
-	return IsValidFlag;
+	return isValidFlag;
 }
 

@@ -20,8 +20,8 @@ public:
 	RendererPtr GetRenderer();
 	GLFWwindow* GetGlfwWindow();
 protected:
-	ScenePtr SceneInstance;
-	RendererPtr RendererInstance;
+	ScenePtr sceneInstance;
+	RendererPtr rendererInstance;
 
 	void Init();
 	void MainLoop();

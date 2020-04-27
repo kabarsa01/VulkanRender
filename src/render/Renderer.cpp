@@ -156,7 +156,6 @@ void Renderer::Cleanup()
 	// destroying pipelines
 	DestroyGraphicsPipeline();
 	
-	MeshData::FullscreenQuad()->DestroyBuffer();
 	device.GetDevice().destroySampler(sampler);
 
 	commandBuffers.Destroy();

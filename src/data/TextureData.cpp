@@ -19,11 +19,7 @@ TextureData::TextureData()
 
 TextureData::~TextureData()
 {
-	if (image)
-	{
-		image.Destroy();
-	}
-	Unload();
+	Cleanup();
 }
 
 bool TextureData::Load()
@@ -48,11 +44,12 @@ bool TextureData::Load()
 	return true;
 }
 
-bool TextureData::Unload()
+bool TextureData::Cleanup()
 {
 	if (image)
 	{
-		image.DestroyStagingBuffer();
+		image.Destroy();
+		return true;
 	}
 	return false;
 }

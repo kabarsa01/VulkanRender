@@ -2,7 +2,7 @@
 #include "data/DataManager.h"
 #include "core/Class.h"
 
-DataManager* DataManager::Instance = nullptr;
+DataManager* DataManager::instance = nullptr;
 
 DataManager::DataManager()
 {
@@ -16,72 +16,84 @@ DataManager::~DataManager()
 
 DataManager* DataManager::GetInstance()
 {
-	if (Instance == nullptr)
+	if (instance == nullptr)
 	{
-		Instance = new DataManager();
+		instance = new DataManager();
 	}
 
-	return Instance;
+	return instance;
 }
 
 void DataManager::ShutdownInstance()
 {
-	if (Instance != nullptr)
+	instance->CleanupResources();
+	if (instance != nullptr)
 	{
-		delete Instance;
+		delete instance;
 	}
 }
 
-bool DataManager::AddResource(HashString InKey, shared_ptr<Resource> InValue)
+void DataManager::CleanupResources()
 {
-	if (InValue && ( ResourcesTable.find(InKey) == ResourcesTable.end() ))
+	map<HashString, ResourcePtr>::iterator it = resourcesTable.begin();
+	for (; it != resourcesTable.end(); it++)
 	{
-		ResourcesTable[InKey] = InValue;
-		ResourcesMap[InValue->GetClass().GetName()][InKey] = InValue;
+		it->second->Cleanup();
+	}
+	resourcesTable.clear();
+	resourcesMap.clear();
+}
+
+bool DataManager::AddResource(HashString inKey, shared_ptr<Resource> inValue)
+{
+	if (inValue && ( resourcesTable.find(inKey) == resourcesTable.end() ))
+	{
+		resourcesTable[inKey] = inValue;
+		resourcesMap[inValue->GetClass().GetName()][inKey] = inValue;
 		return true;
 	}
 
 	return false;
 }
 
-bool DataManager::AddResource(ResourcePtr InValue)
+bool DataManager::AddResource(ResourcePtr inValue)
 {
-	return AddResource(InValue->GetResourceId(), InValue);
+	return AddResource(inValue->GetResourceId(), inValue);
 }
 
-bool DataManager::DeleteResource(HashString InKey, shared_ptr<Resource> InValue)
+bool DataManager::DeleteResource(HashString inKey, shared_ptr<Resource> inValue)
 {
-	if (InValue && (ResourcesTable.find(InKey) != ResourcesTable.end()))
+	if (inValue && (resourcesTable.find(inKey) != resourcesTable.end()))
 	{
-		ResourcesTable.erase(InKey);
-		ResourcesMap[InValue->GetClass().GetName()].erase(InKey);
+		resourcesTable.erase(inKey);
+		resourcesMap[inValue->GetClass().GetName()].erase(inKey);
 		return true;
 	}
 
 	return false;
 }
 
-bool DataManager::DeleteResource(ResourcePtr InValue)
+bool DataManager::DeleteResource(ResourcePtr inValue)
 {
-	return DeleteResource(InValue->GetResourceId(), InValue);
+	return DeleteResource(inValue->GetResourceId(), inValue);
 }
 
-bool DataManager::IsResourcePresent(HashString InKey)
+bool DataManager::IsResourcePresent(HashString inKey)
 {
-	return ResourcesTable.find(InKey) != ResourcesTable.end();
+	return resourcesTable.find(inKey) != resourcesTable.end();
 }
 
-shared_ptr<Resource> DataManager::GetResource(HashString InKey)
+std::shared_ptr<Resource> DataManager::GetResource(HashString inKey)
 {
-	return GetResource(InKey, ResourcesTable);
+	return GetResource(inKey, resourcesTable);
 }
 
-ResourcePtr DataManager::GetResource(HashString InKey, map<HashString, ResourcePtr>& InMap)
+ResourcePtr DataManager::GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap)
 {
-	map<HashString, ResourcePtr>::iterator It = InMap.find(InKey);
-	if (It != InMap.end())
+	map<HashString, ResourcePtr>::iterator it = inMap.find(inKey);
+	if (it != inMap.end())
 	{
-		return It->second;
+		return it->second;
 	}
 	return nullptr;
 }

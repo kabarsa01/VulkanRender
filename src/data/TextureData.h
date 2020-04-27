@@ -11,7 +11,7 @@ public:
 	virtual ~TextureData();
 
 	virtual bool Load() override;
-	virtual bool Unload() override;
+	virtual bool Cleanup() override;
 protected:
 	VulkanImage image;
 

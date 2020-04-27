@@ -38,10 +38,11 @@ void VulkanBuffer::SetData(DeviceSize inSize, char* inData)
 
 void VulkanBuffer::Destroy()
 {
-	if (stagingBuffer)
+	if (stagingBuffer != nullptr)
 	{
 		stagingBuffer->Destroy();
 		delete stagingBuffer;
+		stagingBuffer = nullptr;
 	}
 	if (buffer)
 	{
