@@ -26,6 +26,8 @@ public:
 	bool operator>(const HashString& other) const noexcept;
 	bool operator<=(const HashString& other) const noexcept;
 	bool operator>=(const HashString& other) const noexcept;
+
+	HashString operator+(const HashString& other) const noexcept;
 	const std::string& operator*() const;
 private:
 	static std::map<size_t, std::string> stringsMap;

@@ -76,6 +76,11 @@ bool HashString::operator>=(const HashString & other) const noexcept
 	return this->hashValue >= other.hashValue;
 }
 
+HashString HashString::operator+(const HashString& other) const noexcept
+{
+	return HashString(*cachedString + *other.cachedString);
+}
+
 const std::string & HashString::operator*() const
 {
 	return * cachedString;

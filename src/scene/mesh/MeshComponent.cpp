@@ -33,6 +33,11 @@ void MeshComponent::SetMeshData(MeshDataPtr inMeshData)
 	meshData = inMeshData;
 }
 
+void MeshComponent::SetMaterial(MaterialPtr inMaterial)
+{
+	material = inMaterial;
+}
+
 void MeshComponent::OnInitialize()
 {
 	SceneObjectComponent::OnInitialize();

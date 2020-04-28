@@ -241,7 +241,7 @@ exit /b</Command>
     <ClCompile Include="src\core\ObjectBase.cpp" />
     <ClCompile Include="src\core\TimeManager.cpp" />
     <ClCompile Include="src\data\DataManager.cpp" />
-    <ClCompile Include="src\data\MaterialData.cpp" />
+    <ClCompile Include="src\data\Material.cpp" />
     <ClCompile Include="src\data\MeshData.cpp" />
     <ClCompile Include="src\data\Resource.cpp" />
     <ClCompile Include="src\data\Texture2D.cpp" />
@@ -257,6 +257,7 @@ exit /b</Command>
     <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanSwapChain.cpp" />
     <ClCompile Include="src\render\passes\VulkanPassBase.cpp" />
+    <ClCompile Include="src\render\PipelineStorage.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\resources\VulkanBuffer.cpp" />
     <ClCompile Include="src\render\resources\VulkanDeviceMemory.cpp" />
@@ -281,7 +282,7 @@ exit /b</Command>
     <ClInclude Include="src\core\ObjectBase.h" />
     <ClInclude Include="src\core\TimeManager.h" />
     <ClInclude Include="src\data\DataManager.h" />
-    <ClInclude Include="src\data\MaterialData.h" />
+    <ClInclude Include="src\data\Material.h" />
     <ClInclude Include="src\data\MeshData.h" />
     <ClInclude Include="src\data\Resource.h" />
     <ClInclude Include="src\data\Texture2D.h" />
@@ -296,6 +297,7 @@ exit /b</Command>
     <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\render\objects\VulkanSwapChain.h" />
     <ClInclude Include="src\render\passes\VulkanPassBase.h" />
+    <ClInclude Include="src\render\PipelineStorage.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\resources\VulkanBuffer.h" />
     <ClInclude Include="src\render\resources\VulkanDeviceMemory.h" />

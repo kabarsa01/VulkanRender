@@ -241,6 +241,8 @@ void VulkanPassBase::CreateGraphicsPipeline()
 {
 	Device& device = vulkanDevice->GetDevice();
 
+	// TODO: check pipeline storage
+
 	DataManager* DM = DataManager::GetInstance();
 	ShaderPtr vertShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasePassVert.spv"));
 	vertShader->Load();
@@ -343,6 +345,8 @@ void VulkanPassBase::CreateGraphicsPipeline()
 	pipelineInfo.setBasePipelineIndex(-1);
 
 	pipeline = device.createGraphicsPipeline(vulkanDevice->GetPipelineCache(), pipelineInfo);
+
+	// TODO: update pipeline storage
 }
 
 void VulkanPassBase::CreateDescriptorPool()
