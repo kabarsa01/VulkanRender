@@ -81,6 +81,11 @@ HashString HashString::operator+(const HashString& other) const noexcept
 	return HashString(*cachedString + *other.cachedString);
 }
 
+HashString HashString::operator+(const std::string& other) const noexcept
+{
+	return HashString(*cachedString + other);
+}
+
 const std::string & HashString::operator*() const
 {
 	return * cachedString;
