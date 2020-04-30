@@ -1,8 +1,9 @@
 #include "Material.h"
+#include "DataManager.h"
 
 Material::Material(HashString inId)
 	: Resource(inId)
-	, shaderHash(HashString::NONE())
+	, shaderHash(HashString::NONE)
 {
 
 }
@@ -23,7 +24,8 @@ Material::~Material()
 
 void Material::LoadResources()
 {
-
+	vertexShader = DataManager::RequestResourceType<Shader>(vertexShaderPath);
+	fragmentShader = DataManager::RequestResourceType<Shader>(fragmentShaderPath);
 }
 
 HashString Material::GetShaderHash()
@@ -41,5 +43,15 @@ void Material::SetShaderPath(const std::string& inVertexShaderPath, const std::s
 void Material::SetTexture(const std::string& inName, Texture2DPtr inTexture2D)
 {
 	textures2D[inName] = inTexture2D;
+}
+
+bool Material::Load()
+{
+	return true;
+}
+
+bool Material::Cleanup()
+{
+	return true;
 }
 

@@ -65,7 +65,7 @@ private:
 	VulkanBuffer vertexBuffer;
 	VulkanBuffer indexBuffer;
 
-	MeshData() : Resource(HashString::NONE()) {}
+	MeshData() : Resource(HashString::NONE) {}
 
 	template<class T>
 	void SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);

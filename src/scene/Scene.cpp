@@ -7,6 +7,7 @@
 #include "mesh/MeshObject.h"
 #include "import/MeshImporter.h"
 #include "render/TransferList.h"
+#include "data/DataManager.h"
 
 Scene::Scene()
 	: ObjectBase()
@@ -26,6 +27,13 @@ void Scene::Init()
 {
 	TransferList* TL = TransferList::GetInstance();
 
+	MaterialPtr mat = DataManager::RequestResourceType<Material>(
+		"default",
+		"content/shaders/BasePassVert.spv",
+		"content/shaders/BasePassFrag.spv"
+	);
+	mat->LoadResources();
+
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
@@ -43,6 +51,7 @@ void Scene::Init()
 			MO->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 			MO->transform.SetScale({ 0.3f, 0.3f, 0.3f });
 			MO->GetMeshComponent()->meshData->CreateBuffer();
+			MO->GetMeshComponent()->SetMaterial(mat);
 
 			TL->PushBuffers(MO->GetMeshComponent()->meshData);
 		}

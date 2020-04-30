@@ -12,7 +12,7 @@ TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/,
 }
 
 TextureData::TextureData()
-	: Resource(HashString::NONE())
+	: Resource(HashString::NONE)
 {
 
 }

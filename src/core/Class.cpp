@@ -44,7 +44,7 @@ bool Class::operator>=(const Class & Other) const
 }
 
 Class::Class()
-	: Name( HashString::NONE() )
+	: Name( HashString::NONE )
 {
 }
 

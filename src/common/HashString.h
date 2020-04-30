@@ -11,11 +11,12 @@
 class HashString
 {
 public:
+	static HashString NONE;
+
+	HashString();
 	HashString(const std::string& inString);
 	HashString(const char* inString);
 	virtual ~HashString();
-
-	static HashString NONE();
 
 	const size_t GetHash() const;
 	const std::string& GetString() const;
@@ -35,6 +36,4 @@ private:
 
 	size_t hashValue;
 	std::string* cachedString;
-
-	HashString();
 };

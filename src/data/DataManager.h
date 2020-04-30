@@ -31,6 +31,8 @@ public:
 	shared_ptr<T> GetResourceByType(HashString inKey);
 	template<class T, typename ...ArgTypes>
 	shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes ...args);
+	template<class T, typename ...ArgTypes>
+	static shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes ...args);
 protected:
 	map<HashString, ResourcePtr> resourcesTable;
 	map<HashString, map<HashString, ResourcePtr>> resourcesMap;
@@ -84,5 +86,13 @@ inline shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTyp
 		resource->Load();
 	}
 	return resource;
+}
+
+//-----------------------------------------------------------------------------------
+
+template<class T, typename ...ArgTypes>
+static shared_ptr<T> DataManager::RequestResourceType(HashString inKey, ArgTypes ...args)
+{
+	return instance->RequestResourceByType<T, ArgTypes...>(inKey, args...);
 }
 

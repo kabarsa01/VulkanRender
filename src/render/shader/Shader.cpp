@@ -18,6 +18,11 @@ Shader::~Shader()
 
 bool Shader::Load()
 {
+	if (shaderModule)
+	{
+		return true;
+	}
+
 	std::ifstream file(filePath, std::ios::binary);
 	if (!file.is_open()) {
 		throw std::runtime_error("failed to open file!");

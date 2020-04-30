@@ -2,15 +2,26 @@
 
 namespace
 {
-	std::string NONE("NONE");
-	size_t NONEHash = std::hash<std::string>{}(NONE);
+	std::string NONEString("NONE");
+	size_t NONEHash = std::hash<std::string>{}(NONEString);
 }
 
-std::map<size_t, std::string> HashString::stringsMap { { ::NONEHash, ::NONE } };
+//--------------------------------------------------------------------------------
+// static stuff
+//--------------------------------------------------------------------------------
+HashString HashString::NONE = HashString();
+std::map<size_t, std::string> HashString::stringsMap { /*{ ::NONEHash, ::NONEString }*/ };
+//--------------------------------------------------------------------------------
+
+HashString::HashString()
+	: hashValue{ NONEHash }
+	, cachedString{ &NONEString }
+{
+}
 
 HashString::HashString(const std::string& inString)
 	: hashValue{ NONEHash }
-	, cachedString{ &stringsMap[NONEHash] }
+	, cachedString{ &NONEString }
 {
 	std::hash<std::string> hash;
 	hashValue = hash(inString);
@@ -29,11 +40,6 @@ HashString::HashString(const char* inString)
 
 HashString::~HashString()
 {
-}
-
-HashString HashString::NONE()
-{
-	return HashString(::NONE);
 }
 
 const size_t HashString::GetHash() const
@@ -91,8 +97,4 @@ const std::string & HashString::operator*() const
 	return * cachedString;
 }
 
-HashString::HashString()
-	: hashValue{ NONEHash }
-	, cachedString{ &stringsMap[NONEHash] }
-{
-}
+

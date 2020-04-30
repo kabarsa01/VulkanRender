@@ -15,7 +15,7 @@ void Resource::SetValid(bool inValid)
 
 Resource::Resource()
 	: ObjectBase{}
-	, id{HashString::NONE()}
+	, id{HashString::NONE}
 {
 
 }
