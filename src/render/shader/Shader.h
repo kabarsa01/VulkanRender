@@ -9,6 +9,16 @@
 
 using namespace VULKAN_HPP_NAMESPACE;
 
+struct BindingInfo
+{
+	uint32_t set;
+	uint32_t binding;
+	uint32_t count;
+	std::string name;
+	std::string typeName;
+	DescriptorType descriptorType;
+};
+
 class Shader : public Resource
 {
 public:
@@ -21,9 +31,12 @@ public:
 	ShaderModule GetShaderModule();
 	void DestroyShaderModule();
 	const std::vector<char>& GetCode() const;
+
+	std::vector<BindingInfo>& GetBindings();
 protected:
 	std::string filePath;
 	std::vector<char> binary;
+	std::vector<BindingInfo> bindings;
 
 	ShaderModule shaderModule;
 

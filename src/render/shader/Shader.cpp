@@ -37,24 +37,7 @@ bool Shader::Load()
 	file.read(binary.data(), size);
 	file.close();
 
-	/*const uint32_t *ir_, size_t word_count*/
-	SPIRV_CROSS_NAMESPACE::CompilerGLSL spirv(reinterpret_cast<const uint32_t*>( binary.data() ), size / sizeof(uint32_t));
-	SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
-
-	// Get all sampled images in the shader.
-	for (SPIRV_CROSS_NAMESPACE::Resource& resource : resources.uniform_buffers)
-	{
-		printf("uniform buffer name is %s \n", resource.name.c_str());
-		unsigned set = spirv.get_decoration(resource.id, spv::DecorationDescriptorSet);
-		unsigned binding = spirv.get_decoration(resource.id, spv::DecorationBinding);
-
-		std::string name = spirv.get_name(resource.id);
-		printf("UBO %s at set = %u, binding = %u\n", name.c_str(), set, binding);
-
-		// Some arbitrary remapping if we want.
-		//spirv.set_decoration(resource.id, spv::DecorationBinding, set * 16 + binding);
-	}
-
+	GetBindings();
 	CreateShaderModule();
 	return true;
 }
@@ -82,6 +65,43 @@ void Shader::DestroyShaderModule()
 const std::vector<char>& Shader::GetCode() const
 {
 	return binary;
+}
+
+std::vector<BindingInfo>& Shader::GetBindings()
+{
+	if (bindings.size() == 0)
+	{
+		SPIRV_CROSS_NAMESPACE::CompilerGLSL spirv(reinterpret_cast<const uint32_t*>(binary.data()), binary.size() / sizeof(uint32_t));
+		SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
+
+		// Get all sampled images in the shader.
+		for (SPIRV_CROSS_NAMESPACE::Resource& resource : resources.uniform_buffers)
+		{
+			BindingInfo info;
+			info.descriptorType = DescriptorType::eUniformBuffer;
+
+			printf("uniform buffer name is %s \n", resource.name.c_str());
+
+			info.set = spirv.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			info.binding = spirv.get_decoration(resource.id, spv::DecorationBinding);
+			info.name = spirv.get_name(resource.id);
+			info.typeName = resource.name;
+			info.count = spirv.get_decoration(resource.id, spv::DecorationArrayStride);
+
+			SPIRV_CROSS_NAMESPACE::SPIRType type = spirv.get_type(resource.type_id);
+			SPIRV_CROSS_NAMESPACE::SPIRType baseType = spirv.get_type(resource.base_type_id);
+
+			uint32_t arraySize = 0;
+			if (type.array.size() > 0)
+			{
+				arraySize = type.array[0];
+			}
+
+			printf("UBO %s at set = %u, binding = %u\n", info.name.c_str(), info.set, info.binding);
+		}
+	}
+
+	return bindings;
 }
 
 void Shader::CreateShaderModule()

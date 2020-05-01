@@ -378,12 +378,6 @@ void VulkanPassBase::CreateTextures()
 
 VULKAN_HPP_NAMESPACE::Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial)
 {
-	//DataManager* DM = DataManager::GetInstance();
-	//ShaderPtr vertShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasePassVert.spv"));
-	//vertShader->Load();
-	//ShaderPtr fragShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasePassFrag.spv"));
-	//fragShader->Load();
-
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
 	vertStageInfo.setModule(inMaterial->GetVertexShader()->GetShaderModule());
