@@ -6,6 +6,7 @@
 #include <vector>
 #include "vulkan\vulkan.hpp"
 #include "data\Resource.h"
+#include "spirv_cross\spirv_cross.hpp"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -13,10 +14,17 @@ struct BindingInfo
 {
 	uint32_t set;
 	uint32_t binding;
-	uint32_t count;
-	std::string name;
-	std::string typeName;
+	uint32_t vectorSize;
+	uint32_t numColumns;
 	DescriptorType descriptorType;
+	std::string name;
+	std::string blockName;
+	std::vector<uint32_t> arrayDimensions;
+
+	bool IsArray()
+	{
+		return arrayDimensions.size() > 0;
+	}
 };
 
 class Shader : public Resource
@@ -32,15 +40,19 @@ public:
 	void DestroyShaderModule();
 	const std::vector<char>& GetCode() const;
 
-	std::vector<BindingInfo>& GetBindings();
+	std::vector<BindingInfo>& GetBindings(DescriptorType inDescriptorType);
 protected:
 	std::string filePath;
 	std::vector<char> binary;
-	std::vector<BindingInfo> bindings;
+	std::map<DescriptorType, std::vector<BindingInfo>> bindings;
 
 	ShaderModule shaderModule;
 
 	void CreateShaderModule();
+	std::vector<BindingInfo> ExtractBindingInfo(
+		SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, 
+		SPIRV_CROSS_NAMESPACE::Compiler& inCompiler);
+	void ExtractBindingsInfo();
 };
 
 typedef std::shared_ptr<Shader> ShaderPtr;

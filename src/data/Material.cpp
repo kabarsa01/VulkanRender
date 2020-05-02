@@ -55,3 +55,51 @@ bool Material::Cleanup()
 	return true;
 }
 
+DescriptorSetLayout Material::ComposeDescriptorSetLayout()
+{
+	std::vector<DescriptorSetLayoutBinding> bindings;
+
+	// TODO: BINDING_INFO and NAME should be paired somewhere here !!!!
+
+	std::vector<BindingInfo> uniformBuffers = vertexShader->GetBindings(DescriptorType::eUniformBuffer);
+	for (BindingInfo& info : uniformBuffers)
+	{
+		DescriptorSetLayoutBinding binding;
+		binding.setBinding(info.binding);
+		binding.setDescriptorType(DescriptorType::eUniformBuffer);
+		binding.setDescriptorCount(info.IsArray() ? info.arrayDimensions[0] : 1);
+		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+
+		bindings.push_back(binding);
+	}
+
+	DescriptorSetLayoutBinding globalsLayoutBinding;
+	globalsLayoutBinding.setBinding(0);
+	globalsLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
+	globalsLayoutBinding.setDescriptorCount(1);
+	globalsLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+	DescriptorSetLayoutBinding mvpLayoutBinding;
+	mvpLayoutBinding.setBinding(2);
+	mvpLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
+	mvpLayoutBinding.setDescriptorCount(1);
+	mvpLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+	DescriptorSetLayoutBinding samplerLayoutBinding;
+	samplerLayoutBinding.setBinding(1);
+	samplerLayoutBinding.setDescriptorType(DescriptorType::eSampler);
+	samplerLayoutBinding.setDescriptorCount(1);
+	samplerLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
+	DescriptorSetLayoutBinding diffuseLayoutBinding;
+	diffuseLayoutBinding.setBinding(3);
+	diffuseLayoutBinding.setDescriptorType(DescriptorType::eSampledImage);
+	diffuseLayoutBinding.setDescriptorCount(1);
+	diffuseLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
+
+	DescriptorSetLayoutBinding setLayoutBindings[] = { globalsLayoutBinding, mvpLayoutBinding, samplerLayoutBinding, diffuseLayoutBinding };
+	DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
+	descriptorSetLayoutInfo.setBindingCount(4);
+	descriptorSetLayoutInfo.setPBindings(setLayoutBindings);
+
+	return DescriptorSetLayout();
+	//descriptorSetLayout = device.createDescriptorSetLayout(descriptorSetLayoutInfo);
+}
+

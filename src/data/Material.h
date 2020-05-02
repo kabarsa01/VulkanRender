@@ -21,6 +21,12 @@ public:
 
 	bool Load() override;
 	bool Cleanup() override;
+
+	//-----------------------------------------------------
+	// we need to produce a descriptor set layout for
+	// material shaders
+	//-----------------------------------------------------
+	DescriptorSetLayout ComposeDescriptorSetLayout();
 protected:
 	std::string vertexShaderPath;
 	std::string fragmentShaderPath;

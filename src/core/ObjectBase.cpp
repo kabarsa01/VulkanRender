@@ -12,12 +12,12 @@ ObjectBase::~ObjectBase()
 
 const Class & ObjectBase::GetClass()
 {
-	return * InstanceClass;
+	return * instanceClass;
 }
 
 void ObjectBase::OnInitialize()
 {
-	InstanceClass = Class::GetClass(this);
+	instanceClass = Class::GetClass(this);
 }
 
 void ObjectBase::OnDestroy()

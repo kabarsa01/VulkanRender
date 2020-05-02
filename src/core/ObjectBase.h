@@ -26,7 +26,7 @@ public:
 	virtual void OnInitialize();
 	virtual void OnDestroy();
 private:
-	std::shared_ptr<Class> InstanceClass;
+	std::shared_ptr<Class> instanceClass;
 };
 
 //-----------------------------------------------------------------------------------

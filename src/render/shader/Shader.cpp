@@ -1,7 +1,6 @@
 #include "render/shader/Shader.h"
 #include <fstream>
 #include <streambuf>
-#include "spirv_cross/spirv_glsl.hpp"
 #include "core/Engine.h"
 
 Shader::Shader(const HashString& inPath)
@@ -37,7 +36,7 @@ bool Shader::Load()
 	file.read(binary.data(), size);
 	file.close();
 
-	GetBindings();
+	ExtractBindingsInfo();
 	CreateShaderModule();
 	return true;
 }
@@ -67,41 +66,9 @@ const std::vector<char>& Shader::GetCode() const
 	return binary;
 }
 
-std::vector<BindingInfo>& Shader::GetBindings()
+std::vector<BindingInfo>& Shader::GetBindings(DescriptorType inDescriptorType)
 {
-	if (bindings.size() == 0)
-	{
-		SPIRV_CROSS_NAMESPACE::CompilerGLSL spirv(reinterpret_cast<const uint32_t*>(binary.data()), binary.size() / sizeof(uint32_t));
-		SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
-
-		// Get all sampled images in the shader.
-		for (SPIRV_CROSS_NAMESPACE::Resource& resource : resources.uniform_buffers)
-		{
-			BindingInfo info;
-			info.descriptorType = DescriptorType::eUniformBuffer;
-
-			printf("uniform buffer name is %s \n", resource.name.c_str());
-
-			info.set = spirv.get_decoration(resource.id, spv::DecorationDescriptorSet);
-			info.binding = spirv.get_decoration(resource.id, spv::DecorationBinding);
-			info.name = spirv.get_name(resource.id);
-			info.typeName = resource.name;
-			info.count = spirv.get_decoration(resource.id, spv::DecorationArrayStride);
-
-			SPIRV_CROSS_NAMESPACE::SPIRType type = spirv.get_type(resource.type_id);
-			SPIRV_CROSS_NAMESPACE::SPIRType baseType = spirv.get_type(resource.base_type_id);
-
-			uint32_t arraySize = 0;
-			if (type.array.size() > 0)
-			{
-				arraySize = type.array[0];
-			}
-
-			printf("UBO %s at set = %u, binding = %u\n", info.name.c_str(), info.set, info.binding);
-		}
-	}
-
-	return bindings;
+	return bindings[inDescriptorType];
 }
 
 void Shader::CreateShaderModule()
@@ -117,5 +84,47 @@ void Shader::CreateShaderModule()
 	createInfo.setPCode(reinterpret_cast<const uint32_t*>(binary.data()));
 
 	shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
+}
+
+std::vector<BindingInfo> Shader::ExtractBindingInfo(SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, SPIRV_CROSS_NAMESPACE::Compiler& inCompiler)
+{
+	std::vector<BindingInfo> bindingsVector;
+
+	for (SPIRV_CROSS_NAMESPACE::Resource& resource : inResources)
+	{
+		BindingInfo info;
+
+		info.set = inCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+		info.binding = inCompiler.get_decoration(resource.id, spv::DecorationBinding);
+		info.name = inCompiler.get_name(resource.id);
+		info.blockName = resource.name;
+
+		SPIRV_CROSS_NAMESPACE::SPIRType type = inCompiler.get_type(resource.type_id);
+
+		info.vectorSize = type.vecsize;
+		info.numColumns = type.columns;
+
+		info.arrayDimensions.resize(type.array.size());
+		for (uint64_t index = 0; index < type.array.size(); index++)
+		{
+			info.arrayDimensions[index] = type.array[index];
+		}
+		printf("Resource %s with block name %s at set = %u, binding = %u\n", info.name.c_str(), info.blockName.c_str(), info.set, info.binding);
+
+		bindingsVector.push_back(info);
+	}
+	
+	return bindingsVector;
+}
+
+void Shader::ExtractBindingsInfo()
+{
+	SPIRV_CROSS_NAMESPACE::Compiler spirv(reinterpret_cast<const uint32_t*>(binary.data()), binary.size() / sizeof(uint32_t));
+	SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
+
+	bindings[DescriptorType::eUniformBuffer] = ExtractBindingInfo(resources.uniform_buffers, spirv);
+	bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv);
+	bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv);
+	bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv);
 }
 

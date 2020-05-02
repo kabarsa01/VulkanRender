@@ -25,7 +25,7 @@ void Scene::OnInitialize()
 
 void Scene::Init()
 {
-	TransferList* TL = TransferList::GetInstance();
+	TransferList* tl = TransferList::GetInstance();
 
 	MaterialPtr mat = DataManager::RequestResourceType<Material>(
 		"default",
@@ -41,24 +41,24 @@ void Scene::Init()
 	cameraObj->GetCameraComponent()->SetFov(110.0f);
 
 	{
-		MeshImporter Importer;
-		//Importer.Import("./content/root/Aset_wood_root_M_rkswd_LOD0.FBX");
-		Importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
-		for (unsigned int MeshIndex = 0; MeshIndex < Importer.GetMeshes().size(); MeshIndex++)
+		MeshImporter importer;
+		//importer.Import("./content/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+		importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+		for (unsigned int MeshIndex = 0; MeshIndex < importer.GetMeshes().size(); MeshIndex++)
 		{
-			MeshObjectPtr MO = ObjectBase::NewObject<MeshObject>();
-			MO->GetMeshComponent()->meshData = Importer.GetMeshes()[MeshIndex];
-			MO->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-			MO->transform.SetScale({ 0.3f, 0.3f, 0.3f });
-			MO->GetMeshComponent()->meshData->CreateBuffer();
-			MO->GetMeshComponent()->SetMaterial(mat);
+			MeshObjectPtr mo = ObjectBase::NewObject<MeshObject>();
+			mo->GetMeshComponent()->meshData = importer.GetMeshes()[MeshIndex];
+			mo->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+			mo->transform.SetScale({ 0.3f, 0.3f, 0.3f });
+			mo->GetMeshComponent()->meshData->CreateBuffer();
+			mo->GetMeshComponent()->SetMaterial(mat);
 
-			TL->PushBuffers(MO->GetMeshComponent()->meshData);
+			tl->PushBuffers(mo->GetMeshComponent()->meshData);
 		}
 	}
 
 	MeshData::FullscreenQuad()->CreateBuffer();
-	TL->PushBuffers(MeshData::FullscreenQuad());
+	tl->PushBuffers(MeshData::FullscreenQuad());
 }
 
 void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)
