@@ -10,6 +10,7 @@ public:
 	virtual ~Texture2D();
 protected:
 	ImageCreateInfo GetImageInfo() override;
+	ImageView CreateImageView() override;
 private:
 	Texture2D();
 };

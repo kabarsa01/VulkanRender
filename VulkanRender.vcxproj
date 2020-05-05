@@ -257,7 +257,7 @@ exit /b</Command>
     <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanSwapChain.cpp" />
     <ClCompile Include="src\render\passes\VulkanPassBase.cpp" />
-    <ClCompile Include="src\render\PipelineStorage.cpp" />
+    <ClCompile Include="src\render\PipelineRegistry.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\resources\VulkanBuffer.cpp" />
     <ClCompile Include="src\render\resources\VulkanDeviceMemory.cpp" />
@@ -297,7 +297,7 @@ exit /b</Command>
     <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\render\objects\VulkanSwapChain.h" />
     <ClInclude Include="src\render\passes\VulkanPassBase.h" />
-    <ClInclude Include="src\render\PipelineStorage.h" />
+    <ClInclude Include="src\render\PipelineRegistry.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\resources\VulkanBuffer.h" />
     <ClInclude Include="src\render\resources\VulkanDeviceMemory.h" />

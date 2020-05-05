@@ -4,6 +4,7 @@
 
 TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
 	: Resource(inPath)
+	, imageView(nullptr)
 {
 	path = inPath.GetString();
 	usedAlpha = inUsesAlpha;
@@ -38,6 +39,7 @@ bool TextureData::Load()
 	image.Create(&device);
 	image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 	image.CreateStagingBuffer(reinterpret_cast<char*>(data));
+	imageView = CreateImageView();
 
 	stbi_image_free(data);
 
@@ -46,6 +48,11 @@ bool TextureData::Load()
 
 bool TextureData::Cleanup()
 {
+	if (imageView)
+	{
+		Engine::GetRendererInstance()->GetDevice().destroyImageView(imageView);
+		imageView = nullptr;
+	}
 	if (image)
 	{
 		image.Destroy();
@@ -53,6 +60,13 @@ bool TextureData::Cleanup()
 	}
 	return false;
 }
+
+ImageView& TextureData::GetImageView()
+{
+	return imageView;
+}
+
+
 
 
 

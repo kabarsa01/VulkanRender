@@ -24,6 +24,8 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 	}
 	vulkanDevice = inDevice;
 	image = vulkanDevice->GetDevice().createImage(createInfo);
+
+	
 }
 
 void VulkanImage::Destroy()

@@ -22,6 +22,7 @@
 #include "DataStructures.h"
 #include "TransferList.h"
 #include "data/DataManager.h"
+#include "passes/VulkanPassBase.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -65,7 +66,8 @@ void Renderer::Init()
 	swapChain.CreateForResolution(width, height);
 	commandBuffers.Create(&device, 2, 1);
 
-	basePass.Create(&device);
+	basePass = new VulkanPassBase();
+	basePass->Create(&device);
 
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
@@ -107,7 +109,7 @@ void Renderer::RenderFrame()
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 	// render passes
-	basePass.Draw(&cmdBuffer);
+	basePass->Draw(&cmdBuffer);
 	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
 	// end commands recording
 	cmdBuffer.end();
@@ -132,6 +134,7 @@ void Renderer::RenderFrame()
 	{
 		OnResolutionChange();
 	}
+	swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()
@@ -143,7 +146,8 @@ void Renderer::Cleanup()
 {
 	WaitForDevice();
 
-	basePass.Destroy();
+	basePass->Destroy();
+	delete basePass;
 
 	ScenePtr scene = Engine::GetSceneInstance();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
@@ -155,6 +159,7 @@ void Renderer::Cleanup()
 	device.GetDevice().destroyDescriptorPool(descriptorPool);
 	// destroying pipelines
 	DestroyGraphicsPipeline();
+	PipelineRegistry::GetInstance()->DestroyPipelines(&device);
 	
 	device.GetDevice().destroySampler(sampler);
 
@@ -184,6 +189,11 @@ int Renderer::GetHeight() const
 VulkanDevice& Renderer::GetVulkanDevice()
 {
 	return device;
+}
+
+Device& Renderer::GetDevice()
+{
+	return device.GetDevice();
 }
 
 VulkanSwapChain& Renderer::GetSwapChain()
@@ -361,7 +371,7 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	ImageMemoryBarrier barrier;
 	barrier.setOldLayout(ImageLayout::eUndefined);
 	barrier.setNewLayout(ImageLayout::eShaderReadOnlyOptimal);
-	barrier.setImage(basePass.GetImage());
+	barrier.setImage(basePass->GetImage());
 	barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 	barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 	barrier.subresourceRange.setAspectMask(ImageAspectFlagBits::eColor);
@@ -445,7 +455,7 @@ void Renderer::CreateDescriptorSets()
 
 		DescriptorImageInfo samplerInfo;
 		samplerInfo.setSampler(sampler);
-		samplerInfo.setImageView(basePass.GetImageView());
+		samplerInfo.setImageView(basePass->GetImageView());
 		samplerInfo.setImageLayout(ImageLayout::eShaderReadOnlyOptimal);//eShaderReadOnlyOptimal);
 
 		WriteDescriptorSet samplerWrite;

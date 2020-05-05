@@ -8,6 +8,7 @@
 #include "import/MeshImporter.h"
 #include "render/TransferList.h"
 #include "data/DataManager.h"
+#include "render/DataStructures.h"
 
 Scene::Scene()
 	: ObjectBase()
@@ -27,11 +28,15 @@ void Scene::Init()
 {
 	TransferList* tl = TransferList::GetInstance();
 
+//	Texture2DPtr tex = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("");
+
 	MaterialPtr mat = DataManager::RequestResourceType<Material>(
 		"default",
 		"content/shaders/BasePassVert.spv",
 		"content/shaders/BasePassFrag.spv"
 	);
+	ObjectCommonData objData;
+	mat->SetUniformBuffer<ObjectCommonData>("mvpBuffer", objData);
 	mat->LoadResources();
 
 	// hardcoding dirty sample scene 
@@ -98,4 +103,13 @@ void Scene::PerFrameUpdate()
 	// DIRTY TESTING SCENE
 	MeshComponentPtr meshComp = GetSceneComponent<MeshComponent>();
 	meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
+
+	CameraComponentPtr camComp = GetSceneComponent<CameraComponent>();
+
+	ObjectCommonData ubo;
+	ubo.model = meshComp->GetParent()->transform.GetMatrix();
+	ubo.view = camComp->CalculateViewMatrix();
+	ubo.proj = camComp->CalculateProjectionMatrix();
+
+	meshComp->material->UpdateUniformBuffer<ObjectCommonData>("mvpBuffer", ubo);
 }

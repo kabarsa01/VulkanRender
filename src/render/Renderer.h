@@ -11,7 +11,7 @@
 #include "objects/VulkanDevice.h"
 #include "objects/VulkanSwapChain.h"
 #include "objects/VulkanCommandBuffers.h"
-#include "passes/VulkanPassBase.h"
+//#include "passes/VulkanPassBase.h"
 #include "memory/DeviceMemoryManager.h"
 #include "resources/VulkanImage.h"
 
@@ -59,6 +59,7 @@ public:
 	int GetHeight() const;
 
 	VulkanDevice& GetVulkanDevice();
+	Device& GetDevice();
 	VulkanSwapChain& GetSwapChain();
 	VulkanCommandBuffers& GetCommandBuffers();
 	Queue GetGraphicsQueue();
@@ -95,7 +96,7 @@ private:
 	DescriptorPool descriptorPool;
 	std::vector<DescriptorSet> descriptorSets;
 
-	VulkanPassBase basePass;
+	class VulkanPassBase* basePass;
 	Sampler sampler;
 
 	//==================== METHODS ===============================

@@ -36,6 +36,29 @@ void VulkanBuffer::SetData(DeviceSize inSize, char* inData)
 	data.assign(inData, inData + inSize);
 }
 
+void VulkanBuffer::CopyTo(DeviceSize inSize, char* inData)
+{
+	if (stagingBuffer)
+	{
+		CopyToStagingBuffer(inSize, inData);
+	}
+	else
+	{
+		CopyToBuffer(inSize, inData);
+	}
+}
+
+void VulkanBuffer::CopyToBuffer(DeviceSize inSize, char* inData)
+{
+	memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRecord.pos.offset, inSize, inData, 0, inSize);
+}
+
+void VulkanBuffer::CopyToStagingBuffer(DeviceSize inSize, char* inData)
+{
+	MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
+}
+
 void VulkanBuffer::Destroy()
 {
 	if (stagingBuffer != nullptr)
@@ -136,29 +159,5 @@ MemoryRecord& VulkanBuffer::GetMemoryRecord()
 {
 	return memRecord;
 }
-//
-//void VulkanBuffer::SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst)
-//{
-//	CommandBuffer commandBuffer = Engine::GetRendererInstance()->GetCommandBuffers().GetNextTransferBuffer();
-//
-//	CommandBufferBeginInfo commandBeginInfo;
-//	commandBeginInfo.setFlags(CommandBufferUsageFlagBits::eOneTimeSubmit);
-//
-//	BufferCopy copyRegion;
-//	copyRegion.setSize(std::min<DeviceSize>(inSrc.createInfo.size, inDst.createInfo.size));
-//	copyRegion.setSrcOffset(0);
-//	copyRegion.setDstOffset(0);
-//
-//	commandBuffer.begin(commandBeginInfo);
-//	commandBuffer.copyBuffer(inSrc, inDst, 1, &copyRegion);
-//	commandBuffer.end();
-//
-//	SubmitInfo submitInfo;
-//	submitInfo.setCommandBufferCount(1);
-//	submitInfo.setPCommandBuffers(&commandBuffer);
-//
-//	Queue& transferQueue = Engine::GetRendererInstance()->GetVulkanDevice().GetTransferQueue();
-//	transferQueue.submit({ submitInfo }, Fence());
-//	transferQueue.waitIdle();
-//}
+
 

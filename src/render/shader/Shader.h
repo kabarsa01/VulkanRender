@@ -17,8 +17,8 @@ struct BindingInfo
 	uint32_t vectorSize;
 	uint32_t numColumns;
 	DescriptorType descriptorType;
-	std::string name;
-	std::string blockName;
+	HashString name;
+	HashString blockName;
 	std::vector<uint32_t> arrayDimensions;
 
 	bool IsArray()
@@ -51,7 +51,8 @@ protected:
 	void CreateShaderModule();
 	std::vector<BindingInfo> ExtractBindingInfo(
 		SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, 
-		SPIRV_CROSS_NAMESPACE::Compiler& inCompiler);
+		SPIRV_CROSS_NAMESPACE::Compiler& inCompiler,
+		DescriptorType inDescriptorType);
 	void ExtractBindingsInfo();
 };
 

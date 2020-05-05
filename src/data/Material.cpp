@@ -26,6 +26,21 @@ void Material::LoadResources()
 {
 	vertexShader = DataManager::RequestResourceType<Shader>(vertexShaderPath);
 	fragmentShader = DataManager::RequestResourceType<Shader>(fragmentShaderPath);
+
+	// TODO: process all the material resources
+	descriptorBindings.clear();
+	ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, vertexShader, textures2D, descriptorBindings);
+	ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, fragmentShader, textures2D, descriptorBindings);
+	ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, vertexShader, buffers, descriptorBindings);
+	ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, fragmentShader, buffers, descriptorBindings);
+
+	PrepareDescriptorInfos();
+
+	descriptorWrites.clear();
+	PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, vertexShader, imageDescInfos, descriptorWrites);
+	PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, fragmentShader, imageDescInfos, descriptorWrites);
+	PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, vertexShader, bufferDescInfos, descriptorWrites);
+	PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, fragmentShader, bufferDescInfos, descriptorWrites);
 }
 
 HashString Material::GetShaderHash()
@@ -52,54 +67,44 @@ bool Material::Load()
 
 bool Material::Cleanup()
 {
+	// TODO: cleanup at least buffers
+	for (auto& pair : buffers)
+	{
+		pair.second.Destroy();
+	}
 	return true;
 }
 
-DescriptorSetLayout Material::ComposeDescriptorSetLayout()
+std::vector<DescriptorSetLayoutBinding>& Material::GetBindings()
 {
-	std::vector<DescriptorSetLayoutBinding> bindings;
+	return descriptorBindings;
+}
 
-	// TODO: BINDING_INFO and NAME should be paired somewhere here !!!!
+std::vector<WriteDescriptorSet>& Material::GetDescriptorWrites()
+{
+	return descriptorWrites;
+}
 
-	std::vector<BindingInfo> uniformBuffers = vertexShader->GetBindings(DescriptorType::eUniformBuffer);
-	for (BindingInfo& info : uniformBuffers)
+void Material::PrepareDescriptorInfos()
+{
+	for (auto& pair : textures2D)
 	{
-		DescriptorSetLayoutBinding binding;
-		binding.setBinding(info.binding);
-		binding.setDescriptorType(DescriptorType::eUniformBuffer);
-		binding.setDescriptorCount(info.IsArray() ? info.arrayDimensions[0] : 1);
-		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+		DescriptorImageInfo imageInfo;
+		imageInfo.setImageView(pair.second->GetImageView());
+		imageInfo.setImageLayout(ImageLayout::eShaderReadOnlyOptimal);
 
-		bindings.push_back(binding);
+		imageDescInfos[pair.first] = imageInfo;
 	}
 
-	DescriptorSetLayoutBinding globalsLayoutBinding;
-	globalsLayoutBinding.setBinding(0);
-	globalsLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	globalsLayoutBinding.setDescriptorCount(1);
-	globalsLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
-	DescriptorSetLayoutBinding mvpLayoutBinding;
-	mvpLayoutBinding.setBinding(2);
-	mvpLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	mvpLayoutBinding.setDescriptorCount(1);
-	mvpLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
-	DescriptorSetLayoutBinding samplerLayoutBinding;
-	samplerLayoutBinding.setBinding(1);
-	samplerLayoutBinding.setDescriptorType(DescriptorType::eSampler);
-	samplerLayoutBinding.setDescriptorCount(1);
-	samplerLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
-	DescriptorSetLayoutBinding diffuseLayoutBinding;
-	diffuseLayoutBinding.setBinding(3);
-	diffuseLayoutBinding.setDescriptorType(DescriptorType::eSampledImage);
-	diffuseLayoutBinding.setDescriptorCount(1);
-	diffuseLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
+	for (auto& pair : buffers)
+	{
+		DescriptorBufferInfo bufferInfo;
+		bufferInfo.setBuffer(pair.second);
+		bufferInfo.setOffset(0);
+		bufferInfo.setRange(pair.second.createInfo.size);
 
-	DescriptorSetLayoutBinding setLayoutBindings[] = { globalsLayoutBinding, mvpLayoutBinding, samplerLayoutBinding, diffuseLayoutBinding };
-	DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-	descriptorSetLayoutInfo.setBindingCount(4);
-	descriptorSetLayoutInfo.setPBindings(setLayoutBindings);
-
-	return DescriptorSetLayout();
-	//descriptorSetLayout = device.createDescriptorSetLayout(descriptorSetLayoutInfo);
+		bufferDescInfos[pair.first] = bufferInfo;
+	}
 }
+
 

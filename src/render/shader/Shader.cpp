@@ -86,7 +86,10 @@ void Shader::CreateShaderModule()
 	shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
 }
 
-std::vector<BindingInfo> Shader::ExtractBindingInfo(SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, SPIRV_CROSS_NAMESPACE::Compiler& inCompiler)
+std::vector<BindingInfo> Shader::ExtractBindingInfo(
+	SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, 
+	SPIRV_CROSS_NAMESPACE::Compiler& inCompiler, 
+	DescriptorType inDescriptorType)
 {
 	std::vector<BindingInfo> bindingsVector;
 
@@ -98,6 +101,7 @@ std::vector<BindingInfo> Shader::ExtractBindingInfo(SPIRV_CROSS_NAMESPACE::Small
 		info.binding = inCompiler.get_decoration(resource.id, spv::DecorationBinding);
 		info.name = inCompiler.get_name(resource.id);
 		info.blockName = resource.name;
+		info.descriptorType = inDescriptorType;
 
 		SPIRV_CROSS_NAMESPACE::SPIRType type = inCompiler.get_type(resource.type_id);
 
@@ -109,7 +113,7 @@ std::vector<BindingInfo> Shader::ExtractBindingInfo(SPIRV_CROSS_NAMESPACE::Small
 		{
 			info.arrayDimensions[index] = type.array[index];
 		}
-		printf("Resource %s with block name %s at set = %u, binding = %u\n", info.name.c_str(), info.blockName.c_str(), info.set, info.binding);
+		printf("Resource %s with block name %s at set = %u, binding = %u\n", info.name.GetString().c_str(), info.blockName.GetString().c_str(), info.set, info.binding);
 
 		bindingsVector.push_back(info);
 	}
@@ -122,9 +126,9 @@ void Shader::ExtractBindingsInfo()
 	SPIRV_CROSS_NAMESPACE::Compiler spirv(reinterpret_cast<const uint32_t*>(binary.data()), binary.size() / sizeof(uint32_t));
 	SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
 
-	bindings[DescriptorType::eUniformBuffer] = ExtractBindingInfo(resources.uniform_buffers, spirv);
-	bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv);
-	bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv);
-	bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv);
+	bindings[DescriptorType::eUniformBuffer] = ExtractBindingInfo(resources.uniform_buffers, spirv, DescriptorType::eUniformBuffer);
+	bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv, DescriptorType::eSampler);
+	bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv, DescriptorType::eSampledImage);
+	bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv, DescriptorType::eCombinedImageSampler);
 }
 

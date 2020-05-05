@@ -32,45 +32,19 @@ void VulkanPassBase::Create(VulkanDevice* inDevice)
 
 	CreateRenderPass();
 	CreateFramebufferResources();
-	CreatePipelineLayout();
-//	FindGraphicsPipeline(nullptr); // TODO provide material
-	CreateDescriptorPool();
-	AllocateDescriptorSets();
-
-	frameDataBuffer.createInfo.setSize(sizeof(ShaderGlobalData));
-	frameDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
-	frameDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	frameDataBuffer.Create(vulkanDevice);
-	frameDataBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-
-	mvpBuffer.createInfo.setSize(sizeof(ObjectCommonData));
-	mvpBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
-	mvpBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	mvpBuffer.Create(vulkanDevice);
-	mvpBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-
-	CreateTextures();
-
-	UpdateDescriptorSets();
+	CreateDescriptorPool();;
 }
 
 void VulkanPassBase::Destroy()
 {
 	Device& device = vulkanDevice->GetDevice();
 
-	device.destroyDescriptorSetLayout(descriptorSetLayout);
 	device.destroyDescriptorPool(descriptorPool);
-
-	pipelineStorage.DestroyPipelines(vulkanDevice);
-	device.destroyPipelineLayout(pipelineLayout);
 
 	device.destroyRenderPass(renderPass);
 	device.destroyFramebuffer(framebuffer);
 	device.destroyImageView(colorAttachmentImageView);
 	colorAttachmentImage.Destroy();
-
-	frameDataBuffer.Destroy();
-	mvpBuffer.Destroy();
 }
 
 void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
@@ -78,8 +52,15 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	UpdateUniformBuffers();
 
 	ScenePtr scene = Engine::GetSceneInstance();
-//	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
+	//---------------------------------------------------------------------------------
+	// TODO: provide some more robust centralized solution for batching/sorting
+	std::map<HashString, std::vector<MeshComponentPtr>> shaderSortedMeshes;
+	for (MeshComponentPtr meshComp : meshComponents)
+	{
+		shaderSortedMeshes[meshComp->material->GetShaderHash()].push_back(meshComp);
+	}
+	//---------------------------------------------------------------------------------
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
@@ -95,17 +76,25 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
 
 	//------------------------------------------------------------------------------------------------------------
-	for (uint64_t index = 0; index < meshComponents.size(); index++)
+	for (auto& pair : shaderSortedMeshes)
 	{
-		Pipeline pipeline = FindGraphicsPipeline(meshComponents[index]->material);
-		MeshDataPtr meshData = meshComponents[index]->meshData;
+		PipelineData& pipelineData = FindGraphicsPipeline(pair.second[0]->material);
 
-		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipeline);
-		inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
-		inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
-		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets, {});
-		inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
-	}	
+		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
+		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
+
+		std::vector<MeshComponentPtr>& meshes = pair.second;
+		for (uint64_t index = 0; index < meshes.size(); index++)
+		{
+			MeshDataPtr meshData = meshes[index]->meshData;
+			// update per material descriptors
+			UpdateMaterialDescriptorSet(meshes[index]->material);
+
+			inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
+			inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
+			inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+		}
+	}
 	//------------------------------------------------------------------------------------------------------------
 	inCommandBuffer->endRenderPass();
 }
@@ -207,72 +196,60 @@ void VulkanPassBase::CreateFramebufferResources()
 	framebuffer = device.createFramebuffer(framebufferInfo);
 }
 
-void VulkanPassBase::CreatePipelineLayout()
+PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts)
 {
 	Device& device = vulkanDevice->GetDevice();
-
-	DescriptorSetLayoutBinding globalsLayoutBinding;
-	globalsLayoutBinding.setBinding(0);
-	globalsLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	globalsLayoutBinding.setDescriptorCount(1);
-	globalsLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
-	DescriptorSetLayoutBinding mvpLayoutBinding;
-	mvpLayoutBinding.setBinding(2);
-	mvpLayoutBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	mvpLayoutBinding.setDescriptorCount(1);
-	mvpLayoutBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
-	DescriptorSetLayoutBinding samplerLayoutBinding;
-	samplerLayoutBinding.setBinding(1);
-	samplerLayoutBinding.setDescriptorType(DescriptorType::eSampler);
-	samplerLayoutBinding.setDescriptorCount(1);
-	samplerLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
-	DescriptorSetLayoutBinding diffuseLayoutBinding;
-	diffuseLayoutBinding.setBinding(3);
-	diffuseLayoutBinding.setDescriptorType(DescriptorType::eSampledImage);
-	diffuseLayoutBinding.setDescriptorCount(1);
-	diffuseLayoutBinding.setStageFlags(ShaderStageFlagBits::eFragment);
-
-	DescriptorSetLayoutBinding setLayoutBindings[] = { globalsLayoutBinding, mvpLayoutBinding, samplerLayoutBinding, diffuseLayoutBinding };
-	DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-	descriptorSetLayoutInfo.setBindingCount(4);
-	descriptorSetLayoutInfo.setPBindings(setLayoutBindings);
-
-	descriptorSetLayout = device.createDescriptorSetLayout(descriptorSetLayoutInfo);
 
 	PipelineLayoutCreateInfo pipelineLayoutInfo;
 	pipelineLayoutInfo.setFlags(PipelineLayoutCreateFlags());
-	pipelineLayoutInfo.setSetLayoutCount(1);
-	pipelineLayoutInfo.setPSetLayouts(&descriptorSetLayout);
+	pipelineLayoutInfo.setSetLayoutCount(inDescriptorSetLayouts.size());
+	pipelineLayoutInfo.setPSetLayouts(inDescriptorSetLayouts.data());
 
-	pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
+	return device.createPipelineLayout(pipelineLayoutInfo);
 }
 
-Pipeline VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
+PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 {
 	Device& device = vulkanDevice->GetDevice();
 
+	PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
 	// check pipeline storage and create new pipeline in case it was not created before
-	HashString pipelineId = name + inMaterial->GetShaderHash();
-	if (!pipelineStorage.HasPipeline(pipelineId))
+	if (!pipelineRegistry.HasPipeline(inMaterial->GetShaderHash(), name))
 	{
-		pipelineStorage.StorePipeline(pipelineId, CreateGraphicsPipeline(inMaterial));
+		PipelineData pipelineData;
+
+		pipelineData.shaderDescriptorSetLayout = CreateDescriptorSetLayout(inMaterial);
+		std::vector<DescriptorSetLayout> setLayouts = { pipelineData.shaderDescriptorSetLayout };
+		DescriptorSet materialSet = AllocateDescriptorSets(setLayouts)[0];
+		pipelineData.shaderDescriptorSet = materialSet;
+		pipelineData.descriptorSets = { /*globalSet, objectsSet,*/ materialSet };
+
+		//setLayouts.push_front(objectSetLayout);
+		//setLayouts.push_front(globalSetLayout);
+		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
+		pipelineData.pipeline = CreateGraphicsPipeline(inMaterial, pipelineData.pipelineLayout);
+
+		pipelineRegistry.StorePipeline(inMaterial->GetShaderHash(), name, pipelineData);
 	}
 
-	return pipelineStorage[pipelineId];
+	return pipelineRegistry.GetPipeline(inMaterial->GetShaderHash(), name);
 }
 
 void VulkanPassBase::CreateDescriptorPool()
 {
 	DescriptorPoolSize uniformPoolSize;
-	uniformPoolSize.setDescriptorCount(32);
+	uniformPoolSize.setDescriptorCount(128);
 	uniformPoolSize.setType(DescriptorType::eUniformBuffer);
 	DescriptorPoolSize samplerPoolSize;
 	samplerPoolSize.setDescriptorCount(16);
 	samplerPoolSize.setType(DescriptorType::eSampler);
+	DescriptorPoolSize imagePoolSize;
+	imagePoolSize.setDescriptorCount(128);
+	imagePoolSize.setType(DescriptorType::eSampledImage);
 
-	DescriptorPoolSize poolSizes[] = { uniformPoolSize, samplerPoolSize };
+	DescriptorPoolSize poolSizes[] = { uniformPoolSize, samplerPoolSize, imagePoolSize };
 	DescriptorPoolCreateInfo descPoolInfo;
-	descPoolInfo.setPoolSizeCount(2);
+	descPoolInfo.setPoolSizeCount(3);
 	descPoolInfo.setPPoolSizes(poolSizes);
 	descPoolInfo.setMaxSets(8);
 
@@ -280,103 +257,55 @@ void VulkanPassBase::CreateDescriptorPool()
 }
 
 // this should be split in actual allocation and update for desc sets
-void VulkanPassBase::AllocateDescriptorSets()
+std::vector<DescriptorSet> VulkanPassBase::AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts)
 {
-	std::vector<DescriptorSetLayout> layouts = { descriptorSetLayout };
 	DescriptorSetAllocateInfo descSetAllocInfo;
 	descSetAllocInfo.setDescriptorPool(descriptorPool);
-	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(layouts.size()));
-	descSetAllocInfo.setPSetLayouts(layouts.data());
+	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(inSetLayouts.size()));
+	descSetAllocInfo.setPSetLayouts(inSetLayouts.data());
 
-	descriptorSets = vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
+	return vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
 }
 
-// this should be about updating buffers
-void VulkanPassBase::UpdateDescriptorSets()
+// this should be about updating sets with new images and buffers
+void VulkanPassBase::UpdateMaterialDescriptorSet(MaterialPtr inMaterial)
 {
-
-	for (uint32_t index = 0; index < descriptorSets.size(); index++)
+	PipelineData& pipelineData = PipelineRegistry::GetInstance()->GetPipeline(inMaterial->GetShaderHash(), name);
+	std::vector<WriteDescriptorSet>& writes = inMaterial->GetDescriptorWrites();
+	for (WriteDescriptorSet& write : writes)
 	{
-		DescriptorBufferInfo descBufferInfo;
-		descBufferInfo.setBuffer(mvpBuffer);
-		descBufferInfo.setOffset(0);
-		descBufferInfo.setRange(sizeof(ObjectCommonData));// VK_WHOLE_SIZE;
-
-		WriteDescriptorSet mvpWriteDescSet;
-		mvpWriteDescSet.setDstSet(descriptorSets[index]);
-		mvpWriteDescSet.setDstBinding(0);
-		mvpWriteDescSet.setDstArrayElement(0); // globals is 0, uniform buffer is 1
-		mvpWriteDescSet.setDescriptorCount(1);
-		mvpWriteDescSet.setDescriptorType(DescriptorType::eUniformBuffer);
-		mvpWriteDescSet.setPBufferInfo(&descBufferInfo);
-
-		DescriptorBufferInfo frameDataInfo;
-		frameDataInfo.setBuffer(frameDataBuffer);
-		frameDataInfo.setOffset(0);
-		frameDataInfo.setRange(sizeof(ShaderGlobalData));// VK_WHOLE_SIZE;
-
-		WriteDescriptorSet frameDataWriteDescSet;
-		frameDataWriteDescSet.setDstSet(descriptorSets[index]);
-		frameDataWriteDescSet.setDstBinding(2);
-		frameDataWriteDescSet.setDstArrayElement(0); // globals is 0, uniform buffer is 1
-		frameDataWriteDescSet.setDescriptorCount(1);
-		frameDataWriteDescSet.setDescriptorType(DescriptorType::eUniformBuffer);
-		frameDataWriteDescSet.setPBufferInfo(&frameDataInfo);
-
-		WriteDescriptorSet writes[] = { frameDataWriteDescSet, mvpWriteDescSet };
-		vulkanDevice->GetDevice().updateDescriptorSets(2, writes, 0, nullptr);
+		write.setDstSet(pipelineData.shaderDescriptorSet);
 	}
+	vulkanDevice->GetDevice().updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
 }
 
 void VulkanPassBase::UpdateUniformBuffers()
 {
-	ScenePtr scene = Engine::GetSceneInstance();
-	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
-	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
+	//ScenePtr scene = Engine::GetSceneInstance();
+	//CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
+	//MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 
-	ObjectCommonData ubo;
-	ubo.model = meshComp->GetParent()->transform.GetMatrix();
-	ubo.view = camComp->CalculateViewMatrix();
-	ubo.proj = camComp->CalculateProjectionMatrix();
+	//ObjectCommonData ubo;
+	//ubo.model = meshComp->GetParent()->transform.GetMatrix();
+	//ubo.view = camComp->CalculateViewMatrix();
+	//ubo.proj = camComp->CalculateProjectionMatrix();
 
-	{
-		MemoryRecord& memRec = mvpBuffer.GetMemoryRecord();
-		memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectCommonData), &ubo, 0, sizeof(ObjectCommonData));
-	}
+	//{
+	//	MemoryRecord& memRec = mvpBuffer.GetMemoryRecord();
+	//	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectCommonData), &ubo, 0, sizeof(ObjectCommonData));
+	//}
 
-	ShaderGlobalData frameData;
-	frameData.view = ubo.view;
-	frameData.proj = ubo.proj;
+	//ShaderGlobalData frameData;
+	//frameData.view = ubo.view;
+	//frameData.proj = ubo.proj;
 
-	{
-		MemoryRecord& memRec = frameDataBuffer.GetMemoryRecord();
-		memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ShaderGlobalData), &frameData, 0, sizeof(ShaderGlobalData));
-	}
+	//{
+	//	MemoryRecord& memRec = frameDataBuffer.GetMemoryRecord();
+	//	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ShaderGlobalData), &frameData, 0, sizeof(ShaderGlobalData));
+	//}
 }
 
-void VulkanPassBase::CreateTextures()
-{
-	//uint32_t familyIndices[] = {vulkanDevice->GetGraphicsQueueIndex()};
-
-	//diffuseTexture.createInfo.setArrayLayers(1);
-	//diffuseTexture.createInfo.setFormat(Format::eR16G16B16A16Sfloat);
-	//diffuseTexture.createInfo.setImageType(ImageType::e2D);
-	//diffuseTexture.createInfo.setInitialLayout(ImageLayout::eUndefined);
-	//diffuseTexture.createInfo.setSamples(SampleCountFlagBits::e1);
-	//diffuseTexture.createInfo.setMipLevels(1);
-	//diffuseTexture.createInfo.setSharingMode(SharingMode::eExclusive);
-	//diffuseTexture.createInfo.setQueueFamilyIndexCount(1);
-	//diffuseTexture.createInfo.setPQueueFamilyIndices(familyIndices);
-	//diffuseTexture.createInfo.setTiling(ImageTiling::eOptimal);
-	//diffuseTexture.createInfo.setFlags(ImageCreateFlags());
-	//diffuseTexture.createInfo.setExtent(Extent3D(width, height, 1));
-	//diffuseTexture.createInfo.setUsage(ImageUsageFlagBits::eSampled);
-	//diffuseTexture.Create(vulkanDevice);
-	//diffuseTexture.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-
-}
-
-VULKAN_HPP_NAMESPACE::Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial)
+Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout)
 {
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
@@ -467,7 +396,7 @@ VULKAN_HPP_NAMESPACE::Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPt
 	pipelineInfo.setPDepthStencilState(nullptr);
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
 	pipelineInfo.setPDynamicState(&dynamicStateInfo);
-	pipelineInfo.setLayout(pipelineLayout);
+	pipelineInfo.setLayout(inLayout);
 	pipelineInfo.setRenderPass(renderPass);
 	pipelineInfo.setSubpass(0);
 	pipelineInfo.setBasePipelineHandle(Pipeline());
@@ -475,4 +404,15 @@ VULKAN_HPP_NAMESPACE::Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPt
 
 	return vulkanDevice->GetDevice().createGraphicsPipeline(vulkanDevice->GetPipelineCache(), pipelineInfo);
 }
+
+DescriptorSetLayout VulkanPassBase::CreateDescriptorSetLayout(MaterialPtr inMaterial)
+{
+	DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
+	descriptorSetLayoutInfo.setBindingCount(inMaterial->GetBindings().size());
+	descriptorSetLayoutInfo.setPBindings(inMaterial->GetBindings().data());
+
+	return vulkanDevice->GetDevice().createDescriptorSetLayout(descriptorSetLayoutInfo);
+}
+
+
 

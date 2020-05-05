@@ -171,7 +171,7 @@
     <ClCompile Include="src\data\Material.cpp">
       <Filter>Source Files\data</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\PipelineStorage.cpp">
+    <ClCompile Include="src\render\PipelineRegistry.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
   </ItemGroup>
@@ -287,7 +287,7 @@
     <ClInclude Include="src\data\Material.h">
       <Filter>Source Files\data</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\PipelineStorage.h">
+    <ClInclude Include="src\render\PipelineRegistry.h">
       <Filter>Source Files\render</Filter>
     </ClInclude>
   </ItemGroup>

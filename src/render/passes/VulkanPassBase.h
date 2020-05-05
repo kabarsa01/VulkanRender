@@ -6,7 +6,7 @@
 #include "../resources/VulkanBuffer.h"
 #include "../memory/DeviceMemoryManager.h"
 #include "../resources/VulkanImage.h"
-#include "../PipelineStorage.h"
+#include "../PipelineRegistry.h"
 #include "data/Material.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
@@ -29,33 +29,25 @@ protected:
 	VulkanDevice* vulkanDevice;
 
 	RenderPass renderPass;
-	PipelineLayout pipelineLayout;
-//	Pipeline pipeline;
 	DescriptorPool descriptorPool;
-	DescriptorSetLayout descriptorSetLayout;
-	std::vector<DescriptorSet> descriptorSets;
-	PipelineStorage pipelineStorage;
+	std::vector<DescriptorSet> globalDescriptorSets;
 
 	VulkanImage colorAttachmentImage;
 	ImageView colorAttachmentImageView;
 	Framebuffer framebuffer;
-
-	VulkanBuffer frameDataBuffer;
-	VulkanBuffer mvpBuffer;
 
 	uint32_t width;
 	uint32_t height;
 
 	void CreateRenderPass();
 	void CreateFramebufferResources();
-	void CreatePipelineLayout();
-	Pipeline FindGraphicsPipeline(MaterialPtr inMaterial);
+	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
 	void CreateDescriptorPool();
-	void AllocateDescriptorSets();
-	void UpdateDescriptorSets();
+	std::vector<DescriptorSet> AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts);
+	void UpdateMaterialDescriptorSet(MaterialPtr inMaterial);
+	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
+	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
+	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
+
 	void UpdateUniformBuffers();
-
-	void CreateTextures();
-
-	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial);
 };
