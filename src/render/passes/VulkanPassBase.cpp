@@ -49,8 +49,6 @@ void VulkanPassBase::Destroy()
 
 void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 {
-	UpdateUniformBuffers();
-
 	ScenePtr scene = Engine::GetSceneInstance();
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
 	//---------------------------------------------------------------------------------
