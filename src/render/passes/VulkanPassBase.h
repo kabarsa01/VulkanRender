@@ -48,6 +48,4 @@ protected:
 	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
 	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
-
-	void UpdateUniformBuffers();
 };

@@ -3,7 +3,6 @@
 #include "data/Resource.h"
 #include "data/Texture2D.h"
 #include "render/shader/Shader.h"
-#include "core/Engine.h"
 
 class Material : public Resource
 {
@@ -19,8 +18,10 @@ public:
 	void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
 	void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
+	void SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	template<typename T>
 	void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
+	void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 
 	inline ShaderPtr GetVertexShader() { return vertexShader; }
 	inline ShaderPtr GetFragmentShader() { return fragmentShader; }
@@ -62,25 +63,13 @@ typedef std::shared_ptr<Material> MaterialPtr;
 template<typename T>
 void Material::SetUniformBuffer(const std::string& inName, T& inUniformBuffer)
 {
-	VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
-
-	VulkanBuffer buffer;
-	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	buffer.createInfo.setSize(sizeof(T));
-	buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
-	buffer.Create(&vulkanDevice);
-	buffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-
-	buffers[inName].Destroy();
-	buffers[inName] = buffer;
-
-	UpdateUniformBuffer(inName, inUniformBuffer);
+	SetUniformBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inUniformBuffer));
 }
 
 template<typename T>
 void Material::UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer)
 {
-	buffers[inName].CopyTo(sizeof(T), reinterpret_cast<char*>(&inUniformBuffer));
+	UpdateUniformBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inUniformBuffer));
 }
 
 template<class T>

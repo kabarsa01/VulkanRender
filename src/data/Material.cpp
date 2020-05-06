@@ -1,5 +1,6 @@
 #include "Material.h"
 #include "DataManager.h"
+#include "core/Engine.h"
 
 Material::Material(HashString inId)
 	: Resource(inId)
@@ -58,6 +59,28 @@ void Material::SetShaderPath(const std::string& inVertexShaderPath, const std::s
 void Material::SetTexture(const std::string& inName, Texture2DPtr inTexture2D)
 {
 	textures2D[inName] = inTexture2D;
+}
+
+void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
+{
+	VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
+
+	VulkanBuffer buffer;
+	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
+	buffer.createInfo.setSize(inSize);
+	buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
+	buffer.Create(&vulkanDevice);
+	buffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+
+	buffers[inName].Destroy();
+	buffers[inName] = buffer;
+
+	UpdateUniformBuffer(inName, inSize, inData);
+}
+
+void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
+{
+	buffers[inName].CopyTo(inSize, inData);
 }
 
 bool Material::Load()

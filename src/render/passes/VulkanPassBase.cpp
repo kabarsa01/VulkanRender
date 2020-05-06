@@ -202,7 +202,7 @@ PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLay
 
 	PipelineLayoutCreateInfo pipelineLayoutInfo;
 	pipelineLayoutInfo.setFlags(PipelineLayoutCreateFlags());
-	pipelineLayoutInfo.setSetLayoutCount(inDescriptorSetLayouts.size());
+	pipelineLayoutInfo.setSetLayoutCount(static_cast<uint32_t>( inDescriptorSetLayouts.size() ));
 	pipelineLayoutInfo.setPSetLayouts(inDescriptorSetLayouts.data());
 
 	return device.createPipelineLayout(pipelineLayoutInfo);
@@ -276,33 +276,7 @@ void VulkanPassBase::UpdateMaterialDescriptorSet(MaterialPtr inMaterial)
 	{
 		write.setDstSet(pipelineData.shaderDescriptorSet);
 	}
-	vulkanDevice->GetDevice().updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
-}
-
-void VulkanPassBase::UpdateUniformBuffers()
-{
-	//ScenePtr scene = Engine::GetSceneInstance();
-	//CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
-	//MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-
-	//ObjectCommonData ubo;
-	//ubo.model = meshComp->GetParent()->transform.GetMatrix();
-	//ubo.view = camComp->CalculateViewMatrix();
-	//ubo.proj = camComp->CalculateProjectionMatrix();
-
-	//{
-	//	MemoryRecord& memRec = mvpBuffer.GetMemoryRecord();
-	//	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectCommonData), &ubo, 0, sizeof(ObjectCommonData));
-	//}
-
-	//ShaderGlobalData frameData;
-	//frameData.view = ubo.view;
-	//frameData.proj = ubo.proj;
-
-	//{
-	//	MemoryRecord& memRec = frameDataBuffer.GetMemoryRecord();
-	//	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ShaderGlobalData), &frameData, 0, sizeof(ShaderGlobalData));
-	//}
+	vulkanDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout)
@@ -408,7 +382,7 @@ Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipeline
 DescriptorSetLayout VulkanPassBase::CreateDescriptorSetLayout(MaterialPtr inMaterial)
 {
 	DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-	descriptorSetLayoutInfo.setBindingCount(inMaterial->GetBindings().size());
+	descriptorSetLayoutInfo.setBindingCount(static_cast<uint32_t>(inMaterial->GetBindings().size()));
 	descriptorSetLayoutInfo.setPBindings(inMaterial->GetBindings().data());
 
 	return vulkanDevice->GetDevice().createDescriptorSetLayout(descriptorSetLayoutInfo);

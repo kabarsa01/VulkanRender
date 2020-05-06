@@ -31,12 +31,12 @@ void VulkanBuffer::SetData(const std::vector<char>& inData)
 	data = inData;
 }
 
-void VulkanBuffer::SetData(DeviceSize inSize, char* inData)
+void VulkanBuffer::SetData(DeviceSize inSize, const char* inData)
 {
 	data.assign(inData, inData + inSize);
 }
 
-void VulkanBuffer::CopyTo(DeviceSize inSize, char* inData)
+void VulkanBuffer::CopyTo(DeviceSize inSize, const char* inData)
 {
 	if (stagingBuffer)
 	{
@@ -48,12 +48,12 @@ void VulkanBuffer::CopyTo(DeviceSize inSize, char* inData)
 	}
 }
 
-void VulkanBuffer::CopyToBuffer(DeviceSize inSize, char* inData)
+void VulkanBuffer::CopyToBuffer(DeviceSize inSize, const char* inData)
 {
 	memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRecord.pos.offset, inSize, inData, 0, inSize);
 }
 
-void VulkanBuffer::CopyToStagingBuffer(DeviceSize inSize, char* inData)
+void VulkanBuffer::CopyToStagingBuffer(DeviceSize inSize, const char* inData)
 {
 	MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
 	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
