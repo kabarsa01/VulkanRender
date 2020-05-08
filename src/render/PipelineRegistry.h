@@ -4,6 +4,7 @@
 #include <map>
 #include "common/HashString.h"
 #include "objects/VulkanDevice.h"
+#include "objects/VulkanDescriptorSet.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -11,9 +12,8 @@ struct PipelineData
 {
 	Pipeline pipeline;
 	PipelineLayout pipelineLayout;
-	DescriptorSetLayout shaderDescriptorSetLayout;
+	VulkanDescriptorSet vulkanDescriptorSet;
 	std::vector<DescriptorSet> descriptorSets;
-	DescriptorSet shaderDescriptorSet;
 };
 
 class PipelineRegistry

@@ -250,9 +250,11 @@ exit /b</Command>
     <ClCompile Include="src\import\MeshImporter.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\DataStructures.cpp" />
+    <ClCompile Include="src\render\GlobalSamplers.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp" />
     <ClCompile Include="src\render\objects\VulkanCommandBuffers.cpp" />
+    <ClCompile Include="src\render\objects\VulkanDescriptorSet.cpp" />
     <ClCompile Include="src\render\objects\VulkanDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanSwapChain.cpp" />
@@ -290,9 +292,11 @@ exit /b</Command>
     <ClInclude Include="src\import\ImageImporter.h" />
     <ClInclude Include="src\import\MeshImporter.h" />
     <ClInclude Include="src\render\DataStructures.h" />
+    <ClInclude Include="src\render\GlobalSamplers.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryManager.h" />
     <ClInclude Include="src\render\objects\VulkanCommandBuffers.h" />
+    <ClInclude Include="src\render\objects\VulkanDescriptorSet.h" />
     <ClInclude Include="src\render\objects\VulkanDevice.h" />
     <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\render\objects\VulkanSwapChain.h" />

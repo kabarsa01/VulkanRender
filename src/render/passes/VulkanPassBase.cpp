@@ -216,12 +216,11 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 	{
 		PipelineData pipelineData;
 
-		pipelineData.shaderDescriptorSetLayout = CreateDescriptorSetLayout(inMaterial);
-		std::vector<DescriptorSetLayout> setLayouts = { pipelineData.shaderDescriptorSetLayout };
-		DescriptorSet materialSet = AllocateDescriptorSets(setLayouts)[0];
-		pipelineData.shaderDescriptorSet = materialSet;
-		pipelineData.descriptorSets = { /*globalSet, objectsSet,*/ materialSet };
+		pipelineData.vulkanDescriptorSet.SetBindings(inMaterial->GetBindings());
+		pipelineData.vulkanDescriptorSet.Create(vulkanDevice, descriptorPool);
+		pipelineData.descriptorSets = { /*globalSet, objectsSet,*/ pipelineData.vulkanDescriptorSet.GetSet() };
 
+		std::vector<DescriptorSetLayout> setLayouts = { pipelineData.vulkanDescriptorSet.GetLayout() };
 		//setLayouts.push_front(objectSetLayout);
 		//setLayouts.push_front(globalSetLayout);
 		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
@@ -254,7 +253,6 @@ void VulkanPassBase::CreateDescriptorPool()
 	descriptorPool = vulkanDevice->GetDevice().createDescriptorPool(descPoolInfo);
 }
 
-// this should be split in actual allocation and update for desc sets
 std::vector<DescriptorSet> VulkanPassBase::AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts)
 {
 	DescriptorSetAllocateInfo descSetAllocInfo;
@@ -265,14 +263,13 @@ std::vector<DescriptorSet> VulkanPassBase::AllocateDescriptorSets(std::vector<De
 	return vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
 }
 
-// this should be about updating sets with new images and buffers
 void VulkanPassBase::UpdateMaterialDescriptorSet(MaterialPtr inMaterial)
 {
 	PipelineData& pipelineData = PipelineRegistry::GetInstance()->GetPipeline(inMaterial->GetShaderHash(), name);
 	std::vector<WriteDescriptorSet>& writes = inMaterial->GetDescriptorWrites();
 	for (WriteDescriptorSet& write : writes)
 	{
-		write.setDstSet(pipelineData.shaderDescriptorSet);
+		write.setDstSet(pipelineData.vulkanDescriptorSet.GetSet());
 	}
 	vulkanDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }

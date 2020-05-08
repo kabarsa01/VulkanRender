@@ -30,7 +30,7 @@ void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice)
 	{
 		for (auto& passPair : shaderPair.second)
 		{
-			device.destroyDescriptorSetLayout(passPair.second.shaderDescriptorSetLayout);
+			passPair.second.vulkanDescriptorSet.Destroy();
 			device.destroyPipelineLayout(passPair.second.pipelineLayout);
 			device.destroyPipeline(passPair.second.pipeline);
 		}
