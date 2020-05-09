@@ -20,7 +20,7 @@ protected:
 	ImageView imageView;
 
 	std::string path;
-	bool usedAlpha;
+	bool useAlpha;
 	bool flipVertical;
 	bool linear;
 

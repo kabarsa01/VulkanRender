@@ -9,16 +9,29 @@ using namespace VULKAN_HPP_NAMESPACE;
 class GlobalSamplers
 {
 public:
-	GlobalSamplers();
-	virtual ~GlobalSamplers();
-
-	void Create(VulkanDevice* inVulkanDevice);
-	void Destroy();
-private:
-	VulkanDevice* vulkanDevice;
-
 	Sampler repeatLinearMipLinear;
 	Sampler repeatMirrorLinearMipLinear;
 	Sampler borderBlackLinearMipLinear;
 	Sampler borderWhiteLinearMipLinear;
+
+	static GlobalSamplers* GetInstance() { return instance; }
+
+	void Create(VulkanDevice* inVulkanDevice);
+	void Destroy();
+
+	std::vector<DescriptorSetLayoutBinding> GetBindings(uint32_t inStartIndex = 0);
+private:
+	static GlobalSamplers* instance;
+
+	VulkanDevice* vulkanDevice;
+	std::vector<DescriptorSetLayoutBinding> bindings;
+	std::vector<Sampler*> samplers;
+
+	GlobalSamplers();
+	GlobalSamplers(const GlobalSamplers& inOther);
+	virtual ~GlobalSamplers();
+	void operator=(const GlobalSamplers& inOther);
+
+
+	void ConstructBindings();
 };

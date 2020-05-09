@@ -180,6 +180,9 @@
     <ClCompile Include="src\render\GlobalSamplers.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\PerFrameData.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -300,6 +303,9 @@
       <Filter>Source Files\render\objects</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GlobalSamplers.h">
+      <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\PerFrameData.h">
       <Filter>Source Files\render</Filter>
     </ClInclude>
   </ItemGroup>

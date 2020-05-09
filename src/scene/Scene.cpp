@@ -28,15 +28,20 @@ void Scene::Init()
 {
 	TransferList* tl = TransferList::GetInstance();
 
-//	Texture2DPtr tex = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("");
+	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", true, true, false);
+	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", true, true, false);
+	tl->PushImage(& albedo->GetImage());
+	tl->PushImage(& normal->GetImage());
 
 	MaterialPtr mat = DataManager::RequestResourceType<Material>(
 		"default",
 		"content/shaders/BasePassVert.spv",
 		"content/shaders/BasePassFrag.spv"
 	);
-	ObjectCommonData objData;
-	mat->SetUniformBuffer<ObjectCommonData>("mvpBuffer", objData);
+	mat->SetTexture("albedo", albedo);
+	mat->SetTexture("normal", normal);
+	ObjectMVPData objData;
+	mat->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat->LoadResources();
 
 	// hardcoding dirty sample scene 
@@ -106,10 +111,10 @@ void Scene::PerFrameUpdate()
 
 	CameraComponentPtr camComp = GetSceneComponent<CameraComponent>();
 
-	ObjectCommonData ubo;
+	ObjectMVPData ubo;
 	ubo.model = meshComp->GetParent()->transform.GetMatrix();
 	ubo.view = camComp->CalculateViewMatrix();
 	ubo.proj = camComp->CalculateProjectionMatrix();
 
-	meshComp->material->UpdateUniformBuffer<ObjectCommonData>("mvpBuffer", ubo);
+	meshComp->material->UpdateUniformBuffer<ObjectMVPData>("mvpBuffer", ubo);
 }

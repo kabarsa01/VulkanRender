@@ -53,11 +53,13 @@ public:
 
 	DeviceMemoryChunk& GetMemoryChunk(MemoryRecord inMemPosition);
 protected:
-	static DeviceMemoryManager staticInstance;
+	static DeviceMemoryManager* staticInstance;
 
 	std::map<uint64_t, std::vector<DeviceMemoryChunk>> memRegions;
 
 	DeviceMemoryManager();
+	DeviceMemoryManager(const DeviceMemoryManager&) {}
+	void operator= (const DeviceMemoryManager&) {}
 	virtual ~DeviceMemoryManager();
 
 	DeviceSize GetRangeBase(uint32_t inIndex);

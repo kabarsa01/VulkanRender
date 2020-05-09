@@ -36,7 +36,7 @@ using namespace VULKAN_HPP_NAMESPACE;
 
 //-------------------------------------------------------------------------------------------------------
 
-
+class PerFrameData;
 
 //=======================================================================================================
 //=======================================================================================================
@@ -63,6 +63,8 @@ public:
 	VulkanSwapChain& GetSwapChain();
 	VulkanCommandBuffers& GetCommandBuffers();
 	Queue GetGraphicsQueue();
+
+	PerFrameData* GetPerFrameData() { return perFrameData; }
 protected:
 private:
 	// TEMP
@@ -89,6 +91,7 @@ private:
 
 	Viewport viewport;
 
+	PerFrameData* perFrameData;
 	DescriptorSetLayout descriptorSetLayout;
 	PipelineLayout pipelineLayout;
 	Pipeline pipeline;

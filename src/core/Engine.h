@@ -37,5 +37,7 @@ private:
 	int windowHeight = 720;
 
 	Engine();
+	Engine(const Engine& inOther) {}
+	void operator=(const Engine& inOther) {}
 	virtual ~Engine();
 };

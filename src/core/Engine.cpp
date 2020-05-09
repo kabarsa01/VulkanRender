@@ -4,7 +4,7 @@
 
 Engine* Engine::staticInstance = new Engine();
 
-Engine * Engine::GetInstance()
+Engine* Engine::GetInstance()
 {
 	return staticInstance;
 }

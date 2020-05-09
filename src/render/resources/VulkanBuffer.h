@@ -30,6 +30,7 @@ public:
 	VulkanBuffer* CreateStagingBuffer(DeviceSize inSize, char* inData);
 	BufferCopy CreateBufferCopy();
 	BufferMemoryBarrier CreateMemoryBarrier(uint32_t inSrcQueue, uint32_t inDstQueue, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask);
+	DescriptorBufferInfo& GetDescriptorInfo();
 
 	Buffer& GetBuffer();
 	Buffer GetBuffer() const;
@@ -43,6 +44,7 @@ public:
 protected:
 	VulkanDevice* vulkanDevice;
 	Buffer buffer;
+	DescriptorBufferInfo descriptorInfo;
 	MemoryRecord memRecord;
 	std::vector<char> data;
 

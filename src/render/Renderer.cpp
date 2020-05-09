@@ -23,6 +23,7 @@
 #include "TransferList.h"
 #include "data/DataManager.h"
 #include "passes/VulkanPassBase.h"
+#include "PerFrameData.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -66,6 +67,10 @@ void Renderer::Init()
 	swapChain.CreateForResolution(width, height);
 	commandBuffers.Create(&device, 2, 1);
 
+	CreateDescriptorPool();
+
+	perFrameData = new PerFrameData();
+	perFrameData->Create(&device, descriptorPool);
 	basePass = new VulkanPassBase();
 	basePass->Create(&device);
 
@@ -73,8 +78,6 @@ void Renderer::Init()
 	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
 
 	CreateUniformBuffers();
-	CreateDescriptorPool();
-
 	CreateImageAndSampler();
 	CreateDescriptorSets();
 }
@@ -97,6 +100,7 @@ void Renderer::RenderFrame()
 	}
 
 	UpdateUniformBuffer();
+	perFrameData->UpdateBufferData();
 
 	CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
 
@@ -154,6 +158,9 @@ void Renderer::Cleanup()
 	meshComp->meshData->DestroyBuffer();
 
 	uniformBuffer.Destroy();
+
+	perFrameData->Destroy();
+	delete perFrameData;
 
 	device.GetDevice().destroyDescriptorSetLayout(descriptorSetLayout);
 	device.GetDevice().destroyDescriptorPool(descriptorPool);
@@ -407,7 +414,7 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 
 void Renderer::CreateUniformBuffers()
 {
-	uniformBuffer.createInfo.setSize(sizeof(ObjectCommonData));
+	uniformBuffer.createInfo.setSize(sizeof(ObjectMVPData));
 	uniformBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
 	uniformBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	uniformBuffer.Create(&device);
@@ -416,14 +423,21 @@ void Renderer::CreateUniformBuffers()
 
 void Renderer::CreateDescriptorPool()
 {
-	DescriptorPoolSize poolSize;
-	poolSize.setDescriptorCount(1);
-	poolSize.setType(DescriptorType::eUniformBuffer);
+	DescriptorPoolSize uniformSize;
+	uniformSize.setDescriptorCount(128);
+	uniformSize.setType(DescriptorType::eUniformBuffer);
+	DescriptorPoolSize samplerSize;
+	samplerSize.setDescriptorCount(16);
+	samplerSize.setType(DescriptorType::eSampler);
+	DescriptorPoolSize imageSize;
+	imageSize.setDescriptorCount(128);
+	imageSize.setType(DescriptorType::eSampledImage);
 
+	std::array<DescriptorPoolSize, 3> sizes = { uniformSize, samplerSize, imageSize };
 	DescriptorPoolCreateInfo descPoolInfo;
-	descPoolInfo.setPoolSizeCount(1);
-	descPoolInfo.setPPoolSizes(&poolSize);
-	descPoolInfo.setMaxSets(4);
+	descPoolInfo.setPoolSizeCount(static_cast<uint32_t>( sizes.size() ));
+	descPoolInfo.setPPoolSizes(sizes.data());
+	descPoolInfo.setMaxSets(128);
 
 	descriptorPool = device.GetDevice().createDescriptorPool(descPoolInfo);
 }
@@ -443,7 +457,7 @@ void Renderer::CreateDescriptorSets()
 		DescriptorBufferInfo descBufferInfo;
 		descBufferInfo.setBuffer(uniformBuffer);
 		descBufferInfo.setOffset(0);
-		descBufferInfo.setRange(sizeof(ObjectCommonData));// VK_WHOLE_SIZE;
+		descBufferInfo.setRange(sizeof(ObjectMVPData));// VK_WHOLE_SIZE;
 
 		WriteDescriptorSet uniformBufferWrite;
 		uniformBufferWrite.setDstSet(descriptorSets[index]);
@@ -551,7 +565,7 @@ void Renderer::UpdateUniformBuffer()
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 
-	ObjectCommonData ubo;
+	ObjectMVPData ubo;
 
 	glm::vec3 scale = meshComp->GetParent()->transform.GetScale();
 	meshComp->GetParent()->transform.SetScale({ 10.0f, 10.0f, 10.0f });
@@ -562,7 +576,7 @@ void Renderer::UpdateUniformBuffer()
 	ubo.proj = camComp->CalculateProjectionMatrix(); 
 
 	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
-	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectCommonData), &ubo, 0, sizeof(ObjectCommonData));
+	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectMVPData), &ubo, 0, sizeof(ObjectMVPData));
 }
 
 void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)
@@ -618,7 +632,7 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 	}
 
 	inCmdBuffer.pipelineBarrier(
-		PipelineStageFlagBits::eTopOfPipe,
+		PipelineStageFlagBits::eHost,
 		PipelineStageFlagBits::eTransfer,
 		DependencyFlags(),
 		0, nullptr, 0, nullptr,
@@ -638,7 +652,7 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 	// final barriers for buffers and images
 	inCmdBuffer.pipelineBarrier(
 		PipelineStageFlagBits::eTransfer,
-		PipelineStageFlagBits::eVertexInput,
+		PipelineStageFlagBits::eVertexInput | PipelineStageFlagBits::eVertexShader,
 		DependencyFlags(),
 		0, nullptr, 
 		static_cast<uint32_t>( buffersTransferBarriers.size() ),

@@ -25,7 +25,9 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 	vulkanDevice = inDevice;
 	image = vulkanDevice->GetDevice().createImage(createInfo);
 
-	
+	width = createInfo.extent.width;
+	height = createInfo.extent.height;
+	depth = createInfo.extent.depth;
 }
 
 void VulkanImage::Destroy()
@@ -188,7 +190,7 @@ MemoryRequirements VulkanImage::GetMemoryRequirements()
 
 VulkanBuffer* VulkanImage::CreateStagingBuffer(char* inData)
 {
-	return CreateStagingBuffer(SharingMode::eExclusive, 0, data.data());
+	return CreateStagingBuffer(SharingMode::eExclusive, 0, inData);
 }
 
 VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex)
@@ -211,7 +213,7 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 	stagingBuffer.createInfo.setQueueFamilyIndexCount(1);
 	stagingBuffer.createInfo.setPQueueFamilyIndices(&inQueueFamilyIndex);
 	stagingBuffer.Create(vulkanDevice);
-	stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible);
+	stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 	MemoryRecord& rec = stagingBuffer.GetMemoryRecord();
 	rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, inData, 0, size);
 

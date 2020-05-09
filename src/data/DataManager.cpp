@@ -2,7 +2,7 @@
 #include "data/DataManager.h"
 #include "core/Class.h"
 
-DataManager* DataManager::instance = nullptr;
+DataManager* DataManager::instance = new DataManager();
 
 DataManager::DataManager()
 {
@@ -16,11 +16,6 @@ DataManager::~DataManager()
 
 DataManager* DataManager::GetInstance()
 {
-	if (instance == nullptr)
-	{
-		instance = new DataManager();
-	}
-
 	return instance;
 }
 

@@ -29,7 +29,7 @@ ImageCreateInfo Texture2D::GetImageInfo()
 	createInfo.setTiling(ImageTiling::eOptimal);
 	createInfo.setFlags(ImageCreateFlags());
 	createInfo.setExtent(Extent3D(width, height, 1));
-	createInfo.setUsage(ImageUsageFlagBits::eSampled);
+	createInfo.setUsage(ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
 
 	return createInfo;
 }

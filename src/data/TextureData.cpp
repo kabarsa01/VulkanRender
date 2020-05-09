@@ -7,7 +7,7 @@ TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/,
 	, imageView(nullptr)
 {
 	path = inPath.GetString();
-	usedAlpha = inUsesAlpha;
+	useAlpha = inUsesAlpha;
 	flipVertical = inFlipVertical;
 	linear = inLinear;
 }
@@ -27,7 +27,7 @@ bool TextureData::Load()
 {
 	unsigned char* data;
 	stbi_set_flip_vertically_on_load(flipVertical);
-	data = stbi_load(path.c_str(), &width, &height, &numChannels, 0);
+	data = stbi_load(path.c_str(), &width, &height, &numChannels, 4);
 
 	if (data == nullptr)
 	{

@@ -1,17 +1,32 @@
 #include "GlobalSamplers.h"
 
+GlobalSamplers* GlobalSamplers::instance = new GlobalSamplers();
+
 GlobalSamplers::GlobalSamplers()
 {
+}
 
+GlobalSamplers::GlobalSamplers(const GlobalSamplers& inOther)
+{
 }
 
 GlobalSamplers::~GlobalSamplers()
 {
+}
 
+void GlobalSamplers::operator=(const GlobalSamplers& inOther)
+{
 }
 
 void GlobalSamplers::Create(VulkanDevice* inVulkanDevice)
 {
+	if (samplers.size() > 0)
+	{
+		return;
+	}
+
+	vulkanDevice = inVulkanDevice;
+
 	SamplerCreateInfo samplerInfo;
 	samplerInfo.setAddressModeU(SamplerAddressMode::eRepeat);
 	samplerInfo.setAddressModeV(SamplerAddressMode::eRepeat);
@@ -27,12 +42,60 @@ void GlobalSamplers::Create(VulkanDevice* inVulkanDevice)
 	samplerInfo.setMipLodBias(0.0f);
 	samplerInfo.setMipmapMode(SamplerMipmapMode::eLinear);
 	samplerInfo.setUnnormalizedCoordinates(VK_FALSE);
-	// something like this
 	repeatLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
+	samplers.push_back(&repeatLinearMipLinear);
+
+	samplerInfo.setAddressModeU(SamplerAddressMode::eMirroredRepeat);
+	samplerInfo.setAddressModeV(SamplerAddressMode::eMirroredRepeat);
+	samplerInfo.setAddressModeW(SamplerAddressMode::eMirroredRepeat);
+	repeatMirrorLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
+	samplers.push_back(&repeatMirrorLinearMipLinear);
+
+	samplerInfo.setAddressModeU(SamplerAddressMode::eClampToBorder);
+	samplerInfo.setAddressModeV(SamplerAddressMode::eClampToBorder);
+	samplerInfo.setAddressModeW(SamplerAddressMode::eClampToBorder);
+	borderBlackLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
+	samplers.push_back(&borderBlackLinearMipLinear);
+
+	samplerInfo.setBorderColor(BorderColor::eIntOpaqueWhite);
+	borderWhiteLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
+	samplers.push_back(&borderWhiteLinearMipLinear);
+
+	// construct bindings 
+	ConstructBindings();
 }
 
 void GlobalSamplers::Destroy()
 {
-	vulkanDevice->GetDevice().destroySampler(repeatLinearMipLinear);
+	for (uint32_t index = 0; index < samplers.size(); index++)
+	{
+		vulkanDevice->GetDevice().destroySampler(*samplers[index]);
+	}
+	samplers.clear();
+}
+
+std::vector<DescriptorSetLayoutBinding> GlobalSamplers::GetBindings(uint32_t inStartIndex /*= 0*/)
+{
+	for (uint32_t index = 0; index < bindings.size(); index++)
+	{
+		bindings[index].setBinding(inStartIndex + index);
+	}
+	return bindings;
+}
+
+void GlobalSamplers::ConstructBindings()
+{
+	bindings.clear();
+	for (uint32_t index = 0; index < samplers.size(); index++)
+	{
+		DescriptorSetLayoutBinding binding;
+		binding.setBinding(index);
+		binding.setDescriptorType(DescriptorType::eSampler);
+		binding.setDescriptorCount(1);
+		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+		binding.setPImmutableSamplers(samplers[index]);
+
+		bindings.push_back(binding);
+	}
 }
 

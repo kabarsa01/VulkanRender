@@ -121,12 +121,7 @@ void Material::PrepareDescriptorInfos()
 
 	for (auto& pair : buffers)
 	{
-		DescriptorBufferInfo bufferInfo;
-		bufferInfo.setBuffer(pair.second);
-		bufferInfo.setOffset(0);
-		bufferInfo.setRange(pair.second.createInfo.size);
-
-		bufferDescInfos[pair.first] = bufferInfo;
+		bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
 	}
 }
 

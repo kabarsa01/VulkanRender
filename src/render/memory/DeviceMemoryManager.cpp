@@ -1,7 +1,7 @@
 #include "DeviceMemoryManager.h"
 #include <algorithm>
 
-DeviceMemoryManager DeviceMemoryManager::staticInstance;
+DeviceMemoryManager* DeviceMemoryManager::staticInstance = new DeviceMemoryManager();
 
 namespace
 {
@@ -45,7 +45,7 @@ uint32_t DeviceMemoryManager::GetRangeIndex(DeviceSize inSize)
 
 DeviceMemoryManager* DeviceMemoryManager::GetInstance()
 {
-	return &staticInstance;
+	return staticInstance;
 }
 
 MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)

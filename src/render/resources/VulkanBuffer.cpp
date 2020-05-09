@@ -24,6 +24,10 @@ void VulkanBuffer::Create(VulkanDevice* inDevice)
 	}
 	vulkanDevice = inDevice;
 	buffer = vulkanDevice->GetDevice().createBuffer(createInfo);
+
+	descriptorInfo.setBuffer(buffer);
+	descriptorInfo.setOffset(0);
+	descriptorInfo.setRange(createInfo.size);
 }
 
 void VulkanBuffer::SetData(const std::vector<char>& inData)
@@ -138,6 +142,11 @@ BufferMemoryBarrier VulkanBuffer::CreateMemoryBarrier(uint32_t inSrcQueue, uint3
 	barrier.setDstAccessMask(inDstAccessMask);
 
 	return barrier;
+}
+
+DescriptorBufferInfo& VulkanBuffer::GetDescriptorInfo()
+{
+	return descriptorInfo;
 }
 
 Buffer& VulkanBuffer::GetBuffer()

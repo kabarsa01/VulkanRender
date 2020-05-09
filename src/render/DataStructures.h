@@ -13,7 +13,7 @@ struct ShaderGlobalData
 };
 
 // per object update
-struct ObjectCommonData
+struct ObjectMVPData
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;

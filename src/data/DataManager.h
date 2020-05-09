@@ -40,6 +40,8 @@ private:
 	static DataManager* instance;
 
 	DataManager();
+	DataManager(const DataManager& inOther) {}
+	void operator=(const DataManager& inOther) {}
 	virtual ~DataManager();
 
 	ResourcePtr GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap);

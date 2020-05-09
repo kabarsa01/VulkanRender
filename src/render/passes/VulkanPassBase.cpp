@@ -10,6 +10,7 @@
 #include "../DataStructures.h"
 #include "scene/Transform.h"
 #include "data/DataManager.h"
+#include "../PerFrameData.h"
 
 VulkanPassBase::VulkanPassBase(HashString inName)
 	: name(inName)
@@ -209,6 +210,7 @@ PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLay
 PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 {
 	Device& device = vulkanDevice->GetDevice();
+	RendererPtr renderer = Engine::GetRendererInstance();
 
 	PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
 	// check pipeline storage and create new pipeline in case it was not created before
@@ -218,11 +220,9 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 
 		pipelineData.vulkanDescriptorSet.SetBindings(inMaterial->GetBindings());
 		pipelineData.vulkanDescriptorSet.Create(vulkanDevice, descriptorPool);
-		pipelineData.descriptorSets = { /*globalSet, objectsSet,*/ pipelineData.vulkanDescriptorSet.GetSet() };
+		pipelineData.descriptorSets = { renderer->GetPerFrameData()->GetSet(), pipelineData.vulkanDescriptorSet.GetSet() };
 
-		std::vector<DescriptorSetLayout> setLayouts = { pipelineData.vulkanDescriptorSet.GetLayout() };
-		//setLayouts.push_front(objectSetLayout);
-		//setLayouts.push_front(globalSetLayout);
+		std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), pipelineData.vulkanDescriptorSet.GetLayout() };
 		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
 		pipelineData.pipeline = CreateGraphicsPipeline(inMaterial, pipelineData.pipelineLayout);
 
