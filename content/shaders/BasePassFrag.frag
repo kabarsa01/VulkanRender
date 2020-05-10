@@ -23,5 +23,6 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 	vec4 rgba = texture( sampler2D( albedo, repeatLinearSampler ), uv );
+	rgba *= cos(fract(globalData.time) * 3.14 * 2.0) * 0.5 + 1.0;
     outColor = rgba; //vec4(fragColor, 1.0);
 }

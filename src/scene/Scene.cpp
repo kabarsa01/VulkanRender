@@ -28,8 +28,8 @@ void Scene::Init()
 {
 	TransferList* tl = TransferList::GetInstance();
 
-	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", true, true, false);
-	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", true, true, false);
+	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
+	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, false);
 	tl->PushImage(& albedo->GetImage());
 	tl->PushImage(& normal->GetImage());
 
@@ -108,13 +108,8 @@ void Scene::PerFrameUpdate()
 	// DIRTY TESTING SCENE
 	MeshComponentPtr meshComp = GetSceneComponent<MeshComponent>();
 	meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
-
-	CameraComponentPtr camComp = GetSceneComponent<CameraComponent>();
-
 	ObjectMVPData ubo;
 	ubo.model = meshComp->GetParent()->transform.GetMatrix();
-	ubo.view = camComp->CalculateViewMatrix();
-	ubo.proj = camComp->CalculateProjectionMatrix();
 
 	meshComp->material->UpdateUniformBuffer<ObjectMVPData>("mvpBuffer", ubo);
 }

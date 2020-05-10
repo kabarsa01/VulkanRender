@@ -28,7 +28,7 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 uv;
 
 void main() {
-    gl_Position = mvpBuffer.proj * mvpBuffer.view * mvpBuffer.model * vec4(inPos, 1.0);
+    gl_Position = globalData.proj * globalData.view * mvpBuffer.model * vec4(inPos, 1.0);
     fragColor = inNormal*0.5 + 0.5;//inPos + vec3(0.5, 0.5, 0.5);
 	uv = inUV;
 }

@@ -1,6 +1,10 @@
 #include "PerFrameData.h"
 #include "objects/VulkanDevice.h"
 #include "GlobalSamplers.h"
+#include "scene/Scene.h"
+#include "core/Engine.h"
+#include "scene/camera/CameraComponent.h"
+#include "core/TimeManager.h"
 
 PerFrameData::PerFrameData()
 {
@@ -81,6 +85,12 @@ std::vector<WriteDescriptorSet> PerFrameData::ProduceWrites(VulkanDescriptorSet&
 
 void PerFrameData::GatherData()
 {
+	shaderGlobalData.time = TimeManager::GetInstance()->GetTime();
+	shaderGlobalData.deltaTime = TimeManager::GetInstance()->GetDeltaTime();
 
+	ScenePtr scene = Engine::GetSceneInstance();
+	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
+	shaderGlobalData.view = camComp->CalculateViewMatrix();
+	shaderGlobalData.proj = camComp->CalculateProjectionMatrix();
 }
 

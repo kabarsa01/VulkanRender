@@ -28,6 +28,8 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 	width = createInfo.extent.width;
 	height = createInfo.extent.height;
 	depth = createInfo.extent.depth;
+
+	memoryRequirements = vulkanDevice->GetDevice().getImageMemoryRequirements(image);
 }
 
 void VulkanImage::Destroy()
@@ -185,7 +187,7 @@ const Image& VulkanImage::GetImage() const
 
 MemoryRequirements VulkanImage::GetMemoryRequirements()
 {
-	return vulkanDevice->GetDevice().getImageMemoryRequirements(image);
+	return memoryRequirements;
 }
 
 VulkanBuffer* VulkanImage::CreateStagingBuffer(char* inData)
@@ -205,7 +207,7 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 		return &stagingBuffer;
 	}
 
-	DeviceSize size = width * height * depth * 4;
+	DeviceSize size = memoryRequirements.size;//width * height * depth * 4;
 
 	stagingBuffer.createInfo.setSize(size);
 	stagingBuffer.createInfo.setSharingMode(inSharingMode);

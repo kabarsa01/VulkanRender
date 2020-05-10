@@ -138,7 +138,8 @@ void Renderer::RenderFrame()
 	{
 		OnResolutionChange();
 	}
-	swapChain.WaitForPresentQueue();
+	device.GetGraphicsQueue().waitIdle();
+	//swapChain.WaitForPresentQueue();
 }
 
 void Renderer::WaitForDevice()

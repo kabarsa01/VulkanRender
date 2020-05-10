@@ -2,6 +2,11 @@
 #include "stb/stb_image.h"
 #include "core/Engine.h"
 
+namespace
+{
+	static const int DESIRED_CHANNELS_COUNT = 4;
+};
+
 TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
 	: Resource(inPath)
 	, imageView(nullptr)
@@ -27,7 +32,7 @@ bool TextureData::Load()
 {
 	unsigned char* data;
 	stbi_set_flip_vertically_on_load(flipVertical);
-	data = stbi_load(path.c_str(), &width, &height, &numChannels, 4);
+	data = stbi_load(path.c_str(), &width, &height, &numChannels, DESIRED_CHANNELS_COUNT);
 
 	if (data == nullptr)
 	{

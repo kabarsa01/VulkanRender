@@ -76,6 +76,7 @@ protected:
 	VulkanDevice* vulkanDevice;
 	Image image;
 	MemoryRecord memoryRecord;
+	MemoryRequirements memoryRequirements;
 	VulkanBuffer stagingBuffer;
 	std::vector<char> data;
 

@@ -9,10 +9,13 @@ public:
 
 	void UpdateTime();
 	float GetDeltaTime();
+	double GetTime();
 protected:
 	static TimeManager* staticInstance;
 
+	double time;
 	float deltaTime;
+	std::chrono::time_point<std::chrono::steady_clock> appStartTime;
 	std::chrono::time_point<std::chrono::steady_clock> lastTimestamp;
 private:
 	TimeManager();
