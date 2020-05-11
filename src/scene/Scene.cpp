@@ -44,6 +44,16 @@ void Scene::Init()
 	mat->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat->LoadResources();
 
+	MaterialPtr mat2 = DataManager::RequestResourceType<Material>(
+		"default2",
+		"content/shaders/BasePassVert.spv",
+		"content/shaders/BasePassFrag.spv"
+		);
+	mat2->SetTexture("normal", albedo);
+	mat2->SetTexture("albedo", normal);
+	mat2->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
+	mat2->LoadResources();
+
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
@@ -64,6 +74,15 @@ void Scene::Init()
 			mo->GetMeshComponent()->SetMaterial(mat);
 
 			tl->PushBuffers(mo->GetMeshComponent()->meshData);
+
+			MeshObjectPtr mo2 = ObjectBase::NewObject<MeshObject>();
+			mo2->GetMeshComponent()->meshData = importer.GetMeshes()[MeshIndex];
+			mo2->transform.SetLocation({ -25.0f, -5.0f, 0.0f });
+			mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
+//			mo2->GetMeshComponent()->meshData->CreateBuffer();
+			mo2->GetMeshComponent()->SetMaterial(mat2);
+
+			tl->PushBuffers(mo2->GetMeshComponent()->meshData);
 		}
 	}
 
@@ -106,10 +125,16 @@ void Scene::PerFrameUpdate()
 	}
 
 	// DIRTY TESTING SCENE
-	MeshComponentPtr meshComp = GetSceneComponent<MeshComponent>();
-	meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 45.0f, deltaTime * 15.0f });
-	ObjectMVPData ubo;
-	ubo.model = meshComp->GetParent()->transform.GetMatrix();
+	std::vector<MeshComponentPtr> meshComps = GetSceneComponentsCast<MeshComponent>();
+	uint32_t index = 1;
+	for (MeshComponentPtr meshComp : meshComps)
+	{
+		meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 45.0f * index, deltaTime * 15.0f * index });
+		ObjectMVPData ubo;
+		ubo.model = meshComp->GetParent()->transform.GetMatrix();
 
-	meshComp->material->UpdateUniformBuffer<ObjectMVPData>("mvpBuffer", ubo);
+		meshComp->material->UpdateUniformBuffer<ObjectMVPData>("mvpBuffer", ubo);
+
+		index++;
+	}
 }

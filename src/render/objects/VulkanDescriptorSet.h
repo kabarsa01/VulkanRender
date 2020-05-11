@@ -20,6 +20,8 @@ public:
 	DescriptorSetLayout& GetLayout() { return layout; }
 	void SetBindings(const std::vector<DescriptorSetLayoutBinding>& inBindings);
 	std::vector<DescriptorSetLayoutBinding>& GetBindings() { return bindings; }
+
+	operator bool() { return set; }
 protected:
 	virtual std::vector<DescriptorSetLayoutBinding> ProduceCustomBindings();
 private:

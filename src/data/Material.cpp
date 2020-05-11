@@ -49,6 +49,34 @@ HashString Material::GetShaderHash()
 	return shaderHash;
 }
 
+void Material::CreateDescriptorSet(VulkanDevice* inDevice, DescriptorPool& inPool)
+{
+	if (vulkanDescriptorSet)
+	{
+		return;
+	}
+
+	vulkanDevice = inDevice;
+	vulkanDescriptorSet.SetBindings(GetBindings());
+	vulkanDescriptorSet.Create(vulkanDevice, inPool);
+	UpdateDescriptorSet(vulkanDescriptorSet.GetSet(), vulkanDevice);
+}
+
+DescriptorSet Material::GetDescriptorSet()
+{
+	return vulkanDescriptorSet.GetSet();
+}
+
+std::vector<DescriptorSet> Material::GetDescriptorSets()
+{
+	return { vulkanDescriptorSet.GetSet() };
+}
+
+DescriptorSetLayout Material::GetDescriptorSetLayout()
+{
+	return vulkanDescriptorSet.GetLayout();
+}
+
 void Material::SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath)
 {
 	vertexShaderPath = inVertexShaderPath;
@@ -83,6 +111,16 @@ void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, c
 	buffers[inName].CopyTo(inSize, inData);
 }
 
+void Material::UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice)
+{
+	std::vector<WriteDescriptorSet>& writes = GetDescriptorWrites();
+	for (WriteDescriptorSet& write : writes)
+	{
+		write.setDstSet(inSet);
+	}
+	inDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+}
+
 bool Material::Load()
 {
 	return true;
@@ -95,6 +133,7 @@ bool Material::Cleanup()
 	{
 		pair.second.Destroy();
 	}
+	vulkanDescriptorSet.Destroy();
 	return true;
 }
 

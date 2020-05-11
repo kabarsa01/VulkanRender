@@ -1,6 +1,8 @@
 #include "VulkanDescriptorSet.h"
 
 VulkanDescriptorSet::VulkanDescriptorSet()
+	: set(nullptr)
+	, layout(nullptr)
 {
 
 }
@@ -54,6 +56,8 @@ void VulkanDescriptorSet::Destroy()
 	if (layout)
 	{
 		vulkanDevice->GetDevice().destroyDescriptorSetLayout(layout);
+		layout = nullptr;
+		set = nullptr;
 	}
 }
 

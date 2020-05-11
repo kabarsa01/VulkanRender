@@ -3,6 +3,9 @@
 #include "data/Resource.h"
 #include "data/Texture2D.h"
 #include "render/shader/Shader.h"
+#include "render/objects/VulkanDescriptorSet.h"
+
+class VulkanDevice;
 
 class Material : public Resource
 {
@@ -14,6 +17,11 @@ public:
 	void LoadResources();
 	HashString GetShaderHash();
 
+	void CreateDescriptorSet(VulkanDevice* inDevice, DescriptorPool& inPool);
+	DescriptorSet GetDescriptorSet();
+	std::vector<DescriptorSet> GetDescriptorSets();
+	DescriptorSetLayout GetDescriptorSetLayout();
+
 	void SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath);
 	void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
@@ -22,6 +30,7 @@ public:
 	template<typename T>
 	void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 	void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
+	void UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice);
 
 	inline ShaderPtr GetVertexShader() { return vertexShader; }
 	inline ShaderPtr GetFragmentShader() { return fragmentShader; }
@@ -45,6 +54,9 @@ protected:
 	std::map<HashString, DescriptorImageInfo> imageDescInfos;
 	std::map<HashString, DescriptorBufferInfo> bufferDescInfos;
 	std::vector<WriteDescriptorSet> descriptorWrites;
+
+	VulkanDevice* vulkanDevice;
+	VulkanDescriptorSet vulkanDescriptorSet;
 
 	void PrepareDescriptorInfos();
 

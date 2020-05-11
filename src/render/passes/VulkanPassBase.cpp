@@ -54,10 +54,13 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
 	//---------------------------------------------------------------------------------
 	// TODO: provide some more robust centralized solution for batching/sorting
-	std::map<HashString, std::vector<MeshComponentPtr>> shaderSortedMeshes;
+	std::map<HashString, std::vector<MaterialPtr>> shaderSortedMaterials;
+	std::map<HashString, std::vector<MeshDataPtr>> materialSortedMeshes;
 	for (MeshComponentPtr meshComp : meshComponents)
 	{
-		shaderSortedMeshes[meshComp->material->GetShaderHash()].push_back(meshComp);
+		MaterialPtr material = meshComp->material;
+		shaderSortedMaterials[material->GetShaderHash()].push_back(material);
+		materialSortedMeshes[material->GetResourceId()].push_back(meshComp->meshData);
 	}
 	//---------------------------------------------------------------------------------
 
@@ -75,23 +78,26 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
 
 	//------------------------------------------------------------------------------------------------------------
-	for (auto& pair : shaderSortedMeshes)
+	for (auto& shaderMaterialPair : shaderSortedMaterials)
 	{
-		PipelineData& pipelineData = FindGraphicsPipeline(pair.second[0]->material);
+		PipelineData& pipelineData = FindGraphicsPipeline(shaderMaterialPair.second[0]);
 
 		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
 		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
-		std::vector<MeshComponentPtr>& meshes = pair.second;
-		for (uint64_t index = 0; index < meshes.size(); index++)
+		for (MaterialPtr material : shaderMaterialPair.second)
 		{
-			MeshDataPtr meshData = meshes[index]->meshData;
-			// update per material descriptors
-			UpdateMaterialDescriptorSet(meshes[index]->material);
+			material->CreateDescriptorSet(vulkanDevice, descriptorPool);
+			inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, material->GetDescriptorSets(), {});
 
-			inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
-			inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
-			inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+			std::vector<MeshDataPtr>& meshes = materialSortedMeshes[material->GetResourceId()];
+			for (uint64_t index = 0; index < meshes.size(); index++)
+			{
+				MeshDataPtr meshData = meshes[index];
+				inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
+				inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
+				inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+			}
 		}
 	}
 	//------------------------------------------------------------------------------------------------------------
@@ -218,11 +224,10 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 	{
 		PipelineData pipelineData;
 
-		pipelineData.vulkanDescriptorSet.SetBindings(inMaterial->GetBindings());
-		pipelineData.vulkanDescriptorSet.Create(vulkanDevice, descriptorPool);
-		pipelineData.descriptorSets = { renderer->GetPerFrameData()->GetSet(), pipelineData.vulkanDescriptorSet.GetSet() };
+		inMaterial->CreateDescriptorSet(vulkanDevice, descriptorPool);
+		pipelineData.descriptorSets = { renderer->GetPerFrameData()->GetSet(), inMaterial->GetDescriptorSet() };
 
-		std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), pipelineData.vulkanDescriptorSet.GetLayout() };
+		std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), inMaterial->GetDescriptorSetLayout() };
 		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
 		pipelineData.pipeline = CreateGraphicsPipeline(inMaterial, pipelineData.pipelineLayout);
 
@@ -261,17 +266,6 @@ std::vector<DescriptorSet> VulkanPassBase::AllocateDescriptorSets(std::vector<De
 	descSetAllocInfo.setPSetLayouts(inSetLayouts.data());
 
 	return vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
-}
-
-void VulkanPassBase::UpdateMaterialDescriptorSet(MaterialPtr inMaterial)
-{
-	PipelineData& pipelineData = PipelineRegistry::GetInstance()->GetPipeline(inMaterial->GetShaderHash(), name);
-	std::vector<WriteDescriptorSet>& writes = inMaterial->GetDescriptorWrites();
-	for (WriteDescriptorSet& write : writes)
-	{
-		write.setDstSet(pipelineData.vulkanDescriptorSet.GetSet());
-	}
-	vulkanDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout)

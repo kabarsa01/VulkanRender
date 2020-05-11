@@ -12,7 +12,6 @@ struct PipelineData
 {
 	Pipeline pipeline;
 	PipelineLayout pipelineLayout;
-	VulkanDescriptorSet vulkanDescriptorSet;
 	std::vector<DescriptorSet> descriptorSets;
 };
 

@@ -44,7 +44,6 @@ protected:
 	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
 	void CreateDescriptorPool();
 	std::vector<DescriptorSet> AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts);
-	void UpdateMaterialDescriptorSet(MaterialPtr inMaterial);
 	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
 	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
