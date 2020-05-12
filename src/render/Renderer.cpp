@@ -48,12 +48,6 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-
-}
-
-void Renderer::OnInitialize()
-{
-
 }
 
 void Renderer::Init()
@@ -66,13 +60,13 @@ void Renderer::Init()
 	swapChain.Create(&device, 2);
 	swapChain.CreateForResolution(width, height);
 	commandBuffers.Create(&device, 2, 1);
-
+	descriptorPools.Create(&device);
 	CreateDescriptorPool();
 
 	perFrameData = new PerFrameData();
 	perFrameData->Create(&device, descriptorPool);
 	basePass = new VulkanPassBase();
-	basePass->Create(&device);
+	basePass->Create();
 
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
@@ -168,7 +162,8 @@ void Renderer::Cleanup()
 	// destroying pipelines
 	DestroyGraphicsPipeline();
 	PipelineRegistry::GetInstance()->DestroyPipelines(&device);
-	
+
+	descriptorPools.Destroy();
 	device.GetDevice().destroySampler(sampler);
 
 	commandBuffers.Destroy();
@@ -212,6 +207,11 @@ VulkanSwapChain& Renderer::GetSwapChain()
 VulkanCommandBuffers& Renderer::GetCommandBuffers()
 {
 	return commandBuffers;
+}
+
+VulkanDescriptorPools& Renderer::GetDescriptorPools()
+{
+	return descriptorPools;
 }
 
 Queue Renderer::GetGraphicsQueue()

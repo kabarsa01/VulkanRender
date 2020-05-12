@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include "core\Engine.h"
 #include <stdexcept>
+#include "..\Renderer.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 

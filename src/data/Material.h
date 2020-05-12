@@ -17,7 +17,7 @@ public:
 	void LoadResources();
 	HashString GetShaderHash();
 
-	void CreateDescriptorSet(VulkanDevice* inDevice, DescriptorPool& inPool);
+	void CreateDescriptorSet(VulkanDevice* inDevice);
 	DescriptorSet GetDescriptorSet();
 	std::vector<DescriptorSet> GetDescriptorSets();
 	DescriptorSetLayout GetDescriptorSetLayout();

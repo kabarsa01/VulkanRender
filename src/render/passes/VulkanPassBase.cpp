@@ -23,24 +23,20 @@ VulkanPassBase::~VulkanPassBase()
 
 }
 
-void VulkanPassBase::Create(VulkanDevice* inDevice)
+void VulkanPassBase::Create()
 {
-	RendererPtr renderer = Engine::GetRendererInstance();
+	renderer = Engine::GetRendererInstance();
+	vulkanDevice = &renderer->GetVulkanDevice();
 	width = renderer->GetWidth();
 	height = renderer->GetHeight();
 
-	vulkanDevice = inDevice;
-
 	CreateRenderPass();
 	CreateFramebufferResources();
-	CreateDescriptorPool();;
 }
 
 void VulkanPassBase::Destroy()
 {
 	Device& device = vulkanDevice->GetDevice();
-
-	device.destroyDescriptorPool(descriptorPool);
 
 	device.destroyRenderPass(renderPass);
 	device.destroyFramebuffer(framebuffer);
@@ -87,7 +83,7 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 
 		for (MaterialPtr material : shaderMaterialPair.second)
 		{
-			material->CreateDescriptorSet(vulkanDevice, descriptorPool);
+			material->CreateDescriptorSet(vulkanDevice);
 			inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, material->GetDescriptorSets(), {});
 
 			std::vector<MeshDataPtr>& meshes = materialSortedMeshes[material->GetResourceId()];
@@ -149,7 +145,6 @@ void VulkanPassBase::CreateRenderPass()
 void VulkanPassBase::CreateFramebufferResources()
 {
 	Device& device = vulkanDevice->GetDevice();
-	RendererPtr renderer = Engine::GetRendererInstance();
 
 	uint32_t queueFailyIndices[] = { vulkanDevice->GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
 
@@ -216,7 +211,6 @@ PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLay
 PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 {
 	Device& device = vulkanDevice->GetDevice();
-	RendererPtr renderer = Engine::GetRendererInstance();
 
 	PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
 	// check pipeline storage and create new pipeline in case it was not created before
@@ -224,7 +218,7 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 	{
 		PipelineData pipelineData;
 
-		inMaterial->CreateDescriptorSet(vulkanDevice, descriptorPool);
+		inMaterial->CreateDescriptorSet(vulkanDevice);
 		pipelineData.descriptorSets = { renderer->GetPerFrameData()->GetSet(), inMaterial->GetDescriptorSet() };
 
 		std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), inMaterial->GetDescriptorSetLayout() };
@@ -235,37 +229,6 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 	}
 
 	return pipelineRegistry.GetPipeline(inMaterial->GetShaderHash(), name);
-}
-
-void VulkanPassBase::CreateDescriptorPool()
-{
-	DescriptorPoolSize uniformPoolSize;
-	uniformPoolSize.setDescriptorCount(128);
-	uniformPoolSize.setType(DescriptorType::eUniformBuffer);
-	DescriptorPoolSize samplerPoolSize;
-	samplerPoolSize.setDescriptorCount(16);
-	samplerPoolSize.setType(DescriptorType::eSampler);
-	DescriptorPoolSize imagePoolSize;
-	imagePoolSize.setDescriptorCount(128);
-	imagePoolSize.setType(DescriptorType::eSampledImage);
-
-	DescriptorPoolSize poolSizes[] = { uniformPoolSize, samplerPoolSize, imagePoolSize };
-	DescriptorPoolCreateInfo descPoolInfo;
-	descPoolInfo.setPoolSizeCount(3);
-	descPoolInfo.setPPoolSizes(poolSizes);
-	descPoolInfo.setMaxSets(8);
-
-	descriptorPool = vulkanDevice->GetDevice().createDescriptorPool(descPoolInfo);
-}
-
-std::vector<DescriptorSet> VulkanPassBase::AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts)
-{
-	DescriptorSetAllocateInfo descSetAllocInfo;
-	descSetAllocInfo.setDescriptorPool(descriptorPool);
-	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(inSetLayouts.size()));
-	descSetAllocInfo.setPSetLayouts(inSetLayouts.data());
-
-	return vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
 }
 
 Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout)

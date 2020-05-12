@@ -1,6 +1,7 @@
 #include "core/Engine.h"
 #include "core/TimeManager.h"
 #include "data/DataManager.h"
+#include "render/Renderer.h"
 
 Engine* Engine::staticInstance = new Engine();
 
@@ -21,7 +22,7 @@ void Engine::Run()
 	Cleanup();
 }
 
-RendererPtr Engine::GetRendererInstance()
+Renderer* Engine::GetRendererInstance()
 {
 	return staticInstance->GetRenderer();
 }
@@ -31,7 +32,7 @@ ScenePtr Engine::GetScene()
 	return sceneInstance;
 }
 
-RendererPtr Engine::GetRenderer()
+Renderer* Engine::GetRenderer()
 {
 	return rendererInstance;
 }
@@ -47,7 +48,7 @@ void Engine::Init()
 	InitWindow();
 
 	// init modules
-	rendererInstance = ObjectBase::NewObject<Renderer>();
+	rendererInstance = new Renderer();
 	sceneInstance = ObjectBase::NewObject<Scene>();
 
 	rendererInstance->Init();
@@ -75,7 +76,10 @@ void Engine::MainLoop()
 void Engine::Cleanup()
 {
 	DataManager::ShutdownInstance();
+
 	rendererInstance->Cleanup();
+	delete rendererInstance;
+
 	// glfw cleanup
 	glfwDestroyWindow(window);
 	glfwTerminate();

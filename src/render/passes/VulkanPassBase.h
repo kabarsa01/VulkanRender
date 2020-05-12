@@ -17,7 +17,7 @@ public:
 	VulkanPassBase(HashString inName = HashString::NONE);
 	virtual ~VulkanPassBase();
 
-	void Create(VulkanDevice* inDevice);
+	void Create();
 	void Destroy();
 
 	ImageView& GetImageView() { return colorAttachmentImageView; }
@@ -27,10 +27,9 @@ public:
 protected:
 	HashString name;
 	VulkanDevice* vulkanDevice;
+	class Renderer* renderer;
 
 	RenderPass renderPass;
-	DescriptorPool descriptorPool;
-	std::vector<DescriptorSet> globalDescriptorSets;
 
 	VulkanImage colorAttachmentImage;
 	ImageView colorAttachmentImageView;
@@ -42,8 +41,6 @@ protected:
 	void CreateRenderPass();
 	void CreateFramebufferResources();
 	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
-	void CreateDescriptorPool();
-	std::vector<DescriptorSet> AllocateDescriptorSets(std::vector<DescriptorSetLayout>& inSetLayouts);
 	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
 	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);

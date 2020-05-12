@@ -1,9 +1,10 @@
 #pragma once
 
 #include "vulkan/vulkan.hpp"
-#include "VulkanDevice.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
+
+class VulkanDevice;
 
 class VulkanDescriptorSet
 {
@@ -11,9 +12,9 @@ public:
 	VulkanDescriptorSet();
 	virtual ~VulkanDescriptorSet();
 
-	void Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool);
-	static void Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool, std::vector<VulkanDescriptorSet*>& inSets);
-	static void Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool, uint32_t inCount, VulkanDescriptorSet** inSets);
+	void Create(VulkanDevice* inVulkanDevice);
+	static void Create(VulkanDevice* inVulkanDevice, std::vector<VulkanDescriptorSet*>& inSets);
+	static void Create(VulkanDevice* inVulkanDevice, uint32_t inCount, VulkanDescriptorSet** inSets);
 	void Destroy();
 
 	DescriptorSet& GetSet() { return set; }
@@ -27,6 +28,7 @@ protected:
 private:
 	VulkanDevice* vulkanDevice;
 
+	DescriptorPool pool;
 	DescriptorSet set;
 	DescriptorSetLayout layout;
 	std::vector<DescriptorSetLayoutBinding> bindings;

@@ -5,23 +5,24 @@
 
 #include "core/ObjectBase.h"
 #include "scene/Scene.h"
-#include "render/Renderer.h"
+
+class Renderer;
 
 class Engine
 {
 public:
 	static Engine* GetInstance();
 	static ScenePtr GetSceneInstance();
-	static RendererPtr GetRendererInstance();
+	static Renderer* GetRendererInstance();
 
 	void Run();
 
 	ScenePtr GetScene();
-	RendererPtr GetRenderer();
+	Renderer* GetRenderer();
 	GLFWwindow* GetGlfwWindow();
 protected:
 	ScenePtr sceneInstance;
-	RendererPtr rendererInstance;
+	Renderer* rendererInstance;
 
 	void Init();
 	void MainLoop();

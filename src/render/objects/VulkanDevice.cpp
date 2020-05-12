@@ -2,6 +2,7 @@
 #include "core/Engine.h"
 #include "GLFW/glfw3.h"
 #include <iostream>
+#include "../memory/DeviceMemoryManager.h"
 
 VulkanDevice::VulkanDevice()
 {

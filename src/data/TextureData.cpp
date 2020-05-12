@@ -1,6 +1,7 @@
 #include "TextureData.h"
 #include "stb/stb_image.h"
 #include "core/Engine.h"
+#include "render/Renderer.h"
 
 namespace
 {

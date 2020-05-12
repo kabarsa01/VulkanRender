@@ -1,6 +1,7 @@
 #include "Material.h"
 #include "DataManager.h"
 #include "core/Engine.h"
+#include "render/Renderer.h"
 
 Material::Material(HashString inId)
 	: Resource(inId)
@@ -49,7 +50,7 @@ HashString Material::GetShaderHash()
 	return shaderHash;
 }
 
-void Material::CreateDescriptorSet(VulkanDevice* inDevice, DescriptorPool& inPool)
+void Material::CreateDescriptorSet(VulkanDevice* inDevice)
 {
 	if (vulkanDescriptorSet)
 	{
@@ -58,7 +59,7 @@ void Material::CreateDescriptorSet(VulkanDevice* inDevice, DescriptorPool& inPoo
 
 	vulkanDevice = inDevice;
 	vulkanDescriptorSet.SetBindings(GetBindings());
-	vulkanDescriptorSet.Create(vulkanDevice, inPool);
+	vulkanDescriptorSet.Create(vulkanDevice);
 	UpdateDescriptorSet(vulkanDescriptorSet.GetSet(), vulkanDevice);
 }
 

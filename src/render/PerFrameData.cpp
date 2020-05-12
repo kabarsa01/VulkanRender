@@ -29,7 +29,7 @@ void PerFrameData::Create(VulkanDevice* inDevice, DescriptorPool& inDescriptorPo
 	shaderDataBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 
 	set.SetBindings(ProduceBindings());
-	set.Create(device, inDescriptorPool);
+	set.Create(device);
 
 	descriptorWrites = ProduceWrites(set);
 	device->GetDevice().updateDescriptorSets(static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -56,7 +56,7 @@ std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
 	GlobalSamplers::GetInstance()->Create(device);
 	std::vector<DescriptorSetLayoutBinding> bindings = GlobalSamplers::GetInstance()->GetBindings(0);
 
-	shaderGlobalDataBinding.setBinding(bindings.size());
+	shaderGlobalDataBinding.setBinding(static_cast<uint32_t>( bindings.size() ));
 	shaderGlobalDataBinding.setDescriptorCount(1);
 	shaderGlobalDataBinding.setDescriptorType(DescriptorType::eUniformBuffer);
 	shaderGlobalDataBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <streambuf>
 #include "core/Engine.h"
+#include "../Renderer.h"
 
 Shader::Shader(const HashString& inPath)
 	: Resource(inPath)

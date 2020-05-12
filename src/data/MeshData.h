@@ -10,6 +10,8 @@
 #include "vulkan/vulkan.hpp"
 #include "render/resources/VulkanBuffer.h"
 #include "render/resources/VulkanDeviceMemory.h"
+#include "core/Engine.h"
+#include "render/Renderer.h"
 
 using namespace std;
 using namespace glm;

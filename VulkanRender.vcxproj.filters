@@ -183,6 +183,9 @@
     <ClCompile Include="src\render\PerFrameData.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\objects\VulkanDescriptorPools.cpp">
+      <Filter>Source Files\render\objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -307,6 +310,9 @@
     </ClInclude>
     <ClInclude Include="src\render\PerFrameData.h">
       <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\objects\VulkanDescriptorPools.h">
+      <Filter>Source Files\render\objects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

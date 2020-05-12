@@ -1,4 +1,7 @@
 #include "VulkanDescriptorSet.h"
+#include "core/Engine.h"
+#include "VulkanDevice.h"
+#include "../Renderer.h"
 
 VulkanDescriptorSet::VulkanDescriptorSet()
 	: set(nullptr)
@@ -12,25 +15,20 @@ VulkanDescriptorSet::~VulkanDescriptorSet()
 
 }
 
-void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool)
+void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice)
 {
 	vulkanDevice = inVulkanDevice;
 	CreateLayout();
 
-	DescriptorSetAllocateInfo descSetAllocInfo;
-	descSetAllocInfo.setDescriptorPool(inDescriptorPool);
-	descSetAllocInfo.setDescriptorSetCount(1);
-	descSetAllocInfo.setPSetLayouts(&layout);
-
-	set = vulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo)[0];
+	set = Engine::GetRendererInstance()->GetDescriptorPools().AllocateSet({layout}, pool)[0];
 }
 
-void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool, std::vector<VulkanDescriptorSet*>& inSets)
+void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, std::vector<VulkanDescriptorSet*>& inSets)
 {
-	Create(inVulkanDevice, inDescriptorPool, static_cast<uint32_t>(inSets.size()), inSets.data());
+	Create(inVulkanDevice, static_cast<uint32_t>(inSets.size()), inSets.data());
 }
 
-void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, DescriptorPool& inDescriptorPool, uint32_t inCount, VulkanDescriptorSet** inSets)
+void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, uint32_t inCount, VulkanDescriptorSet** inSets)
 {
 	std::vector<DescriptorSetLayout> layouts;
 	for (uint32_t index = 0; index < inCount; index++)
@@ -39,15 +37,13 @@ void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, DescriptorPool& i
 		layouts.push_back(inSets[index]->CreateLayout());
 	}
 
-	DescriptorSetAllocateInfo descSetAllocInfo;
-	descSetAllocInfo.setDescriptorPool(inDescriptorPool);
-	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(layouts.size()));
-	descSetAllocInfo.setPSetLayouts(layouts.data());
+	DescriptorPool pool;
+	std::vector<DescriptorSet> sets = Engine::GetRendererInstance()->GetDescriptorPools().AllocateSet({ layouts }, pool);
 
-	std::vector<DescriptorSet> sets = inVulkanDevice->GetDevice().allocateDescriptorSets(descSetAllocInfo);
 	for (uint32_t index = 0; index < inCount; index++)
 	{
 		inSets[index]->set = sets[index];
+		inSets[index]->pool = pool;
 	}
 }
 
@@ -57,6 +53,7 @@ void VulkanDescriptorSet::Destroy()
 	{
 		vulkanDevice->GetDevice().destroyDescriptorSetLayout(layout);
 		layout = nullptr;
+		vulkanDevice->GetDevice().freeDescriptorSets(pool, { set });
 		set = nullptr;
 	}
 }

@@ -14,6 +14,7 @@
 //#include "passes/VulkanPassBase.h"
 #include "memory/DeviceMemoryManager.h"
 #include "resources/VulkanImage.h"
+#include "objects/VulkanDescriptorPools.h"
 
 using namespace VULKAN_HPP_NAMESPACE;
 
@@ -41,13 +42,11 @@ class PerFrameData;
 //=======================================================================================================
 //=======================================================================================================
 
-class Renderer : public ObjectBase
+class Renderer
 {
 public:
 	Renderer();
 	virtual ~Renderer();
-
-	virtual void OnInitialize() override;
 
 	void Init();
 	void RenderFrame();
@@ -62,6 +61,7 @@ public:
 	Device& GetDevice();
 	VulkanSwapChain& GetSwapChain();
 	VulkanCommandBuffers& GetCommandBuffers();
+	VulkanDescriptorPools& GetDescriptorPools();
 	Queue GetGraphicsQueue();
 
 	PerFrameData* GetPerFrameData() { return perFrameData; }
@@ -88,6 +88,7 @@ private:
 	VulkanDevice device;
 	VulkanSwapChain swapChain;
 	VulkanCommandBuffers commandBuffers;
+	VulkanDescriptorPools descriptorPools;
 
 	Viewport viewport;
 
@@ -126,5 +127,5 @@ private:
 	void CreateImageAndSampler();
 };
 
-typedef std::shared_ptr<Renderer> RendererPtr;
+
 

@@ -1,5 +1,6 @@
 #include "VulkanDeviceMemory.h"
 #include "core/Engine.h"
+#include "../Renderer.h"
 
 VulkanDeviceMemory::VulkanDeviceMemory(bool inScoped)
 	: scoped(inScoped)
