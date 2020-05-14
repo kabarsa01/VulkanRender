@@ -1,7 +1,6 @@
 #pragma once
 
 #include "vulkan/vulkan.hpp"
-#include "../objects/VulkanDevice.h"
 #include <vector>
 #include "../resources/VulkanBuffer.h"
 #include "../memory/DeviceMemoryManager.h"
@@ -20,26 +19,36 @@ public:
 	void Create();
 	void Destroy();
 
-	ImageView& GetImageView() { return colorAttachmentImageView; }
-	Image& GetImage() { return colorAttachmentImage.GetImage(); }
+	std::vector<VulkanImage> GetAttachments() { return attachments; }
+	std::vector<ImageView> GetAttachmentViews() { return attachmentViews; }
 
 	void Draw(CommandBuffer* inCmdBuffer);
 protected:
 	HashString name;
-	VulkanDevice* vulkanDevice;
+	class VulkanDevice* vulkanDevice;
 	class Renderer* renderer;
 
 	RenderPass renderPass;
-
-	VulkanImage colorAttachmentImage;
-	ImageView colorAttachmentImageView;
 	Framebuffer framebuffer;
+	std::vector<VulkanImage> attachments;
+	std::vector<ImageView> attachmentViews;
 
 	uint32_t width;
 	uint32_t height;
 
-	void CreateRenderPass();
-	void CreateFramebufferResources();
+	virtual RenderPass CreateRenderPass();
+	virtual void CreateFramebufferResources(
+		std::vector<VulkanImage>& outAttachments, 
+		std::vector<ImageView>& outAttachmentViews,
+		uint32_t inWidth,
+		uint32_t inHeight);
+
+
+	Framebuffer CreateFramebuffer(
+		RenderPass inRenderPass,
+		std::vector<ImageView>& inAttachmentViews,
+		uint32_t inWidth,
+		uint32_t inHeight);
 	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
 	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);

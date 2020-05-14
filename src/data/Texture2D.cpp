@@ -37,13 +37,6 @@ ImageCreateInfo Texture2D::GetImageInfo()
 
 ImageView Texture2D::CreateImageView()
 {
-	ImageViewCreateInfo imageViewInfo;
-	imageViewInfo.setComponents(ComponentMapping());
-	imageViewInfo.setFormat(image.createInfo.format);
-	imageViewInfo.setImage(image);
-	imageViewInfo.setSubresourceRange(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-	imageViewInfo.setViewType(ImageViewType::e2D);
-
-	return Engine::GetRendererInstance()->GetDevice().createImageView(imageViewInfo);
+	return image.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D);
 }
 

@@ -55,6 +55,9 @@
     <Filter Include="Source Files\render\passes">
       <UniqueIdentifier>{3a1b3faa-8977-41d7-acbe-c47601e02096}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{e178d0ae-de75-4ed8-bb83-bef791751e2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -186,6 +189,9 @@
     <ClCompile Include="src\render\objects\VulkanDescriptorPools.cpp">
       <Filter>Source Files\render\objects</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\ImageUtils.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -313,6 +319,9 @@
     </ClInclude>
     <ClInclude Include="src\render\objects\VulkanDescriptorPools.h">
       <Filter>Source Files\render\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\ImageUtils.h">
+      <Filter>Source Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -278,6 +278,7 @@ exit /b</Command>
     <ClCompile Include="src\scene\SceneObjectComponent.cpp" />
     <ClCompile Include="src\scene\Transform.cpp" />
     <ClCompile Include="src\stb\stb_image.cpp" />
+    <ClCompile Include="src\utils\ImageUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h" />
@@ -322,6 +323,7 @@ exit /b</Command>
     <ClInclude Include="src\scene\SceneObjectComponent.h" />
     <ClInclude Include="src\scene\Transform.h" />
     <ClInclude Include="src\stb\stb_image.h" />
+    <ClInclude Include="src\utils\ImageUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

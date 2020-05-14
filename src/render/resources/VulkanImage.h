@@ -18,6 +18,7 @@ public:
 	virtual ~VulkanImage();
 
 	void Create(VulkanDevice* inDevice);
+	ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType);
 	void Destroy();
 
 	void SetData(const std::vector<char>& inData);

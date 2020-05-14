@@ -30,8 +30,9 @@ void VulkanPassBase::Create()
 	width = renderer->GetWidth();
 	height = renderer->GetHeight();
 
-	CreateRenderPass();
-	CreateFramebufferResources();
+	renderPass = CreateRenderPass();
+	CreateFramebufferResources(attachments, attachmentViews, width, height);
+	framebuffer = CreateFramebuffer(renderPass, attachmentViews, width, height);
 }
 
 void VulkanPassBase::Destroy()
@@ -40,8 +41,11 @@ void VulkanPassBase::Destroy()
 
 	device.destroyRenderPass(renderPass);
 	device.destroyFramebuffer(framebuffer);
-	device.destroyImageView(colorAttachmentImageView);
-	colorAttachmentImage.Destroy();
+	for (uint32_t index = 0; index < attachments.size(); index++)
+	{
+		attachments[index].Destroy();
+		device.destroyImageView( attachmentViews[index] );
+	}
 }
 
 void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
@@ -100,7 +104,7 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->endRenderPass();
 }
 
-void VulkanPassBase::CreateRenderPass()
+RenderPass VulkanPassBase::CreateRenderPass()
 {
 	Device& device = vulkanDevice->GetDevice();
 
@@ -139,15 +143,29 @@ void VulkanPassBase::CreateRenderPass()
 	renderPassInfo.setDependencyCount(1);
 	renderPassInfo.setPDependencies(&subpassDependency);
 
-	renderPass = device.createRenderPass(renderPassInfo);
+	return device.createRenderPass(renderPassInfo);
 }
 
-void VulkanPassBase::CreateFramebufferResources()
+Framebuffer VulkanPassBase::CreateFramebuffer(RenderPass inRenderPass, std::vector<ImageView>& inAttachmentViews, uint32_t inWidth, uint32_t inHeight)
+{
+	FramebufferCreateInfo framebufferInfo;
+	framebufferInfo.setRenderPass(inRenderPass);
+	framebufferInfo.setAttachmentCount(static_cast<uint32_t>( inAttachmentViews.size() ));
+	framebufferInfo.setPAttachments(inAttachmentViews.data());
+	framebufferInfo.setWidth(inWidth);
+	framebufferInfo.setHeight(inHeight);
+	framebufferInfo.setLayers(1);
+
+	return vulkanDevice->GetDevice().createFramebuffer(framebufferInfo);
+}
+
+void VulkanPassBase::CreateFramebufferResources(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
 {
 	Device& device = vulkanDevice->GetDevice();
 
-	uint32_t queueFailyIndices[] = { vulkanDevice->GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
+	uint32_t queueFailyIndices[] = { vulkanDevice->GetGraphicsQueueIndex() };
 
+	VulkanImage colorAttachmentImage;
 	colorAttachmentImage.createInfo.setArrayLayers(1);
 	colorAttachmentImage.createInfo.setFormat(Format::eR16G16B16A16Sfloat);
 	colorAttachmentImage.createInfo.setImageType(ImageType::e2D);
@@ -159,41 +177,16 @@ void VulkanPassBase::CreateFramebufferResources()
 	colorAttachmentImage.createInfo.setPQueueFamilyIndices(queueFailyIndices);
 	colorAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
 	colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
-	colorAttachmentImage.createInfo.setExtent(Extent3D(renderer->GetWidth(), renderer->GetHeight(), 1));
+	colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
 	colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eInputAttachment);
 	colorAttachmentImage.Create(vulkanDevice);
 	colorAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+	// push to list
+	outAttachments.push_back(colorAttachmentImage);
 
-	ComponentMapping compMapping;
-	compMapping.setR(ComponentSwizzle::eIdentity);
-	compMapping.setG(ComponentSwizzle::eIdentity);
-	compMapping.setB(ComponentSwizzle::eIdentity);
-	compMapping.setA(ComponentSwizzle::eIdentity);
-
-	ImageSubresourceRange imageSubresRange;
-	imageSubresRange.setBaseArrayLayer(0);
-	imageSubresRange.setAspectMask(ImageAspectFlagBits::eColor);
-	imageSubresRange.setBaseMipLevel(0);
-	imageSubresRange.setLayerCount(1);
-	imageSubresRange.setLevelCount(1);
-
-	ImageViewCreateInfo imageViewInfo;
-	imageViewInfo.setComponents(compMapping);
-	imageViewInfo.setFormat(Format::eR16G16B16A16Sfloat);
-	imageViewInfo.setImage(colorAttachmentImage);
-	imageViewInfo.setSubresourceRange(imageSubresRange);
-	imageViewInfo.setViewType(ImageViewType::e2D);
-	colorAttachmentImageView = device.createImageView(imageViewInfo);
-
-	FramebufferCreateInfo framebufferInfo;
-	framebufferInfo.setRenderPass(renderPass);
-	framebufferInfo.setAttachmentCount(1);
-	framebufferInfo.setPAttachments(&colorAttachmentImageView);
-	framebufferInfo.setWidth(renderer->GetWidth());
-	framebufferInfo.setHeight(renderer->GetHeight());
-	framebufferInfo.setLayers(1);
-
-	framebuffer = device.createFramebuffer(framebufferInfo);
+	ImageView view = colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D);
+	// push to list
+	outAttachmentViews.push_back( view );
 }
 
 PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts)

@@ -4,6 +4,7 @@
 
 VulkanImage::VulkanImage(bool inScoped)
 	: scoped(inScoped)
+	, image(nullptr)
 {
 
 }
@@ -32,16 +33,27 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 	memoryRequirements = vulkanDevice->GetDevice().getImageMemoryRequirements(image);
 }
 
+ImageView VulkanImage::CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType)
+{
+	ImageViewCreateInfo imageViewInfo;
+	imageViewInfo.setComponents(ComponentMapping());
+	imageViewInfo.setFormat(createInfo.format);
+	imageViewInfo.setImage(image);
+	imageViewInfo.setSubresourceRange(inSubRange);
+	imageViewInfo.setViewType(inViewType);
+
+	return vulkanDevice->GetDevice().createImageView(imageViewInfo);
+}
+
 void VulkanImage::Destroy()
 {
 	DestroyStagingBuffer();
-	if (image && vulkanDevice)
+	if (image)
 	{
 		vulkanDevice->GetDevice().destroyImage(image);
 		image = nullptr;
 		DeviceMemoryManager::GetInstance()->ReturnMemory(memoryRecord);
 	}
-
 }
 
 void VulkanImage::SetData(const std::vector<char>& inData)

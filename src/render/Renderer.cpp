@@ -379,7 +379,7 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	ImageMemoryBarrier barrier;
 	barrier.setOldLayout(ImageLayout::eUndefined);
 	barrier.setNewLayout(ImageLayout::eShaderReadOnlyOptimal);
-	barrier.setImage(basePass->GetImage());
+	barrier.setImage(basePass->GetAttachments()[0]);
 	barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 	barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 	barrier.subresourceRange.setAspectMask(ImageAspectFlagBits::eColor);
@@ -470,7 +470,7 @@ void Renderer::CreateDescriptorSets()
 
 		DescriptorImageInfo samplerInfo;
 		samplerInfo.setSampler(sampler);
-		samplerInfo.setImageView(basePass->GetImageView());
+		samplerInfo.setImageView(basePass->GetAttachmentViews()[0]);
 		samplerInfo.setImageLayout(ImageLayout::eShaderReadOnlyOptimal);//eShaderReadOnlyOptimal);
 
 		WriteDescriptorSet samplerWrite;
