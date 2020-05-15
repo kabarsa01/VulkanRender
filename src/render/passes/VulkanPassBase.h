@@ -21,6 +21,8 @@ public:
 
 	std::vector<VulkanImage> GetAttachments() { return attachments; }
 	std::vector<ImageView> GetAttachmentViews() { return attachmentViews; }
+	VulkanImage& GetDepthAttachment() { return depthAttachment; }
+	ImageView& GetDepthAttachmentView() { return depthAttachmentView; }
 
 	void Draw(CommandBuffer* inCmdBuffer);
 protected:
@@ -32,6 +34,8 @@ protected:
 	Framebuffer framebuffer;
 	std::vector<VulkanImage> attachments;
 	std::vector<ImageView> attachmentViews;
+	VulkanImage depthAttachment;
+	ImageView depthAttachmentView;
 
 	uint32_t width;
 	uint32_t height;
@@ -40,6 +44,8 @@ protected:
 	virtual void CreateFramebufferResources(
 		std::vector<VulkanImage>& outAttachments, 
 		std::vector<ImageView>& outAttachmentViews,
+		VulkanImage& outDepthAttachment,
+		ImageView& outDepthAttachmentView,
 		uint32_t inWidth,
 		uint32_t inHeight);
 

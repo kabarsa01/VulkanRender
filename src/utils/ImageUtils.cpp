@@ -1,0 +1,46 @@
+#include "ImageUtils.h"
+
+VulkanImage ImageUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+{
+	VulkanImage colorAttachmentImage;
+	colorAttachmentImage.createInfo.setArrayLayers(1);
+	colorAttachmentImage.createInfo.setFormat(Format::eR16G16B16A16Sfloat);
+	colorAttachmentImage.createInfo.setImageType(ImageType::e2D);
+	colorAttachmentImage.createInfo.setInitialLayout(ImageLayout::eUndefined);
+	colorAttachmentImage.createInfo.setSamples(SampleCountFlagBits::e1);
+	colorAttachmentImage.createInfo.setMipLevels(1);
+	colorAttachmentImage.createInfo.setSharingMode(SharingMode::eExclusive);
+	//colorAttachmentImage.createInfo.setQueueFamilyIndexCount(1);
+	//colorAttachmentImage.createInfo.setPQueueFamilyIndices(queueFailyIndices);
+	colorAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
+	colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
+	colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
+	colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled);
+	colorAttachmentImage.Create(inDevice);
+	colorAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+
+	return colorAttachmentImage;
+}
+
+VulkanImage ImageUtils::CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+{
+	VulkanImage depthAttachmentImage;
+	depthAttachmentImage.createInfo.setArrayLayers(1);
+	depthAttachmentImage.createInfo.setFormat(Format::eD24UnormS8Uint);
+	depthAttachmentImage.createInfo.setImageType(ImageType::e2D);
+	depthAttachmentImage.createInfo.setInitialLayout(ImageLayout::eUndefined);
+	depthAttachmentImage.createInfo.setSamples(SampleCountFlagBits::e1);
+	depthAttachmentImage.createInfo.setMipLevels(1);
+	depthAttachmentImage.createInfo.setSharingMode(SharingMode::eExclusive);
+	//colorAttachmentImage.createInfo.setQueueFamilyIndexCount(1);
+	//colorAttachmentImage.createInfo.setPQueueFamilyIndices(queueFailyIndices);
+	depthAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
+	depthAttachmentImage.createInfo.setFlags(ImageCreateFlags());
+	depthAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
+	depthAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled);
+	depthAttachmentImage.Create(inDevice);
+	depthAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+
+	return depthAttachmentImage;
+}
+

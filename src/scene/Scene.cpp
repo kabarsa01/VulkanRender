@@ -68,7 +68,7 @@ void Scene::Init()
 		{
 			MeshObjectPtr mo = ObjectBase::NewObject<MeshObject>();
 			mo->GetMeshComponent()->meshData = importer.GetMeshes()[MeshIndex];
-			mo->transform.SetLocation({ 25.0f, 0.0f, 0.0f });
+			mo->transform.SetLocation({ 15.0f, 0.0f, 0.0f });
 			mo->transform.SetScale({ 0.3f, 0.3f, 0.3f });
 			mo->GetMeshComponent()->meshData->CreateBuffer();
 			mo->GetMeshComponent()->SetMaterial(mat);
@@ -77,7 +77,7 @@ void Scene::Init()
 
 			MeshObjectPtr mo2 = ObjectBase::NewObject<MeshObject>();
 			mo2->GetMeshComponent()->meshData = importer.GetMeshes()[MeshIndex];
-			mo2->transform.SetLocation({ -25.0f, -5.0f, 0.0f });
+			mo2->transform.SetLocation({ -15.0f, -5.0f, 0.0f });
 			mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
 //			mo2->GetMeshComponent()->meshData->CreateBuffer();
 			mo2->GetMeshComponent()->SetMaterial(mat2);

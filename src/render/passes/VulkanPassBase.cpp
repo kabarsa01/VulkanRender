@@ -11,6 +11,7 @@
 #include "scene/Transform.h"
 #include "data/DataManager.h"
 #include "../PerFrameData.h"
+#include "utils/ImageUtils.h"
 
 VulkanPassBase::VulkanPassBase(HashString inName)
 	: name(inName)
@@ -31,8 +32,10 @@ void VulkanPassBase::Create()
 	height = renderer->GetHeight();
 
 	renderPass = CreateRenderPass();
-	CreateFramebufferResources(attachments, attachmentViews, width, height);
-	framebuffer = CreateFramebuffer(renderPass, attachmentViews, width, height);
+	CreateFramebufferResources(attachments, attachmentViews, depthAttachment, depthAttachmentView, width, height);
+	std::vector<ImageView> views = attachmentViews;
+	views.push_back(depthAttachmentView);
+	framebuffer = CreateFramebuffer(renderPass, views, width, height);
 }
 
 void VulkanPassBase::Destroy()
@@ -43,9 +46,11 @@ void VulkanPassBase::Destroy()
 	device.destroyFramebuffer(framebuffer);
 	for (uint32_t index = 0; index < attachments.size(); index++)
 	{
+		device.destroyImageView(attachmentViews[index]);
 		attachments[index].Destroy();
-		device.destroyImageView( attachmentViews[index] );
 	}
+	device.destroyImageView(depthAttachmentView);
+	depthAttachment.Destroy();
 }
 
 void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
@@ -64,15 +69,16 @@ void VulkanPassBase::Draw(CommandBuffer* inCommandBuffer)
 	}
 	//---------------------------------------------------------------------------------
 
-	ClearValue clearValue;
-	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+	std::array<ClearValue, 2> clearValues;
+	clearValues[0].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+	clearValues[1].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
 
 	RenderPassBeginInfo passBeginInfo;
 	passBeginInfo.setRenderPass(renderPass);
 	passBeginInfo.setFramebuffer(framebuffer);
 	passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), Extent2D(width, height)));
-	passBeginInfo.setClearValueCount(1);
-	passBeginInfo.setPClearValues(&clearValue);
+	passBeginInfo.setClearValueCount(clearValues.size());
+	passBeginInfo.setPClearValues(clearValues.data());
 
 	DeviceSize offset = 0;
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
@@ -117,14 +123,26 @@ RenderPass VulkanPassBase::CreateRenderPass()
 	colorAttachDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
 	colorAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 	colorAttachDesc.setFinalLayout(ImageLayout::eColorAttachmentOptimal);
-
 	AttachmentReference colorAttachRef;
 	colorAttachRef.setAttachment(0);
 	colorAttachRef.setLayout(ImageLayout::eColorAttachmentOptimal);
+	AttachmentDescription depthAttachDesc;
+	depthAttachDesc.setFormat(Format::eD24UnormS8Uint);
+	depthAttachDesc.setSamples(SampleCountFlagBits::e1);
+	depthAttachDesc.setLoadOp(AttachmentLoadOp::eClear);
+	depthAttachDesc.setStoreOp(AttachmentStoreOp::eStore);
+	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eDontCare);
+	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
+	depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
+	depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
+	AttachmentReference depthAttachRef;
+	depthAttachRef.setAttachment(1);
+	depthAttachRef.setLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 
 	SubpassDescription subpassDesc;
 	subpassDesc.setColorAttachmentCount(1);
 	subpassDesc.setPColorAttachments(&colorAttachRef);
+	subpassDesc.setPDepthStencilAttachment(&depthAttachRef);
 	subpassDesc.setPipelineBindPoint(PipelineBindPoint::eGraphics);
 
 	SubpassDependency subpassDependency;
@@ -135,9 +153,10 @@ RenderPass VulkanPassBase::CreateRenderPass()
 	subpassDependency.setDstStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
 	subpassDependency.setDstAccessMask(AccessFlagBits::eColorAttachmentRead | AccessFlagBits::eColorAttachmentWrite);
 
+	std::array<AttachmentDescription, 2> attachDescriptions = { colorAttachDesc, depthAttachDesc };
 	RenderPassCreateInfo renderPassInfo;
-	renderPassInfo.setAttachmentCount(1);
-	renderPassInfo.setPAttachments(&colorAttachDesc);
+	renderPassInfo.setAttachmentCount(static_cast<uint32_t>( attachDescriptions.size() ));
+	renderPassInfo.setPAttachments(attachDescriptions.data());
 	renderPassInfo.setSubpassCount(1);
 	renderPassInfo.setPSubpasses(&subpassDesc);
 	renderPassInfo.setDependencyCount(1);
@@ -159,34 +178,28 @@ Framebuffer VulkanPassBase::CreateFramebuffer(RenderPass inRenderPass, std::vect
 	return vulkanDevice->GetDevice().createFramebuffer(framebufferInfo);
 }
 
-void VulkanPassBase::CreateFramebufferResources(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
+void VulkanPassBase::CreateFramebufferResources(
+	std::vector<VulkanImage>& outAttachments, 
+	std::vector<ImageView>& outAttachmentViews, 
+	VulkanImage& outDepthAttachment, 
+	ImageView& outDepthAttachmentView, 
+	uint32_t inWidth, 
+	uint32_t inHeight)
 {
 	Device& device = vulkanDevice->GetDevice();
 
 	uint32_t queueFailyIndices[] = { vulkanDevice->GetGraphicsQueueIndex() };
 
-	VulkanImage colorAttachmentImage;
-	colorAttachmentImage.createInfo.setArrayLayers(1);
-	colorAttachmentImage.createInfo.setFormat(Format::eR16G16B16A16Sfloat);
-	colorAttachmentImage.createInfo.setImageType(ImageType::e2D);
-	colorAttachmentImage.createInfo.setInitialLayout(ImageLayout::eUndefined);
-	colorAttachmentImage.createInfo.setSamples(SampleCountFlagBits::e1);
-	colorAttachmentImage.createInfo.setMipLevels(1);
-	colorAttachmentImage.createInfo.setSharingMode(SharingMode::eExclusive);
-	colorAttachmentImage.createInfo.setQueueFamilyIndexCount(1);
-	colorAttachmentImage.createInfo.setPQueueFamilyIndices(queueFailyIndices);
-	colorAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
-	colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
-	colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
-	colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eInputAttachment);
-	colorAttachmentImage.Create(vulkanDevice);
-	colorAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+	VulkanImage colorAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
 	// push to list
 	outAttachments.push_back(colorAttachmentImage);
 
 	ImageView view = colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D);
 	// push to list
 	outAttachmentViews.push_back( view );
+
+	outDepthAttachment = ImageUtils::CreateDepthAttachment(vulkanDevice, inWidth, inHeight);
+	outDepthAttachmentView = depthAttachment.CreateView({ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 }, ImageViewType::e2D);
 }
 
 PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts)
@@ -280,7 +293,14 @@ Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipeline
 
 	PipelineMultisampleStateCreateInfo multisampleInfo;
 
-	//	PipelineDepthStencilStateCreateInfo depthStencilInfo;
+	PipelineDepthStencilStateCreateInfo depthStencilInfo;
+	depthStencilInfo.setDepthBoundsTestEnable(VK_FALSE);
+	depthStencilInfo.setDepthCompareOp(CompareOp::eLessOrEqual);
+	depthStencilInfo.setDepthTestEnable(VK_TRUE);
+	depthStencilInfo.setDepthWriteEnable(VK_TRUE);
+	//depthStencilInfo.setMaxDepthBounds(1.0f);
+	//depthStencilInfo.setMinDepthBounds(0.0f);
+	depthStencilInfo.setStencilTestEnable(VK_FALSE);
 
 	PipelineColorBlendAttachmentState colorBlendAttachment;
 	colorBlendAttachment.setColorWriteMask(ColorComponentFlagBits::eR | ColorComponentFlagBits::eG | ColorComponentFlagBits::eB | ColorComponentFlagBits::eA);
@@ -312,7 +332,7 @@ Pipeline VulkanPassBase::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipeline
 	pipelineInfo.setPViewportState(&viewportInfo);
 	pipelineInfo.setPRasterizationState(&rasterizationInfo);
 	pipelineInfo.setPMultisampleState(&multisampleInfo);
-	pipelineInfo.setPDepthStencilState(nullptr);
+	pipelineInfo.setPDepthStencilState(&depthStencilInfo);
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
 	pipelineInfo.setPDynamicState(&dynamicStateInfo);
 	pipelineInfo.setLayout(inLayout);
