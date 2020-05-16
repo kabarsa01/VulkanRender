@@ -19,10 +19,12 @@ layout(set = 1, binding = 2) uniform texture2D normal;
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 uv;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outAlbedo;
+layout(location = 1) out vec4 outNormal;
 
 void main() {
 	vec4 rgba = texture( sampler2D( albedo, repeatLinearSampler ), uv );
 	//rgba *= cos(fract(globalData.time) * 3.14 * 2.0) * 0.5 + 1.0;
-    outColor = rgba; //vec4(fragColor, 1.0);
+    outAlbedo = rgba; //vec4(fragColor, 1.0);
+	outNormal = texture( sampler2D( normal, repeatLinearSampler ), uv );
 }

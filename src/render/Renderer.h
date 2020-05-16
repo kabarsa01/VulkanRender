@@ -100,7 +100,7 @@ private:
 	DescriptorPool descriptorPool;
 	std::vector<DescriptorSet> descriptorSets;
 
-	class VulkanPassBase* basePass;
+	class GBufferPass* gBufferPass;
 	Sampler sampler;
 
 	//==================== METHODS ===============================

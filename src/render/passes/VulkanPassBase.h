@@ -10,44 +10,44 @@
 
 using namespace VULKAN_HPP_NAMESPACE;
 
+class VulkanDevice;
+class Renderer;
+
 class VulkanPassBase
 {
 public:
-	VulkanPassBase(HashString inName = HashString::NONE);
+	VulkanPassBase(HashString inName);
 	virtual ~VulkanPassBase();
 
 	void Create();
 	void Destroy();
 
-	std::vector<VulkanImage> GetAttachments() { return attachments; }
-	std::vector<ImageView> GetAttachmentViews() { return attachmentViews; }
-	VulkanImage& GetDepthAttachment() { return depthAttachment; }
-	ImageView& GetDepthAttachmentView() { return depthAttachmentView; }
+	void SetResolution(uint32_t inWidth, uint32_t inHeight);
 
-	void Draw(CommandBuffer* inCmdBuffer);
+	inline HashString& GetName() { return name; }
+	inline RenderPass& GetRenderPass() { return renderPass; }
+	inline Framebuffer& GetFramebuffer() { return framebuffer; }
+	inline std::vector<VulkanImage> GetAttachments() { return attachments; }
+	inline std::vector<ImageView> GetAttachmentViews() { return attachmentViews; }
+	inline VulkanImage& GetDepthAttachment() { return depthAttachment; }
+	inline ImageView& GetDepthAttachmentView() { return depthAttachmentView; }
+	inline uint32_t GetWidth() { return width; }
+	inline uint32_t GetHeight() { return height; }
+
+	virtual void Draw(CommandBuffer* inCommandBuffer) = 0;
 protected:
-	HashString name;
-	class VulkanDevice* vulkanDevice;
-	class Renderer* renderer;
+	inline VulkanDevice* GetVulkanDevice() { return vulkanDevice; }
+	inline Renderer* GetRenderer() { return renderer; }
 
-	RenderPass renderPass;
-	Framebuffer framebuffer;
-	std::vector<VulkanImage> attachments;
-	std::vector<ImageView> attachmentViews;
-	VulkanImage depthAttachment;
-	ImageView depthAttachmentView;
-
-	uint32_t width;
-	uint32_t height;
-
-	virtual RenderPass CreateRenderPass();
+	virtual RenderPass CreateRenderPass() = 0;
 	virtual void CreateFramebufferResources(
 		std::vector<VulkanImage>& outAttachments, 
 		std::vector<ImageView>& outAttachmentViews,
 		VulkanImage& outDepthAttachment,
 		ImageView& outDepthAttachmentView,
 		uint32_t inWidth,
-		uint32_t inHeight);
+		uint32_t inHeight) = 0;
+	virtual Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) = 0;
 
 
 	Framebuffer CreateFramebuffer(
@@ -56,7 +56,22 @@ protected:
 		uint32_t inWidth,
 		uint32_t inHeight);
 	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
-	Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
 	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
+private:
+	HashString name;
+	VulkanDevice* vulkanDevice;
+	Renderer* renderer;
+
+	RenderPass renderPass;
+	Framebuffer framebuffer;
+	std::vector<VulkanImage> attachments;
+	std::vector<ImageView> attachmentViews;
+	VulkanImage depthAttachment;
+	ImageView depthAttachmentView;
+
+	uint32_t width = 1280;
+	uint32_t height = 720;
+
+	VulkanPassBase() {}
 };

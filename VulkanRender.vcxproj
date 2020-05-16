@@ -259,7 +259,9 @@ exit /b</Command>
     <ClCompile Include="src\render\objects\VulkanDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanSwapChain.cpp" />
+    <ClCompile Include="src\render\passes\GBufferPass.cpp" />
     <ClCompile Include="src\render\passes\VulkanPassBase.cpp" />
+    <ClCompile Include="src\render\passes\ZPrepass.cpp" />
     <ClCompile Include="src\render\PerFrameData.cpp" />
     <ClCompile Include="src\render\PipelineRegistry.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
@@ -304,7 +306,9 @@ exit /b</Command>
     <ClInclude Include="src\render\objects\VulkanDevice.h" />
     <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\render\objects\VulkanSwapChain.h" />
+    <ClInclude Include="src\render\passes\GBufferPass.h" />
     <ClInclude Include="src\render\passes\VulkanPassBase.h" />
+    <ClInclude Include="src\render\passes\ZPrepass.h" />
     <ClInclude Include="src\render\PerFrameData.h" />
     <ClInclude Include="src\render\PipelineRegistry.h" />
     <ClInclude Include="src\render\Renderer.h" />
