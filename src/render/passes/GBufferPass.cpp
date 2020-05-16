@@ -6,10 +6,6 @@
 GBufferPass::GBufferPass(HashString inName)
 	:VulkanPassBase(inName)
 {
-	// just init clear values
-	clearValues[0].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
-	clearValues[1].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
-	clearValues[2].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
 }
 
 void GBufferPass::Draw(CommandBuffer* inCommandBuffer)
@@ -65,6 +61,14 @@ void GBufferPass::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->endRenderPass();
 }
 
+void GBufferPass::OnCreate()
+{
+	// just init clear values
+	clearValues[0].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+	clearValues[1].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+	clearValues[2].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
+}
+
 RenderPass GBufferPass::CreateRenderPass()
 {
 	// color : albedo, normal
@@ -97,9 +101,9 @@ RenderPass GBufferPass::CreateRenderPass()
 	AttachmentDescription depthAttachDesc;
 	depthAttachDesc.setFormat(Format::eD24UnormS8Uint);
 	depthAttachDesc.setSamples(SampleCountFlagBits::e1);
-	depthAttachDesc.setLoadOp(AttachmentLoadOp::eClear);
-	depthAttachDesc.setStoreOp(AttachmentStoreOp::eStore);
-	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eDontCare);
+	depthAttachDesc.setLoadOp(AttachmentLoadOp::eLoad);
+	depthAttachDesc.setStoreOp(AttachmentStoreOp::eDontCare);
+	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eLoad);
 	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
 	depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 	depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
@@ -134,12 +138,9 @@ RenderPass GBufferPass::CreateRenderPass()
 	return GetVulkanDevice()->GetDevice().createRenderPass(renderPassInfo);
 }
 
-void GBufferPass::CreateFramebufferResources(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
+void GBufferPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
 {
 	VulkanDevice* vulkanDevice = GetVulkanDevice();
-	Device& device = GetVulkanDevice()->GetDevice();
-
-	uint32_t queueFailyIndices[] = { vulkanDevice->GetGraphicsQueueIndex() };
 
 	// albedo
 	VulkanImage colorAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
@@ -149,8 +150,11 @@ void GBufferPass::CreateFramebufferResources(std::vector<VulkanImage>& outAttach
 	VulkanImage normalAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
 	outAttachments.push_back(normalAttachmentImage);
 	outAttachmentViews.push_back(normalAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
+}
 
-	outDepthAttachment = ImageUtils::CreateDepthAttachment(vulkanDevice, inWidth, inHeight);
+void GBufferPass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
+{
+	outDepthAttachment = ImageUtils::CreateDepthAttachment(GetVulkanDevice(), inWidth, inHeight);
 	outDepthAttachmentView = outDepthAttachment.CreateView({ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 }, ImageViewType::e2D);
 }
 
@@ -212,9 +216,9 @@ Pipeline GBufferPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLay
 
 	PipelineDepthStencilStateCreateInfo depthStencilInfo;
 	depthStencilInfo.setDepthBoundsTestEnable(VK_FALSE);
-	depthStencilInfo.setDepthCompareOp(CompareOp::eLessOrEqual);
+	depthStencilInfo.setDepthCompareOp(CompareOp::eEqual);
 	depthStencilInfo.setDepthTestEnable(VK_TRUE);
-	depthStencilInfo.setDepthWriteEnable(VK_TRUE);
+	depthStencilInfo.setDepthWriteEnable(VK_FALSE);
 	//depthStencilInfo.setMaxDepthBounds(1.0f);
 	//depthStencilInfo.setMinDepthBounds(0.0f);
 	depthStencilInfo.setStencilTestEnable(VK_FALSE);

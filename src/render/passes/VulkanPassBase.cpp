@@ -32,10 +32,16 @@ void VulkanPassBase::Create()
 	//height = renderer->GetHeight();
 
 	renderPass = CreateRenderPass();
-	CreateFramebufferResources(attachments, attachmentViews, depthAttachment, depthAttachmentView, width, height);
+	CreateColorAttachments(attachments, attachmentViews, width, height);
+	if (!isDepthExternal)
+	{
+		CreateDepthAttachment(depthAttachment, depthAttachmentView, width, height);
+	}
 	std::vector<ImageView> views = attachmentViews;
 	views.push_back(depthAttachmentView);
 	framebuffer = CreateFramebuffer(renderPass, views, width, height);
+
+	OnCreate();
 }
 
 void VulkanPassBase::Destroy()
@@ -49,14 +55,27 @@ void VulkanPassBase::Destroy()
 		device.destroyImageView(attachmentViews[index]);
 		attachments[index].Destroy();
 	}
-	device.destroyImageView(depthAttachmentView);
-	depthAttachment.Destroy();
+	if (!isDepthExternal)
+	{
+		device.destroyImageView(depthAttachmentView);
+		depthAttachment.Destroy();
+	}
 }
 
 void VulkanPassBase::SetResolution(uint32_t inWidth, uint32_t inHeight)
 {
 	width = inWidth;
 	height = inHeight;
+}
+
+void VulkanPassBase::SetExternalDepth(const VulkanImage& inDepthAttachment, const ImageView& inDepthAttachmentView)
+{
+	isDepthExternal = inDepthAttachment && inDepthAttachmentView;
+	if (isDepthExternal)
+	{
+		depthAttachment = inDepthAttachment;
+		depthAttachmentView = inDepthAttachmentView;
+	}
 }
 
 Framebuffer VulkanPassBase::CreateFramebuffer(RenderPass inRenderPass, std::vector<ImageView>& inAttachmentViews, uint32_t inWidth, uint32_t inHeight)

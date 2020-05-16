@@ -38,6 +38,8 @@ using namespace VULKAN_HPP_NAMESPACE;
 //-------------------------------------------------------------------------------------------------------
 
 class PerFrameData;
+class ZPrepass;
+class GBufferPass;
 
 //=======================================================================================================
 //=======================================================================================================
@@ -100,7 +102,8 @@ private:
 	DescriptorPool descriptorPool;
 	std::vector<DescriptorSet> descriptorSets;
 
-	class GBufferPass* gBufferPass;
+	ZPrepass* zPrepass;
+	GBufferPass* gBufferPass;
 	Sampler sampler;
 
 	//==================== METHODS ===============================

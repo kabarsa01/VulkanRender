@@ -24,6 +24,7 @@
 #include "data/DataManager.h"
 #include "PerFrameData.h"
 #include "passes/GBufferPass.h"
+#include "passes/ZPrepass.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -65,7 +66,11 @@ void Renderer::Init()
 
 	perFrameData = new PerFrameData();
 	perFrameData->Create(&device, descriptorPool);
+
+	zPrepass = new ZPrepass(HashString("ZPrepass"));
+	zPrepass->Create();
 	gBufferPass = new GBufferPass(HashString("GBufferPass"));
+	gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
 	gBufferPass->Create();
 
 	CreateDescriptorSetLayout();
@@ -107,7 +112,34 @@ void Renderer::RenderFrame()
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 	// render passes
+	// z prepass
+	zPrepass->Draw(&cmdBuffer);
+	// gbuffer pass
 	gBufferPass->Draw(&cmdBuffer);
+	// barriers ----------------------------------------------
+	ImageMemoryBarrier albedoBarrier = gBufferPass->GetAttachments()[0].CreateLayoutBarrier(
+		ImageLayout::eColorAttachmentOptimal,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eColorAttachmentWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eColor,
+		0, 1, 0, 1);
+	ImageMemoryBarrier normalBarrier = gBufferPass->GetAttachments()[1].CreateLayoutBarrier(
+		ImageLayout::eColorAttachmentOptimal,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eColorAttachmentWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eColor,
+		0, 1, 0, 1);
+	std::array<ImageMemoryBarrier, 2> imageBarriers{ albedoBarrier, normalBarrier };
+	cmdBuffer.pipelineBarrier(
+		PipelineStageFlagBits::eColorAttachmentOutput,
+		PipelineStageFlagBits::eFragmentShader,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		static_cast<uint32_t>(imageBarriers.size()),
+		imageBarriers.data());
+	//--------------------------------------------------------
 	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
 	// end commands recording
 	cmdBuffer.end();
@@ -147,6 +179,8 @@ void Renderer::Cleanup()
 
 	gBufferPass->Destroy();
 	delete gBufferPass;
+	zPrepass->Destroy();
+	delete zPrepass;
 
 	ScenePtr scene = Engine::GetSceneInstance();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
@@ -375,32 +409,6 @@ void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& i
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
-
-	ImageMemoryBarrier albedoBarrier = gBufferPass->GetAttachments()[0].CreateLayoutBarrier(
-		ImageLayout::eColorAttachmentOptimal,
-		ImageLayout::eShaderReadOnlyOptimal,
-		AccessFlagBits::eColorAttachmentWrite, 
-		AccessFlagBits::eShaderRead,
-		ImageAspectFlagBits::eColor,
-		0, 1, 0, 1);
-	;
-	ImageMemoryBarrier normalBarrier = gBufferPass->GetAttachments()[1].CreateLayoutBarrier(
-		ImageLayout::eColorAttachmentOptimal,
-		ImageLayout::eShaderReadOnlyOptimal,
-		AccessFlagBits::eColorAttachmentWrite,
-		AccessFlagBits::eShaderRead,
-		ImageAspectFlagBits::eColor,
-		0, 1, 0, 1);
-	;
-
-	std::array<ImageMemoryBarrier, 2> imageBarriers { albedoBarrier, normalBarrier };
-	inCommandBuffer.pipelineBarrier(
-		PipelineStageFlagBits::eColorAttachmentOutput, 
-		PipelineStageFlagBits::eFragmentShader, 
-		DependencyFlags(), 
-		0, nullptr, 0, nullptr, 
-		static_cast<uint32_t>( imageBarriers.size() ), 
-		imageBarriers.data());
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));

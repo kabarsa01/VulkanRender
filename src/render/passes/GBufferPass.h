@@ -10,17 +10,21 @@ class GBufferPass : public VulkanPassBase
 {
 public:
 	GBufferPass(HashString inName);
-	void Draw(CommandBuffer* inCmdBuffer) override;
+	void Draw(CommandBuffer* inCommandBuffer) override;
 protected:
 	std::array<ClearValue, 3> clearValues;
 
+	virtual void OnCreate() override;
 	virtual RenderPass CreateRenderPass() override;
-	virtual void CreateFramebufferResources(
+	virtual void CreateColorAttachments(
 		std::vector<VulkanImage>& outAttachments, 
 		std::vector<ImageView>& outAttachmentViews, 
-		VulkanImage& outDepthAttachment, 
-		ImageView& outDepthAttachmentView, 
 		uint32_t inWidth, 
+		uint32_t inHeight) override;
+	virtual void CreateDepthAttachment(
+		VulkanImage& outDepthAttachment,
+		ImageView& outDepthAttachmentView,
+		uint32_t inWidth,
 		uint32_t inHeight) override;
 	virtual Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
 };
