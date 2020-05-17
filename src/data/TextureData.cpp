@@ -11,6 +11,7 @@ namespace
 TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
 	: Resource(inPath)
 	, imageView(nullptr)
+	, cleanup(true)
 {
 	path = inPath.GetString();
 	useAlpha = inUsesAlpha;
@@ -54,6 +55,11 @@ bool TextureData::Load()
 
 bool TextureData::Cleanup()
 {
+	if (!cleanup)
+	{
+		return false;
+	}
+
 	if (imageView)
 	{
 		Engine::GetRendererInstance()->GetDevice().destroyImageView(imageView);
@@ -65,6 +71,13 @@ bool TextureData::Cleanup()
 		return true;
 	}
 	return false;
+}
+
+void TextureData::CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup/* = false*/)
+{
+	image = inImage;
+	imageView = inImageView;
+	cleanup = inCleanup;
 }
 
 ImageView& TextureData::GetImageView()

@@ -15,7 +15,7 @@ public:
 	PerFrameData();
 	virtual ~PerFrameData();
 
-	void Create(VulkanDevice* inDevice, DescriptorPool& inDescriptorPool);
+	void Create(VulkanDevice* inDevice);
 	void Destroy();
 	void UpdateBufferData();
 	VulkanDescriptorSet& GetVulkanDescriptorSet() { return set; }

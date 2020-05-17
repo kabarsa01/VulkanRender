@@ -129,7 +129,7 @@ ImageMemoryBarrier VulkanImage::CreateBarrier(
 	uint32_t inBaseMipLevel,
 	uint32_t inMipLevelCount,
 	uint32_t inBaseArrayLayer,
-	uint32_t inArrayLayerCount)
+	uint32_t inArrayLayerCount) const
 {
 	ImageMemoryBarrier barrier;
 	barrier.setImage(image);
@@ -155,7 +155,7 @@ ImageMemoryBarrier VulkanImage::CreateBarrier(
 	uint32_t inDstQueue, 
 	AccessFlags inSrcAccessMask, 
 	AccessFlags inDstAccessMask, 
-	ImageSubresourceRange inSubresourceRange)
+	ImageSubresourceRange inSubresourceRange) const
 {
 	ImageMemoryBarrier barrier;
 	barrier.setImage(image);
@@ -170,7 +170,16 @@ ImageMemoryBarrier VulkanImage::CreateBarrier(
 	return barrier;
 }
 
-ImageMemoryBarrier VulkanImage::CreateLayoutBarrier(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask, ImageAspectFlags inAspectFlags, uint32_t inBaseMipLevel, uint32_t inMipLevelCount, uint32_t inBaseArrayLayer, uint32_t inArrayLayerCount)
+ImageMemoryBarrier VulkanImage::CreateLayoutBarrier(
+	ImageLayout inOldLayout, 
+	ImageLayout inNewLayout, 
+	AccessFlags inSrcAccessMask, 
+	AccessFlags inDstAccessMask, 
+	ImageAspectFlags inAspectFlags, 
+	uint32_t inBaseMipLevel, 
+	uint32_t inMipLevelCount, 
+	uint32_t inBaseArrayLayer, 
+	uint32_t inArrayLayerCount) const
 {
 	return CreateBarrier(
 		inOldLayout,

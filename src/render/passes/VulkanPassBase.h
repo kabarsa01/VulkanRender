@@ -27,8 +27,8 @@ public:
 	inline HashString& GetName() { return name; }
 	inline RenderPass& GetRenderPass() { return renderPass; }
 	inline Framebuffer& GetFramebuffer() { return framebuffer; }
-	inline std::vector<VulkanImage> GetAttachments() { return attachments; }
-	inline std::vector<ImageView> GetAttachmentViews() { return attachmentViews; }
+	inline const std::vector<VulkanImage>& GetAttachments() { return attachments; }
+	inline const std::vector<ImageView>& GetAttachmentViews() { return attachmentViews; }
 	inline VulkanImage& GetDepthAttachment() { return depthAttachment; }
 	inline ImageView& GetDepthAttachmentView() { return depthAttachmentView; }
 	inline uint32_t GetWidth() { return width; }

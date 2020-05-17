@@ -16,7 +16,7 @@ PerFrameData::~PerFrameData()
 
 }
 
-void PerFrameData::Create(VulkanDevice* inDevice, DescriptorPool& inDescriptorPool)
+void PerFrameData::Create(VulkanDevice* inDevice)
 {
 	device = inDevice;
 

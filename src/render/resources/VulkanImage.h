@@ -41,7 +41,7 @@ public:
 		uint32_t inMipLevelCount,
 		uint32_t inBaseArrayLayer,
 		uint32_t inArrayLayerCount
-	);
+	) const;
 	ImageMemoryBarrier CreateBarrier(
 		ImageLayout inOldLayout,
 		ImageLayout inNewLayout,
@@ -50,7 +50,7 @@ public:
 		AccessFlags inSrcAccessMask,
 		AccessFlags inDstAccessMask,
 		ImageSubresourceRange inSubresourceRange
-	);
+	) const;
 	ImageMemoryBarrier CreateLayoutBarrier(
 		ImageLayout inOldLayout,
 		ImageLayout inNewLayout,
@@ -61,7 +61,7 @@ public:
 		uint32_t inMipLevelCount,
 		uint32_t inBaseArrayLayer,
 		uint32_t inArrayLayerCount
-	);
+	) const;
 
 	Image& GetImage();
 	const Image& GetImage() const;

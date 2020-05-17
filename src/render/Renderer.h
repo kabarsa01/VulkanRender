@@ -40,6 +40,7 @@ using namespace VULKAN_HPP_NAMESPACE;
 class PerFrameData;
 class ZPrepass;
 class GBufferPass;
+class PostProcessPass;
 
 //=======================================================================================================
 //=======================================================================================================
@@ -67,6 +68,7 @@ public:
 	Queue GetGraphicsQueue();
 
 	PerFrameData* GetPerFrameData() { return perFrameData; }
+	GBufferPass* GetGBufferPass() { return gBufferPass; }
 protected:
 private:
 	// TEMP
@@ -91,43 +93,19 @@ private:
 	VulkanSwapChain swapChain;
 	VulkanCommandBuffers commandBuffers;
 	VulkanDescriptorPools descriptorPools;
-
 	Viewport viewport;
 
 	PerFrameData* perFrameData;
-	DescriptorSetLayout descriptorSetLayout;
-	PipelineLayout pipelineLayout;
-	Pipeline pipeline;
-
-	DescriptorPool descriptorPool;
-	std::vector<DescriptorSet> descriptorSets;
 
 	ZPrepass* zPrepass;
 	GBufferPass* gBufferPass;
+	PostProcessPass* postProcessPass;
 	Sampler sampler;
 
 	//==================== METHODS ===============================
 
-	void UpdateCommandBuffer(
-		CommandBuffer& inCommandBuffer, 
-		RenderPass& inRenderPass, 
-		Framebuffer& inFrameBuffer, 
-		Pipeline& inPipeline, 
-		PipelineLayout& inPipelineLayout);
-	void UpdateUniformBuffer();
 	void TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex);
-
-	void CreateDescriptorSetLayout();
-
-	void CreateGraphicsPipeline(RenderPass& inRenderPass, Extent2D inExtent);
-	void DestroyGraphicsPipeline();
-
-	void CreateUniformBuffers();
-	void CreateDescriptorPool();
-	void CreateDescriptorSets();
-
 	void OnResolutionChange();
-	void CreateImageAndSampler();
 };
 
 

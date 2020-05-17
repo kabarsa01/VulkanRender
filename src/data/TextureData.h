@@ -13,6 +13,8 @@ public:
 	virtual bool Load() override;
 	virtual bool Cleanup() override;
 
+	void CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup = false);
+
 	inline VulkanImage& GetImage() { return image; }
 	ImageView& GetImageView();
 protected:
@@ -23,6 +25,7 @@ protected:
 	bool useAlpha;
 	bool flipVertical;
 	bool linear;
+	bool cleanup;
 
 	int width;
 	int height;

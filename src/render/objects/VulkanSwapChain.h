@@ -28,6 +28,7 @@ public:
 	Semaphore& GetRenderingFinishedSemaphore() { return renderingFinishedSemaphores[imageIndex]; }
 	Fence& GetGraphicsQueueFence();
 	Fence& GetGraphicsQueuePrevFence();
+	Framebuffer& GetFramebuffer() { return framebuffers[imageIndex]; }
 	Framebuffer& GetFramebuffer(uint32_t inIndex) { return framebuffers[inIndex]; }
 	uint32_t GetFramebuffersCount() { return static_cast<uint32_t>(framebuffers.size()); }
 

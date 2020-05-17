@@ -35,8 +35,8 @@ void Scene::Init()
 
 	MaterialPtr mat = DataManager::RequestResourceType<Material>(
 		"default",
-		"content/shaders/BasePassVert.spv",
-		"content/shaders/BasePassFrag.spv"
+		"content/shaders/GBufferVert.spv",
+		"content/shaders/GBufferFrag.spv"
 	);
 	mat->SetTexture("albedo", albedo);
 	mat->SetTexture("normal", normal);
@@ -46,8 +46,8 @@ void Scene::Init()
 
 	MaterialPtr mat2 = DataManager::RequestResourceType<Material>(
 		"default2",
-		"content/shaders/BasePassVert.spv",
-		"content/shaders/BasePassFrag.spv"
+		"content/shaders/GBufferVert.spv",
+		"content/shaders/GBufferFrag.spv"
 		);
 	mat2->SetTexture("normal", albedo);
 	mat2->SetTexture("albedo", normal);
@@ -79,7 +79,8 @@ void Scene::Init()
 			mo2->GetMeshComponent()->meshData = importer.GetMeshes()[MeshIndex];
 			mo2->transform.SetLocation({ -15.0f, -5.0f, 0.0f });
 			mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-//			mo2->GetMeshComponent()->meshData->CreateBuffer();
+			// buffers were already created for this resource
+			//mo2->GetMeshComponent()->meshData->CreateBuffer();
 			mo2->GetMeshComponent()->SetMaterial(mat2);
 
 			tl->PushBuffers(mo2->GetMeshComponent()->meshData);

@@ -25,6 +25,7 @@
 #include "PerFrameData.h"
 #include "passes/GBufferPass.h"
 #include "passes/ZPrepass.h"
+#include "passes/PostProcessPass.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -62,23 +63,17 @@ void Renderer::Init()
 	swapChain.CreateForResolution(width, height);
 	commandBuffers.Create(&device, 2, 1);
 	descriptorPools.Create(&device);
-	CreateDescriptorPool();
 
 	perFrameData = new PerFrameData();
-	perFrameData->Create(&device, descriptorPool);
+	perFrameData->Create(&device);
 
 	zPrepass = new ZPrepass(HashString("ZPrepass"));
 	zPrepass->Create();
 	gBufferPass = new GBufferPass(HashString("GBufferPass"));
 	gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
 	gBufferPass->Create();
-
-	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
-
-	CreateUniformBuffers();
-	CreateImageAndSampler();
-	CreateDescriptorSets();
+	postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
+	postProcessPass->Create();
 }
 
 void Renderer::RenderFrame()
@@ -98,7 +93,6 @@ void Renderer::RenderFrame()
 		return;
 	}
 
-	UpdateUniformBuffer();
 	perFrameData->UpdateBufferData();
 
 	CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
@@ -117,30 +111,29 @@ void Renderer::RenderFrame()
 	// gbuffer pass
 	gBufferPass->Draw(&cmdBuffer);
 	// barriers ----------------------------------------------
-	ImageMemoryBarrier albedoBarrier = gBufferPass->GetAttachments()[0].CreateLayoutBarrier(
-		ImageLayout::eColorAttachmentOptimal,
-		ImageLayout::eShaderReadOnlyOptimal,
-		AccessFlagBits::eColorAttachmentWrite,
-		AccessFlagBits::eShaderRead,
-		ImageAspectFlagBits::eColor,
-		0, 1, 0, 1);
-	ImageMemoryBarrier normalBarrier = gBufferPass->GetAttachments()[1].CreateLayoutBarrier(
-		ImageLayout::eColorAttachmentOptimal,
-		ImageLayout::eShaderReadOnlyOptimal,
-		AccessFlagBits::eColorAttachmentWrite,
-		AccessFlagBits::eShaderRead,
-		ImageAspectFlagBits::eColor,
-		0, 1, 0, 1);
-	std::array<ImageMemoryBarrier, 2> imageBarriers{ albedoBarrier, normalBarrier };
+	const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
+	std::vector<ImageMemoryBarrier> gBufferBarriers;
+	for (uint32_t index = 0; index < gBufferAttachments.size(); index++)
+	{
+		ImageMemoryBarrier attachmentBarrier = gBufferAttachments[index].CreateLayoutBarrier(
+			ImageLayout::eColorAttachmentOptimal,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eColorAttachmentWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		gBufferBarriers.push_back(attachmentBarrier);
+	}
 	cmdBuffer.pipelineBarrier(
 		PipelineStageFlagBits::eColorAttachmentOutput,
 		PipelineStageFlagBits::eFragmentShader,
 		DependencyFlags(),
 		0, nullptr, 0, nullptr,
-		static_cast<uint32_t>(imageBarriers.size()),
-		imageBarriers.data());
+		static_cast<uint32_t>(gBufferBarriers.size()),
+		gBufferBarriers.data());
 	//--------------------------------------------------------
-	UpdateCommandBuffer(cmdBuffer, swapChain.GetRenderPass(), swapChain.GetFramebuffer(imageIndex), pipeline, pipelineLayout);
+	// post process pass
+	postProcessPass->Draw(&cmdBuffer);
 	// end commands recording
 	cmdBuffer.end();
 
@@ -177,6 +170,8 @@ void Renderer::Cleanup()
 {
 	WaitForDevice();
 
+	postProcessPass->Destroy();
+	delete postProcessPass;
 	gBufferPass->Destroy();
 	delete gBufferPass;
 	zPrepass->Destroy();
@@ -186,19 +181,13 @@ void Renderer::Cleanup()
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 	meshComp->meshData->DestroyBuffer();
 
-	uniformBuffer.Destroy();
+	//uniformBuffer.Destroy();
 
 	perFrameData->Destroy();
 	delete perFrameData;
-
-	device.GetDevice().destroyDescriptorSetLayout(descriptorSetLayout);
-	device.GetDevice().destroyDescriptorPool(descriptorPool);
-	// destroying pipelines
-	DestroyGraphicsPipeline();
 	PipelineRegistry::GetInstance()->DestroyPipelines(&device);
 
 	descriptorPools.Destroy();
-	device.GetDevice().destroySampler(sampler);
 
 	commandBuffers.Destroy();
 	swapChain.Destroy();
@@ -253,257 +242,6 @@ Queue Renderer::GetGraphicsQueue()
 	return device.GetGraphicsQueue();
 }
 
-void Renderer::CreateDescriptorSetLayout()
-{
-	DescriptorSetLayoutBinding uniforBufferBinding;
-	uniforBufferBinding.setBinding(0);
-	uniforBufferBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	uniforBufferBinding.setDescriptorCount(1);
-	uniforBufferBinding.setStageFlags(ShaderStageFlagBits::eVertex);
-	uniforBufferBinding.setPImmutableSamplers(nullptr);
-	DescriptorSetLayoutBinding samplerBinding;
-	samplerBinding.setBinding(1);
-	samplerBinding.setDescriptorType(DescriptorType::eCombinedImageSampler);
-	samplerBinding.setDescriptorCount(1);
-	samplerBinding.setStageFlags(ShaderStageFlagBits::eFragment);
-	samplerBinding.setPImmutableSamplers(nullptr);
-	DescriptorSetLayoutBinding inputAttachmentBinding;
-	inputAttachmentBinding.setBinding(2);
-	inputAttachmentBinding.setDescriptorType(DescriptorType::eInputAttachment);
-	inputAttachmentBinding.setDescriptorCount(1);
-	inputAttachmentBinding.setStageFlags(ShaderStageFlagBits::eFragment);
-	inputAttachmentBinding.setPImmutableSamplers(nullptr);
-
-	DescriptorSetLayoutBinding bindings[] = { uniforBufferBinding, samplerBinding, inputAttachmentBinding };
-	DescriptorSetLayoutCreateInfo descSetLayoutInfo;
-	descSetLayoutInfo.setBindingCount(3);
-	descSetLayoutInfo.setPBindings(bindings);
-
-	descriptorSetLayout = device.GetDevice().createDescriptorSetLayout(descSetLayoutInfo);
-}
-
-void Renderer::CreateGraphicsPipeline(RenderPass& inRenderPass, Extent2D inExtent)
-{
-	DataManager* DM = DataManager::GetInstance();
-	ShaderPtr vertShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasicVert.spv"));
-	vertShader->Load();
-	ShaderPtr fragShader = DM->RequestResourceByType<Shader>(std::string("content/shaders/BasicFrag.spv"));
-	fragShader->Load();
-
-	PipelineShaderStageCreateInfo vertStageInfo;
-	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(vertShader->GetShaderModule());
-	vertStageInfo.setPName("main");
-	//vertStageInfo.setPSpecializationInfo(); spec info to set some constants
-
-	PipelineShaderStageCreateInfo fragStageInfo;
-	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
-	fragStageInfo.setModule(fragShader->GetShaderModule());
-	fragStageInfo.setPName("main");
-
-	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
-
-	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
-	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);
-	PipelineVertexInputStateCreateInfo vertexInputInfo;
-	vertexInputInfo.setVertexBindingDescriptionCount(1);
-	vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);
-	vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>( attributeDesc.size() ));
-	vertexInputInfo.setPVertexAttributeDescriptions(attributeDesc.data());
-
-	PipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
-	inputAssemblyInfo.setTopology(PrimitiveTopology::eTriangleList);
-	inputAssemblyInfo.setPrimitiveRestartEnable(VK_FALSE);
-
-//	Viewport viewport;
-	viewport.setX(0.0f);
-	viewport.setY(0.0f);
-	viewport.setWidth((float)inExtent.width);
-	viewport.setHeight((float)inExtent.height);
-	viewport.setMinDepth(0.0f);
-	viewport.setMaxDepth(1.0f);
-
-	Rect2D scissor;
-	scissor.setOffset(Offset2D(0, 0));
-	scissor.setExtent(inExtent);
-
-	PipelineViewportStateCreateInfo viewportInfo;
-	viewportInfo.setViewportCount(1);
-	viewportInfo.setPViewports(&viewport);
-	viewportInfo.setScissorCount(1);
-	viewportInfo.setPScissors(&scissor);
-
-	PipelineRasterizationStateCreateInfo rasterizationInfo;
-	rasterizationInfo.setDepthClampEnable(VK_FALSE);
-	rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
-	rasterizationInfo.setPolygonMode(PolygonMode::eFill);
-	rasterizationInfo.setLineWidth(1.0f);
-	rasterizationInfo.setCullMode(CullModeFlagBits::eNone);
-	rasterizationInfo.setFrontFace(FrontFace::eClockwise);
-	rasterizationInfo.setDepthBiasEnable(VK_FALSE);
-
-	PipelineMultisampleStateCreateInfo multisampleInfo;
-
-//	PipelineDepthStencilStateCreateInfo depthStencilInfo;
-
-	PipelineColorBlendAttachmentState colorBlendAttachment;
-	colorBlendAttachment.setColorWriteMask(ColorComponentFlagBits::eR | ColorComponentFlagBits::eG | ColorComponentFlagBits::eB | ColorComponentFlagBits::eA);
-	colorBlendAttachment.setBlendEnable(VK_FALSE);
-	colorBlendAttachment.setSrcColorBlendFactor(BlendFactor::eOne);
-	colorBlendAttachment.setDstColorBlendFactor(BlendFactor::eZero);
-	colorBlendAttachment.setColorBlendOp(BlendOp::eAdd);
-	colorBlendAttachment.setSrcAlphaBlendFactor(BlendFactor::eOne);
-	colorBlendAttachment.setDstAlphaBlendFactor(BlendFactor::eZero);
-	colorBlendAttachment.setAlphaBlendOp(BlendOp::eAdd);
-
-	PipelineColorBlendStateCreateInfo colorBlendInfo;
-	colorBlendInfo.setLogicOpEnable(VK_FALSE);
-	colorBlendInfo.setLogicOp(LogicOp::eCopy);
-	colorBlendInfo.setAttachmentCount(1);
-	colorBlendInfo.setPAttachments(&colorBlendAttachment);
-	colorBlendInfo.setBlendConstants( { 0.0f, 0.0f, 0.0f, 0.0f } );
-
-	std::vector<DynamicState> dynamicStates = { DynamicState::eViewport, DynamicState::eLineWidth };
-	PipelineDynamicStateCreateInfo dynamicStateInfo;
-	dynamicStateInfo.setDynamicStateCount(2); // 2
-	dynamicStateInfo.setPDynamicStates(dynamicStates.data());
-
-	PipelineLayoutCreateInfo layoutInfo;
-	layoutInfo.setSetLayoutCount(1);
-	DescriptorSetLayout layoutBindings[] = { descriptorSetLayout };
-	layoutInfo.setPSetLayouts(layoutBindings);
-	layoutInfo.setPushConstantRangeCount(0);
-	layoutInfo.setPPushConstantRanges(nullptr);
-
-	pipelineLayout = device.GetDevice().createPipelineLayout(layoutInfo);
-
-	GraphicsPipelineCreateInfo pipelineInfo;
-	pipelineInfo.setStageCount(2);
-	pipelineInfo.setPStages(shaderStageInfoArray.data());
-	pipelineInfo.setPVertexInputState(&vertexInputInfo);
-	pipelineInfo.setPInputAssemblyState(&inputAssemblyInfo);
-	pipelineInfo.setPViewportState(&viewportInfo);
-	pipelineInfo.setPRasterizationState(&rasterizationInfo);
-	pipelineInfo.setPMultisampleState(&multisampleInfo);
-	pipelineInfo.setPDepthStencilState(nullptr);
-	pipelineInfo.setPColorBlendState(&colorBlendInfo);
-	pipelineInfo.setPDynamicState(&dynamicStateInfo);
-	pipelineInfo.setLayout(pipelineLayout);
-	pipelineInfo.setRenderPass(inRenderPass);
-	pipelineInfo.setSubpass(0);
-	pipelineInfo.setBasePipelineHandle(Pipeline());
-	pipelineInfo.setBasePipelineIndex(-1);
-
-	pipeline = device.GetDevice().createGraphicsPipeline(device.GetPipelineCache(), pipelineInfo);
-}
-
-void Renderer::DestroyGraphicsPipeline()
-{
-	device.GetDevice().destroyPipeline(pipeline);
-	device.GetDevice().destroyPipelineLayout(pipelineLayout);
-}
-
-void Renderer::UpdateCommandBuffer(CommandBuffer& inCommandBuffer, RenderPass& inRenderPass, Framebuffer& inFrameBuffer, Pipeline& inPipeline, PipelineLayout& inPipelineLayout)
-{
-	ScenePtr scene = Engine::GetSceneInstance();
-	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
-	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-	MeshDataPtr meshData = MeshData::FullscreenQuad();
-
-	ClearValue clearValue;
-	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
-
-	RenderPassBeginInfo passBeginInfo;
-	passBeginInfo.setRenderPass(inRenderPass);
-	passBeginInfo.setFramebuffer(inFrameBuffer);
-	passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), swapChain.GetExtent()));
-	passBeginInfo.setClearValueCount(1);
-	passBeginInfo.setPClearValues(&clearValue);
-
-	DeviceSize offset = 0;
-	inCommandBuffer.beginRenderPass(passBeginInfo, SubpassContents::eInline);
-	inCommandBuffer.bindPipeline(PipelineBindPoint::eGraphics, inPipeline);
-	inCommandBuffer.setViewport(0, 1, &viewport);
-	inCommandBuffer.bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
-	inCommandBuffer.bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
-	inCommandBuffer.bindDescriptorSets(PipelineBindPoint::eGraphics, inPipelineLayout, 0, descriptorSets, {});
-	inCommandBuffer.drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
-	inCommandBuffer.endRenderPass();
-}
-
-void Renderer::CreateUniformBuffers()
-{
-	uniformBuffer.createInfo.setSize(sizeof(ObjectMVPData));
-	uniformBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
-	uniformBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	uniformBuffer.Create(&device);
-	uniformBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-}
-
-void Renderer::CreateDescriptorPool()
-{
-	DescriptorPoolSize uniformSize;
-	uniformSize.setDescriptorCount(128);
-	uniformSize.setType(DescriptorType::eUniformBuffer);
-	DescriptorPoolSize samplerSize;
-	samplerSize.setDescriptorCount(16);
-	samplerSize.setType(DescriptorType::eSampler);
-	DescriptorPoolSize imageSize;
-	imageSize.setDescriptorCount(128);
-	imageSize.setType(DescriptorType::eSampledImage);
-
-	std::array<DescriptorPoolSize, 3> sizes = { uniformSize, samplerSize, imageSize };
-	DescriptorPoolCreateInfo descPoolInfo;
-	descPoolInfo.setPoolSizeCount(static_cast<uint32_t>( sizes.size() ));
-	descPoolInfo.setPPoolSizes(sizes.data());
-	descPoolInfo.setMaxSets(128);
-
-	descriptorPool = device.GetDevice().createDescriptorPool(descPoolInfo);
-}
-
-void Renderer::CreateDescriptorSets()
-{
-	std::vector<DescriptorSetLayout> layouts = {descriptorSetLayout};
-	DescriptorSetAllocateInfo descSetAllocInfo;
-	descSetAllocInfo.setDescriptorPool(descriptorPool);
-	descSetAllocInfo.setDescriptorSetCount(static_cast<uint32_t>(layouts.size()));
-	descSetAllocInfo.setPSetLayouts(layouts.data());
-
-	descriptorSets = device.GetDevice().allocateDescriptorSets(descSetAllocInfo);
-
-	for (uint32_t index = 0; index < descriptorSets.size(); index++)
-	{
-		DescriptorBufferInfo descBufferInfo;
-		descBufferInfo.setBuffer(uniformBuffer);
-		descBufferInfo.setOffset(0);
-		descBufferInfo.setRange(sizeof(ObjectMVPData));// VK_WHOLE_SIZE;
-
-		WriteDescriptorSet uniformBufferWrite;
-		uniformBufferWrite.setDstSet(descriptorSets[index]);
-		uniformBufferWrite.setDstBinding(0);
-		uniformBufferWrite.setDstArrayElement(0);
-		uniformBufferWrite.setDescriptorCount(1);
-		uniformBufferWrite.setDescriptorType(DescriptorType::eUniformBuffer);
-		uniformBufferWrite.setPBufferInfo(&descBufferInfo);
-
-		DescriptorImageInfo samplerInfo;
-		samplerInfo.setSampler(sampler);
-		samplerInfo.setImageView(gBufferPass->GetAttachmentViews()[0]);
-		samplerInfo.setImageLayout(ImageLayout::eShaderReadOnlyOptimal);
-
-		WriteDescriptorSet samplerWrite;
-		samplerWrite.setDstSet(descriptorSets[index]);
-		samplerWrite.setDstBinding(1);
-		samplerWrite.setDstArrayElement(0);
-		samplerWrite.setDescriptorCount(1);
-		samplerWrite.setDescriptorType(DescriptorType::eCombinedImageSampler);
-		samplerWrite.setPImageInfo(&samplerInfo);
-
-		WriteDescriptorSet writes[] = { uniformBufferWrite, samplerWrite };
-		device.GetDevice().updateDescriptorSets(2, writes, 0, nullptr);
-	}
-}
-
 void Renderer::OnResolutionChange()
 {
 	device.GetDevice().waitIdle();
@@ -511,91 +249,13 @@ void Renderer::OnResolutionChange()
 	GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
 	glfwGetFramebufferSize(window, &width, &height);
 
-	DestroyGraphicsPipeline();
+	postProcessPass->Destroy();
+	delete postProcessPass;
 	swapChain.DestroyForResolution();
 
 	swapChain.CreateForResolution(width, height);
-	CreateGraphicsPipeline(swapChain.GetRenderPass(), swapChain.GetExtent());
-}
-
-void Renderer::CreateImageAndSampler()
-{
-	uint32_t queueFamilyIndices[] = { device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value() };
-
-	//image.createInfo.setArrayLayers(1);
-	//image.createInfo.setFormat(Format::eR8G8B8A8Srgb);
-	//image.createInfo.setImageType(ImageType::e2D);
-	//image.createInfo.setInitialLayout(ImageLayout::eUndefined);
-	//image.createInfo.setSamples(SampleCountFlagBits::e1);
-	//image.createInfo.setMipLevels(1);
-	//image.createInfo.setSharingMode(SharingMode::eExclusive);
-	//image.createInfo.setQueueFamilyIndexCount(1);
-	//image.createInfo.setPQueueFamilyIndices(queueFailyIndices);
-	//image.createInfo.setTiling(ImageTiling::eOptimal);
-	//image.createInfo.setFlags(ImageCreateFlags());
-	//image.createInfo.setExtent(Extent3D(width, height, 1));
-	//image.createInfo.setUsage(ImageUsageFlagBits::eSampled);
-	//image.Create(&device);
-	//image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-
-	//ComponentMapping compMapping;
-	//compMapping.setR(ComponentSwizzle::eIdentity);
-	//compMapping.setG(ComponentSwizzle::eIdentity);
-	//compMapping.setB(ComponentSwizzle::eIdentity);
-	//compMapping.setA(ComponentSwizzle::eIdentity);
-
-	//ImageSubresourceRange imageSubresRange;
-	//imageSubresRange.setBaseArrayLayer(0);
-	//imageSubresRange.setAspectMask(ImageAspectFlagBits::eColor);
-	//imageSubresRange.setBaseMipLevel(0);
-	//imageSubresRange.setLayerCount(1);
-	//imageSubresRange.setLevelCount(1);
-
-	//ImageViewCreateInfo imageViewInfo;
-	//imageViewInfo.setComponents(compMapping);
-	//imageViewInfo.setFormat(Format::eR8G8B8A8Srgb);
-	//imageViewInfo.setImage(image);
-	//imageViewInfo.setSubresourceRange(imageSubresRange);
-	//imageViewInfo.setViewType(ImageViewType::e2D);
-	//imageView = device.GetDevice().createImageView(imageViewInfo);
-
-	SamplerCreateInfo samplerInfo;
-	samplerInfo.setAddressModeU(SamplerAddressMode::eRepeat);
-	samplerInfo.setAddressModeV(SamplerAddressMode::eRepeat);
-	samplerInfo.setAddressModeW(SamplerAddressMode::eRepeat);
-	samplerInfo.setAnisotropyEnable(VK_FALSE);
-	samplerInfo.setBorderColor(BorderColor::eIntOpaqueBlack);
-	samplerInfo.setCompareEnable(VK_FALSE);
-	samplerInfo.setMagFilter(Filter::eLinear);
-	samplerInfo.setMaxAnisotropy(2);
-	samplerInfo.setMaxLod(0);
-	samplerInfo.setMinFilter(Filter::eLinear);
-	samplerInfo.setMinLod(0);
-	samplerInfo.setMipLodBias(0.0f);
-	samplerInfo.setMipmapMode(SamplerMipmapMode::eLinear);
-	samplerInfo.setUnnormalizedCoordinates(VK_FALSE);
-
-	sampler = device.GetDevice().createSampler(samplerInfo);
-}
-
-void Renderer::UpdateUniformBuffer()
-{
-	ScenePtr scene = Engine::GetSceneInstance();
-	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
-	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
-
-	ObjectMVPData ubo;
-
-	glm::vec3 scale = meshComp->GetParent()->transform.GetScale();
-	meshComp->GetParent()->transform.SetScale({ 10.0f, 10.0f, 10.0f });
-	ubo.model = meshComp->GetParent()->transform.GetMatrix();
-	meshComp->GetParent()->transform.SetScale(scale);
-
-	ubo.view = camComp->CalculateViewMatrix();
-	ubo.proj = camComp->CalculateProjectionMatrix(); 
-
-	MemoryRecord& memRec = uniformBuffer.GetMemoryRecord();
-	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, sizeof(ObjectMVPData), &ubo, 0, sizeof(ObjectMVPData));
+	postProcessPass = new PostProcessPass("PostProcessPass");
+	postProcessPass->Create();
 }
 
 void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)

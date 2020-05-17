@@ -38,7 +38,10 @@ void VulkanPassBase::Create()
 		CreateDepthAttachment(depthAttachment, depthAttachmentView, width, height);
 	}
 	std::vector<ImageView> views = attachmentViews;
-	views.push_back(depthAttachmentView);
+	if (depthAttachmentView)
+	{
+		views.push_back(depthAttachmentView);
+	}
 	framebuffer = CreateFramebuffer(renderPass, views, width, height);
 
 	OnCreate();
