@@ -11,7 +11,6 @@
 #include "objects/VulkanDevice.h"
 #include "objects/VulkanSwapChain.h"
 #include "objects/VulkanCommandBuffers.h"
-//#include "passes/VulkanPassBase.h"
 #include "memory/DeviceMemoryManager.h"
 #include "resources/VulkanImage.h"
 #include "objects/VulkanDescriptorPools.h"
