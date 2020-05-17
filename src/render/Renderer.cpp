@@ -26,6 +26,7 @@
 #include "passes/GBufferPass.h"
 #include "passes/ZPrepass.h"
 #include "passes/PostProcessPass.h"
+#include "PipelineRegistry.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -68,11 +69,14 @@ void Renderer::Init()
 	perFrameData->Create(&device);
 
 	zPrepass = new ZPrepass(HashString("ZPrepass"));
+	zPrepass->SetResolution(width, height);
 	zPrepass->Create();
 	gBufferPass = new GBufferPass(HashString("GBufferPass"));
 	gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
+	gBufferPass->SetResolution(width, height);
 	gBufferPass->Create();
 	postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
+	postProcessPass->SetResolution(width, height);
 	postProcessPass->Create();
 }
 
@@ -255,6 +259,7 @@ void Renderer::OnResolutionChange()
 
 	swapChain.CreateForResolution(width, height);
 	postProcessPass = new PostProcessPass("PostProcessPass");
+	postProcessPass->SetResolution(width, height);
 	postProcessPass->Create();
 }
 

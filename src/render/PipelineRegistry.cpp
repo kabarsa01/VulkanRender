@@ -26,36 +26,50 @@ PipelineRegistry* PipelineRegistry::GetInstance()
 void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice)
 {
 	Device& device = inDevice->GetDevice();
-	for (auto& shaderPair : pipelinesData)
+	for (auto& passPair : pipelinesData)
 	{
-		for (auto& passPair : shaderPair.second)
+		for (auto& shaderPair : passPair.second)
 		{
-			device.destroyPipelineLayout(passPair.second.pipelineLayout);
-			device.destroyPipeline(passPair.second.pipeline);
+			device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
+			device.destroyPipeline(shaderPair.second.pipeline);
 		}
 	}
 	pipelinesData.clear();
 }
 
-bool PipelineRegistry::HasPipeline(HashString inShadersHash, HashString inPassHash)
+void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice, HashString inPassHash)
 {
-	if (pipelinesData.find(inShadersHash) != pipelinesData.end())
+	Device& device = inDevice->GetDevice();
+	if (pipelinesData.find(inPassHash) != pipelinesData.end())
 	{
-		std::map<HashString, PipelineData>& passData = pipelinesData[inShadersHash];
-		return passData.find(inPassHash) != passData.end();
+		for (auto& shaderPair : pipelinesData[inPassHash])
+		{
+			device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
+			device.destroyPipeline(shaderPair.second.pipeline);
+		}
+		pipelinesData[inPassHash].clear();
+	}
+}
+
+bool PipelineRegistry::HasPipeline(HashString inPassHash, HashString inShadersHash)
+{
+	if (pipelinesData.find(inPassHash) != pipelinesData.end())
+	{
+		std::map<HashString, PipelineData>& passData = pipelinesData[inPassHash];
+		return passData.find(inShadersHash) != passData.end();
 	}
 	return false;
 }
 
-bool PipelineRegistry::StorePipeline(HashString inShadersHash, HashString inPassHash, PipelineData inPipelineData)
+bool PipelineRegistry::StorePipeline(HashString inPassHash, HashString inShadersHash, PipelineData inPipelineData)
 {
-	pipelinesData[inShadersHash][inPassHash] = inPipelineData;
+	pipelinesData[inPassHash][inShadersHash] = inPipelineData;
 	return true;
 }
 
-PipelineData& PipelineRegistry::GetPipeline(HashString inShadersHash, HashString inPassHash)
+PipelineData& PipelineRegistry::GetPipeline(HashString inPassHash, HashString inShadersHash)
 {
-	return pipelinesData[inShadersHash][inPassHash];
+	return pipelinesData[inPassHash][inShadersHash];
 }
 
 std::map<HashString, PipelineData>& PipelineRegistry::operator[](HashString inShaderHash)

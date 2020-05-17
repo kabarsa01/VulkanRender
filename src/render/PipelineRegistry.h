@@ -21,17 +21,18 @@ public:
 	static PipelineRegistry* GetInstance();
 
 	void DestroyPipelines(VulkanDevice* inDevice);
+	void DestroyPipelines(VulkanDevice* inDevice, HashString inPassHash);
 
-	bool HasPipeline(HashString inShadersHash, HashString inPassHash);
-	bool StorePipeline(HashString inShadersHash, HashString inPassHash, PipelineData inPipelineData);
-	PipelineData& GetPipeline(HashString inShadersHash, HashString inPassHash);
+	bool HasPipeline(HashString inPassHash, HashString inShadersHash);
+	bool StorePipeline(HashString inPassHash, HashString inShadersHash, PipelineData inPipelineData);
+	PipelineData& GetPipeline(HashString inPassHash, HashString inShadersHash);
 
-	std::map<HashString, PipelineData>& operator[](HashString inShaderHash);
+	std::map<HashString, PipelineData>& operator[](HashString inPassHash);
 private:
 	static PipelineRegistry* instance;
 
 	//std::map<HashString, Pipeline> pipelines;
-	// shader hash - render pass hash - pipeline data
+	// render pass hash - shader hash - pipeline data
 	std::map<HashString, std::map<HashString, PipelineData>> pipelinesData;
 
 	PipelineRegistry();

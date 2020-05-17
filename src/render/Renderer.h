@@ -100,7 +100,6 @@ private:
 	ZPrepass* zPrepass;
 	GBufferPass* gBufferPass;
 	PostProcessPass* postProcessPass;
-	Sampler sampler;
 
 	//==================== METHODS ===============================
 

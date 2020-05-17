@@ -51,6 +51,8 @@ void VulkanPassBase::Destroy()
 {
 	Device& device = vulkanDevice->GetDevice();
 
+	PipelineRegistry::GetInstance()->DestroyPipelines(vulkanDevice, name);
+
 	device.destroyRenderPass(renderPass);
 	device.destroyFramebuffer(framebuffer);
 	for (uint32_t index = 0; index < attachments.size(); index++)
@@ -112,7 +114,7 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 
 	PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
 	// check pipeline storage and create new pipeline in case it was not created before
-	if (!pipelineRegistry.HasPipeline(inMaterial->GetShaderHash(), name))
+	if (!pipelineRegistry.HasPipeline(name, inMaterial->GetShaderHash()))
 	{
 		PipelineData pipelineData;
 
@@ -123,10 +125,10 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
 		pipelineData.pipeline = CreateGraphicsPipeline(inMaterial, pipelineData.pipelineLayout, GetRenderPass());
 
-		pipelineRegistry.StorePipeline(inMaterial->GetShaderHash(), name, pipelineData);
+		pipelineRegistry.StorePipeline(name, inMaterial->GetShaderHash(), pipelineData);
 	}
 
-	return pipelineRegistry.GetPipeline(inMaterial->GetShaderHash(), name);
+	return pipelineRegistry.GetPipeline(name, inMaterial->GetShaderHash());
 }
 
 DescriptorSetLayout VulkanPassBase::CreateDescriptorSetLayout(MaterialPtr inMaterial)
