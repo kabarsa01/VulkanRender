@@ -109,6 +109,7 @@ void Renderer::RenderFrame()
 	cmdBuffer.begin(beginInfo);
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
+
 	// render passes
 	// z prepass
 	zPrepass->Draw(&cmdBuffer);
@@ -185,14 +186,12 @@ void Renderer::Cleanup()
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 	meshComp->meshData->DestroyBuffer();
 
-	//uniformBuffer.Destroy();
-
 	perFrameData->Destroy();
 	delete perFrameData;
+
 	PipelineRegistry::GetInstance()->DestroyPipelines(&device);
 
 	descriptorPools.Destroy();
-
 	commandBuffers.Destroy();
 	swapChain.Destroy();
 	device.Destroy();
