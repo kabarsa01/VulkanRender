@@ -1,30 +1,28 @@
-#include "PostProcessPass.h"
-#include "../Renderer.h"
-#include "data/DataManager.h"
-#include "GBufferPass.h"
-#include "../DataStructures.h"
 #include "DeferredLightingPass.h"
+#include "utils/ImageUtils.h"
+#include "data/MeshData.h"
+#include "GBufferPass.h"
+#include "data/DataManager.h"
+#include "../DataStructures.h"
 
-PostProcessPass::PostProcessPass(HashString inName)
+DeferredLightingPass::DeferredLightingPass(HashString inName)
 	: VulkanPassBase(inName)
 {
 
 }
 
-void PostProcessPass::Draw(CommandBuffer* inCommandBuffer)
+void DeferredLightingPass::Draw(CommandBuffer* inCommandBuffer)
 {
-	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
-
-	PipelineData& pipelineData = FindGraphicsPipeline(postProcessMaterial);
+	PipelineData& pipelineData = FindGraphicsPipeline(lightingMaterial);
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
 
 	RenderPassBeginInfo passBeginInfo;
-	passBeginInfo.setRenderPass(swapChain.GetRenderPass());
-	passBeginInfo.setFramebuffer(swapChain.GetFramebuffer());
-	passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), GetRenderer()->GetSwapChain().GetExtent()));
+	passBeginInfo.setRenderPass(GetRenderPass());
+	passBeginInfo.setFramebuffer(GetFramebuffer());
+	passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), Extent2D(GetWidth(), GetHeight()) ));
 	passBeginInfo.setClearValueCount(1);
 	passBeginInfo.setPClearValues(&clearValue);
 
@@ -39,28 +37,46 @@ void PostProcessPass::Draw(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->endRenderPass();
 }
 
-void PostProcessPass::OnCreate()
+void DeferredLightingPass::OnCreate()
 {
-	DeferredLightingPass* lightingPass = GetRenderer()->GetDeferredLightingPass();
-	screenImage = ObjectBase::NewObject<Texture2D, const HashString&>("SceneImageTexture");
-	screenImage->CreateFromExternal(lightingPass->GetAttachments()[0], lightingPass->GetAttachmentViews()[0]);
+	GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
 
-	postProcessMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
-		"PostProcessMaterial",
+	albedoTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingAlbedoTexture");
+	albedoTexture->CreateFromExternal(gBufferPass->GetAttachments()[0], gBufferPass->GetAttachmentViews()[0]);
+	normalTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingNormalTexture");
+	normalTexture->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
+
+	lightingMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
+		"DeferredLightingMaterial",
 		"content/shaders/PostProcessVert.spv",
 		"content/shaders/PostProcessFrag.spv"
 		);
 	ObjectMVPData objData;
-	postProcessMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	postProcessMaterial->SetTexture("screenImage", screenImage);
-	postProcessMaterial->LoadResources();
+	lightingMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
+	lightingMaterial->SetTexture("screenImage", albedoTexture);
+	lightingMaterial->SetTexture("albedo", albedoTexture);
+	lightingMaterial->SetTexture("normal", normalTexture);
+	lightingMaterial->LoadResources();
 }
 
-RenderPass PostProcessPass::CreateRenderPass()
+RenderPass DeferredLightingPass::CreateRenderPass()
 {
+	AttachmentDescription colorAttachmentDesc;
+	colorAttachmentDesc.setFormat(Format::eR16G16B16A16Sfloat); // 16bit float to accumulate lighting
+	colorAttachmentDesc.setSamples(SampleCountFlagBits::e1);
+	colorAttachmentDesc.setLoadOp(AttachmentLoadOp::eClear);
+	colorAttachmentDesc.setStoreOp(AttachmentStoreOp::eStore);
+	colorAttachmentDesc.setStencilLoadOp(AttachmentLoadOp::eDontCare);
+	colorAttachmentDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
+	colorAttachmentDesc.setInitialLayout(ImageLayout::eUndefined);
+	colorAttachmentDesc.setFinalLayout(ImageLayout::eColorAttachmentOptimal);
+	AttachmentReference colorAttachmentRef;
+	colorAttachmentRef.setAttachment(0);
+	colorAttachmentRef.setLayout(ImageLayout::eColorAttachmentOptimal);
+
 	SubpassDescription subpassDesc;
-	subpassDesc.setColorAttachmentCount(0);
-	subpassDesc.setPColorAttachments(nullptr);
+	subpassDesc.setColorAttachmentCount(1);
+	subpassDesc.setPColorAttachments(&colorAttachmentRef);
 	subpassDesc.setPDepthStencilAttachment(nullptr);
 	subpassDesc.setPipelineBindPoint(PipelineBindPoint::eGraphics);
 
@@ -73,8 +89,8 @@ RenderPass PostProcessPass::CreateRenderPass()
 	subpassDependency.setDstAccessMask(AccessFlagBits::eColorAttachmentRead | AccessFlagBits::eColorAttachmentWrite);
 
 	RenderPassCreateInfo renderPassInfo;
-	renderPassInfo.setAttachmentCount(0);
-	renderPassInfo.setPAttachments(nullptr);
+	renderPassInfo.setAttachmentCount(1);
+	renderPassInfo.setPAttachments(&colorAttachmentDesc);
 	renderPassInfo.setSubpassCount(1);
 	renderPassInfo.setPSubpasses(&subpassDesc);
 	renderPassInfo.setDependencyCount(1);
@@ -83,18 +99,19 @@ RenderPass PostProcessPass::CreateRenderPass()
 	return GetVulkanDevice()->GetDevice().createRenderPass(renderPassInfo);
 }
 
-void PostProcessPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
+void DeferredLightingPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
+{
+	VulkanImage colorAttachmentImage = ImageUtils::CreateColorAttachment(GetVulkanDevice(), inWidth, inHeight, true); // do not forget 16 bit float
+	outAttachments.push_back(colorAttachmentImage);
+	outAttachmentViews.push_back(colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
+}
+
+void DeferredLightingPass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
 {
 }
 
-void PostProcessPass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
+Pipeline DeferredLightingPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
-}
-
-Pipeline PostProcessPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
-{
-	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
-
 	PipelineShaderStageCreateInfo vertStageInfo;
 	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
 	vertStageInfo.setModule(inMaterial->GetVertexShader()->GetShaderModule());
@@ -122,14 +139,14 @@ Pipeline PostProcessPass::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipelin
 	Viewport viewport;
 	viewport.setX(0.0f);
 	viewport.setY(0.0f);
-	viewport.setWidth((float)swapChain.GetExtent().width);
-	viewport.setHeight((float)swapChain.GetExtent().height);
+	viewport.setWidth(static_cast<float>(GetWidth()));
+	viewport.setHeight(static_cast<float>(GetHeight()));
 	viewport.setMinDepth(0.0f);
 	viewport.setMaxDepth(1.0f);
 
 	Rect2D scissor;
 	scissor.setOffset(Offset2D(0, 0));
-	scissor.setExtent(swapChain.GetExtent());
+	scissor.setExtent(Extent2D{ GetWidth(), GetHeight() });
 
 	PipelineViewportStateCreateInfo viewportInfo;
 	viewportInfo.setViewportCount(1);
@@ -177,7 +194,7 @@ Pipeline PostProcessPass::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipelin
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
 	pipelineInfo.setPDynamicState(nullptr);
 	pipelineInfo.setLayout(inLayout);
-	pipelineInfo.setRenderPass(GetRenderer()->GetSwapChain().GetRenderPass());
+	pipelineInfo.setRenderPass(inRenderPass);
 	pipelineInfo.setSubpass(0);
 	pipelineInfo.setBasePipelineHandle(Pipeline());
 	pipelineInfo.setBasePipelineIndex(-1);

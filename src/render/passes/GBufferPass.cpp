@@ -143,9 +143,9 @@ void GBufferPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachment
 	VulkanDevice* vulkanDevice = GetVulkanDevice();
 
 	// albedo
-	VulkanImage colorAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
-	outAttachments.push_back(colorAttachmentImage);
-	outAttachmentViews.push_back( colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D) );
+	VulkanImage albedoAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
+	outAttachments.push_back(albedoAttachmentImage);
+	outAttachmentViews.push_back( albedoAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D) );
 	// normal
 	VulkanImage normalAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
 	outAttachments.push_back(normalAttachmentImage);
@@ -250,11 +250,6 @@ Pipeline GBufferPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLay
 	colorBlendInfo.setPAttachments(colorBlendAttachmentStates.data());
 	colorBlendInfo.setBlendConstants({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-	std::vector<DynamicState> dynamicStates = { /*DynamicState::eViewport,*/ DynamicState::eLineWidth };
-	PipelineDynamicStateCreateInfo dynamicStateInfo;
-	dynamicStateInfo.setDynamicStateCount(1);
-	dynamicStateInfo.setPDynamicStates(dynamicStates.data());
-
 	GraphicsPipelineCreateInfo pipelineInfo;
 	pipelineInfo.setStageCount(2);
 	pipelineInfo.setPStages(shaderStageInfoArray.data());
@@ -265,7 +260,7 @@ Pipeline GBufferPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLay
 	pipelineInfo.setPMultisampleState(&multisampleInfo);
 	pipelineInfo.setPDepthStencilState(&depthStencilInfo);
 	pipelineInfo.setPColorBlendState(&colorBlendInfo);
-	pipelineInfo.setPDynamicState(&dynamicStateInfo);
+	pipelineInfo.setPDynamicState(nullptr);
 	pipelineInfo.setLayout(inLayout);
 	pipelineInfo.setRenderPass(inRenderPass);
 	pipelineInfo.setSubpass(0);

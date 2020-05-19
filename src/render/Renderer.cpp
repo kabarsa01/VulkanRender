@@ -27,6 +27,7 @@
 #include "passes/ZPrepass.h"
 #include "passes/PostProcessPass.h"
 #include "PipelineRegistry.h"
+#include "passes/DeferredLightingPass.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -75,6 +76,9 @@ void Renderer::Init()
 	gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
 	gBufferPass->SetResolution(width, height);
 	gBufferPass->Create();
+	deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
+	deferredLightingPass->SetResolution(width, height);
+	deferredLightingPass->Create();
 	postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 	postProcessPass->SetResolution(width, height);
 	postProcessPass->Create();
@@ -137,6 +141,23 @@ void Renderer::RenderFrame()
 		static_cast<uint32_t>(gBufferBarriers.size()),
 		gBufferBarriers.data());
 	//--------------------------------------------------------
+	// deferred lighting pass
+	deferredLightingPass->Draw(&cmdBuffer);
+	//--------------------------------------------------------
+	ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
+		ImageLayout::eColorAttachmentOptimal,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eColorAttachmentWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eColor,
+		0, 1, 0, 1);
+	cmdBuffer.pipelineBarrier(
+		PipelineStageFlagBits::eColorAttachmentOutput,
+		PipelineStageFlagBits::eFragmentShader,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		1, &attachmentBarrier);
+	//--------------------------------------------------------
 	// post process pass
 	postProcessPass->Draw(&cmdBuffer);
 	// end commands recording
@@ -177,6 +198,8 @@ void Renderer::Cleanup()
 
 	postProcessPass->Destroy();
 	delete postProcessPass;
+	deferredLightingPass->Destroy();
+	delete deferredLightingPass;
 	gBufferPass->Destroy();
 	delete gBufferPass;
 	zPrepass->Destroy();

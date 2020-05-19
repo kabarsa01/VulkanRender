@@ -39,6 +39,7 @@ using namespace VULKAN_HPP_NAMESPACE;
 class PerFrameData;
 class ZPrepass;
 class GBufferPass;
+class DeferredLightingPass;
 class PostProcessPass;
 
 //=======================================================================================================
@@ -68,6 +69,7 @@ public:
 
 	PerFrameData* GetPerFrameData() { return perFrameData; }
 	GBufferPass* GetGBufferPass() { return gBufferPass; }
+	DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
 protected:
 private:
 	// TEMP
@@ -98,6 +100,7 @@ private:
 
 	ZPrepass* zPrepass;
 	GBufferPass* gBufferPass;
+	DeferredLightingPass* deferredLightingPass;
 	PostProcessPass* postProcessPass;
 
 	//==================== METHODS ===============================

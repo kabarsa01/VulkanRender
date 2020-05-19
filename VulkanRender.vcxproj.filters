@@ -201,6 +201,9 @@
     <ClCompile Include="src\render\passes\PostProcessPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\passes\DeferredLightingPass.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -339,6 +342,9 @@
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
     <ClInclude Include="src\render\passes\PostProcessPass.h">
+      <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\passes\DeferredLightingPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
   </ItemGroup>
