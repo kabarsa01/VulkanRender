@@ -6,6 +6,8 @@
 Material::Material(HashString inId)
 	: Resource(inId)
 	, shaderHash(HashString::NONE)
+	, vertexEntrypoint("main")
+	, fragmentEntrypoint("main")
 {
 
 }
@@ -15,6 +17,8 @@ Material::Material(HashString inId, const std::string& inVertexShaderPath, const
 	, vertexShaderPath(inVertexShaderPath)
 	, fragmentShaderPath(inFragmentShaderPath)
 	, shaderHash(inVertexShaderPath + inFragmentShaderPath)
+	, vertexEntrypoint("main")
+	, fragmentEntrypoint("main")
 {
 
 }
@@ -76,6 +80,42 @@ std::vector<DescriptorSet> Material::GetDescriptorSets()
 DescriptorSetLayout Material::GetDescriptorSetLayout()
 {
 	return vulkanDescriptorSet.GetLayout();
+}
+
+PipelineShaderStageCreateInfo Material::GetVertexStageInfo()
+{
+	PipelineShaderStageCreateInfo vertStageInfo;
+	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
+	vertStageInfo.setModule(vertexShader->GetShaderModule());
+	vertStageInfo.setPName(vertexEntrypoint.c_str());
+
+	return vertStageInfo;
+}
+
+PipelineShaderStageCreateInfo Material::GetFragmentStageInfo()
+{
+	PipelineShaderStageCreateInfo fragStageInfo;
+	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
+	fragStageInfo.setModule(fragmentShader->GetShaderModule());
+	fragStageInfo.setPName(fragmentEntrypoint.c_str());
+
+	return fragStageInfo;
+}
+
+void Material::SetEntrypoints(const std::string& inVertexEntrypoint, const std::string& inFragmentEntrypoint)
+{
+	vertexEntrypoint = inVertexEntrypoint;
+	fragmentEntrypoint = inFragmentEntrypoint;
+}
+
+void Material::SetVertexEntrypoint(const std::string& inEntrypoint)
+{
+	vertexEntrypoint = inEntrypoint;
+}
+
+void Material::SetFragmentEntrypoint(const std::string& inEntrypoint)
+{
+	fragmentEntrypoint = inEntrypoint;
 }
 
 void Material::SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath)

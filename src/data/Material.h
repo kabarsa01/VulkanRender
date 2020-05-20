@@ -1,9 +1,13 @@
 #pragma once
 
+#include "vulkan/vulkan.hpp"
+
 #include "data/Resource.h"
 #include "data/Texture2D.h"
 #include "render/shader/Shader.h"
 #include "render/objects/VulkanDescriptorSet.h"
+
+using namespace VULKAN_HPP_NAMESPACE;
 
 class VulkanDevice;
 
@@ -22,6 +26,12 @@ public:
 	std::vector<DescriptorSet> GetDescriptorSets();
 	DescriptorSetLayout GetDescriptorSetLayout();
 
+	PipelineShaderStageCreateInfo GetVertexStageInfo();
+	PipelineShaderStageCreateInfo GetFragmentStageInfo();
+
+	void SetEntrypoints(const std::string& inVertexEntrypoint, const std::string& inFragmentEntrypoint);
+	void SetVertexEntrypoint(const std::string& inEntrypoint);
+	void SetFragmentEntrypoint(const std::string& inEntrypoint);
 	void SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath);
 	void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
@@ -34,6 +44,8 @@ public:
 
 	inline ShaderPtr GetVertexShader() { return vertexShader; }
 	inline ShaderPtr GetFragmentShader() { return fragmentShader; }
+	inline const std::string& GetVertexEntrypoint() const { return vertexEntrypoint; };
+	inline const std::string& GetFragmentEntrypoint() const { return fragmentEntrypoint; };
 
 	bool Load() override;
 	bool Cleanup() override;
@@ -43,6 +55,8 @@ public:
 protected:
 	std::string vertexShaderPath;
 	std::string fragmentShaderPath;
+	std::string vertexEntrypoint;
+	std::string fragmentEntrypoint;
 	HashString shaderHash;
 
 	ShaderPtr vertexShader;

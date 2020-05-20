@@ -95,17 +95,7 @@ Pipeline PostProcessPass::CreateGraphicsPipeline(MaterialPtr inMaterial, Pipelin
 {
 	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
 
-	PipelineShaderStageCreateInfo vertStageInfo;
-	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(inMaterial->GetVertexShader()->GetShaderModule());
-	vertStageInfo.setPName("main");
-
-	PipelineShaderStageCreateInfo fragStageInfo;
-	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
-	fragStageInfo.setModule(inMaterial->GetFragmentShader()->GetShaderModule());
-	fragStageInfo.setPName("main");
-
-	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
+	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { inMaterial->GetVertexStageInfo(), inMaterial->GetFragmentStageInfo() };
 
 	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
 	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);

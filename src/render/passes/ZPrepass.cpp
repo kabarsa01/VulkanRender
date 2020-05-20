@@ -120,13 +120,7 @@ void ZPrepass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView&
 
 Pipeline ZPrepass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
-	PipelineShaderStageCreateInfo vertStageInfo;
-	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(inMaterial->GetVertexShader()->GetShaderModule());
-	vertStageInfo.setPName("main");
-	//vertStageInfo.setPSpecializationInfo(); spec info to set some constants
-
-	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo };
+	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { inMaterial->GetVertexStageInfo() };
 
 	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
 	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);

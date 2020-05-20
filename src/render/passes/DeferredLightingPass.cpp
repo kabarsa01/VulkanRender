@@ -48,14 +48,13 @@ void DeferredLightingPass::OnCreate()
 
 	lightingMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
 		"DeferredLightingMaterial",
-		"content/shaders/PostProcessVert.spv",
-		"content/shaders/PostProcessFrag.spv"
+		"content/shaders/ScreenSpaceVert.spv",
+		"content/shaders/DeferredLighting.spv"
 		);
 	ObjectMVPData objData;
 	lightingMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	lightingMaterial->SetTexture("screenImage", albedoTexture);
-	lightingMaterial->SetTexture("albedo", albedoTexture);
-	lightingMaterial->SetTexture("normal", normalTexture);
+	lightingMaterial->SetTexture("albedoTex", albedoTexture);
+	lightingMaterial->SetTexture("normalsTex", normalTexture);
 	lightingMaterial->LoadResources();
 }
 
@@ -112,17 +111,7 @@ void DeferredLightingPass::CreateDepthAttachment(VulkanImage& outDepthAttachment
 
 Pipeline DeferredLightingPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
-	PipelineShaderStageCreateInfo vertStageInfo;
-	vertStageInfo.setStage(ShaderStageFlagBits::eVertex);
-	vertStageInfo.setModule(inMaterial->GetVertexShader()->GetShaderModule());
-	vertStageInfo.setPName("main");
-
-	PipelineShaderStageCreateInfo fragStageInfo;
-	fragStageInfo.setStage(ShaderStageFlagBits::eFragment);
-	fragStageInfo.setModule(inMaterial->GetFragmentShader()->GetShaderModule());
-	fragStageInfo.setPName("main");
-
-	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { vertStageInfo, fragStageInfo };
+	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { inMaterial->GetVertexStageInfo(), inMaterial->GetFragmentStageInfo() };
 
 	VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
 	std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);
