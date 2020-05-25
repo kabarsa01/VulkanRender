@@ -5,7 +5,6 @@
 
 Material::Material(HashString inId)
 	: Resource(inId)
-	, shaderHash(HashString::NONE)
 	, vertexEntrypoint("main")
 	, fragmentEntrypoint("main")
 {
@@ -16,7 +15,6 @@ Material::Material(HashString inId, const std::string& inVertexShaderPath, const
 	: Resource(inId)
 	, vertexShaderPath(inVertexShaderPath)
 	, fragmentShaderPath(inFragmentShaderPath)
-	, shaderHash(inVertexShaderPath + inFragmentShaderPath)
 	, vertexEntrypoint("main")
 	, fragmentEntrypoint("main")
 {
@@ -30,23 +28,21 @@ Material::~Material()
 
 void Material::LoadResources()
 {
-	vertexShader = DataManager::RequestResourceType<Shader>(vertexShaderPath);
-	fragmentShader = DataManager::RequestResourceType<Shader>(fragmentShaderPath);
-
 	// TODO: process all the material resources
 	descriptorBindings.clear();
-	ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, vertexShader, textures2D, descriptorBindings);
-	ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, fragmentShader, textures2D, descriptorBindings);
-	ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, vertexShader, buffers, descriptorBindings);
-	ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, fragmentShader, buffers, descriptorBindings);
+	descriptorWrites.clear();
+
+	vertexShader = InitShader(vertexShaderPath);
+	fragmentShader = InitShader(fragmentShaderPath);
+	computeShader = InitShader(computeShaderPath);
 
 	PrepareDescriptorInfos();
 
-	descriptorWrites.clear();
-	PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, vertexShader, imageDescInfos, descriptorWrites);
-	PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, fragmentShader, imageDescInfos, descriptorWrites);
-	PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, vertexShader, bufferDescInfos, descriptorWrites);
-	PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, fragmentShader, bufferDescInfos, descriptorWrites);
+	PrepareDescriptorWrites(vertexShader);
+	PrepareDescriptorWrites(fragmentShader);
+	PrepareDescriptorWrites(computeShader);
+
+	shaderHash = HashString(vertexShaderPath + fragmentShaderPath + computeShaderPath);
 }
 
 HashString Material::GetShaderHash()
@@ -102,6 +98,16 @@ PipelineShaderStageCreateInfo Material::GetFragmentStageInfo()
 	return fragStageInfo;
 }
 
+PipelineShaderStageCreateInfo Material::GetComputeStageInfo()
+{
+	PipelineShaderStageCreateInfo computeStageInfo;
+	computeStageInfo.setStage(ShaderStageFlagBits::eCompute);
+	computeStageInfo.setModule(computeShader->GetShaderModule());
+	computeStageInfo.setPName(computeEntrypoint.c_str());
+
+	return computeStageInfo;
+}
+
 void Material::SetEntrypoints(const std::string& inVertexEntrypoint, const std::string& inFragmentEntrypoint)
 {
 	vertexEntrypoint = inVertexEntrypoint;
@@ -118,11 +124,20 @@ void Material::SetFragmentEntrypoint(const std::string& inEntrypoint)
 	fragmentEntrypoint = inEntrypoint;
 }
 
+void Material::SetComputeEntrypoint(const std::string& inEntrypoint)
+{
+	computeEntrypoint = inEntrypoint;
+}
+
 void Material::SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath)
 {
 	vertexShaderPath = inVertexShaderPath;
 	fragmentShaderPath = inFragmentShaderPath;
-	shaderHash = HashString(vertexShaderPath + fragmentShaderPath);
+}
+
+void Material::SetComputeShaderPath(const std::string& inComputeShaderPath)
+{
+	computeShaderPath = inComputeShaderPath;
 }
 
 void Material::SetTexture(const std::string& inName, Texture2DPtr inTexture2D)
@@ -205,4 +220,24 @@ void Material::PrepareDescriptorInfos()
 	}
 }
 
+ShaderPtr Material::InitShader(const std::string& inResourcePath)
+{
+	if (!inResourcePath.empty())
+	{
+		ShaderPtr shader = DataManager::RequestResourceType<Shader>(inResourcePath);
+		ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, shader, textures2D, descriptorBindings);
+		ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, shader, buffers, descriptorBindings);
+		return shader;
+	}
+	return ShaderPtr();
+}
+
+void Material::PrepareDescriptorWrites(ShaderPtr inShader)
+{
+	if (inShader)
+	{
+		PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, inShader, imageDescInfos, descriptorWrites);
+		PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, inShader, bufferDescInfos, descriptorWrites);
+	}
+}
 

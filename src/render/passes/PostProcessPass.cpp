@@ -91,7 +91,7 @@ void PostProcessPass::CreateDepthAttachment(VulkanImage& outDepthAttachment, Ima
 {
 }
 
-Pipeline PostProcessPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
+Pipeline PostProcessPass::CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
 	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
 

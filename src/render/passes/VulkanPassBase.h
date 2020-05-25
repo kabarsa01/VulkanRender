@@ -53,7 +53,7 @@ protected:
 		ImageView& outDepthAttachmentView,
 		uint32_t inWidth,
 		uint32_t inHeight) = 0;
-	virtual Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) = 0;
+	virtual Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) = 0;
 
 
 	Framebuffer CreateFramebuffer(

@@ -123,7 +123,7 @@ PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
 
 		std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), inMaterial->GetDescriptorSetLayout() };
 		pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
-		pipelineData.pipeline = CreateGraphicsPipeline(inMaterial, pipelineData.pipelineLayout, GetRenderPass());
+		pipelineData.pipeline = CreatePipeline(inMaterial, pipelineData.pipelineLayout, GetRenderPass());
 
 		pipelineRegistry.StorePipeline(name, inMaterial->GetShaderHash(), pipelineData);
 	}

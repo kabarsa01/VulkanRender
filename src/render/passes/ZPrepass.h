@@ -26,5 +26,5 @@ protected:
 		ImageView& outDepthAttachmentView,
 		uint32_t inWidth,
 		uint32_t inHeight) override;
-	virtual Pipeline CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
+	virtual Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
 };

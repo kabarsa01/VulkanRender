@@ -109,7 +109,7 @@ void DeferredLightingPass::CreateDepthAttachment(VulkanImage& outDepthAttachment
 {
 }
 
-Pipeline DeferredLightingPass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
+Pipeline DeferredLightingPass::CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { inMaterial->GetVertexStageInfo(), inMaterial->GetFragmentStageInfo() };
 

@@ -28,11 +28,14 @@ public:
 
 	PipelineShaderStageCreateInfo GetVertexStageInfo();
 	PipelineShaderStageCreateInfo GetFragmentStageInfo();
+	PipelineShaderStageCreateInfo GetComputeStageInfo();
 
 	void SetEntrypoints(const std::string& inVertexEntrypoint, const std::string& inFragmentEntrypoint);
 	void SetVertexEntrypoint(const std::string& inEntrypoint);
 	void SetFragmentEntrypoint(const std::string& inEntrypoint);
+	void SetComputeEntrypoint(const std::string& inEntrypoint);
 	void SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath);
+	void SetComputeShaderPath(const std::string& inComputeShaderPath);
 	void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
 	void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
@@ -44,8 +47,10 @@ public:
 
 	inline ShaderPtr GetVertexShader() { return vertexShader; }
 	inline ShaderPtr GetFragmentShader() { return fragmentShader; }
+	inline ShaderPtr GetComputeShader() { return computeShader; }
 	inline const std::string& GetVertexEntrypoint() const { return vertexEntrypoint; };
 	inline const std::string& GetFragmentEntrypoint() const { return fragmentEntrypoint; };
+	inline const std::string& GetComputeEntrypoint() const { return computeEntrypoint; };
 
 	bool Load() override;
 	bool Cleanup() override;
@@ -55,12 +60,15 @@ public:
 protected:
 	std::string vertexShaderPath;
 	std::string fragmentShaderPath;
+	std::string computeShaderPath;
 	std::string vertexEntrypoint;
 	std::string fragmentEntrypoint;
+	std::string computeEntrypoint;
 	HashString shaderHash;
 
 	ShaderPtr vertexShader;
 	ShaderPtr fragmentShader;
+	ShaderPtr computeShader;
 	std::map<HashString, Texture2DPtr> textures2D;
 	std::map<HashString, VulkanBuffer> buffers;
 
@@ -73,6 +81,9 @@ protected:
 	VulkanDescriptorSet vulkanDescriptorSet;
 
 	void PrepareDescriptorInfos();
+
+	ShaderPtr InitShader(const std::string& inResourcePath);
+	void PrepareDescriptorWrites(ShaderPtr inShader);
 
 	template<class T>
 	void ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inResources, std::vector<DescriptorSetLayoutBinding>& inOutBindings);
@@ -113,7 +124,7 @@ void Material::ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, 
 		binding.setBinding(info.binding);
 		binding.setDescriptorType(info.descriptorType);
 		binding.setDescriptorCount(info.IsArray() ? info.arrayDimensions[0] : 1);
-		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
 
 		inOutBindings.push_back(binding);
 	}

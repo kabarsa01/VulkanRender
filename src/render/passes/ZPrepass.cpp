@@ -118,7 +118,7 @@ void ZPrepass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView&
 	outDepthAttachmentView = outDepthAttachment.CreateView({ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 }, ImageViewType::e2D);
 }
 
-Pipeline ZPrepass::CreateGraphicsPipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
+Pipeline ZPrepass::CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 {
 	std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { inMaterial->GetVertexStageInfo() };
 
