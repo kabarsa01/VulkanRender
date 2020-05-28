@@ -8,7 +8,7 @@ GBufferPass::GBufferPass(HashString inName)
 {
 }
 
-void GBufferPass::Draw(CommandBuffer* inCommandBuffer)
+void GBufferPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
 	ScenePtr scene = Engine::GetSceneInstance();
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
@@ -37,7 +37,7 @@ void GBufferPass::Draw(CommandBuffer* inCommandBuffer)
 	//------------------------------------------------------------------------------------------------------------
 	for (auto& shaderMaterialPair : shaderSortedMaterials)
 	{
-		PipelineData& pipelineData = FindGraphicsPipeline(shaderMaterialPair.second[0]);
+		PipelineData& pipelineData = FindPipeline(shaderMaterialPair.second[0]);
 
 		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
 		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});

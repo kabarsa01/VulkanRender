@@ -36,7 +36,9 @@ public:
 	void SetComputeEntrypoint(const std::string& inEntrypoint);
 	void SetShaderPath(const std::string& inVertexShaderPath, const std::string& inFragmentShaderPath);
 	void SetComputeShaderPath(const std::string& inComputeShaderPath);
+
 	void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
+	void SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
 	void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
 	void SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
@@ -69,8 +71,10 @@ protected:
 	ShaderPtr vertexShader;
 	ShaderPtr fragmentShader;
 	ShaderPtr computeShader;
-	std::map<HashString, Texture2DPtr> textures2D;
+	std::map<HashString, Texture2DPtr> sampledImages2D;
+	std::map<HashString, Texture2DPtr> storageImages2D;
 	std::map<HashString, VulkanBuffer> buffers;
+	std::map<HashString, VulkanBuffer> storageBuffers;
 
 	std::vector<DescriptorSetLayoutBinding> descriptorBindings;
 	std::map<HashString, DescriptorImageInfo> imageDescInfos;
@@ -154,8 +158,14 @@ void Material::PrepareDescriptorWrites(DescriptorType inType, ShaderPtr inShader
 		case DescriptorType::eSampledImage:
 			writeDescriptorSet.setPImageInfo(& imageDescInfos[info.name]);
 			break;
+		case DescriptorType::eStorageImage:
+			writeDescriptorSet.setPImageInfo(&imageDescInfos[info.name]);
+			break;
 		case DescriptorType::eUniformBuffer:
 			writeDescriptorSet.setPBufferInfo(& bufferDescInfos[info.name]);
+			break;
+		case DescriptorType::eStorageBuffer:
+			writeDescriptorSet.setPBufferInfo(&bufferDescInfos[info.name]);
 			break;
 		}
 

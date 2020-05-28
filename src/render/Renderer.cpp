@@ -28,6 +28,7 @@
 #include "passes/PostProcessPass.h"
 #include "PipelineRegistry.h"
 #include "passes/DeferredLightingPass.h"
+#include "passes/LightClusteringPass.h"
 
 const std::vector<Vertex> verticesTest = {
 	{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
@@ -69,6 +70,8 @@ void Renderer::Init()
 	perFrameData = new PerFrameData();
 	perFrameData->Create(&device);
 
+	lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
+	lightClusteringPass->Create();
 	zPrepass = new ZPrepass(HashString("ZPrepass"));
 	zPrepass->SetResolution(width, height);
 	zPrepass->Create();
@@ -114,11 +117,29 @@ void Renderer::RenderFrame()
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 
+	//--------------------------------------------------------
+	lightClusteringPass->RecordCommands(&cmdBuffer);
+	// barriers ----------------------------------------------
+	ImageMemoryBarrier clustersTextureBarrier = lightClusteringPass->image.CreateLayoutBarrier(
+		ImageLayout::eGeneral,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eShaderWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eColor,
+		0, 1, 0, 1);
+	cmdBuffer.pipelineBarrier(
+		PipelineStageFlagBits::eComputeShader,
+		PipelineStageFlagBits::eVertexShader,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		1, &clustersTextureBarrier);
+	//--------------------------------------------------------
+
 	// render passes
 	// z prepass
-	zPrepass->Draw(&cmdBuffer);
+	zPrepass->RecordCommands(&cmdBuffer);
 	// gbuffer pass
-	gBufferPass->Draw(&cmdBuffer);
+	gBufferPass->RecordCommands(&cmdBuffer);
 	// barriers ----------------------------------------------
 	const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
 	std::vector<ImageMemoryBarrier> gBufferBarriers;
@@ -142,7 +163,7 @@ void Renderer::RenderFrame()
 		gBufferBarriers.data());
 	//--------------------------------------------------------
 	// deferred lighting pass
-	deferredLightingPass->Draw(&cmdBuffer);
+	deferredLightingPass->RecordCommands(&cmdBuffer);
 	//--------------------------------------------------------
 	ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
 		ImageLayout::eColorAttachmentOptimal,
@@ -159,7 +180,7 @@ void Renderer::RenderFrame()
 		1, &attachmentBarrier);
 	//--------------------------------------------------------
 	// post process pass
-	postProcessPass->Draw(&cmdBuffer);
+	postProcessPass->RecordCommands(&cmdBuffer);
 	// end commands recording
 	cmdBuffer.end();
 
@@ -204,6 +225,8 @@ void Renderer::Cleanup()
 	delete gBufferPass;
 	zPrepass->Destroy();
 	delete zPrepass;
+	lightClusteringPass->Destroy();
+	delete lightClusteringPass;
 
 	ScenePtr scene = Engine::GetSceneInstance();
 	MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();

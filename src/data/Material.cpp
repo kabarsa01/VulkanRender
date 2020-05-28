@@ -7,6 +7,7 @@ Material::Material(HashString inId)
 	: Resource(inId)
 	, vertexEntrypoint("main")
 	, fragmentEntrypoint("main")
+	, computeEntrypoint("main")
 {
 
 }
@@ -17,6 +18,7 @@ Material::Material(HashString inId, const std::string& inVertexShaderPath, const
 	, fragmentShaderPath(inFragmentShaderPath)
 	, vertexEntrypoint("main")
 	, fragmentEntrypoint("main")
+	, computeEntrypoint("main")
 {
 
 }
@@ -142,7 +144,12 @@ void Material::SetComputeShaderPath(const std::string& inComputeShaderPath)
 
 void Material::SetTexture(const std::string& inName, Texture2DPtr inTexture2D)
 {
-	textures2D[inName] = inTexture2D;
+	sampledImages2D[inName] = inTexture2D;
+}
+
+void Material::SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D)
+{
+	storageImages2D[inName] = inTexture2D;
 }
 
 void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
@@ -205,7 +212,7 @@ std::vector<WriteDescriptorSet>& Material::GetDescriptorWrites()
 
 void Material::PrepareDescriptorInfos()
 {
-	for (auto& pair : textures2D)
+	for (auto& pair : sampledImages2D)
 	{
 		DescriptorImageInfo imageInfo;
 		imageInfo.setImageView(pair.second->GetImageView());
@@ -213,8 +220,21 @@ void Material::PrepareDescriptorInfos()
 
 		imageDescInfos[pair.first] = imageInfo;
 	}
+	for (auto& pair : storageImages2D)
+	{
+		DescriptorImageInfo imageInfo;
+		imageInfo.setImageView(pair.second->GetImageView());
+		imageInfo.setImageLayout(ImageLayout::eGeneral);
+
+		imageDescInfos[pair.first] = imageInfo;
+	}
+
 
 	for (auto& pair : buffers)
+	{
+		bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
+	}
+	for (auto& pair : storageBuffers)
 	{
 		bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
 	}
@@ -225,8 +245,10 @@ ShaderPtr Material::InitShader(const std::string& inResourcePath)
 	if (!inResourcePath.empty())
 	{
 		ShaderPtr shader = DataManager::RequestResourceType<Shader>(inResourcePath);
-		ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, shader, textures2D, descriptorBindings);
+		ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, shader, sampledImages2D, descriptorBindings);
+		ProcessDescriptorType<Texture2DPtr>(DescriptorType::eStorageImage, shader, storageImages2D, descriptorBindings);
 		ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, shader, buffers, descriptorBindings);
+		ProcessDescriptorType<VulkanBuffer>(DescriptorType::eStorageBuffer, shader, storageBuffers, descriptorBindings);
 		return shader;
 	}
 	return ShaderPtr();
@@ -237,7 +259,9 @@ void Material::PrepareDescriptorWrites(ShaderPtr inShader)
 	if (inShader)
 	{
 		PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, inShader, imageDescInfos, descriptorWrites);
+		PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eStorageImage, inShader, imageDescInfos, descriptorWrites);
 		PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, inShader, bufferDescInfos, descriptorWrites);
+		PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eStorageBuffer, inShader, bufferDescInfos, descriptorWrites);
 	}
 }
 

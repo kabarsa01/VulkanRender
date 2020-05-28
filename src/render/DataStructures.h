@@ -20,3 +20,9 @@ struct ObjectMVPData
 	alignas(16) glm::mat4 proj;
 };
 
+// per object update
+struct TestData
+{
+	alignas(16) glm::vec4 color;
+};
+

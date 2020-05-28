@@ -6,7 +6,7 @@ class DeferredLightingPass : public VulkanPassBase
 {
 public:
 	DeferredLightingPass(HashString inName);
-	void Draw(CommandBuffer* inCommandBuffer) override;
+	void RecordCommands(CommandBuffer* inCommandBuffer) override;
 protected:
 	MaterialPtr lightingMaterial;
 	Texture2DPtr albedoTexture;

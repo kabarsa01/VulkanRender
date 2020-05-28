@@ -128,8 +128,11 @@ void Shader::ExtractBindingsInfo()
 	SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
 
 	bindings[DescriptorType::eUniformBuffer] = ExtractBindingInfo(resources.uniform_buffers, spirv, DescriptorType::eUniformBuffer);
+	bindings[DescriptorType::eStorageBuffer] = ExtractBindingInfo(resources.storage_buffers, spirv, DescriptorType::eStorageBuffer);
 	bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv, DescriptorType::eSampler);
 	bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv, DescriptorType::eSampledImage);
+	bindings[DescriptorType::eStorageImage] = ExtractBindingInfo(resources.storage_images, spirv, DescriptorType::eStorageImage);
+	// rejected sibling
 	bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv, DescriptorType::eCombinedImageSampler);
 }
 

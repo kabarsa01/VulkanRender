@@ -4,6 +4,7 @@
 #include "GBufferPass.h"
 #include "../DataStructures.h"
 #include "DeferredLightingPass.h"
+#include "LightClusteringPass.h"
 
 PostProcessPass::PostProcessPass(HashString inName)
 	: VulkanPassBase(inName)
@@ -11,12 +12,12 @@ PostProcessPass::PostProcessPass(HashString inName)
 
 }
 
-void PostProcessPass::Draw(CommandBuffer* inCommandBuffer)
+void PostProcessPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
 	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
 
-	PipelineData& pipelineData = FindGraphicsPipeline(postProcessMaterial);
+	PipelineData& pipelineData = FindPipeline(postProcessMaterial);
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
@@ -52,7 +53,7 @@ void PostProcessPass::OnCreate()
 		);
 	ObjectMVPData objData;
 	postProcessMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	postProcessMaterial->SetTexture("screenImage", screenImage);
+	postProcessMaterial->SetTexture("screenImage", GetRenderer()->GetLightClusteringPass()->texture);
 	postProcessMaterial->LoadResources();
 }
 

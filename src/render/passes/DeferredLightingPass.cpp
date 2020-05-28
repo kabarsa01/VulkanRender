@@ -11,10 +11,10 @@ DeferredLightingPass::DeferredLightingPass(HashString inName)
 
 }
 
-void DeferredLightingPass::Draw(CommandBuffer* inCommandBuffer)
+void DeferredLightingPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
-	PipelineData& pipelineData = FindGraphicsPipeline(lightingMaterial);
+	PipelineData& pipelineData = FindPipeline(lightingMaterial);
 
 	ClearValue clearValue;
 	clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));

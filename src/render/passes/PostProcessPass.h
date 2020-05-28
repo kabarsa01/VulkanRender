@@ -7,7 +7,7 @@ class PostProcessPass : public VulkanPassBase
 {
 public:
 	PostProcessPass(HashString inName);
-	void Draw(CommandBuffer* inCommandBuffer) override;
+	void RecordCommands(CommandBuffer* inCommandBuffer) override;
 protected:
 	MaterialPtr postProcessMaterial;
 	Texture2DPtr screenImage;

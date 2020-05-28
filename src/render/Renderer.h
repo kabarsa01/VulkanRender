@@ -37,6 +37,7 @@ using namespace VULKAN_HPP_NAMESPACE;
 //-------------------------------------------------------------------------------------------------------
 
 class PerFrameData;
+class LightClusteringPass;
 class ZPrepass;
 class GBufferPass;
 class DeferredLightingPass;
@@ -68,6 +69,7 @@ public:
 	Queue GetGraphicsQueue();
 
 	PerFrameData* GetPerFrameData() { return perFrameData; }
+	LightClusteringPass* GetLightClusteringPass() { return lightClusteringPass; }
 	GBufferPass* GetGBufferPass() { return gBufferPass; }
 	DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
 protected:
@@ -98,6 +100,7 @@ private:
 
 	PerFrameData* perFrameData;
 
+	LightClusteringPass* lightClusteringPass;
 	ZPrepass* zPrepass;
 	GBufferPass* gBufferPass;
 	DeferredLightingPass* deferredLightingPass;

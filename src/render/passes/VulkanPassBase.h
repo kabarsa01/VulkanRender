@@ -36,7 +36,7 @@ public:
 
 	void SetExternalDepth(const VulkanImage& inDepthAttachment, const ImageView& inDepthAttachmentView);
 
-	virtual void Draw(CommandBuffer* inCommandBuffer) = 0;
+	virtual void RecordCommands(CommandBuffer* inCommandBuffer) = 0;
 protected:
 	inline VulkanDevice* GetVulkanDevice() { return vulkanDevice; }
 	inline Renderer* GetRenderer() { return renderer; }
@@ -61,7 +61,7 @@ protected:
 		std::vector<ImageView>& inAttachmentViews,
 		uint32_t inWidth,
 		uint32_t inHeight);
-	PipelineData& FindGraphicsPipeline(MaterialPtr inMaterial);
+	PipelineData& FindPipeline(MaterialPtr inMaterial);
 	PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
 	DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
 private:

@@ -108,7 +108,7 @@ PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLay
 	return device.createPipelineLayout(pipelineLayoutInfo);
 }
 
-PipelineData& VulkanPassBase::FindGraphicsPipeline(MaterialPtr inMaterial)
+PipelineData& VulkanPassBase::FindPipeline(MaterialPtr inMaterial)
 {
 	Device& device = vulkanDevice->GetDevice();
 
