@@ -17,8 +17,8 @@ void main() {
 	imageStore(storageTex, ivec2(16,16), colorData.color);
 	imageStore(storageTex, ivec2(48,48), colorData.color);
 	imageStore(storageTex, ivec2(18,48), colorData.color);
-	clusterLightsData.lightIndices[13] = 65000;
+	clusterLightsData.lightIndices[13] = 2265330;
 	uint intColor = clusterLightsData.lightIndices[13];
-	vec4 color = vec4((intColor & 0x000000ff),( (intColor & 0x0000ff00) >> 8), ((intColor & 0x00ff0000) >> 16), ((intColor & 0xff000000) >> 24));
+	vec4 color = vec4(intColor & 0x000000ff, (intColor & 0x0000ff00) >> 8, (intColor & 0x00ff0000) >> 16, 1.0);
 	imageStore(storageTex, ivec2(38,28), color);
 }

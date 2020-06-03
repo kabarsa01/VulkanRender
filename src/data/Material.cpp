@@ -206,7 +206,7 @@ bool Material::Load()
 
 bool Material::Cleanup()
 {
-	// TODO: cleanup at least buffers
+	// cleanup buffers. textures are resources themselves and will be cleaned by data manager
 	for (auto& pair : buffers)
 	{
 		pair.second.Destroy();
