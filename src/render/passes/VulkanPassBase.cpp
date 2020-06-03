@@ -32,17 +32,20 @@ void VulkanPassBase::Create()
 	//height = renderer->GetHeight();
 
 	renderPass = CreateRenderPass();
-	CreateColorAttachments(attachments, attachmentViews, width, height);
-	if (!isDepthExternal)
+	if (renderPass)
 	{
-		CreateDepthAttachment(depthAttachment, depthAttachmentView, width, height);
+		CreateColorAttachments(attachments, attachmentViews, width, height);
+		if (!isDepthExternal)
+		{
+			CreateDepthAttachment(depthAttachment, depthAttachmentView, width, height);
+		}
+		std::vector<ImageView> views = attachmentViews;
+		if (depthAttachmentView)
+		{
+			views.push_back(depthAttachmentView);
+		}
+		framebuffer = CreateFramebuffer(renderPass, views, width, height);
 	}
-	std::vector<ImageView> views = attachmentViews;
-	if (depthAttachmentView)
-	{
-		views.push_back(depthAttachmentView);
-	}
-	framebuffer = CreateFramebuffer(renderPass, views, width, height);
 
 	OnCreate();
 }

@@ -41,7 +41,10 @@ public:
 	void SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D);
 	template<typename T>
 	void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
+	template<typename T>
+	void SetStorageBuffer(const std::string& inName, T& inStorageBuffer);
 	void SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
+	void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	template<typename T>
 	void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 	void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
@@ -105,6 +108,12 @@ template<typename T>
 void Material::SetUniformBuffer(const std::string& inName, T& inUniformBuffer)
 {
 	SetUniformBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inUniformBuffer));
+}
+
+template<typename T>
+void Material::SetStorageBuffer(const std::string& inName, T& inStorageBuffer)
+{
+	SetStorageBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inStorageBuffer));
 }
 
 template<typename T>

@@ -6,9 +6,19 @@ layout(set = 1, binding = 0) uniform TestData
 {
 	vec4 color;
 } colorData;
+// cluster lights indices
+layout(set = 1, binding = 2) buffer ClusterLightsData
+{
+	uint lightIndices[128];
+} clusterLightsData;
 
 void main() {
 	float z = 0.5f;
 	imageStore(storageTex, ivec2(16,16), colorData.color);
 	imageStore(storageTex, ivec2(48,48), colorData.color);
+	imageStore(storageTex, ivec2(18,48), colorData.color);
+	clusterLightsData.lightIndices[13] = 65000;
+	uint intColor = clusterLightsData.lightIndices[13];
+	vec4 color = vec4((intColor & 0x000000ff),( (intColor & 0x0000ff00) >> 8), ((intColor & 0x00ff0000) >> 16), ((intColor & 0xff000000) >> 24));
+	imageStore(storageTex, ivec2(38,28), color);
 }

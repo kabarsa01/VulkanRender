@@ -38,7 +38,7 @@ void LightClusteringPass::OnCreate()
 	image.createInfo.setExtent(Extent3D(64, 64, 1));
 	image.createInfo.setFormat(Format::eR8G8B8A8Unorm);
 	image.createInfo.setImageType(ImageType::e2D);
-	image.createInfo.setInitialLayout(ImageLayout::eGeneral);
+	image.createInfo.setInitialLayout(ImageLayout::eUndefined);
 	image.createInfo.setMipLevels(1);
 	image.createInfo.setSamples(SampleCountFlagBits::e1);
 	image.createInfo.setSharingMode(SharingMode::eExclusive);
@@ -54,8 +54,10 @@ void LightClusteringPass::OnCreate()
 	computeMaterial = DataManager::RequestResourceType<Material>("LightClusteringMaterial");
 	computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
 	TestData data;
+	ClusterLightsData lightData;
 	data.color = { 1.0f, 0.3f, 1.0f, 1.0f };
 	computeMaterial->SetUniformBuffer<TestData>("colorData", data);
+	computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", lightData);
 	computeMaterial->SetStorageTexture("storageTex", texture);
 	computeMaterial->LoadResources();
 }

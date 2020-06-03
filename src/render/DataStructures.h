@@ -26,3 +26,9 @@ struct TestData
 	alignas(16) glm::vec4 color;
 };
 
+// cluster lights indices
+struct ClusterLightsData
+{
+	alignas(16) glm::uint16 lightIndices[256];
+};
+

@@ -169,6 +169,21 @@ void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, cons
 	UpdateUniformBuffer(inName, inSize, inData);
 }
 
+void Material::SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)
+{
+	VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
+
+	VulkanBuffer buffer;
+	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
+	buffer.createInfo.setSize(inSize);
+	buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer);
+	buffer.Create(&vulkanDevice);
+	buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+
+	storageBuffers[inName].Destroy();
+	storageBuffers[inName] = buffer;
+}
+
 void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 {
 	buffers[inName].CopyTo(inSize, inData);
@@ -193,6 +208,10 @@ bool Material::Cleanup()
 {
 	// TODO: cleanup at least buffers
 	for (auto& pair : buffers)
+	{
+		pair.second.Destroy();
+	}
+	for (auto& pair : storageBuffers)
 	{
 		pair.second.Destroy();
 	}
