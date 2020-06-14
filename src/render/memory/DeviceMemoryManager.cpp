@@ -77,7 +77,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 				auto currentTime = std::chrono::high_resolution_clock::now();
 				double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 
-				std::printf("my allocation of %I64u bytes for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, requiredSize, deltaTime);
+				std::printf("suballocation from %I64u bytes memtype %I64u for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, memTypeIndex, requiredSize, deltaTime);
 
 				return memoryRecord;
 			}
@@ -94,7 +94,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 
-	std::printf("vulkan allocation of %I64u bytes for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, requiredSize, deltaTime);
+	std::printf("vulkan allocation of %I64u bytes memtype %I64u for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, memTypeIndex, requiredSize, deltaTime);
 
 	MemoryPosition pos = chunk.AcquireSegment(requiredSize);
 

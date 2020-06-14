@@ -1,6 +1,9 @@
 #include "LightClusteringPass.h"
 #include "data/DataManager.h"
 #include "../DataStructures.h"
+#include "VulkanPassBase.h"
+#include "render/Renderer.h"
+#include "ZPrepass.h"
 
 LightClusteringPass::LightClusteringPass(HashString inName)
 	: VulkanPassBase(inName)
@@ -10,6 +13,14 @@ LightClusteringPass::LightClusteringPass(HashString inName)
 
 void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
+	// barriers ----------------------------------------------
+	ImageMemoryBarrier depthTextureBarrier = depthTexture->GetImage().CreateLayoutBarrier(
+		ImageLayout::eUndefined,//DepthAttachmentOptimal,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eShaderWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
+		0, 1, 0, 1);
 	ImageMemoryBarrier clustersTextureBarrier = image.CreateLayoutBarrier(
 		ImageLayout::eUndefined,
 		ImageLayout::eGeneral,
@@ -17,19 +28,20 @@ void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
 		AccessFlagBits::eShaderWrite,
 		ImageAspectFlagBits::eColor,
 		0, 1, 0, 1);
+	std::array<ImageMemoryBarrier, 2> barriers{ depthTextureBarrier, clustersTextureBarrier };
 	inCommandBuffer->pipelineBarrier(
 		PipelineStageFlagBits::eAllGraphics,
 		PipelineStageFlagBits::eComputeShader,
 		DependencyFlags(),
 		0, nullptr, 0, nullptr,
-		1, &clustersTextureBarrier);
+		static_cast<uint32_t>( barriers.size() ), barriers.data());
 
 	PipelineData& pipelineData = FindPipeline(computeMaterial);
 
 	DeviceSize offset = 0;
 	inCommandBuffer->bindPipeline(PipelineBindPoint::eCompute, pipelineData.pipeline);
 	inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
-	inCommandBuffer->dispatch(64, 64, 64);
+	inCommandBuffer->dispatch(64, 64, 1);
 }
 
 void LightClusteringPass::OnCreate()
@@ -50,16 +62,19 @@ void LightClusteringPass::OnCreate()
 
 	texture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeTexture");
 	texture->CreateFromExternal(image, imageView, true);
+	ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
+	depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeDepthTexture");
+	depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
 
 	computeMaterial = DataManager::RequestResourceType<Material>("LightClusteringMaterial");
 	computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
-	TestData data;
-	ClusterLightsData lightData;
-	data.color = { 1.0f, 0.3f, 1.0f, 1.0f };
-	computeMaterial->SetUniformBuffer<TestData>("colorData", data);
-	computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", lightData);
+	ClusterLightsData* lightData = new ClusterLightsData();
+	computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", *lightData);
 	computeMaterial->SetStorageTexture("storageTex", texture);
+	computeMaterial->SetTexture("depthTexture", depthTexture);
 	computeMaterial->LoadResources();
+
+	delete lightData;
 }
 
 RenderPass LightClusteringPass::CreateRenderPass()

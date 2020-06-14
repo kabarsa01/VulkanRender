@@ -70,11 +70,11 @@ void Renderer::Init()
 	perFrameData = new PerFrameData();
 	perFrameData->Create(&device);
 
-	lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
-	lightClusteringPass->Create();
 	zPrepass = new ZPrepass(HashString("ZPrepass"));
 	zPrepass->SetResolution(width, height);
 	zPrepass->Create();
+	lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
+	lightClusteringPass->Create();
 	gBufferPass = new GBufferPass(HashString("GBufferPass"));
 	gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
 	gBufferPass->SetResolution(width, height);
@@ -117,6 +117,9 @@ void Renderer::RenderFrame()
 	// copy new data
 	TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 
+	// render passes
+	// z prepass
+	zPrepass->RecordCommands(&cmdBuffer);
 	//--------------------------------------------------------
 	lightClusteringPass->RecordCommands(&cmdBuffer);
 	// barriers ----------------------------------------------
@@ -134,10 +137,6 @@ void Renderer::RenderFrame()
 		0, nullptr, 0, nullptr,
 		1, &clustersTextureBarrier);
 	//--------------------------------------------------------
-
-	// render passes
-	// z prepass
-	zPrepass->RecordCommands(&cmdBuffer);
 	// gbuffer pass
 	gBufferPass->RecordCommands(&cmdBuffer);
 	// barriers ----------------------------------------------

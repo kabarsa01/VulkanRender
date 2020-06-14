@@ -59,7 +59,7 @@ std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
 	shaderGlobalDataBinding.setBinding(static_cast<uint32_t>( bindings.size() ));
 	shaderGlobalDataBinding.setDescriptorCount(1);
 	shaderGlobalDataBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-	shaderGlobalDataBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+	shaderGlobalDataBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
 
 	bindings.push_back(shaderGlobalDataBinding);
 
@@ -90,7 +90,7 @@ void PerFrameData::GatherData()
 
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
-	shaderGlobalData.view = camComp->CalculateViewMatrix();
-	shaderGlobalData.proj = camComp->CalculateProjectionMatrix();
+	shaderGlobalData.worldToView = camComp->CalculateViewMatrix();
+	shaderGlobalData.viewToProj = camComp->CalculateProjectionMatrix();
 }
 

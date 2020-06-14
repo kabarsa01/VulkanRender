@@ -10,6 +10,20 @@ GBufferPass::GBufferPass(HashString inName)
 
 void GBufferPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
+	ImageMemoryBarrier depthTextureBarrier = GetDepthAttachment().CreateLayoutBarrier(
+		ImageLayout::eUndefined,
+		ImageLayout::eDepthAttachmentOptimal,
+		AccessFlagBits::eShaderRead,
+		AccessFlagBits::eDepthStencilAttachmentRead,
+		ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
+		0, 1, 0, 1);
+	inCommandBuffer->pipelineBarrier(
+		PipelineStageFlagBits::eComputeShader,
+		PipelineStageFlagBits::eAllGraphics,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		1, &depthTextureBarrier);
+
 	ScenePtr scene = Engine::GetSceneInstance();
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
 	//---------------------------------------------------------------------------------

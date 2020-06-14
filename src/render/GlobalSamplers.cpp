@@ -92,7 +92,7 @@ void GlobalSamplers::ConstructBindings()
 		binding.setBinding(index);
 		binding.setDescriptorType(DescriptorType::eSampler);
 		binding.setDescriptorCount(1);
-		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+		binding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
 		binding.setPImmutableSamplers(samplers[index]);
 
 		bindings.push_back(binding);

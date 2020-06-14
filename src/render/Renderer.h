@@ -69,6 +69,7 @@ public:
 	Queue GetGraphicsQueue();
 
 	PerFrameData* GetPerFrameData() { return perFrameData; }
+	ZPrepass* GetZPrepass() { return zPrepass; }
 	LightClusteringPass* GetLightClusteringPass() { return lightClusteringPass; }
 	GBufferPass* GetGBufferPass() { return gBufferPass; }
 	DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
@@ -100,8 +101,8 @@ private:
 
 	PerFrameData* perFrameData;
 
-	LightClusteringPass* lightClusteringPass;
 	ZPrepass* zPrepass;
+	LightClusteringPass* lightClusteringPass;
 	GBufferPass* gBufferPass;
 	DeferredLightingPass* deferredLightingPass;
 	PostProcessPass* postProcessPass;

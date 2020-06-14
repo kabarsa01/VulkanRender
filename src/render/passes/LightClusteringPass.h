@@ -12,6 +12,7 @@ public:
 	VulkanImage image;
 	ImageView imageView;
 	Texture2DPtr texture;
+	Texture2DPtr depthTexture;
 
 	LightClusteringPass(HashString inName);
 	void RecordCommands(CommandBuffer* inCommandBuffer) override;

@@ -1,24 +1,68 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 1, binding = 1, rgba8) uniform image2D storageTex;
-layout(set = 1, binding = 0) uniform TestData
+layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
+layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
+layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
+layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
+layout(set = 0, binding = 4) uniform ShaderGlobalData
 {
-	vec4 color;
-} colorData;
+	mat4 worldToView;
+	mat4 viewToProj;
+	float time;
+	float deltaTime;
+} globalData;
+
+layout(set = 1, binding = 0) uniform texture2D depthTexture;
+layout(set = 1, binding = 1, rgba8) uniform image2D storageTex;
 // cluster lights indices
 layout(set = 1, binding = 2) buffer ClusterLightsData
 {
-	uint lightIndices[128];
+	uvec2 clusters[32][32][32];
+	uint lightIndices[32][32][32][128];
 } clusterLightsData;
 
+// shared
+shared uint clusterStatus[32];
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+// depth sampling
+float SampleDepth()
+{
+	return 0.5f;
+}
+
 void main() {
-	float z = 0.5f;
-	imageStore(storageTex, ivec2(16,16), colorData.color);
-	imageStore(storageTex, ivec2(48,48), colorData.color);
-	imageStore(storageTex, ivec2(18,48), colorData.color);
-	clusterLightsData.lightIndices[13] = 2265330;
-	uint intColor = clusterLightsData.lightIndices[13];
-	vec4 color = vec4(intColor & 0x000000ff, (intColor & 0x0000ff00) >> 8, (intColor & 0x00ff0000) >> 16, 1.0);
-	imageStore(storageTex, ivec2(38,28), color);
+	uvec2 screenRes = textureSize(sampler2D( depthTexture, repeatLinearSampler ), 0);
+	vec2 pixelHalfSize = 1.0 / (2.0 * screenRes);
+	uvec2 tileSize = screenRes / gl_NumWorkGroups.xy;
+
+	if ((gl_LocalInvocationID.x >= tileSize.x) || (gl_LocalInvocationID.y >= tileSize.y))
+	{
+		return;
+	}
+
+	vec2 samplePosition = vec2(tileSize * gl_WorkGroupID.xy + gl_LocalInvocationID.xy) / screenRes;
+	float depth = texture(sampler2D( depthTexture, repeatLinearSampler ), samplePosition).r;
+	if (depth == 0.0 || depth == 1.0)
+	{
+		imageStore(storageTex, ivec2(samplePosition * vec2(63,63)), vec4(0.0, 0.0, 0.0, 1.0));
+		return;
+	}
+
+	uint clusterIndex = uint(clamp( depth * 32.0, 0.0, 31.0));
+
+	uint clusterChecked = atomicOr(clusterStatus[clusterIndex], 1);
+	if (clusterChecked != 0)
+	{
+		return;
+	}
+
+	clusterLightsData.lightIndices[13][13][13][13] = 2265330;
+	uint intColor = clusterLightsData.lightIndices[13][13][13][13];
+	float clusterColor = float(clusterIndex) / 32.0;
+	vec4 color = vec4(depth, depth, depth, 1.0);
+//	vec4 color = vec4(intColor & 0x000000ff, (intColor & 0x0000ff00) >> 8, (intColor & 0x00ff0000) >> 16, 1.0);
+	imageStore(storageTex, ivec2(samplePosition * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
 }
