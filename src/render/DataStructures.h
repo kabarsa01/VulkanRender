@@ -10,6 +10,8 @@ struct ShaderGlobalData
 	alignas(16) glm::mat4 viewToProj;
 	alignas(4) float time;
 	alignas(4) float deltaTime;
+	alignas(4) float cameraNear;
+	alignas(4) float cameraFar;
 };
 
 // per object update

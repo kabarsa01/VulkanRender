@@ -11,6 +11,8 @@ layout(set = 0, binding = 4) uniform ShaderGlobalData
 	mat4 proj;
 	float time;
 	float deltaTime;
+	float cameraNear;
+	float cameraFar;
 } globalData;
 
 layout(set = 1, binding = 0) uniform MVPBuffer

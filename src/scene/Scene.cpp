@@ -59,8 +59,8 @@ void Scene::Init()
 	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
 	cameraObj->transform.SetRotation({ 0.0f, 180.0f, 0.0f });
 	cameraObj->GetCameraComponent()->SetFov(110.0f);
-	cameraObj->GetCameraComponent()->SetNearPlane(25.0f);
-	cameraObj->GetCameraComponent()->SetFarPlane(45.0f);
+	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
+	cameraObj->GetCameraComponent()->SetFarPlane(100.0f);
 
 	{
 		MeshImporter importer;

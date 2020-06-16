@@ -92,5 +92,7 @@ void PerFrameData::GatherData()
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	shaderGlobalData.worldToView = camComp->CalculateViewMatrix();
 	shaderGlobalData.viewToProj = camComp->CalculateProjectionMatrix();
+	shaderGlobalData.cameraNear = camComp->GetNearPlane();
+	shaderGlobalData.cameraFar = camComp->GetFarPlane();
 }
 

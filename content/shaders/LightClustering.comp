@@ -11,6 +11,8 @@ layout(set = 0, binding = 4) uniform ShaderGlobalData
 	mat4 viewToProj;
 	float time;
 	float deltaTime;
+	float cameraNear;
+	float cameraFar;
 } globalData;
 
 layout(set = 1, binding = 0) uniform texture2D depthTexture;
@@ -27,42 +29,52 @@ shared uint clusterStatus[32];
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-// depth sampling
-float SampleDepth()
-{
-	return 0.5f;
-}
-
 void main() {
+	float near = globalData.cameraNear;
+	float far = globalData.cameraFar;
+
 	uvec2 screenRes = textureSize(sampler2D( depthTexture, repeatLinearSampler ), 0);
-	vec2 pixelHalfSize = 1.0 / (2.0 * screenRes);
-	uvec2 tileSize = screenRes / gl_NumWorkGroups.xy;
+	vec2 pixelHalfSize =  0.5 / vec2(screenRes);
+	uvec2 tileSize = uvec2( ceil( vec2(screenRes) / vec2(gl_NumWorkGroups.xy) ) );
 
-	if ((gl_LocalInvocationID.x >= tileSize.x) || (gl_LocalInvocationID.y >= tileSize.y))
+	//uint gl_LocalInvocationIndex
+	uint tilePixelsCount = tileSize.x * tileSize.y;
+	if (gl_LocalInvocationIndex >= tilePixelsCount)
 	{
 		return;
 	}
 
-	vec2 samplePosition = vec2(tileSize * gl_WorkGroupID.xy + gl_LocalInvocationID.xy) / screenRes;
-	float depth = texture(sampler2D( depthTexture, repeatLinearSampler ), samplePosition).r;
-	if (depth == 0.0 || depth == 1.0)
+	uint workgroupSize = gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z;
+	uint pixelCount = (tilePixelsCount / workgroupSize) + clamp((tilePixelsCount % workgroupSize) / gl_LocalInvocationIndex, 0, 1);
+
+	for (uint index = 0; index < pixelCount; index++)
 	{
-		imageStore(storageTex, ivec2(samplePosition * vec2(63,63)), vec4(0.0, 0.0, 0.0, 1.0));
-		return;
-	}
+		uint pixelIndex = gl_LocalInvocationIndex + (index * workgroupSize);
+		uvec2 tileStart = tileSize * gl_WorkGroupID.xy;
+		uvec2 tileCoord = uvec2(pixelIndex % tileSize.x, pixelIndex / tileSize.x);
+		vec2 pixelUV = pixelHalfSize + vec2(tileStart + tileCoord) / vec2(screenRes);
 
-	uint clusterIndex = uint(clamp( depth * 32.0, 0.0, 31.0));
+		float depth = texture(sampler2D( depthTexture, repeatLinearSampler ), pixelUV).r;
+		if (depth == 0.0 || depth == 1.0)
+		{
+			imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), vec4(0.0, 0.0, 0.0, 1.0));
+			continue;
+		}
 
-	uint clusterChecked = atomicOr(clusterStatus[clusterIndex], 1);
-	if (clusterChecked != 0)
-	{
-		return;
-	}
+		float linearDepth = near * far / (far + depth * (near - far));
+		// depthSlice = near * (far/near) ^ (slice/numSlices) --- pretty good distribution from Doom 2016
+		// cluster index = maxClusters * log(linearDepth/near) / log(far/near);
+		uint clusterIndex = uint(32.0 * log(linearDepth/near) / log(far/near));
+		uint clusterChecked = atomicOr(clusterStatus[clusterIndex], 1);
+		if (clusterChecked != 0)
+		{
+			continue;
+		}
 
-	clusterLightsData.lightIndices[13][13][13][13] = 2265330;
-	uint intColor = clusterLightsData.lightIndices[13][13][13][13];
-	float clusterColor = float(clusterIndex) / 32.0;
-	vec4 color = vec4(depth, depth, depth, 1.0);
-//	vec4 color = vec4(intColor & 0x000000ff, (intColor & 0x0000ff00) >> 8, (intColor & 0x00ff0000) >> 16, 1.0);
-	imageStore(storageTex, ivec2(samplePosition * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
+		// TODO: find the light source intersections for this cluster
+
+		clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][13] = 2265330;
+		vec4 color = vec4(depth, depth, depth, 1.0);
+		imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
+	}	
 }
