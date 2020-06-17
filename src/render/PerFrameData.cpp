@@ -94,5 +94,6 @@ void PerFrameData::GatherData()
 	shaderGlobalData.viewToProj = camComp->CalculateProjectionMatrix();
 	shaderGlobalData.cameraNear = camComp->GetNearPlane();
 	shaderGlobalData.cameraFar = camComp->GetFarPlane();
+	shaderGlobalData.cameraFov = camComp->GetFov();
 }
 

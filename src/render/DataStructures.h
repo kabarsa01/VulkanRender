@@ -12,6 +12,7 @@ struct ShaderGlobalData
 	alignas(4) float deltaTime;
 	alignas(4) float cameraNear;
 	alignas(4) float cameraFar;
+	alignas(4) float cameraFov;
 };
 
 // per object update
