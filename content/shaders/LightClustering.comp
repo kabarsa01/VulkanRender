@@ -29,14 +29,19 @@ layout(set = 1, binding = 2) buffer ClusterLightsData
 } clusterLightsData;
 
 // cluster lights
+
+// we can probably optimize padding by using float after each vec3 to utilize aligment better, but it's not as much memory anyway
 struct LightInfo
 {
 	vec3 position;
 	vec3 direction;
 	vec3 color;
+	float radius;
+	float spotHalfAngle;
 	float intensity;
 };
-struct LightsList
+
+layout(set = 1, binding = 3) uniform LightsList
 {
 	uvec2 directionalPosition;
 	uvec2 spotPosition;
@@ -48,6 +53,41 @@ struct LightsList
 shared uint clusterStatus[32];
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+uint Pack16BitIndex(uint lightIndexData, uint lightIndexInCluster, uint lightIndexGlobal)
+{
+	if ((lightIndexInCluster % 2) == 0)
+	{
+		// nullify the bits before setting the value
+		lightIndexData &= 0xffff0000;
+		lightIndexData |= 0x0000ffff & lightIndexGlobal;
+	}
+	else
+	{
+		// nullify the bits before setting the value
+		lightIndexData &= 0x0000ffff;
+		lightIndexData |= 0xffff0000 & (lightIndexGlobal << 16);
+	}
+
+	return lightIndexData;
+}
+
+bool IsConeIntersectsSphere(vec3 coneOrigin, vec3 coneDir, float coneLength, float halfAngle, vec4 sphere)
+{
+    const vec3 centerToCenter = sphere.xyz - coneOrigin;
+    const float centersDistanceSqr = dot(centerToCenter, centerToCenter);
+	// vector between cone and sphere centers projected onto cone direction, do not forget to normalize coneDir
+    const float projectionOnCone = dot(centerToCenter, coneDir);
+	// this is simply can be calculated looking at similar triangles, v2 * tan(angle) - v1 * sin(angle) gives us distance to cone border,
+	// where v2 is a distance from sphere center to the end of projection vector, which is vector between cone and sphere centers projected on cone direction
+    const float distanceToConeBorder = cos(halfAngle) * sqrt(centersDistanceSqr - projectionOnCone*projectionOnCone) - projectionOnCone * sin(halfAngle);
+ 
+    const bool isSphereOutsideConeAngle = distanceToConeBorder > sphere.w;
+    const bool isOutsideFront = projectionOnCone > (sphere.w + coneLength);
+    const bool isBehindBack  = projectionOnCone < -sphere.w;
+
+	return !(isSphereOutsideConeAngle || isOutsideFront || isBehindBack);
+}
 
 void main() {
 	float near = globalData.cameraNear;
@@ -96,6 +136,8 @@ void main() {
 		}
 
 		// TODO: find the light source intersections for this cluster
+		// first we find our cluster bounds for AABB. clusters are small so it's an 'okay' approximation
+
 		float clusterNear = near * pow(far/near, float(clusterIndex)/32.0);
 		float clusterFar = near * pow(far/near, float(nextClusterIndex)/32.0);
 
@@ -112,7 +154,83 @@ void main() {
 		float clusterBottom = min(-nearHeight * 0.5 + gl_WorkGroupID.y * nearHeight / 32.0, -farHeight * 0.5 + gl_WorkGroupID.y * farHeight / 32.0);
 		float clusterTop = max(-nearHeight * 0.5 + (gl_WorkGroupID.y + 1) * nearHeight / 32.0, -farHeight * 0.5 + (gl_WorkGroupID.y + 1) * farHeight / 32.0);
 
-		clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][13] = 2265330;
+		// we make an AABB from our cluster frustum and then we make a sphere out of it
+		vec4 boundingSphere;
+		vec3 clusterExtent1 = vec3(clusterLeft, clusterTop, clusterFar);
+		vec3 clusterExtent2 = vec3(clusterRight, clusterBottom, clusterNear);
+		vec3 extents = (clusterExtent1 - clusterExtent2) * 0.5;
+		boundingSphere.xyz = clusterExtent2 + extents;
+		boundingSphere.w = length(extents);
+
+		uint lightIndexInCluster = 0;
+
+		for (uint index = lightsList.directionalPosition.x; index < lightsList.directionalPosition.y; index++)
+		{
+			LightInfo lightInfo = lightsList.lights[index];
+			lightIndexInCluster++;
+		}
+
+		uint spotLightOffset = lightIndexInCluster;
+		uint spotLightCount = 0;
+		for (uint index = lightsList.spotPosition.x; index < lightsList.spotPosition.y; index++)
+		{
+			if (lightIndexInCluster > 255)
+			{
+				break;
+			}
+			LightInfo lightInfo = lightsList.lights[index];
+			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position, 1.0)).xyz;
+			vec3 lightDir = (globalData.worldToView * vec4(lightInfo.direction, 0.0)).xyz;
+			if (!IsConeIntersectsSphere(lightPos, lightDir, lightInfo.radius, radians(lightInfo.spotHalfAngle), boundingSphere))
+			{
+				continue;
+			}
+			spotLightCount++;
+
+			uint entryIndex = lightIndexInCluster / 2;
+			uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+			lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+			clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
+
+			lightIndexInCluster++;
+		}
+		uint spotLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+		spotLightOffsetData &= 0x0000ffff;
+		spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
+		spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
+		clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = spotLightOffsetData;
+
+		uint pointLightOffset = lightIndexInCluster;
+		uint pointLightCount = 0;
+		for (uint index = lightsList.pointPosition.x; index < lightsList.pointPosition.y; index++)
+		{
+			if (lightIndexInCluster > 255)
+			{
+				break;
+			}
+			LightInfo lightInfo = lightsList.lights[index];
+			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position, 1.0)).xyz;
+			vec3 centerToCenter = lightPos - boundingSphere.xyz;
+			float radiusSum = boundingSphere.w + lightInfo.radius;
+			if (dot(centerToCenter, centerToCenter) > (radiusSum * radiusSum))
+			{
+				continue;
+			}
+			pointLightCount++;
+
+			uint entryIndex = lightIndexInCluster / 2;
+			uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+			lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+			clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;
+
+			lightIndexInCluster++;
+		}
+		uint pointLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y;
+		pointLightOffsetData &= 0xffff0000;
+		pointLightOffsetData |= 0x000000ff & pointLightOffset;
+		pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
+		clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
+
 		vec4 color = vec4(depth, depth, depth, 1.0);
 		imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
 	}	

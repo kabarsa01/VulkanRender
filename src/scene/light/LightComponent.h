@@ -8,6 +8,9 @@ class LightComponent : public SceneObjectComponent
 {
 public:
 	glm::vec3 Color;
+	float intensity;
+	float radius;
+	float spotHalfAngle;
 
 	LightComponent(std::shared_ptr<SceneObjectBase> InParent);
 	virtual ~LightComponent();

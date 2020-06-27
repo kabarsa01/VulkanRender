@@ -58,6 +58,9 @@
     <Filter Include="Source Files\utils">
       <UniqueIdentifier>{e178d0ae-de75-4ed8-bb83-bef791751e2d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\scene\light">
+      <UniqueIdentifier>{98ca981e-fec5-465a-8cd0-f246401a1106}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -207,6 +210,12 @@
     <ClCompile Include="src\render\passes\LightClusteringPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\light\LightComponent.cpp">
+      <Filter>Source Files\scene\light</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\light\LightObject.cpp">
+      <Filter>Source Files\scene\light</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -352,6 +361,12 @@
     </ClInclude>
     <ClInclude Include="src\render\passes\LightClusteringPass.h">
       <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\light\LightComponent.h">
+      <Filter>Source Files\scene\light</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\light\LightObject.h">
+      <Filter>Source Files\scene\light</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
 #include "vulkan/vulkan.hpp"
 #include "VulkanPassBase.h"
 #include "../resources/VulkanImage.h"
+#include "../DataStructures.h"
 
 class LightClusteringPass : public VulkanPassBase
 {
@@ -17,7 +18,11 @@ public:
 	LightClusteringPass(HashString inName);
 	void RecordCommands(CommandBuffer* inCommandBuffer) override;
 protected:
-	void OnCreate() override;
+	ClusterLightsData* clusterLightData;
+	LightsList* lightsList;
+
+	virtual void OnCreate() override;
+	virtual void OnDestroy() override;
 	RenderPass CreateRenderPass() override;
 	void CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight) override;
 	void CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight) override;

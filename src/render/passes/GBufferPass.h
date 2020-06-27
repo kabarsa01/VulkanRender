@@ -15,6 +15,7 @@ protected:
 	std::array<ClearValue, 3> clearValues;
 
 	virtual void OnCreate() override;
+	virtual void OnDestroy() override {}
 	virtual RenderPass CreateRenderPass() override;
 	virtual void CreateColorAttachments(
 		std::vector<VulkanImage>& outAttachments, 

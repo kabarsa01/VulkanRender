@@ -276,6 +276,8 @@ exit /b</Command>
     <ClCompile Include="src\render\TransferList.cpp" />
     <ClCompile Include="src\scene\camera\CameraComponent.cpp" />
     <ClCompile Include="src\scene\camera\CameraObject.cpp" />
+    <ClCompile Include="src\scene\light\LightComponent.cpp" />
+    <ClCompile Include="src\scene\light\LightObject.cpp" />
     <ClCompile Include="src\scene\mesh\MeshComponent.cpp" />
     <ClCompile Include="src\scene\mesh\MeshObject.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
@@ -326,6 +328,8 @@ exit /b</Command>
     <ClInclude Include="src\render\TransferList.h" />
     <ClInclude Include="src\scene\camera\CameraComponent.h" />
     <ClInclude Include="src\scene\camera\CameraObject.h" />
+    <ClInclude Include="src\scene\light\LightComponent.h" />
+    <ClInclude Include="src\scene\light\LightObject.h" />
     <ClInclude Include="src\scene\mesh\MeshComponent.h" />
     <ClInclude Include="src\scene\mesh\MeshObject.h" />
     <ClInclude Include="src\scene\Scene.h" />

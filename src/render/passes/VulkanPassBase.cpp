@@ -52,6 +52,8 @@ void VulkanPassBase::Create()
 
 void VulkanPassBase::Destroy()
 {
+	OnDestroy();
+
 	Device& device = vulkanDevice->GetDevice();
 
 	PipelineRegistry::GetInstance()->DestroyPipelines(vulkanDevice, name);

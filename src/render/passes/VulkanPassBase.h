@@ -42,6 +42,7 @@ protected:
 	inline Renderer* GetRenderer() { return renderer; }
 
 	virtual void OnCreate() = 0;
+	virtual void OnDestroy() = 0;
 	virtual RenderPass CreateRenderPass() = 0;
 	virtual void CreateColorAttachments(
 		std::vector<VulkanImage>& outAttachments, 

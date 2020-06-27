@@ -28,6 +28,8 @@ struct LightInfo
 	alignas(16) glm::vec3 position;
 	alignas(16) glm::vec3 direction;
 	alignas(16) glm::vec3 color;
+	alignas(4) float radius;
+	alignas(4) float spotHalfAngle;
 	alignas(4) float intensity;
 };
 

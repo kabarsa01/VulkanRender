@@ -4,6 +4,7 @@
 #include "VulkanPassBase.h"
 #include "render/Renderer.h"
 #include "ZPrepass.h"
+#include "scene/light/LightComponent.h"
 
 LightClusteringPass::LightClusteringPass(HashString inName)
 	: VulkanPassBase(inName)
@@ -13,6 +14,11 @@ LightClusteringPass::LightClusteringPass(HashString inName)
 
 void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
+	ScenePtr scene = Engine::GetSceneInstance();
+	std::vector<LightComponentPtr> lights = scene->GetSceneComponentsCast<LightComponent>();
+
+	computeMaterial->UpdateUniformBuffer<LightsList>("lightsList", *lightsList);
+
 	// barriers ----------------------------------------------
 	ImageMemoryBarrier depthTextureBarrier = depthTexture->GetImage().CreateLayoutBarrier(
 		ImageLayout::eUndefined,//DepthAttachmentOptimal,
@@ -66,15 +72,22 @@ void LightClusteringPass::OnCreate()
 	depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeDepthTexture");
 	depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
 
+	clusterLightData = new ClusterLightsData();
+	lightsList = new LightsList();
+
 	computeMaterial = DataManager::RequestResourceType<Material>("LightClusteringMaterial");
 	computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
-	ClusterLightsData* lightData = new ClusterLightsData();
-	computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", *lightData);
+	computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", *clusterLightData);
+	computeMaterial->SetUniformBuffer<LightsList>("lightsList", *lightsList);
 	computeMaterial->SetStorageTexture("storageTex", texture);
 	computeMaterial->SetTexture("depthTexture", depthTexture);
 	computeMaterial->LoadResources();
+}
 
-	delete lightData;
+void LightClusteringPass::OnDestroy()
+{
+	delete clusterLightData;
+	delete lightsList;
 }
 
 RenderPass LightClusteringPass::CreateRenderPass()
