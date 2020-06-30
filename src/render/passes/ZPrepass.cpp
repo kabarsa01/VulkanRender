@@ -11,6 +11,22 @@ ZPrepass::ZPrepass(HashString inName)
 
 void ZPrepass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
+	// barriers ----------------------------------------------
+	ImageMemoryBarrier depthTextureBarrier = GetDepthAttachment().CreateLayoutBarrier(
+		ImageLayout::eUndefined,
+		ImageLayout::eDepthStencilAttachmentOptimal,
+		AccessFlagBits::eShaderRead,
+		AccessFlagBits::eShaderWrite,
+		ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
+		0, 1, 0, 1);
+	std::array<ImageMemoryBarrier, 1> barriers{ depthTextureBarrier };
+	inCommandBuffer->pipelineBarrier(
+		PipelineStageFlagBits::eFragmentShader,
+		PipelineStageFlagBits::eVertexShader,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		static_cast<uint32_t>(barriers.size()), barriers.data());
+
 	ScenePtr scene = Engine::GetSceneInstance();
 	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
 	//---------------------------------------------------------------------------------
@@ -92,10 +108,10 @@ RenderPass ZPrepass::CreateRenderPass()
 	SubpassDependency subpassDependency;
 	subpassDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
 	subpassDependency.setDstSubpass(0);
-	subpassDependency.setSrcStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
-	subpassDependency.setSrcAccessMask(AccessFlags());
-	subpassDependency.setDstStageMask(PipelineStageFlagBits::eColorAttachmentOutput);
-	subpassDependency.setDstAccessMask(AccessFlagBits::eColorAttachmentRead | AccessFlagBits::eColorAttachmentWrite);
+	subpassDependency.setSrcStageMask(PipelineStageFlagBits::eAllGraphics);
+	subpassDependency.setDstStageMask(PipelineStageFlagBits::eAllGraphics);
+	subpassDependency.setSrcAccessMask(AccessFlagBits::eDepthStencilAttachmentWrite);
+	subpassDependency.setDstAccessMask(AccessFlagBits::eMemoryRead);
 
 	RenderPassCreateInfo renderPassInfo;
 	renderPassInfo.setAttachmentCount(1);

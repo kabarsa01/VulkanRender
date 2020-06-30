@@ -1,8 +1,9 @@
 #include "VulkanBuffer.h"
 #include "core/Engine.h"
 
-VulkanBuffer::VulkanBuffer(bool inScoped)
+VulkanBuffer::VulkanBuffer(bool inScoped, bool inCleanup)
 	: scoped(inScoped)
+	, cleanup(inCleanup)
 	, stagingBuffer(nullptr)
 {
 
@@ -65,6 +66,10 @@ void VulkanBuffer::CopyToStagingBuffer(DeviceSize inSize, const char* inData)
 
 void VulkanBuffer::Destroy()
 {
+	if (!cleanup)
+	{
+		return;
+	}
 	if (stagingBuffer != nullptr)
 	{
 		stagingBuffer->Destroy();

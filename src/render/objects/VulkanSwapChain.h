@@ -22,6 +22,8 @@ public:
 
 	void WaitForPresentQueue();
 
+	Image& GetImage() { return images[imageIndex]; }
+	Image& GetPrevImage() { return images[prevImageIndex]; }
 	uint32_t GetImageIndex() { return imageIndex; }
 	uint32_t GetPrevImageIndex() { return prevImageIndex; }
 	Semaphore& GetImageAvailableSemaphore() { return imageAvailableSemaphores[prevImageIndex]; }

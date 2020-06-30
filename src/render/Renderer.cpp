@@ -122,7 +122,7 @@ void Renderer::RenderFrame()
 	zPrepass->RecordCommands(&cmdBuffer);
 	//--------------------------------------------------------
 	lightClusteringPass->RecordCommands(&cmdBuffer);
-	// barriers ----------------------------------------------
+	//// barriers ----------------------------------------------
 	ImageMemoryBarrier clustersTextureBarrier = lightClusteringPass->image.CreateLayoutBarrier(
 		ImageLayout::eGeneral,
 		ImageLayout::eShaderReadOnlyOptimal,
@@ -201,6 +201,7 @@ void Renderer::RenderFrame()
 
 	if (!swapChain.Present())
 	{
+
 		OnResolutionChange();
 	}
 	device.GetGraphicsQueue().waitIdle();

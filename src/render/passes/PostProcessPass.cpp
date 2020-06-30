@@ -15,6 +15,27 @@ PostProcessPass::PostProcessPass(HashString inName)
 void PostProcessPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
 	VulkanSwapChain& swapChain = GetRenderer()->GetSwapChain();
+	Image swapChainImage = swapChain.GetImage();
+
+	// barriers ----------------------------------------------
+	//ImageMemoryBarrier attachmentBarrier;
+	//attachmentBarrier.setImage(swapChainImage);
+	//attachmentBarrier.setOldLayout(ImageLayout::eUndefined);
+	//attachmentBarrier.setNewLayout(ImageLayout::eColorAttachmentOptimal);
+	//attachmentBarrier.subresourceRange.setAspectMask(ImageAspectFlagBits::eColor);
+	//attachmentBarrier.subresourceRange.setBaseMipLevel(0);
+	//attachmentBarrier.subresourceRange.setLevelCount(1);
+	//attachmentBarrier.subresourceRange.setBaseArrayLayer(0);
+	//attachmentBarrier.subresourceRange.setLayerCount(1);
+	//attachmentBarrier.setSrcAccessMask(AccessFlagBits::eMemoryRead);
+	//attachmentBarrier.setDstAccessMask(AccessFlagBits::eMemoryWrite);
+	//inCommandBuffer->pipelineBarrier(
+	//	PipelineStageFlagBits::eVertexShader,
+	//	PipelineStageFlagBits::eFragmentShader,
+	//	DependencyFlags(),
+	//	0, nullptr, 0, nullptr,
+	//	1, &attachmentBarrier);
+
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
 
 	PipelineData& pipelineData = FindPipeline(postProcessMaterial);
@@ -38,6 +59,24 @@ void PostProcessPass::RecordCommands(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
 	inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 	inCommandBuffer->endRenderPass();
+
+	ImageMemoryBarrier presentBarrier;
+	presentBarrier.setImage(swapChainImage);
+	presentBarrier.setOldLayout(ImageLayout::eColorAttachmentOptimal);
+	presentBarrier.setNewLayout(ImageLayout::ePresentSrcKHR);
+	presentBarrier.subresourceRange.setAspectMask(ImageAspectFlagBits::eColor);
+	presentBarrier.subresourceRange.setBaseMipLevel(0);
+	presentBarrier.subresourceRange.setLevelCount(1);
+	presentBarrier.subresourceRange.setBaseArrayLayer(0);
+	presentBarrier.subresourceRange.setLayerCount(1);
+	presentBarrier.setSrcAccessMask(AccessFlagBits::eMemoryWrite);
+	presentBarrier.setDstAccessMask(AccessFlagBits::eMemoryRead);
+	inCommandBuffer->pipelineBarrier(
+		PipelineStageFlagBits::eFragmentShader,
+		PipelineStageFlagBits::eHost,
+		DependencyFlags(),
+		0, nullptr, 0, nullptr,
+		1, &presentBarrier);
 }
 
 void PostProcessPass::OnCreate()
@@ -53,7 +92,7 @@ void PostProcessPass::OnCreate()
 		);
 	ObjectMVPData objData;
 	postProcessMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	postProcessMaterial->SetTexture("screenImage", GetRenderer()->GetLightClusteringPass()->texture);
+	postProcessMaterial->SetTexture("screenImage", screenImage);//GetRenderer()->GetLightClusteringPass()->texture);
 	postProcessMaterial->LoadResources();
 }
 

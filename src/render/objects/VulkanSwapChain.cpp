@@ -216,7 +216,7 @@ void VulkanSwapChain::CreateRenderPass()
 	colorAttachment.setStencilLoadOp(AttachmentLoadOp::eDontCare);
 	colorAttachment.setStencilStoreOp(AttachmentStoreOp::eDontCare);
 	colorAttachment.setInitialLayout(ImageLayout::eUndefined);
-	colorAttachment.setFinalLayout(ImageLayout::ePresentSrcKHR);
+	colorAttachment.setFinalLayout(ImageLayout::eColorAttachmentOptimal);
 
 	AttachmentReference colorAttachmentRef;
 	colorAttachmentRef.setAttachment(0);

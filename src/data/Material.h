@@ -45,10 +45,15 @@ public:
 	void SetStorageBuffer(const std::string& inName, T& inStorageBuffer);
 	void SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
+	void SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
+	void SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
 	template<typename T>
 	void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 	void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	void UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice);
+
+	VulkanBuffer& GetUniformBuffer(const std::string& inName);
+	VulkanBuffer& GetStorageBuffer(const std::string& inName);
 
 	inline ShaderPtr GetVertexShader() { return vertexShader; }
 	inline ShaderPtr GetFragmentShader() { return fragmentShader; }

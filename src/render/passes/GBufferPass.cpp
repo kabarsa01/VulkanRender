@@ -116,9 +116,9 @@ RenderPass GBufferPass::CreateRenderPass()
 	depthAttachDesc.setFormat(Format::eD24UnormS8Uint);
 	depthAttachDesc.setSamples(SampleCountFlagBits::e1);
 	depthAttachDesc.setLoadOp(AttachmentLoadOp::eLoad);
-	depthAttachDesc.setStoreOp(AttachmentStoreOp::eDontCare);
+	depthAttachDesc.setStoreOp(AttachmentStoreOp::eStore);
 	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eLoad);
-	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
+	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eStore);
 	depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 	depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 	AttachmentReference depthAttachRef;

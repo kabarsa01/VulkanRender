@@ -12,7 +12,7 @@ class VulkanBuffer
 public:
 	BufferCreateInfo createInfo;
 
-	VulkanBuffer(bool inScoped = false);
+	VulkanBuffer(bool inScoped = false, bool inCleanup = true);
 	virtual ~VulkanBuffer();
 
 	void Create(VulkanDevice* inDevice);
@@ -40,6 +40,8 @@ public:
 	operator Buffer() const { return buffer; }
 	operator bool() const { return buffer; }
 
+	void SetCleanup(bool inCleanup) { cleanup = inCleanup; }
+
 	//static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
 protected:
 	VulkanDevice* vulkanDevice;
@@ -49,6 +51,7 @@ protected:
 	std::vector<char> data;
 
 	bool scoped = false;
+	bool cleanup = true;
 
 	VulkanBuffer* stagingBuffer;
 };

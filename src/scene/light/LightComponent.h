@@ -4,10 +4,19 @@
 
 #include <glm/ext/vector_float3.hpp>
 
+enum LightType
+{
+	LT_Directional,
+	LT_Spot,
+	LT_Point,
+	LT_MAX
+};
+
 class LightComponent : public SceneObjectComponent
 {
 public:
-	glm::vec3 Color;
+	LightType type;
+	glm::vec3 color;
 	float intensity;
 	float radius;
 	float spotHalfAngle;

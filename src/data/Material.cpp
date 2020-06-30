@@ -169,11 +169,25 @@ void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, cons
 	UpdateUniformBuffer(inName, inSize, inData);
 }
 
+void Material::SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer)
+{
+	buffers[inName].Destroy();
+	buffers[inName] = inBuffer;
+	buffers[inName].SetCleanup(false);
+}
+
+void Material::SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer)
+{
+	storageBuffers[inName].Destroy();
+	storageBuffers[inName] = inBuffer;
+	storageBuffers[inName].SetCleanup(false);
+}
+
 void Material::SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 {
 	VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
 
-	VulkanBuffer buffer;
+	VulkanBuffer buffer(false);
 	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	buffer.createInfo.setSize(inSize);
 	buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer);
@@ -197,6 +211,16 @@ void Material::UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice)
 		write.setDstSet(inSet);
 	}
 	inDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+}
+
+VulkanBuffer& Material::GetUniformBuffer(const std::string& inName)
+{
+	return buffers[inName];
+}
+
+VulkanBuffer& Material::GetStorageBuffer(const std::string& inName)
+{
+	return storageBuffers[inName];
 }
 
 bool Material::Load()

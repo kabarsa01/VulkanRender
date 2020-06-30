@@ -24,33 +24,34 @@ layout(set = 1, binding = 1, rgba8) uniform image2D storageTex;
 // cluster lights indices
 layout(set = 1, binding = 2) buffer ClusterLightsData
 {
-	uvec2 clusters[32][32][32];
-	uint lightIndices[32][32][32][128];
+	uvec2 clusters[32][32][64];
+	uint lightIndices[32][32][64][128];
 } clusterLightsData;
 
 // cluster lights
 
-// we can probably optimize padding by using float after each vec3 to utilize aligment better, but it's not as much memory anyway
 struct LightInfo
 {
-	vec3 position;
-	vec3 direction;
-	vec3 color;
-	float radius;
-	float spotHalfAngle;
-	float intensity;
+	vec4 position;
+	vec4 direction;
+	vec4 color;
+	vec4 rai;
 };
 
 layout(set = 1, binding = 3) uniform LightsList
 {
+	LightInfo lights[512];
+} lightsList;
+
+layout(set = 1, binding = 4) uniform LightsIndices
+{
 	uvec2 directionalPosition;
 	uvec2 spotPosition;
 	uvec2 pointPosition;
-	LightInfo lights[4096];
-} lightsList;
+} lightsIndices;
 
 // shared
-shared uint clusterStatus[32];
+shared uint clusterStatus[64];
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
@@ -90,6 +91,15 @@ bool IsConeIntersectsSphere(vec3 coneOrigin, vec3 coneDir, float coneLength, flo
 }
 
 void main() {
+	if (gl_LocalInvocationIndex == 0)
+	{
+		for (uint idx = 0; idx < 64; idx++)
+		{
+			clusterStatus[idx] = 0;
+		}
+	}
+	memoryBarrierShared();
+
 	float near = globalData.cameraNear;
 	float far = globalData.cameraFar;
 
@@ -120,14 +130,13 @@ void main() {
 		float depth = texture(sampler2D( depthTexture, repeatLinearSampler ), pixelUV).r;
 		if (depth <= 0.0 || depth >= 1.0)
 		{
-			//imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), vec4(0.0, 0.0, 0.0, 1.0));
 			continue;
 		}
 
-		float linearDepth = near * far / (far + depth * (near - far));
+		float linearDepth = 2.0 * near * far / (far + depth * (near - far));
 		// depthSlice = near * (far/near) ^ (slice/numSlices) --- pretty good distribution from Doom 2016
 		// cluster index = maxClusters * log(linearDepth/near) / log(far/near);
-		uint clusterIndex = clamp(uint(32.0 * log(linearDepth/near) / log(far/near)), 0, 31); // clump it for zero based index just in case
+		uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it for zero based index just in case
 		uint nextClusterIndex = clusterIndex + 1;
 		uint clusterChecked = atomicOr(clusterStatus[clusterIndex], 1);
 		if (clusterChecked != 0)
@@ -138,8 +147,8 @@ void main() {
 		// TODO: find the light source intersections for this cluster
 		// first we find our cluster bounds for AABB. clusters are small so it's an 'okay' approximation
 
-		float clusterNear = near * pow(far/near, float(clusterIndex)/32.0);
-		float clusterFar = near * pow(far/near, float(nextClusterIndex)/32.0);
+		float clusterNear = near * pow(far/near, float(clusterIndex)/64.0);
+		float clusterFar = near * pow(far/near, float(nextClusterIndex)/64.0);
 
 		float fovMultiplier = tan(radians(globalData.cameraFov * 0.5)) * 2.0;
 		float nearWidth = clusterNear * fovMultiplier;
@@ -148,8 +157,8 @@ void main() {
 		float nearHeight = nearWidth * reverseAspectRatio;
 		float farHeight = farWidth * reverseAspectRatio;
 
-		float clusterLeft = min(-nearWidth * 0.5 + gl_WorkGroupID.x * nearWidth / 32.0, -farWidth * 0.5 + gl_WorkGroupID.x * farWidth / 32.0);
-		float clusterRight = max(-nearWidth * 0.5 + (gl_WorkGroupID.x + 1) * nearWidth / 32.0, -farWidth * 0.5 + (gl_WorkGroupID.x + 1) * farWidth / 32.0);
+		float clusterLeft = max(nearWidth * 0.5 - gl_WorkGroupID.x * nearWidth / 32.0, farWidth * 0.5 - gl_WorkGroupID.x * farWidth / 32.0);
+		float clusterRight = min(nearWidth * 0.5 - (gl_WorkGroupID.x + 1) * nearWidth / 32.0, farWidth * 0.5 - (gl_WorkGroupID.x + 1) * farWidth / 32.0);
 
 		float clusterBottom = min(-nearHeight * 0.5 + gl_WorkGroupID.y * nearHeight / 32.0, -farHeight * 0.5 + gl_WorkGroupID.y * farHeight / 32.0);
 		float clusterTop = max(-nearHeight * 0.5 + (gl_WorkGroupID.y + 1) * nearHeight / 32.0, -farHeight * 0.5 + (gl_WorkGroupID.y + 1) * farHeight / 32.0);
@@ -164,7 +173,7 @@ void main() {
 
 		uint lightIndexInCluster = 0;
 
-		for (uint index = lightsList.directionalPosition.x; index < lightsList.directionalPosition.y; index++)
+		for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
 		{
 			LightInfo lightInfo = lightsList.lights[index];
 			lightIndexInCluster++;
@@ -172,16 +181,18 @@ void main() {
 
 		uint spotLightOffset = lightIndexInCluster;
 		uint spotLightCount = 0;
-		for (uint index = lightsList.spotPosition.x; index < lightsList.spotPosition.y; index++)
+		for (uint index = lightsIndices.spotPosition.x; index < lightsIndices.spotPosition.x + lightsIndices.spotPosition.y; index++)
 		{
 			if (lightIndexInCluster > 255)
 			{
 				break;
 			}
+
 			LightInfo lightInfo = lightsList.lights[index];
-			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position, 1.0)).xyz;
-			vec3 lightDir = (globalData.worldToView * vec4(lightInfo.direction, 0.0)).xyz;
-			if (!IsConeIntersectsSphere(lightPos, lightDir, lightInfo.radius, radians(lightInfo.spotHalfAngle), boundingSphere))
+			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position.xyz, 1.0)).xyz * vec3(-1.0, 1.0, -1.0);
+			vec3 lightDir = (globalData.worldToView * vec4(lightInfo.direction.xyz, 0.0)).xyz * vec3(-1.0, 1.0, -1.0);
+
+			if (!IsConeIntersectsSphere(lightPos, lightDir, lightInfo.rai.x, radians(lightInfo.rai.y), boundingSphere))
 			{
 				continue;
 			}
@@ -202,16 +213,16 @@ void main() {
 
 		uint pointLightOffset = lightIndexInCluster;
 		uint pointLightCount = 0;
-		for (uint index = lightsList.pointPosition.x; index < lightsList.pointPosition.y; index++)
+		for (uint index = lightsIndices.pointPosition.x; index < lightsIndices.pointPosition.x + lightsIndices.pointPosition.y; index++)
 		{
 			if (lightIndexInCluster > 255)
 			{
 				break;
 			}
 			LightInfo lightInfo = lightsList.lights[index];
-			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position, 1.0)).xyz;
+			vec3 lightPos = (globalData.worldToView * vec4(lightInfo.position.xyz, 1.0)).xyz * vec3(-1.0, 1.0, -1.0);
 			vec3 centerToCenter = lightPos - boundingSphere.xyz;
-			float radiusSum = boundingSphere.w + lightInfo.radius;
+			float radiusSum = boundingSphere.w + lightInfo.rai.x;
 			if (dot(centerToCenter, centerToCenter) > (radiusSum * radiusSum))
 			{
 				continue;
@@ -232,6 +243,6 @@ void main() {
 		clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
 
 		vec4 color = vec4(depth, depth, depth, 1.0);
-		imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
-	}	
+		//imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
+	}
 }

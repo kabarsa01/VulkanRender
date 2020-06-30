@@ -25,27 +25,30 @@ struct ObjectMVPData
 
 struct LightInfo
 {
-	alignas(16) glm::vec3 position;
-	alignas(16) glm::vec3 direction;
-	alignas(16) glm::vec3 color;
-	alignas(4) float radius;
-	alignas(4) float spotHalfAngle;
-	alignas(4) float intensity;
+	alignas(16) glm::vec4 position;
+	alignas(16) glm::vec4 direction;
+	alignas(16) glm::vec4 color;
+	// radius, angle half, intensity
+	alignas(16) glm::vec4 rai;
 };
 
 // cluster lights
 struct LightsList
 {
+	alignas(16) LightInfo lights[512];
+};
+
+struct LightsIndices
+{
 	alignas(8) glm::u32vec2 directionalPosition;
 	alignas(8) glm::u32vec2 spotPosition;
 	alignas(8) glm::u32vec2 pointPosition;
-	alignas(16) LightInfo lights[4096];
 };
 
 // cluster lights indices
 struct ClusterLightsData
 {
-	alignas(8) glm::u32vec2 clusters[32][32][32];
-	alignas(4) glm::uint lightIndices[32][32][32][128];
+	alignas(8) glm::u32vec2 clusters[32][32][64];
+	alignas(4) glm::uint lightIndices[32][32][64][128];
 };
 

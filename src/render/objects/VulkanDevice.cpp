@@ -77,6 +77,7 @@ void VulkanDevice::Create(const char* inAppName, const char* inEngine, bool inVa
 	}
 
 	PhysicalDeviceFeatures deviceFeatures;
+	deviceFeatures.setFragmentStoresAndAtomics(VK_TRUE);
 
 	DeviceCreateInfo deviceCreateInfo;
 	deviceCreateInfo.setPQueueCreateInfos(queueCreateInfoVector.data());

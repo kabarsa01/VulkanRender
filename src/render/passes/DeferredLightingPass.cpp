@@ -4,6 +4,8 @@
 #include "GBufferPass.h"
 #include "data/DataManager.h"
 #include "../DataStructures.h"
+#include "LightClusteringPass.h"
+#include "ZPrepass.h"
 
 DeferredLightingPass::DeferredLightingPass(HashString inName)
 	: VulkanPassBase(inName)
@@ -13,6 +15,37 @@ DeferredLightingPass::DeferredLightingPass(HashString inName)
 
 void DeferredLightingPass::RecordCommands(CommandBuffer* inCommandBuffer)
 {
+	LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
+	VulkanBuffer& buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+
+	// barriers ----------------------------------------------
+	BufferMemoryBarrier clusterDataBarrier = buffer.CreateMemoryBarrier(
+		0, 0, 
+		AccessFlagBits::eShaderWrite, 
+		AccessFlagBits::eShaderRead);
+	ImageMemoryBarrier attachmentBarrier = GetAttachments()[0].CreateLayoutBarrier(
+		ImageLayout::eUndefined,
+		ImageLayout::eColorAttachmentOptimal,
+		AccessFlagBits::eShaderRead,
+		AccessFlagBits::eShaderWrite,
+		ImageAspectFlagBits::eColor,
+		0, 1, 0, 1);
+	ImageMemoryBarrier depthTextureBarrier = depthTexture->GetImage().CreateLayoutBarrier(
+		ImageLayout::eUndefined,
+		ImageLayout::eShaderReadOnlyOptimal,
+		AccessFlagBits::eShaderWrite,
+		AccessFlagBits::eShaderRead,
+		ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
+		0, 1, 0, 1);
+	std::array<ImageMemoryBarrier, 2> barriers{ attachmentBarrier, depthTextureBarrier };
+	inCommandBuffer->pipelineBarrier(
+		PipelineStageFlagBits::eVertexShader,
+		PipelineStageFlagBits::eFragmentShader,
+		DependencyFlags(),
+		0, nullptr,
+		1, &clusterDataBarrier,
+		static_cast<uint32_t>(barriers.size()), barriers.data());
+
 	MeshDataPtr meshData = MeshData::FullscreenQuad();
 	PipelineData& pipelineData = FindPipeline(lightingMaterial);
 
@@ -39,12 +72,16 @@ void DeferredLightingPass::RecordCommands(CommandBuffer* inCommandBuffer)
 
 void DeferredLightingPass::OnCreate()
 {
+	ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
 	GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
+	LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
 
 	albedoTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingAlbedoTexture");
 	albedoTexture->CreateFromExternal(gBufferPass->GetAttachments()[0], gBufferPass->GetAttachmentViews()[0]);
 	normalTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingNormalTexture");
 	normalTexture->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
+	depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingDepthTexture");
+	depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
 
 	lightingMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
 		"DeferredLightingMaterial",
@@ -52,9 +89,13 @@ void DeferredLightingPass::OnCreate()
 		"content/shaders/DeferredLighting.spv"
 		);
 	ObjectMVPData objData;
+	lightingMaterial->SetStorageBufferExternal("clusterLightsData", clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData"));
+	lightingMaterial->SetUniformBufferExternal("lightsList", clusteringPass->computeMaterial->GetUniformBuffer("lightsList"));
+	lightingMaterial->SetUniformBufferExternal("lightsIndices", clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices"));
 	lightingMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	lightingMaterial->SetTexture("albedoTex", albedoTexture);
 	lightingMaterial->SetTexture("normalsTex", normalTexture);
+	lightingMaterial->SetTexture("depthTexture", depthTexture);
 	lightingMaterial->LoadResources();
 }
 

@@ -20,6 +20,7 @@ public:
 protected:
 	ClusterLightsData* clusterLightData;
 	LightsList* lightsList;
+	LightsIndices* lightsIndices;
 
 	virtual void OnCreate() override;
 	virtual void OnDestroy() override;

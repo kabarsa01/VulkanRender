@@ -11,6 +11,7 @@ protected:
 	MaterialPtr lightingMaterial;
 	Texture2DPtr albedoTexture;
 	Texture2DPtr normalTexture;
+	Texture2DPtr depthTexture;
 
 	virtual void OnCreate() override;
 	virtual void OnDestroy() override {}
