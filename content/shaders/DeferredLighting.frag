@@ -37,7 +37,7 @@ struct LightInfo
 };
 layout(set = 1, binding = 5) uniform LightsList
 {
-	LightInfo lights[512];
+	LightInfo lights[1024];
 } lightsList;
 
 layout(set = 1, binding = 6) uniform LightsIndices

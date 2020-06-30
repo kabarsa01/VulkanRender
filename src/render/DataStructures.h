@@ -35,7 +35,7 @@ struct LightInfo
 // cluster lights
 struct LightsList
 {
-	alignas(16) LightInfo lights[512];
+	alignas(16) LightInfo lights[1024];
 };
 
 struct LightsIndices
