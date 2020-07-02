@@ -57,7 +57,7 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 	MemoryRecord memoryRecord;
 
 	uint64_t memTypeIndex = VulkanDeviceMemory::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
-	DeviceSize requiredSize = std::max<DeviceSize>(inMemRequirements.size, inMemRequirements.alignment); // try to honor the alignment
+	DeviceSize requiredSize = inMemRequirements.size;
 	uint64_t rangeIndex = GetRangeIndex(requiredSize);
 	uint64_t regionHash = rangeIndex | (memTypeIndex << 32);
 

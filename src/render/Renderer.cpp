@@ -201,7 +201,6 @@ void Renderer::RenderFrame()
 
 	if (!swapChain.Present())
 	{
-
 		OnResolutionChange();
 	}
 	device.GetGraphicsQueue().waitIdle();

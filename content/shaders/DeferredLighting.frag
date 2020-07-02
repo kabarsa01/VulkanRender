@@ -9,11 +9,14 @@ layout(set = 0, binding = 4) uniform ShaderGlobalData
 {
 	mat4 worldToView;
 	mat4 viewToProj;
+	vec3 cameraPos;
+	vec3 viewVector;
 	float time;
 	float deltaTime;
 	float cameraNear;
 	float cameraFar;
 	float cameraFov;
+	float cameraAspect;
 } globalData;
 
 layout(set = 1, binding = 1) uniform texture2D albedoTex;
@@ -52,6 +55,12 @@ layout(location = 1) in vec2 uv;
 
 layout(location = 0) out vec4 outScreenColor;
 
+uint UnpackLightIndex(uint packedIndices, uint indexPosition)
+{
+	uint bitOffset = 16 * (indexPosition % 2);
+	return (packedIndices >> bitOffset) & 0x0000ffff;
+}
+
 void main() {
 	uint clusterX = uint(clamp(uv.x * 32.0, 0, 31));
 	uint clusterY = uint(clamp(uv.y * 32.0, 0, 31));
@@ -66,8 +75,13 @@ void main() {
 	}
 
 	float linearDepth = 2.0 * near * far / (far + depth * (near - far));
-	float normalizedDepth = (linearDepth - near) / (far - near);
+	float width = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
+	float height = width / globalData.cameraAspect;
+	float pixelViewSpaceX = width * (0.5 - uv.x);
+	float pixelViewSpaceY = height * (-0.5 + uv.x);
 
+	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(pixelViewSpaceX, pixelViewSpaceY, linearDepth, 1.0);
+	float normalizedDepth = (linearDepth - near) / (far - near);
 	uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it just in case
 
 	uvec2 lightsPositions = clusterLightsData.clusters[clusterX][clusterY][clusterIndex];
@@ -77,6 +91,18 @@ void main() {
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec4 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv );
+	vec3 accumulatedLight = vec3(0.0, 0.0, 0.0);
+
+	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
+	{
+		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+	}
+	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
+	{
+		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+	}
 
 	if (spotCount + pointCount > 0)
 	{

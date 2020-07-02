@@ -5,26 +5,31 @@
 #include "core/Engine.h"
 #include "scene/camera/CameraComponent.h"
 #include "core/TimeManager.h"
+#include "scene/SceneObjectComponent.h"
+#include "scene/Transform.h"
+#include "scene/SceneObjectBase.h"
 
 PerFrameData::PerFrameData()
 {
-
+	std::printf("PerFrameData\n");
 }
 
 PerFrameData::~PerFrameData()
 {
-
+	std::printf("~PerFrameData\n");
 }
 
 void PerFrameData::Create(VulkanDevice* inDevice)
 {
 	device = inDevice;
 
+	shaderGlobalData = new ShaderGlobalData();
+
 	shaderDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	shaderDataBuffer.createInfo.setSize(sizeof(ShaderGlobalData));
 	// lets settle for host visible for now, so no transfer dst at the moment
 	// will handle later, using large common buffer
-	shaderDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer); 
+	shaderDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
 	shaderDataBuffer.Create(device);
 	shaderDataBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
 
@@ -37,6 +42,7 @@ void PerFrameData::Create(VulkanDevice* inDevice)
 
 void PerFrameData::Destroy()
 {
+	delete shaderGlobalData;
 	if (shaderDataBuffer)
 	{
 		shaderDataBuffer.Destroy();
@@ -48,7 +54,7 @@ void PerFrameData::Destroy()
 void PerFrameData::UpdateBufferData()
 {
 	GatherData();
-	shaderDataBuffer.CopyTo(sizeof(ShaderGlobalData), reinterpret_cast<const char*>( &shaderGlobalData ));
+	shaderDataBuffer.CopyTo(sizeof(ShaderGlobalData), reinterpret_cast<const char*>( shaderGlobalData ));
 }
 
 std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
@@ -85,16 +91,19 @@ std::vector<WriteDescriptorSet> PerFrameData::ProduceWrites(VulkanDescriptorSet&
 
 void PerFrameData::GatherData()
 {
-	shaderGlobalData.time = TimeManager::GetInstance()->GetTime();
-	shaderGlobalData.deltaTime = TimeManager::GetInstance()->GetDeltaTime();
+	shaderGlobalData->time = TimeManager::GetInstance()->GetTime();
+	shaderGlobalData->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
 
 	ScenePtr scene = Engine::GetSceneInstance();
 	CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 
-	shaderGlobalData.worldToView = camComp->CalculateViewMatrix();
-	shaderGlobalData.viewToProj = camComp->CalculateProjectionMatrix();
-	shaderGlobalData.cameraNear = camComp->GetNearPlane();
-	shaderGlobalData.cameraFar = camComp->GetFarPlane();
-	shaderGlobalData.cameraFov = camComp->GetFov();
+	shaderGlobalData->worldToView = camComp->CalculateViewMatrix();
+	shaderGlobalData->viewToProj = camComp->CalculateProjectionMatrix();
+	shaderGlobalData->cameraPos = camComp->GetParent()->transform.GetLocation();
+	shaderGlobalData->viewVector = camComp->GetParent()->transform.GetForwardVector();
+	shaderGlobalData->cameraNear = camComp->GetNearPlane();
+	shaderGlobalData->cameraFar = camComp->GetFarPlane();
+	shaderGlobalData->cameraFov = camComp->GetFov();
+	shaderGlobalData->cameraAspect = camComp->GetAspectRatio();
 }
 

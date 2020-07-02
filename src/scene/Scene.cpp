@@ -65,6 +65,7 @@ void Scene::Init()
 	mat3->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat3->LoadResources();
 
+	Renderer* renderer = Engine::GetRendererInstance();
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
@@ -72,6 +73,7 @@ void Scene::Init()
 	cameraObj->GetCameraComponent()->SetFov(110.0f);
 	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 	cameraObj->GetCameraComponent()->SetFarPlane(100.0f);
+	cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 
 	LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
 	lightObj->transform.SetLocation({ -10.0f, 0.0f, 0.0f });
@@ -87,7 +89,7 @@ void Scene::Init()
 	lightObj01->transform.SetRotation({ 85.0f, -90.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
 	lightObj01->GetLightComponent()->radius = 25.0f;
-	lightObj01->GetLightComponent()->spotHalfAngle = 25.0f;
+	lightObj01->GetLightComponent()->spotHalfAngle = 45.0f;
 	lightObj01->GetLightComponent()->intensity = 1.0f;
 	lightObj01->GetLightComponent()->color = { 1.0f, 1.0f, 1.0f };
 

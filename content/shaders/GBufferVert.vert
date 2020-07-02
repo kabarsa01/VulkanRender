@@ -5,14 +5,18 @@ layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
 layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
 layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
 layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
-layout(set = 0, binding = 4) uniform ShaderGlobalData
+layout(set = 0, binding = 4, std140) uniform ShaderGlobalData
 {
-	mat4 view;
-	mat4 proj;
+	mat4 worldToView;
+	mat4 viewToProj;
+	vec3 cameraPos;
+	vec3 viewVector;
 	float time;
 	float deltaTime;
 	float cameraNear;
 	float cameraFar;
+	float cameraFov;
+	float cameraAspect;
 } globalData;
 
 layout(set = 1, binding = 0) uniform MVPBuffer
@@ -30,7 +34,7 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 uv;
 
 void main() {
-    gl_Position = globalData.proj * globalData.view * mvpBuffer.model * vec4(inPos, 1.0);
+    gl_Position = globalData.viewToProj * globalData.worldToView * mvpBuffer.model * vec4(inPos, 1.0);
     fragColor = inNormal*0.5 + 0.5;//inPos + vec3(0.5, 0.5, 0.5);
 	uv = inUV;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DataStructures.h"
+#include "render/DataStructures.h"
 #include "objects/VulkanDescriptorSet.h"
 #include "resources/VulkanBuffer.h"
 #include "vulkan/vulkan.hpp"
@@ -10,8 +10,6 @@ using namespace VULKAN_HPP_NAMESPACE;
 class PerFrameData
 {
 public:
-	ShaderGlobalData shaderGlobalData;
-
 	PerFrameData();
 	virtual ~PerFrameData();
 
@@ -27,6 +25,8 @@ private:
 	VulkanDescriptorSet set;
 	std::vector<WriteDescriptorSet> descriptorWrites;
 	DescriptorSetLayoutBinding shaderGlobalDataBinding;
+
+	ShaderGlobalData* shaderGlobalData;
 
 	std::vector<DescriptorSetLayoutBinding> ProduceBindings();
 	std::vector<WriteDescriptorSet> ProduceWrites(VulkanDescriptorSet& inSet);
