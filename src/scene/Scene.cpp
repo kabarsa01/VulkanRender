@@ -50,8 +50,8 @@ void Scene::Init()
 		"content/shaders/GBufferVert.spv",
 		"content/shaders/GBufferFrag.spv"
 		);
-	mat2->SetTexture("normal", albedo);
-	mat2->SetTexture("albedo", normal);
+	mat2->SetTexture("albedo", albedo);
+	mat2->SetTexture("normal", normal);
 	mat2->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat2->LoadResources();
 
@@ -76,22 +76,31 @@ void Scene::Init()
 	cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 
 	LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
-	lightObj->transform.SetLocation({ -10.0f, 0.0f, 0.0f });
+	lightObj->transform.SetLocation({ -20.0f, 0.0f, 0.0f });
 	lightObj->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
 	lightObj->GetLightComponent()->type = LT_Point;
 	lightObj->GetLightComponent()->radius = 20.0f;
 	lightObj->GetLightComponent()->spotHalfAngle = 15.0f;
 	lightObj->GetLightComponent()->intensity = 1.0f;
-	lightObj->GetLightComponent()->color = {1.0f, 1.0f, 1.0f};
+	lightObj->GetLightComponent()->color = {0.2f, 5.0f, 0.2f};
 
 	LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-	lightObj01->transform.SetLocation({ 20.0f, 10.0f, 0.0f });
-	lightObj01->transform.SetRotation({ 85.0f, -90.0f, 0.0f });
+	lightObj01->transform.SetLocation({ 20.0f, 20.0f, 0.0f });
+	lightObj01->transform.SetRotation({ 90.0f, -90.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
-	lightObj01->GetLightComponent()->radius = 25.0f;
+	lightObj01->GetLightComponent()->radius = 35.0f;
 	lightObj01->GetLightComponent()->spotHalfAngle = 45.0f;
 	lightObj01->GetLightComponent()->intensity = 1.0f;
-	lightObj01->GetLightComponent()->color = { 1.0f, 1.0f, 1.0f };
+	lightObj01->GetLightComponent()->color = { 5.0f, 0.2f, 0.2f };
+
+	LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+	lightObj02->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+	lightObj02->transform.SetRotation({ 90.0f, -90.0f, 0.0f });
+	lightObj02->GetLightComponent()->type = LT_Point;
+	lightObj02->GetLightComponent()->radius = 20.0f;
+	lightObj02->GetLightComponent()->spotHalfAngle = 45.0f;
+	lightObj02->GetLightComponent()->intensity = 1.0f;
+	lightObj02->GetLightComponent()->color = { 0.2f, 0.2f, 5.0f };
 
 	{
 		MeshImporter importer;

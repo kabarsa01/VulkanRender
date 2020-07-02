@@ -27,5 +27,9 @@ layout(location = 1) in vec2 uv;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-	outColor = texture( sampler2D( screenImage, repeatLinearSampler ), uv );
+	vec4 color = texture( sampler2D( screenImage, repeatLinearSampler ), uv );
+	// tonemap
+    color.xyz = color.xyz / (color.xyz + vec3(1.0, 1.0, 1.0) );
+	// gamma correct
+	outColor = pow(color, vec4(1.0/2.2));
 }

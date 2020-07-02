@@ -78,9 +78,9 @@ void main() {
 	float width = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
 	float height = width / globalData.cameraAspect;
 	float pixelViewSpaceX = width * (0.5 - uv.x);
-	float pixelViewSpaceY = height * (-0.5 + uv.x);
+	float pixelViewSpaceY = height * (-0.5 + uv.y);
 
-	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(pixelViewSpaceX, pixelViewSpaceY, linearDepth, 1.0);
+	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(-pixelViewSpaceX, pixelViewSpaceY, -linearDepth, 1.0);
 	float normalizedDepth = (linearDepth - near) / (far - near);
 	uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it just in case
 
@@ -91,28 +91,37 @@ void main() {
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec4 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv );
-	vec3 accumulatedLight = vec3(0.0, 0.0, 0.0);
+	vec3 accumulatedLight = vec3(0.1, 0.1, 0.1);
 
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+
+		vec3 pixelToLightDir = (pixelCoordWorld - lightInfo.position).xyz;
+		float cosine = dot(normalize(pixelToLightDir), normalize(lightInfo.direction.xyz));
+		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
+		float lightRadiusSqr = dot(lightInfo.rai.x, lightInfo.rai.x);
+		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
+
+		accumulatedLight += angleFactor * distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+
+		vec3 pixelToLightDir = (pixelCoordWorld - lightInfo.position).xyz;
+		float lightRadiusSqr = dot(lightInfo.rai.x, lightInfo.rai.x);
+		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
+
+		accumulatedLight += distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
 	}
 
-	if (spotCount + pointCount > 0)
-	{
-		float f = float(spotCount + pointCount) / 2.0;
-		outScreenColor = vec4(f,f,f,1.0);//albedo;// * vec4(float(clusterX) / 32.0, float(clusterY) / 32.0, float(clusterIndex) / 32.0, 1.0);
-	}
-	else
-	{
-		outScreenColor = vec4(0.2, 0.0, 0.0, 1.0);
-	}
+	//outScreenColor = vec4(pixelViewSpaceX, pixelViewSpaceY, 0.0, 1.0) / 50.0;
+	outScreenColor = vec4(albedo.xyz * accumulatedLight, 1.0);//vec4(pixelCoordWorld.xy, 0.0, 1.0) / 50.0;
 
 	//outScreenColor = vec4(clustIdx, clustIdx, clustIdx, 1.0);
 	//outScreenColor = vec4(float(pointDist) / 100.0, float(pointDist) / 100.0, float(pointDist) / 100.0, 1.0);

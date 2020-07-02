@@ -24,7 +24,7 @@ void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
 	{
 		LightInfo info;
 		info.direction = vec4(lightComp->GetParent()->transform.GetForwardVector(), 0.0);
-		info.position = vec4(lightComp->GetParent()->transform.GetLocation(), 0.0);
+		info.position = vec4(lightComp->GetParent()->transform.GetLocation(), 1.0);
 		info.color = vec4(lightComp->color, 0.0);
 		info.rai.x = lightComp->radius;
 		info.rai.y = lightComp->spotHalfAngle;
