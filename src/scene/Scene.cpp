@@ -55,21 +55,11 @@ void Scene::Init()
 	mat2->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat2->LoadResources();
 
-	MaterialPtr mat3 = DataManager::RequestResourceType<Material>(
-		"default3",
-		"content/shaders/GBufferVert.spv",
-		"content/shaders/GBufferFrag.spv"
-		);
-	mat3->SetTexture("albedo", albedo);
-	mat3->SetTexture("normal", normal);
-	mat3->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	mat3->LoadResources();
-
 	Renderer* renderer = Engine::GetRendererInstance();
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-	cameraObj->transform.SetLocation({ 0.0f, 0.0f, 35.0f });
-	cameraObj->transform.SetRotation({ 0.0f, 180.0f, 0.0f });
+	cameraObj->transform.SetLocation({ 0.0f, -30.0f, 25.0f });
+	cameraObj->transform.SetRotation({ -30.0f, 180.0f, 0.0f });
 	cameraObj->GetCameraComponent()->SetFov(110.0f);
 	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 	cameraObj->GetCameraComponent()->SetFarPlane(100.0f);
@@ -79,7 +69,7 @@ void Scene::Init()
 	lightObj->transform.SetLocation({ -20.0f, 0.0f, 0.0f });
 	lightObj->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
 	lightObj->GetLightComponent()->type = LT_Point;
-	lightObj->GetLightComponent()->radius = 20.0f;
+	lightObj->GetLightComponent()->radius = 10.0f;
 	lightObj->GetLightComponent()->spotHalfAngle = 15.0f;
 	lightObj->GetLightComponent()->intensity = 1.0f;
 	lightObj->GetLightComponent()->color = {0.2f, 5.0f, 0.2f};
@@ -88,19 +78,27 @@ void Scene::Init()
 	lightObj01->transform.SetLocation({ 20.0f, 20.0f, 0.0f });
 	lightObj01->transform.SetRotation({ 90.0f, -90.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
-	lightObj01->GetLightComponent()->radius = 35.0f;
+	lightObj01->GetLightComponent()->radius = 15.0f;
 	lightObj01->GetLightComponent()->spotHalfAngle = 45.0f;
 	lightObj01->GetLightComponent()->intensity = 1.0f;
 	lightObj01->GetLightComponent()->color = { 5.0f, 0.2f, 0.2f };
 
-	LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-	lightObj02->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-	lightObj02->transform.SetRotation({ 90.0f, -90.0f, 0.0f });
-	lightObj02->GetLightComponent()->type = LT_Point;
-	lightObj02->GetLightComponent()->radius = 20.0f;
-	lightObj02->GetLightComponent()->spotHalfAngle = 45.0f;
-	lightObj02->GetLightComponent()->intensity = 1.0f;
-	lightObj02->GetLightComponent()->color = { 0.2f, 0.2f, 5.0f };
+	float width = 160.0f;
+	float depth = 100.0f;
+	for (uint32_t indexX = 0; indexX < 25; indexX++)
+	{
+		for (uint32_t indexY = 0; indexY < 25; indexY++)
+		{
+			LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+			lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 25.0, 20.0f, -1.0 * indexY * depth / 25.0 });
+			lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
+			lightObj02->GetLightComponent()->type = LT_Spot;
+			lightObj02->GetLightComponent()->radius = 35.0f;
+			lightObj02->GetLightComponent()->spotHalfAngle = 15.0f;
+			lightObj02->GetLightComponent()->intensity = 1.0f;
+			lightObj02->GetLightComponent()->color = { 0.5f, 10.0f, 15.0f };
+		}
+	}
 
 	{
 		MeshImporter importer;
@@ -124,11 +122,30 @@ void Scene::Init()
 			mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
 			mo2->GetMeshComponent()->SetMaterial(mat2);
 
-			MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
-			mo3->GetMeshComponent()->meshData = meshData;
-			mo3->transform.SetLocation({ 0.0f, 0.0f, -65.0f });
-			mo3->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-			mo3->GetMeshComponent()->SetMaterial(mat3);
+			float width = 160.0f;
+			float depth = 65.0f;
+			for (uint32_t indexX = 0; indexX < 10; indexX++)
+			{
+				for (uint32_t indexY = 0; indexY < 10; indexY++)
+				{
+					MaterialPtr mat3 = DataManager::RequestResourceType<Material>(
+						std::string("default").append(std::to_string(indexX)).append(std::to_string(indexY)),
+						"content/shaders/GBufferVert.spv",
+						"content/shaders/GBufferFrag.spv"
+						);
+					mat3->SetTexture("albedo", albedo);
+					mat3->SetTexture("normal", normal);
+					mat3->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
+					mat3->LoadResources();
+
+					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
+					mo3->GetMeshComponent()->meshData = meshData;
+					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
+					mo3->transform.SetRotation({ indexX * 73.0, 0.0f, -23.0 * indexY });
+					mo3->transform.SetScale({ 0.1f, 0.1f, 0.1f });
+					mo3->GetMeshComponent()->SetMaterial(mat3);
+				}
+			}
 		}
 
 	}
@@ -176,7 +193,11 @@ void Scene::PerFrameUpdate()
 	uint32_t index = 1;
 	for (MeshComponentPtr meshComp : meshComps)
 	{
-		meshComp->GetParent()->transform.AddRotation({ 0.0f, deltaTime * 15.0f * index, deltaTime * 5.0f * index });
+		float randomY = std::rand() / float(RAND_MAX);
+		float randomZ = std::rand() / float(RAND_MAX);
+		float multiplierY = deltaTime * 10 * randomY;
+		float multiplierZ = deltaTime * 10 * randomZ;
+		meshComp->GetParent()->transform.AddRotation({ 0.0f, multiplierY, multiplierZ });
 		ObjectMVPData ubo;
 		ubo.model = meshComp->GetParent()->transform.GetMatrix();
 
