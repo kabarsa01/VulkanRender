@@ -110,17 +110,17 @@ void Scene::Init()
 			meshData->CreateBuffer();
 			tl->PushBuffers(meshData);
 
-			MeshObjectPtr mo = ObjectBase::NewObject<MeshObject>();
-			mo->GetMeshComponent()->meshData = meshData;
-			mo->transform.SetLocation({ 25.0f, -5.0f, 0.0f });
-			mo->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-			mo->GetMeshComponent()->SetMaterial(mat);
+			//MeshObjectPtr mo = ObjectBase::NewObject<MeshObject>();
+			//mo->GetMeshComponent()->meshData = meshData;
+			//mo->transform.SetLocation({ 25.0f, -5.0f, 0.0f });
+			//mo->transform.SetScale({ 0.4f, 0.4f, 0.4f });
+			//mo->GetMeshComponent()->SetMaterial(mat);
 
-			MeshObjectPtr mo2 = ObjectBase::NewObject<MeshObject>();
-			mo2->GetMeshComponent()->meshData = meshData;
-			mo2->transform.SetLocation({ -15.0f, -5.0f, 0.0f });
-			mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-			mo2->GetMeshComponent()->SetMaterial(mat2);
+			//MeshObjectPtr mo2 = ObjectBase::NewObject<MeshObject>();
+			//mo2->GetMeshComponent()->meshData = meshData;
+			//mo2->transform.SetLocation({ -15.0f, -5.0f, 0.0f });
+			//mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
+			//mo2->GetMeshComponent()->SetMaterial(mat2);
 
 			float width = 160.0f;
 			float depth = 65.0f;
@@ -129,7 +129,7 @@ void Scene::Init()
 				for (uint32_t indexY = 0; indexY < 10; indexY++)
 				{
 					MaterialPtr mat3 = DataManager::RequestResourceType<Material>(
-						std::string("default").append(std::to_string(indexX)).append(std::to_string(indexY)),
+						std::string("default").append(std::to_string(indexX)).append("--").append(std::to_string(indexY)),
 						"content/shaders/GBufferVert.spv",
 						"content/shaders/GBufferFrag.spv"
 						);
@@ -138,10 +138,13 @@ void Scene::Init()
 					mat3->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 					mat3->LoadResources();
 
+					float randomY = std::rand() / float(RAND_MAX);
+					float randomZ = std::rand() / float(RAND_MAX);
+
 					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 					mo3->GetMeshComponent()->meshData = meshData;
 					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
-					mo3->transform.SetRotation({ indexX * 73.0, 0.0f, -23.0 * indexY });
+					mo3->transform.SetRotation({ 0.0f, randomY * 180.0f, randomZ * 180.0f });
 					mo3->transform.SetScale({ 0.1f, 0.1f, 0.1f });
 					mo3->GetMeshComponent()->SetMaterial(mat3);
 				}
@@ -193,10 +196,8 @@ void Scene::PerFrameUpdate()
 	uint32_t index = 1;
 	for (MeshComponentPtr meshComp : meshComps)
 	{
-		float randomY = std::rand() / float(RAND_MAX);
-		float randomZ = std::rand() / float(RAND_MAX);
-		float multiplierY = deltaTime * 10 * randomY;
-		float multiplierZ = deltaTime * 10 * randomZ;
+		float multiplierY = deltaTime * 10.0f;
+		float multiplierZ = deltaTime * 10.0f;
 		meshComp->GetParent()->transform.AddRotation({ 0.0f, multiplierY, multiplierZ });
 		ObjectMVPData ubo;
 		ubo.model = meshComp->GetParent()->transform.GetMatrix();

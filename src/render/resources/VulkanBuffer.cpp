@@ -118,8 +118,11 @@ VulkanBuffer* VulkanBuffer::CreateStagingBuffer(DeviceSize inSize, char* inData)
 	stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
 	stagingBuffer->Create(vulkanDevice);
 	stagingBuffer->BindMemory(MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
-	MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
-	memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
+	if (inData)
+	{
+		MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
+		memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
+	}
 
 	return stagingBuffer;
 }

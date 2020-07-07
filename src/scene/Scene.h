@@ -30,6 +30,8 @@ public:
 	void RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
 	void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
 
+	void PrepareObjectsLists();
+
 	void PerFrameUpdate();
 
 	template<class T>
@@ -42,6 +44,9 @@ protected:
 	std::set<SceneObjectBasePtr> sceneObjectsSet;
 	std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
 	std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
+
+	std::vector<HashString> componentTypesOrder;
+	std::map<HashString, std::vector<SceneObjectComponentPtr>> componentsVectors;
 };
 
 typedef std::shared_ptr<Scene> ScenePtr;

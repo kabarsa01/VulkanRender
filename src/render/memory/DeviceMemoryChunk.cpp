@@ -31,7 +31,6 @@ DeviceMemoryChunk::DeviceMemoryChunk(const DeviceMemoryChunk& inOther)
 
 DeviceMemoryChunk::~DeviceMemoryChunk()
 {
-	Free();
 	delete [] memoryTree;
 }
 
@@ -68,7 +67,9 @@ MemoryPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
 	bool success = FindSegmentIndex(currentLayer, layer, nodeIndex, targetIndex);
 	if (!success)
 	{
-		return {};
+		MemoryPosition invalidPos;
+		invalidPos.valid = false;
+		return invalidPos;
 	}
 	MarkNotFreeUp(layer, targetIndex);
 
@@ -133,7 +134,7 @@ DeviceSize DeviceMemoryChunk::CalculateOffset(uint32_t inLayer, uint32_t inIndex
 
 bool DeviceMemoryChunk::FindSegmentIndex(uint32_t inCurrentLayer, uint32_t inTargetLayer, uint32_t inIndex, uint32_t& outTargetIndex)
 {
-	if (inCurrentLayer < 0)
+	if (inCurrentLayer == -1)
 	{
 		return false;
 	}

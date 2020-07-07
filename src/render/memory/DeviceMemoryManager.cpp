@@ -61,13 +61,13 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 	uint64_t rangeIndex = GetRangeIndex(requiredSize);
 	uint64_t regionHash = rangeIndex | (memTypeIndex << 32);
 
-	std::vector<DeviceMemoryChunk>& chunkArray = memRegions[regionHash];
+	std::vector<DeviceMemoryChunk*>& chunkArray = memRegions[regionHash];
 	for (uint64_t index = 0; index < chunkArray.size(); index++)
 	{
-		DeviceMemoryChunk& chunk = chunkArray[index];
-		if (chunk.HasFreeSpace())
+		DeviceMemoryChunk* chunk = chunkArray[index];
+		if (chunk->HasFreeSpace())
 		{
-			MemoryPosition pos = chunk.AcquireSegment(requiredSize);
+			MemoryPosition pos = chunk->AcquireSegment(requiredSize);
 			if (pos.valid)
 			{
 				memoryRecord.regionHash = regionHash;
@@ -84,19 +84,19 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 		}
 	}
 
-	chunkArray.push_back(DeviceMemoryChunk(GetRangeBase(static_cast<uint32_t>(rangeIndex)), memoryTreeDepth));
+	chunkArray.push_back(new DeviceMemoryChunk(GetRangeBase(static_cast<uint32_t>(rangeIndex)), memoryTreeDepth));
 
 	startTime = std::chrono::high_resolution_clock::now();
 
-	DeviceMemoryChunk& chunk = chunkArray.back();
-	chunk.Allocate(inMemRequirements, inMemPropertyFlags);
+	DeviceMemoryChunk* chunk = chunkArray.back();
+	chunk->Allocate(inMemRequirements, inMemPropertyFlags);
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 
 	std::printf("vulkan allocation of %I64u bytes memtype %I64u for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, memTypeIndex, requiredSize, deltaTime);
 
-	MemoryPosition pos = chunk.AcquireSegment(requiredSize);
+	MemoryPosition pos = chunk->AcquireSegment(requiredSize);
 
 	memoryRecord.regionHash = regionHash;
 	memoryRecord.chunkIndex = chunkArray.size() - 1;
@@ -110,23 +110,24 @@ MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemR
 
 void DeviceMemoryManager::ReturnMemory(const MemoryRecord& inMemoryRecord)
 {
-	memRegions[inMemoryRecord.regionHash][inMemoryRecord.chunkIndex].ReleaseSegment(inMemoryRecord.pos);
+	memRegions[inMemoryRecord.regionHash][inMemoryRecord.chunkIndex]->ReleaseSegment(inMemoryRecord.pos);
 }
 
 void DeviceMemoryManager::CleanupMemory()
 {
-	std::map<uint64_t, std::vector<DeviceMemoryChunk>>::iterator regionIter;
+	std::map<uint64_t, std::vector<DeviceMemoryChunk*>>::iterator regionIter;
 	for (regionIter = memRegions.begin(); regionIter != memRegions.end(); regionIter++)
 	{
-		std::vector<DeviceMemoryChunk>& chunks = regionIter->second;
+		std::vector<DeviceMemoryChunk*>& chunks = regionIter->second;
 		for (uint64_t index = 0; index < chunks.size(); index++)
 		{
-			chunks[index].Free();
+			chunks[index]->Free();
+			delete chunks[index];
 		}
 	}
 }
 
-DeviceMemoryChunk& DeviceMemoryManager::GetMemoryChunk(MemoryRecord inMemPosition)
+DeviceMemoryChunk* DeviceMemoryManager::GetMemoryChunk(MemoryRecord inMemPosition)
 {
 	return memRegions[inMemPosition.regionHash][inMemPosition.chunkIndex];
 }

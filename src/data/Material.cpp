@@ -2,6 +2,7 @@
 #include "DataManager.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
+#include "render/TransferList.h"
 
 Material::Material(HashString inId)
 	: Resource(inId)
@@ -159,9 +160,10 @@ void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, cons
 	VulkanBuffer buffer;
 	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	buffer.createInfo.setSize(inSize);
-	buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
+	buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst);
 	buffer.Create(&vulkanDevice);
-	buffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+	buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+	buffer.CreateStagingBuffer();
 
 	buffers[inName].Destroy();
 	buffers[inName] = buffer;
@@ -190,9 +192,10 @@ void Material::SetStorageBuffer(const std::string& inName, uint64_t inSize, cons
 	VulkanBuffer buffer(false);
 	buffer.createInfo.setSharingMode(SharingMode::eExclusive);
 	buffer.createInfo.setSize(inSize);
-	buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer);
+	buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst);
 	buffer.Create(&vulkanDevice);
 	buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+	buffer.CreateStagingBuffer();
 
 	storageBuffers[inName].Destroy();
 	storageBuffers[inName] = buffer;
@@ -201,6 +204,13 @@ void Material::SetStorageBuffer(const std::string& inName, uint64_t inSize, cons
 void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 {
 	buffers[inName].CopyTo(inSize, inData);
+	TransferList::GetInstance()->PushBuffer(&buffers[inName]);
+}
+
+void Material::UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)
+{
+	storageBuffers[inName].CopyTo(inSize, inData);
+	TransferList::GetInstance()->PushBuffer(&storageBuffers[inName]);
 }
 
 void Material::UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice)

@@ -50,6 +50,7 @@ public:
 	template<typename T>
 	void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 	void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
+	void UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	void UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice);
 
 	VulkanBuffer& GetUniformBuffer(const std::string& inName);

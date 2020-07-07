@@ -51,11 +51,11 @@ public:
 	void ReturnMemory(const MemoryRecord& inMemoryRecord);
 	void CleanupMemory();
 
-	DeviceMemoryChunk& GetMemoryChunk(MemoryRecord inMemPosition);
+	DeviceMemoryChunk* GetMemoryChunk(MemoryRecord inMemPosition);
 protected:
 	static DeviceMemoryManager* staticInstance;
 
-	std::map<uint64_t, std::vector<DeviceMemoryChunk>> memRegions;
+	std::map<uint64_t, std::vector<DeviceMemoryChunk*>> memRegions;
 
 	DeviceMemoryManager();
 	DeviceMemoryManager(const DeviceMemoryManager&) {}
