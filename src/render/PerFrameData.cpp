@@ -23,10 +23,11 @@ void PerFrameData::Create(VulkanDevice* inDevice)
 {
 	device = inDevice;
 
-	shaderGlobalData = new ShaderGlobalData();
+	shaderGlobalData = new GlobalShaderData();
+	globalTransformData = new GlobalTransformData();
 
 	shaderDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-	shaderDataBuffer.createInfo.setSize(sizeof(ShaderGlobalData));
+	shaderDataBuffer.createInfo.setSize(sizeof(GlobalShaderData));
 	// lets settle for host visible for now, so no transfer dst at the moment
 	// will handle later, using large common buffer
 	shaderDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer);
@@ -43,6 +44,8 @@ void PerFrameData::Create(VulkanDevice* inDevice)
 void PerFrameData::Destroy()
 {
 	delete shaderGlobalData;
+	delete globalTransformData;
+
 	if (shaderDataBuffer)
 	{
 		shaderDataBuffer.Destroy();
@@ -54,7 +57,7 @@ void PerFrameData::Destroy()
 void PerFrameData::UpdateBufferData()
 {
 	GatherData();
-	shaderDataBuffer.CopyTo(sizeof(ShaderGlobalData), reinterpret_cast<const char*>( shaderGlobalData ));
+	shaderDataBuffer.CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( shaderGlobalData ));
 }
 
 std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()

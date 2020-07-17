@@ -8,11 +8,16 @@
 #include "core/ObjectBase.h"
 #include "core/Class.h"
 #include "common/HashString.h"
+#include "glm/fwd.hpp"
 
 class SceneObjectBase;
 typedef std::shared_ptr<SceneObjectBase> SceneObjectBasePtr;
 class SceneObjectComponent;
 typedef std::shared_ptr<SceneObjectComponent> SceneObjectComponentPtr;
+class Material;
+typedef std::shared_ptr<Material> MaterialPtr;
+class MeshData;
+typedef std::shared_ptr<MeshData> MeshDataPtr;
 
 class Scene : public ObjectBase
 {
@@ -31,6 +36,10 @@ public:
 	void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
 
 	void PrepareObjectsLists();
+	std::vector<HashString>& GetShadersList() { return shadersList; }
+	std::map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return shaderToMaterial; }
+	std::map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return materialToMeshData; }
+	std::map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform() { return meshDataToTransform; }
 
 	void PerFrameUpdate();
 
@@ -45,8 +54,13 @@ protected:
 	std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
 	std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
 
-	std::vector<HashString> componentTypesOrder;
-	std::map<HashString, std::vector<SceneObjectComponentPtr>> componentsVectors;
+	// grouped ordered data for drawing stuff
+	std::vector<HashString> shadersList;
+	std::map<HashString, std::vector<MaterialPtr>> shaderToMaterial;
+	std::map<HashString, std::vector<MeshDataPtr>> materialToMeshData;
+	std::map<HashString, std::vector<glm::mat4>> meshDataToTransform;
+
+	std::vector<glm::mat4> modelMatrices;
 };
 
 typedef std::shared_ptr<Scene> ScenePtr;

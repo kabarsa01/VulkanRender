@@ -27,6 +27,8 @@ void Scene::OnInitialize()
 
 void Scene::Init()
 {
+	modelMatrices.resize(g_GlobalTransformDataSize);
+
 	TransferList* tl = TransferList::GetInstance();
 
 	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
@@ -179,6 +181,67 @@ void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComp
 	sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
 }
 
+void Scene::PrepareObjectsLists()
+{
+	/*
+	single threaded simple scene data processing for batching and instancing. later it'll become multi threaded procedure
+	with scene data stored in tree as it should
+	*/
+	shadersList.clear();
+	shaderToMaterial.clear();
+	materialToMeshData.clear();
+	meshDataToTransform.clear();
+
+	const Class& meshDataClass = Class::Get<MeshComponent>();
+	for (std::pair<HashString, std::set<SceneObjectComponentPtr>> pair : sceneObjectComponents)
+	{
+		for (SceneObjectComponentPtr componentPtr : pair.second)
+		{
+			//bool isMesh = componentPtr->GetClass() == meshDataClass;
+			MeshComponentPtr meshComponent = ObjectBase::Cast<MeshComponent, SceneObjectComponent>(componentPtr);
+			if (!meshComponent)
+			{
+				continue;
+			}
+			MaterialPtr material = meshComponent->material;
+			MeshDataPtr meshData = meshComponent->meshData;
+
+			HashString shaderHash = material->GetShaderHash();
+			HashString materialId = material->GetResourceId();
+			HashString meshDataId = meshData->GetResourceId();
+
+			if (shaderToMaterial.find(shaderHash) == shaderToMaterial.end())
+			{
+				shadersList.push_back(shaderHash);
+			}
+			if (materialToMeshData.find(materialId) == materialToMeshData.end())
+			{
+				shaderToMaterial[shaderHash].push_back(material);
+			}
+			if (meshDataToTransform.find(meshDataId) == meshDataToTransform.end())
+			{
+				materialToMeshData[materialId].push_back(meshData);
+			}
+			meshDataToTransform[meshDataId].push_back(componentPtr->GetParent()->transform.CalculateMatrix());
+		}
+	}
+
+	uint64_t counter = 0;
+	for (HashString& shaderHash : shadersList)
+	{
+		for (MaterialPtr material : shaderToMaterial[shaderHash])
+		{
+			for (MeshDataPtr meshData : materialToMeshData[material->GetResourceId()])
+			{
+				for (glm::mat4& modelMatrix : meshDataToTransform[meshData->GetResourceId()])
+				{
+					modelMatrices[counter++] = modelMatrix;
+				}
+			}
+		}
+	}
+}
+
 void Scene::PerFrameUpdate()
 {
 	float deltaTime = TimeManager::GetInstance()->GetDeltaTime();
@@ -206,4 +269,6 @@ void Scene::PerFrameUpdate()
 
 		index++;
 	}
+
+	PrepareObjectsLists();
 }

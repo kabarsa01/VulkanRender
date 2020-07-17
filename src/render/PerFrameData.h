@@ -26,7 +26,8 @@ private:
 	std::vector<WriteDescriptorSet> descriptorWrites;
 	DescriptorSetLayoutBinding shaderGlobalDataBinding;
 
-	ShaderGlobalData* shaderGlobalData;
+	GlobalShaderData* shaderGlobalData;
+	GlobalTransformData* globalTransformData;
 
 	std::vector<DescriptorSetLayoutBinding> ProduceBindings();
 	std::vector<WriteDescriptorSet> ProduceWrites(VulkanDescriptorSet& inSet);

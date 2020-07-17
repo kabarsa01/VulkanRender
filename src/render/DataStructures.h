@@ -3,8 +3,13 @@
 #include <glm/glm.hpp>
 #include "vulkan/vulkan.hpp"
 
+inline constexpr uint32_t g_GlobalTransformDataSize = 1024 * 1024;
+inline constexpr uint32_t g_LightsListSize = 1024;
+inline constexpr glm::u32vec3 g_ClusteringResolution = { 32,32,64 };
+inline constexpr uint32_t g_LightsPerCluster = 256;
+
 // per frame update
-struct alignas(16) ShaderGlobalData
+struct alignas(16) GlobalShaderData
 {
 	alignas(16) glm::mat4 worldToView;
 	alignas(16) glm::mat4 viewToProj;
@@ -16,6 +21,11 @@ struct alignas(16) ShaderGlobalData
 	alignas(4) float cameraFar;
 	alignas(4) float cameraFov;
 	alignas(4) float cameraAspect;
+};
+
+struct alignas(16) GlobalTransformData
+{
+	alignas(16) glm::mat4 modelToWorld[g_GlobalTransformDataSize];
 };
 
 // per object update
@@ -38,7 +48,7 @@ struct LightInfo
 // cluster lights
 struct alignas(16) LightsList
 {
-	alignas(16) LightInfo lights[1024];
+	alignas(16) LightInfo lights[g_LightsListSize];
 };
 
 struct alignas(16) LightsIndices
@@ -51,7 +61,7 @@ struct alignas(16) LightsIndices
 // cluster lights indices
 struct alignas(16) ClusterLightsData
 {
-	alignas(8) glm::u32vec2 clusters[32][32][64];
-	alignas(4) glm::uint lightIndices[32][32][64][128];
+	alignas(8) glm::u32vec2 clusters[g_ClusteringResolution.x][g_ClusteringResolution.y][g_ClusteringResolution.z];
+	alignas(4) glm::uint lightIndices[g_ClusteringResolution.x][g_ClusteringResolution.y][g_ClusteringResolution.z][g_LightsPerCluster / 2];
 };
 
