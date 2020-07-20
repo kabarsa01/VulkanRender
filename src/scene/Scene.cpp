@@ -74,16 +74,16 @@ void Scene::Init()
 	lightObj01->GetLightComponent()->color = { 5.0f, 0.2f, 0.2f };
 
 	float width = 160.0f;
-	float depth = 100.0f;
-	for (uint32_t indexX = 0; indexX < 25; indexX++)
+	float depth = 65.0f;
+	for (uint32_t indexX = 0; indexX < 15; indexX++)
 	{
-		for (uint32_t indexY = 0; indexY < 25; indexY++)
+		for (uint32_t indexY = 0; indexY < 15; indexY++)
 		{
 			LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-			lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 25.0, 20.0f, -1.0 * indexY * depth / 25.0 });
+			lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 15.0, 20.0f, -1.0 * indexY * depth / 15.0 });
 			lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 			lightObj02->GetLightComponent()->type = LT_Spot;
-			lightObj02->GetLightComponent()->radius = 35.0f;
+			lightObj02->GetLightComponent()->radius = 45.0f;
 			lightObj02->GetLightComponent()->spotHalfAngle = 15.0f;
 			lightObj02->GetLightComponent()->intensity = 1.0f;
 			lightObj02->GetLightComponent()->color = { 0.5f, 10.0f, 15.0f };
@@ -100,9 +100,9 @@ void Scene::Init()
 			meshData->CreateBuffer();
 			tl->PushBuffers(meshData);
 
-			float width = 1000.0f;
+			float width = 160.0f;
 			float depth = 65.0f;
-			for (uint32_t indexX = 0; indexX < 50; indexX++)
+			for (uint32_t indexX = 0; indexX < 10; indexX++)
 			{
 				for (uint32_t indexY = 0; indexY < 10; indexY++)
 				{
@@ -111,7 +111,7 @@ void Scene::Init()
 
 					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 					mo3->GetMeshComponent()->meshData = meshData;
-					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 50.0, 0.0f, -1.0 * indexY * depth / 10.0 });
+					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
 					mo3->transform.SetRotation({ 0.0f, randomY * 180.0f, randomZ * 180.0f });
 					mo3->transform.SetScale({ 0.1f, 0.1f, 0.1f });
 					mo3->GetMeshComponent()->SetMaterial(mat);
