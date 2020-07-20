@@ -110,6 +110,14 @@ PipelineLayout VulkanPassBase::CreatePipelineLayout(std::vector<DescriptorSetLay
 	pipelineLayoutInfo.setSetLayoutCount(static_cast<uint32_t>( inDescriptorSetLayouts.size() ));
 	pipelineLayoutInfo.setPSetLayouts(inDescriptorSetLayouts.data());
 
+	PushConstantRange pushConstRange;
+	pushConstRange.setOffset(0);
+	pushConstRange.setSize(sizeof(uint32_t));
+	pushConstRange.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+
+	pipelineLayoutInfo.setPushConstantRangeCount(1);
+	pipelineLayoutInfo.setPPushConstantRanges(&pushConstRange);
+
 	return device.createPipelineLayout(pipelineLayoutInfo);
 }
 

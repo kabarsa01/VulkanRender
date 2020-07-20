@@ -9,6 +9,7 @@
 #include "core/Class.h"
 #include "common/HashString.h"
 #include "glm/fwd.hpp"
+#include "glm/detail/type_mat4x4.hpp"
 
 class SceneObjectBase;
 typedef std::shared_ptr<SceneObjectBase> SceneObjectBasePtr;
@@ -36,10 +37,13 @@ public:
 	void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
 
 	void PrepareObjectsLists();
-	std::vector<HashString>& GetShadersList() { return shadersList; }
-	std::map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return shaderToMaterial; }
-	std::map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return materialToMeshData; }
-	std::map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform() { return meshDataToTransform; }
+	inline std::vector<HashString>& GetShadersList() { return shadersList; }
+	inline std::map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return shaderToMaterial; }
+	inline std::map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return materialToMeshData; }
+	inline std::map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform(const HashString& materialId) { return matToMeshToTransform[materialId]; }
+	inline std::map<HashString, uint32_t>& GetMeshDataToIndex(const HashString& materialId) { return materialToMeshDataToIndex[materialId]; }
+	inline std::vector<glm::mat4>& GetModelMatrices() { return modelMatrices; }
+	inline uint32_t GetRelevantMatricesCount() { return relevantMatricesCount; }
 
 	void PerFrameUpdate();
 
@@ -58,9 +62,10 @@ protected:
 	std::vector<HashString> shadersList;
 	std::map<HashString, std::vector<MaterialPtr>> shaderToMaterial;
 	std::map<HashString, std::vector<MeshDataPtr>> materialToMeshData;
-	std::map<HashString, std::vector<glm::mat4>> meshDataToTransform;
-
+	std::map<HashString, std::map<HashString, std::vector<glm::mat4>>> matToMeshToTransform;
+	std::map<HashString, std::map<HashString, uint32_t>> materialToMeshDataToIndex;
 	std::vector<glm::mat4> modelMatrices;
+	uint32_t relevantMatricesCount;
 };
 
 typedef std::shared_ptr<Scene> ScenePtr;

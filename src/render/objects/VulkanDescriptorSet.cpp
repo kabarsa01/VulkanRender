@@ -78,6 +78,7 @@ DescriptorSetLayout& VulkanDescriptorSet::CreateLayout()
 	DescriptorSetLayoutCreateInfo layoutInfo;
 	layoutInfo.setBindingCount(static_cast<uint32_t>(bindings.size()));
 	layoutInfo.setPBindings(bindings.data());
+
 	layout = vulkanDevice->GetDevice().createDescriptorSetLayout(layoutInfo);
 
 	return layout;

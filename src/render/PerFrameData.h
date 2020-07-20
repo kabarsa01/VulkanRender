@@ -21,12 +21,16 @@ public:
 	DescriptorSetLayout& GetLayout() { return set.GetLayout(); }
 private:
 	VulkanDevice* device;
+
 	VulkanBuffer shaderDataBuffer;
+	VulkanBuffer transformDataBuffer;
+	DescriptorSetLayoutBinding shaderDataBinding;
+	DescriptorSetLayoutBinding transformDataBinding;
+
 	VulkanDescriptorSet set;
 	std::vector<WriteDescriptorSet> descriptorWrites;
-	DescriptorSetLayoutBinding shaderGlobalDataBinding;
 
-	GlobalShaderData* shaderGlobalData;
+	GlobalShaderData* globalShaderData;
 	GlobalTransformData* globalTransformData;
 
 	std::vector<DescriptorSetLayoutBinding> ProduceBindings();

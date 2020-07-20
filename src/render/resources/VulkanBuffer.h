@@ -20,7 +20,7 @@ public:
 
 	void SetData(const std::vector<char>& inData);
 	void SetData(DeviceSize inSize, const char* inData);
-	void CopyTo(DeviceSize inSize, const char* inData);
+	void CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer = false);
 	void CopyToBuffer(DeviceSize inSize, const char* inData);
 	void CopyToStagingBuffer(DeviceSize inSize, const char* inData);
 	void BindMemory(MemoryPropertyFlags inMemPropertyFlags);

@@ -1,6 +1,11 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+layout(push_constant) uniform PushConst
+{
+	uint transformIndexOffset;
+} pushConst;
+
 layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
 layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
 layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
@@ -18,6 +23,11 @@ layout(set = 0, binding = 4) uniform ShaderGlobalData
 	float cameraFov;
 	float cameraAspect;
 } globalData;
+
+layout(set = 0, binding = 5) readonly buffer GlobalTransformData
+{
+	mat4 modelToWorld[];
+} globalTransformData;
 
 layout(set = 1, binding = 1) uniform texture2D screenImage;
 

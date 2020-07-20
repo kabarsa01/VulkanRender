@@ -1,5 +1,6 @@
 #include "VulkanBuffer.h"
 #include "core/Engine.h"
+#include "../TransferList.h"
 
 VulkanBuffer::VulkanBuffer(bool inScoped, bool inCleanup)
 	: scoped(inScoped)
@@ -41,11 +42,15 @@ void VulkanBuffer::SetData(DeviceSize inSize, const char* inData)
 	data.assign(inData, inData + inSize);
 }
 
-void VulkanBuffer::CopyTo(DeviceSize inSize, const char* inData)
+void VulkanBuffer::CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer)
 {
 	if (stagingBuffer)
 	{
 		CopyToStagingBuffer(inSize, inData);
+		if (pushToTransfer)
+		{
+			TransferList::GetInstance()->PushBuffer(this);
+		}
 	}
 	else
 	{

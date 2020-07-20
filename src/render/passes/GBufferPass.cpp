@@ -25,18 +25,6 @@ void GBufferPass::RecordCommands(CommandBuffer* inCommandBuffer)
 		1, &depthTextureBarrier);
 
 	ScenePtr scene = Engine::GetSceneInstance();
-	std::vector<MeshComponentPtr> meshComponents = scene->GetSceneComponentsCast<MeshComponent>();
-	//---------------------------------------------------------------------------------
-	// TODO: provide some more robust centralized solution for batching/sorting
-	std::map<HashString, std::vector<MaterialPtr>> shaderSortedMaterials;
-	std::map<HashString, std::vector<MeshDataPtr>> materialSortedMeshes;
-	for (MeshComponentPtr meshComp : meshComponents)
-	{
-		MaterialPtr material = meshComp->material;
-		shaderSortedMaterials[material->GetShaderHash()].push_back(material);
-		materialSortedMeshes[material->GetResourceId()].push_back(meshComp->meshData);
-	}
-	//---------------------------------------------------------------------------------
 
 	RenderPassBeginInfo passBeginInfo;
 	passBeginInfo.setRenderPass(GetRenderPass());
@@ -49,27 +37,30 @@ void GBufferPass::RecordCommands(CommandBuffer* inCommandBuffer)
 	inCommandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
 
 	//------------------------------------------------------------------------------------------------------------
-	for (auto& shaderMaterialPair : shaderSortedMaterials)
+	for (HashString& shaderHash : scene->GetShadersList())
 	{
-		PipelineData& pipelineData = FindPipeline(shaderMaterialPair.second[0]);
+		PipelineData& pipelineData = FindPipeline(scene->GetShaderToMaterial()[shaderHash][0]);
 
 		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
 		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
-		for (MaterialPtr material : shaderMaterialPair.second)
+		for (MaterialPtr material : scene->GetShaderToMaterial()[shaderHash])
 		{
+			HashString materialId = material->GetResourceId();
+
 			material->CreateDescriptorSet(GetVulkanDevice());
 			inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, material->GetDescriptorSets(), {});
 
-			std::vector<MeshDataPtr>& meshes = materialSortedMeshes[material->GetResourceId()];
-			for (uint64_t index = 0; index < meshes.size(); index++)
+			for (MeshDataPtr meshData : scene->GetMaterialToMeshData()[material->GetResourceId()])
 			{
-				MeshDataPtr meshData = meshes[index];
+				HashString meshId = meshData->GetResourceId();
+
+				inCommandBuffer->pushConstants(pipelineData.pipelineLayout, ShaderStageFlagBits::eAllGraphics, 0, sizeof(uint32_t), & scene->GetMeshDataToIndex(materialId)[meshId]);
 				inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
 				inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, IndexType::eUint32);
-				inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+				inCommandBuffer->drawIndexed(meshData->GetIndexCount(), scene->GetMeshDataToTransform(materialId)[meshId].size(), 0, 0, 0);
 			}
-		}
+		}		
 	}
 	//------------------------------------------------------------------------------------------------------------
 	inCommandBuffer->endRenderPass();

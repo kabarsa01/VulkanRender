@@ -43,19 +43,7 @@ void Scene::Init()
 		);
 	mat->SetTexture("albedo", albedo);
 	mat->SetTexture("normal", normal);
-	ObjectMVPData objData;
-	mat->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	mat->LoadResources();
-
-	MaterialPtr mat2 = DataManager::RequestResourceType<Material>(
-		"default2",
-		"content/shaders/GBufferVert.spv",
-		"content/shaders/GBufferFrag.spv"
-		);
-	mat2->SetTexture("albedo", albedo);
-	mat2->SetTexture("normal", normal);
-	mat2->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-	mat2->LoadResources();
 
 	Renderer* renderer = Engine::GetRendererInstance();
 	// hardcoding dirty sample scene 
@@ -112,43 +100,21 @@ void Scene::Init()
 			meshData->CreateBuffer();
 			tl->PushBuffers(meshData);
 
-			//MeshObjectPtr mo = ObjectBase::NewObject<MeshObject>();
-			//mo->GetMeshComponent()->meshData = meshData;
-			//mo->transform.SetLocation({ 25.0f, -5.0f, 0.0f });
-			//mo->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-			//mo->GetMeshComponent()->SetMaterial(mat);
-
-			//MeshObjectPtr mo2 = ObjectBase::NewObject<MeshObject>();
-			//mo2->GetMeshComponent()->meshData = meshData;
-			//mo2->transform.SetLocation({ -15.0f, -5.0f, 0.0f });
-			//mo2->transform.SetScale({ 0.4f, 0.4f, 0.4f });
-			//mo2->GetMeshComponent()->SetMaterial(mat2);
-
-			float width = 160.0f;
+			float width = 1000.0f;
 			float depth = 65.0f;
-			for (uint32_t indexX = 0; indexX < 10; indexX++)
+			for (uint32_t indexX = 0; indexX < 50; indexX++)
 			{
 				for (uint32_t indexY = 0; indexY < 10; indexY++)
 				{
-					MaterialPtr mat3 = DataManager::RequestResourceType<Material>(
-						std::string("default").append(std::to_string(indexX)).append("--").append(std::to_string(indexY)),
-						"content/shaders/GBufferVert.spv",
-						"content/shaders/GBufferFrag.spv"
-						);
-					mat3->SetTexture("albedo", albedo);
-					mat3->SetTexture("normal", normal);
-					mat3->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-					mat3->LoadResources();
-
 					float randomY = std::rand() / float(RAND_MAX);
 					float randomZ = std::rand() / float(RAND_MAX);
 
 					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 					mo3->GetMeshComponent()->meshData = meshData;
-					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
+					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 50.0, 0.0f, -1.0 * indexY * depth / 10.0 });
 					mo3->transform.SetRotation({ 0.0f, randomY * 180.0f, randomZ * 180.0f });
 					mo3->transform.SetScale({ 0.1f, 0.1f, 0.1f });
-					mo3->GetMeshComponent()->SetMaterial(mat3);
+					mo3->GetMeshComponent()->SetMaterial(mat);
 				}
 			}
 		}
@@ -190,14 +156,14 @@ void Scene::PrepareObjectsLists()
 	shadersList.clear();
 	shaderToMaterial.clear();
 	materialToMeshData.clear();
-	meshDataToTransform.clear();
+	matToMeshToTransform.clear();
+	materialToMeshDataToIndex.clear();
 
 	const Class& meshDataClass = Class::Get<MeshComponent>();
 	for (std::pair<HashString, std::set<SceneObjectComponentPtr>> pair : sceneObjectComponents)
 	{
 		for (SceneObjectComponentPtr componentPtr : pair.second)
 		{
-			//bool isMesh = componentPtr->GetClass() == meshDataClass;
 			MeshComponentPtr meshComponent = ObjectBase::Cast<MeshComponent, SceneObjectComponent>(componentPtr);
 			if (!meshComponent)
 			{
@@ -218,28 +184,30 @@ void Scene::PrepareObjectsLists()
 			{
 				shaderToMaterial[shaderHash].push_back(material);
 			}
-			if (meshDataToTransform.find(meshDataId) == meshDataToTransform.end())
+			if (matToMeshToTransform[materialId].find(meshDataId) == matToMeshToTransform[materialId].end())
 			{
 				materialToMeshData[materialId].push_back(meshData);
 			}
-			meshDataToTransform[meshDataId].push_back(componentPtr->GetParent()->transform.CalculateMatrix());
+			matToMeshToTransform[materialId][meshDataId].push_back(componentPtr->GetParent()->transform.CalculateMatrix());
 		}
 	}
 
-	uint64_t counter = 0;
+	uint32_t counter = 0;
 	for (HashString& shaderHash : shadersList)
 	{
 		for (MaterialPtr material : shaderToMaterial[shaderHash])
 		{
 			for (MeshDataPtr meshData : materialToMeshData[material->GetResourceId()])
 			{
-				for (glm::mat4& modelMatrix : meshDataToTransform[meshData->GetResourceId()])
+				materialToMeshDataToIndex[material->GetResourceId()][meshData->GetResourceId()] = counter;
+				for (glm::mat4& modelMatrix : matToMeshToTransform[material->GetResourceId()][meshData->GetResourceId()])
 				{
 					modelMatrices[counter++] = modelMatrix;
 				}
 			}
 		}
 	}
+	relevantMatricesCount = counter;
 }
 
 void Scene::PerFrameUpdate()
@@ -256,18 +224,11 @@ void Scene::PerFrameUpdate()
 
 	// DIRTY TESTING SCENE
 	std::vector<MeshComponentPtr> meshComps = GetSceneComponentsCast<MeshComponent>();
-	uint32_t index = 1;
 	for (MeshComponentPtr meshComp : meshComps)
 	{
 		float multiplierY = deltaTime * 10.0f;
 		float multiplierZ = deltaTime * 10.0f;
 		meshComp->GetParent()->transform.AddRotation({ 0.0f, multiplierY, multiplierZ });
-		ObjectMVPData ubo;
-		ubo.model = meshComp->GetParent()->transform.GetMatrix();
-
-		meshComp->material->UpdateUniformBuffer<ObjectMVPData>("mvpBuffer", ubo);
-
-		index++;
 	}
 
 	PrepareObjectsLists();
