@@ -21,5 +21,6 @@ protected:
 
 	void ProcessNode(aiNode *inNode, const aiScene *inScene);
 	std::shared_ptr<MeshData> ProcessMesh(aiMesh* inAiMesh);
+	void CalculateTangents(Vertex& v0, const Vertex& v1, const Vertex& v2);
 };
 

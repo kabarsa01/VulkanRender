@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+layout(early_fragment_tests) in;
+
 layout(push_constant) uniform PushConst
 {
 	uint transformIndexOffset;
@@ -95,48 +97,58 @@ void main() {
 	uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it just in case
 
 	uvec2 lightsPositions = clusterLightsData.clusters[clusterX][clusterY][clusterIndex];
+	uint directionalCount = (lightsPositions.x >> 8) & 0x000000ff;
+	uint directionalOffset = lightsPositions.x & 0x000000ff;
 	uint spotCount = (lightsPositions.x >> 24) & 0x000000ff;
 	uint spotOffset = (lightsPositions.x >> 16) & 0x000000ff;
 	uint pointCount = (lightsPositions.y >> 8) & 0x000000ff;
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec4 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv );
-	vec3 accumulatedLight = vec3(0.1, 0.1, 0.1);
+	vec3 normal = texture( sampler2D( normalsTex, repeatLinearSampler ), uv ).xyz;
+	vec3 pixelToCamera = globalData.cameraPos - pixelCoordWorld.xyz;
 
+	vec3 accumulatedLight = vec3(0.03, 0.03, 0.03);
+
+	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
+	{
+		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+
+		vec3 pixelToLightDir = -lightInfo.direction.xyz;
+		float surfaceCosine = max(dot(normalize(pixelToLightDir), normal), 0.0);
+
+		accumulatedLight += surfaceCosine * lightInfo.color.xyz * lightInfo.rai.z;
+	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
-		vec3 pixelToLightDir = (pixelCoordWorld - lightInfo.position).xyz;
-		float cosine = dot(normalize(pixelToLightDir), normalize(lightInfo.direction.xyz));
+		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+		float surfaceCosine = max(dot(normalize(pixelToLightDir), normal), 0.0);
+
+		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
 		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
-		float lightRadiusSqr = dot(lightInfo.rai.x, lightInfo.rai.x);
+		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
 
-		accumulatedLight += angleFactor * distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
+		accumulatedLight += surfaceCosine * angleFactor * distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
-		vec3 pixelToLightDir = (pixelCoordWorld - lightInfo.position).xyz;
-		float lightRadiusSqr = dot(lightInfo.rai.x, lightInfo.rai.x);
+		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
+		float surfaceCosine = max(dot(normalize(pixelToLightDir), normal), 0.0);
 
-		accumulatedLight += distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
+		accumulatedLight += surfaceCosine * distanceFactor * lightInfo.color.xyz * lightInfo.rai.z;
 	}
 
-	//outScreenColor = vec4(pixelViewSpaceX, pixelViewSpaceY, 0.0, 1.0) / 50.0;
-	outScreenColor = vec4(albedo.xyz * accumulatedLight, 1.0);//vec4(pixelCoordWorld.xy, 0.0, 1.0) / 50.0;
-
-	//outScreenColor = vec4(clustIdx, clustIdx, clustIdx, 1.0);
-	//outScreenColor = vec4(float(pointDist) / 100.0, float(pointDist) / 100.0, float(pointDist) / 100.0, 1.0);
-	//outScreenColor = vec4(float(clusterX) / 32.0, float(clusterY) / 32.0, float(clusterIndex) / 32.0, 1.0);
-	//outScreenColor = vec4(normalizedDepth, 0.0, 0.0, 1.0);
-	//outScreenColor = vec4(uv, 0.0, 1.0);
-    //outScreenColor = texture( sampler2D( albedoTex, repeatLinearSampler ), uv );
+	outScreenColor = vec4(albedo.xyz * accumulatedLight, 1.0);//vec4(normal, 1.0);//
 }

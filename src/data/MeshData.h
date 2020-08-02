@@ -23,11 +23,11 @@ using namespace VULKAN_HPP_NAMESPACE;
 
 struct Vertex
 {
-	vec3 Position;
-	vec3 Normal;
-	vec2 TexCoord;
-	vec3 Tangent;
-	vec3 Bitangent;
+	vec3 position;
+	vec3 normal;
+	vec2 texCoord;
+	vec3 tangent;
+	vec3 bitangent;
 
 	static std::array<VertexInputAttributeDescription, 5> GetAttributeDescriptions(uint32_t inDesiredBinding);
 };

@@ -31,8 +31,11 @@ void Scene::Init()
 
 	TransferList* tl = TransferList::GetInstance();
 
-	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
-	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, false);
+	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
+	//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, true);
+	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/uv_base.png", false, true, false);
+	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false);
+	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true);
 	tl->PushImage(&albedo->GetImage());
 	tl->PushImage(&normal->GetImage());
 
@@ -45,75 +48,82 @@ void Scene::Init()
 	mat->SetTexture("normal", normal);
 	mat->LoadResources();
 
+
 	Renderer* renderer = Engine::GetRendererInstance();
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-	cameraObj->transform.SetLocation({ 0.0f, -30.0f, 25.0f });
+	cameraObj->transform.SetLocation({ 0.0f, -20.0f, 25.0f });
 	cameraObj->transform.SetRotation({ -30.0f, 180.0f, 0.0f });
-	cameraObj->GetCameraComponent()->SetFov(110.0f);
+	cameraObj->GetCameraComponent()->SetFov(60.0f);
 	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
-	cameraObj->GetCameraComponent()->SetFarPlane(100.0f);
+	cameraObj->GetCameraComponent()->SetFarPlane(200.0f);
 	cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 
 	LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
-	lightObj->transform.SetLocation({ -20.0f, 0.0f, 0.0f });
-	lightObj->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
-	lightObj->GetLightComponent()->type = LT_Point;
-	lightObj->GetLightComponent()->radius = 10.0f;
-	lightObj->GetLightComponent()->spotHalfAngle = 15.0f;
+	lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+	lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
+	lightObj->GetLightComponent()->type = LT_Directional;
 	lightObj->GetLightComponent()->intensity = 1.0f;
-	lightObj->GetLightComponent()->color = {0.2f, 5.0f, 0.2f};
+	lightObj->GetLightComponent()->color = { 1.0f, 0.6f, 0.2f };
 
 	LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-	lightObj01->transform.SetLocation({ 20.0f, 20.0f, 0.0f });
-	lightObj01->transform.SetRotation({ 90.0f, -90.0f, 0.0f });
+	lightObj01->transform.SetLocation({ 0.0f, 150.0f, 0.0f });
+	lightObj01->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
-	lightObj01->GetLightComponent()->radius = 15.0f;
-	lightObj01->GetLightComponent()->spotHalfAngle = 45.0f;
-	lightObj01->GetLightComponent()->intensity = 1.0f;
-	lightObj01->GetLightComponent()->color = { 5.0f, 0.2f, 0.2f };
+	lightObj01->GetLightComponent()->radius = 250.0f;
+	lightObj01->GetLightComponent()->spotHalfAngle = 15.0f;
+	lightObj01->GetLightComponent()->intensity = 15.0f;
+	lightObj01->GetLightComponent()->color = { 0.2f, 0.2f, 1.0f };
 
 	float width = 160.0f;
 	float depth = 65.0f;
+	uint32_t counter = 0;
 	for (uint32_t indexX = 0; indexX < 15; indexX++)
 	{
 		for (uint32_t indexY = 0; indexY < 15; indexY++)
 		{
-			LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-			lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 15.0, 20.0f, -1.0 * indexY * depth / 15.0 });
-			lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
-			lightObj02->GetLightComponent()->type = LT_Spot;
-			lightObj02->GetLightComponent()->radius = 45.0f;
-			lightObj02->GetLightComponent()->spotHalfAngle = 15.0f;
-			lightObj02->GetLightComponent()->intensity = 1.0f;
-			lightObj02->GetLightComponent()->color = { 0.5f, 10.0f, 15.0f };
+			//glm::vec3 color = counter % 3 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
+			//bool isSpot = true;// counter % 2;
+
+			//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+			//lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 15.0, isSpot ? 20.0f : 10.0f, -1.0 * indexY * depth / 15.0 });
+			//lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
+			//lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
+			//lightObj02->GetLightComponent()->radius = isSpot ? 40.0f : 5.0f;
+			//lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
+			//lightObj02->GetLightComponent()->intensity = isSpot ? 65.0f : 5.0f;
+			//lightObj02->GetLightComponent()->color = color;
+
+			++counter;
 		}
 	}
 
 	{
 		MeshImporter importer;
-		//importer.Import("./content/root/Aset_wood_root_M_rkswd_LOD0.FBX");
-		importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+		//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+		importer.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+		//importer.Import("./content/meshes/cube/cube.fbx");
 		for (unsigned int MeshIndex = 0; MeshIndex < importer.GetMeshes().size(); MeshIndex++)
 		{
 			MeshDataPtr meshData = importer.GetMeshes()[MeshIndex];
 			meshData->CreateBuffer();
 			tl->PushBuffers(meshData);
 
-			float width = 160.0f;
+			float width = 160;
 			float depth = 65.0f;
-			for (uint32_t indexX = 0; indexX < 10; indexX++)
+			for (uint32_t indexX = 0; indexX < 1; indexX++)
 			{
-				for (uint32_t indexY = 0; indexY < 10; indexY++)
+				for (uint32_t indexY = 0; indexY < 1; indexY++)
 				{
 					float randomY = std::rand() / float(RAND_MAX);
 					float randomZ = std::rand() / float(RAND_MAX);
 
 					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 					mo3->GetMeshComponent()->meshData = meshData;
-					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
-					mo3->transform.SetRotation({ 0.0f, randomY * 180.0f, randomZ * 180.0f });
-					mo3->transform.SetScale({ 0.1f, 0.1f, 0.1f });
+					//mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
+					mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+					mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
+					mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
 					mo3->GetMeshComponent()->SetMaterial(mat);
 				}
 			}
@@ -160,36 +170,29 @@ void Scene::PrepareObjectsLists()
 	materialToMeshDataToIndex.clear();
 
 	const Class& meshDataClass = Class::Get<MeshComponent>();
-	for (std::pair<HashString, std::set<SceneObjectComponentPtr>> pair : sceneObjectComponents)
+	std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>();
+	for (MeshComponentPtr meshComponent : meshes)
 	{
-		for (SceneObjectComponentPtr componentPtr : pair.second)
+		MaterialPtr material = meshComponent->material;
+		MeshDataPtr meshData = meshComponent->meshData;
+
+		HashString shaderHash = material->GetShaderHash();
+		HashString materialId = material->GetResourceId();
+		HashString meshDataId = meshData->GetResourceId();
+
+		if (shaderToMaterial.find(shaderHash) == shaderToMaterial.end())
 		{
-			MeshComponentPtr meshComponent = ObjectBase::Cast<MeshComponent, SceneObjectComponent>(componentPtr);
-			if (!meshComponent)
-			{
-				continue;
-			}
-			MaterialPtr material = meshComponent->material;
-			MeshDataPtr meshData = meshComponent->meshData;
-
-			HashString shaderHash = material->GetShaderHash();
-			HashString materialId = material->GetResourceId();
-			HashString meshDataId = meshData->GetResourceId();
-
-			if (shaderToMaterial.find(shaderHash) == shaderToMaterial.end())
-			{
-				shadersList.push_back(shaderHash);
-			}
-			if (materialToMeshData.find(materialId) == materialToMeshData.end())
-			{
-				shaderToMaterial[shaderHash].push_back(material);
-			}
-			if (matToMeshToTransform[materialId].find(meshDataId) == matToMeshToTransform[materialId].end())
-			{
-				materialToMeshData[materialId].push_back(meshData);
-			}
-			matToMeshToTransform[materialId][meshDataId].push_back(componentPtr->GetParent()->transform.CalculateMatrix());
+			shadersList.push_back(shaderHash);
 		}
+		if (materialToMeshData.find(materialId) == materialToMeshData.end())
+		{
+			shaderToMaterial[shaderHash].push_back(material);
+		}
+		if (matToMeshToTransform[materialId].find(meshDataId) == matToMeshToTransform[materialId].end())
+		{
+			materialToMeshData[materialId].push_back(meshData);
+		}
+		matToMeshToTransform[materialId][meshDataId].push_back(meshComponent->GetParent()->transform.CalculateMatrix());
 	}
 
 	uint32_t counter = 0;
@@ -228,7 +231,7 @@ void Scene::PerFrameUpdate()
 	{
 		float multiplierY = deltaTime * 10.0f;
 		float multiplierZ = deltaTime * 10.0f;
-		meshComp->GetParent()->transform.AddRotation({ 0.0f, multiplierY, multiplierZ });
+		meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
 	}
 
 	PrepareObjectsLists();

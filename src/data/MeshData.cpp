@@ -44,31 +44,31 @@ std::array<VertexInputAttributeDescription, 5> Vertex::GetAttributeDescriptions(
 	attributes[0].setBinding(inDesiredBinding);
 	attributes[0].setLocation(0);
 	attributes[0].setFormat(Format::eR32G32B32Sfloat);
-	attributes[0].setOffset(offsetof(Vertex, Position));
+	attributes[0].setOffset(offsetof(Vertex, position));
 
 	// vec3 Normal
 	attributes[1].setBinding(inDesiredBinding);
 	attributes[1].setLocation(1);
 	attributes[1].setFormat(Format::eR32G32B32Sfloat);
-	attributes[1].setOffset(offsetof(Vertex, Normal));
+	attributes[1].setOffset(offsetof(Vertex, normal));
 
 	// vec2 TexCoord
 	attributes[2].setBinding(inDesiredBinding);
 	attributes[2].setLocation(2);
 	attributes[2].setFormat(Format::eR32G32Sfloat);
-	attributes[2].setOffset(offsetof(Vertex, TexCoord));
+	attributes[2].setOffset(offsetof(Vertex, texCoord));
 
 	// vec3 Tangent
 	attributes[3].setBinding(inDesiredBinding);
 	attributes[3].setLocation(3);
 	attributes[3].setFormat(Format::eR32G32B32Sfloat);
-	attributes[3].setOffset(offsetof(Vertex, Tangent));
+	attributes[3].setOffset(offsetof(Vertex, tangent));
 
 	// vec3 BiTangent
 	attributes[4].setBinding(inDesiredBinding);
 	attributes[4].setLocation(4);
 	attributes[4].setFormat(Format::eR32G32B32Sfloat);
-	attributes[4].setOffset(offsetof(Vertex, Bitangent));
+	attributes[4].setOffset(offsetof(Vertex, bitangent));
 
 	return attributes;
 }

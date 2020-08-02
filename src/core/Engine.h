@@ -34,8 +34,8 @@ private:
 	static Engine* staticInstance;
 
 	GLFWwindow* window;
-	int windowWidth = 1280;
-	int windowHeight = 720;
+	int windowWidth = 1600;
+	int windowHeight = 900;
 
 	Engine();
 	Engine(const Engine& inOther) {}

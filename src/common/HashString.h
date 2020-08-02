@@ -37,3 +37,16 @@ private:
 	size_t hashValue;
 	std::string* cachedString;
 };
+
+namespace std {
+
+	template <>
+	struct hash<HashString>
+	{
+		std::size_t operator()(const HashString& inHashString) const
+		{
+			return inHashString.GetHash();
+		}
+	};
+
+}

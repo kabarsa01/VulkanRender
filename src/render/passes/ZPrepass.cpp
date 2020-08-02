@@ -82,8 +82,8 @@ RenderPass ZPrepass::CreateRenderPass()
 	depthAttachDesc.setSamples(SampleCountFlagBits::e1);
 	depthAttachDesc.setLoadOp(AttachmentLoadOp::eClear);
 	depthAttachDesc.setStoreOp(AttachmentStoreOp::eStore);
-	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eDontCare);
-	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eDontCare);
+	depthAttachDesc.setStencilLoadOp(AttachmentLoadOp::eClear);
+	depthAttachDesc.setStencilStoreOp(AttachmentStoreOp::eStore);
 	depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 	depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 	AttachmentReference depthAttachRef;

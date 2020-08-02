@@ -76,7 +76,7 @@ void GBufferPass::OnCreate()
 
 RenderPass GBufferPass::CreateRenderPass()
 {
-	// color : albedo, normal
+	// albedo
 	AttachmentDescription albedoAttachDesc;
 	albedoAttachDesc.setFormat(Format::eR8G8B8A8Unorm);
 	albedoAttachDesc.setSamples(SampleCountFlagBits::e1);
@@ -89,8 +89,9 @@ RenderPass GBufferPass::CreateRenderPass()
 	AttachmentReference albedoAttachRef;
 	albedoAttachRef.setAttachment(0);
 	albedoAttachRef.setLayout(ImageLayout::eColorAttachmentOptimal);
+	// normal
 	AttachmentDescription normalAttachDesc;
-	normalAttachDesc.setFormat(Format::eR8G8B8A8Unorm);
+	normalAttachDesc.setFormat(Format::eR16G16B16A16Sfloat);
 	normalAttachDesc.setSamples(SampleCountFlagBits::e1);
 	normalAttachDesc.setLoadOp(AttachmentLoadOp::eClear);
 	normalAttachDesc.setStoreOp(AttachmentStoreOp::eStore);
@@ -152,7 +153,7 @@ void GBufferPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachment
 	outAttachments.push_back(albedoAttachmentImage);
 	outAttachmentViews.push_back( albedoAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D) );
 	// normal
-	VulkanImage normalAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
+	VulkanImage normalAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight, true);
 	outAttachments.push_back(normalAttachmentImage);
 	outAttachmentViews.push_back(normalAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
 }

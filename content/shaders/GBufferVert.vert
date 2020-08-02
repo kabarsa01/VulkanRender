@@ -32,13 +32,24 @@ layout(set = 0, binding = 5) readonly buffer GlobalTransformData
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inUV;
+layout(location = 3) in vec3 inTangent;
+layout(location = 4) in vec3 inBitangent;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 uv;
+layout(location = 0) out FragmentInput {
+	vec3 worldPos;
+	vec3 worldNormal;
+	vec2 uv;
+} fragInput;
 
 void main() {
 	mat4 modelMatrix = globalTransformData.modelToWorld[pushConst.transformIndexOffset + gl_InstanceIndex];
-    gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);
-    fragColor = inNormal*0.5 + 0.5;//inPos + vec3(0.5, 0.5, 0.5);
-	uv = inUV;
+
+	fragInput.worldPos = (modelMatrix * vec4(inPos, 1.0)).xyz;
+	fragInput.uv = inUV;
+	mat3 normalTransformMatrix = transpose(inverse(mat3(modelMatrix)));
+	fragInput.worldNormal = normalize( normalTransformMatrix * inNormal );
+
+	gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);
 }
+
+

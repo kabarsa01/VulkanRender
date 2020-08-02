@@ -11,6 +11,7 @@
 #include "glm/fwd.hpp"
 #include "glm/detail/type_mat4x4.hpp"
 #include <unordered_map>
+//#include "data/Material.h"
 
 class SceneObjectBase;
 typedef std::shared_ptr<SceneObjectBase> SceneObjectBasePtr;

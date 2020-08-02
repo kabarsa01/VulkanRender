@@ -79,8 +79,8 @@ private:
 	VulkanBuffer uniformBuffer;
 	//======================= VARS ===============================
 	uint32_t version;
-	int width = 1280;
-	int height = 720;
+	int width = 1600;
+	int height = 900;
 	bool framebufferResized = false;
 
 	const std::vector<const char*> validationLayers = {

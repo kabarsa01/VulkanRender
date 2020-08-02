@@ -170,8 +170,19 @@ void main() {
 		for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
 		{
 			LightInfo lightInfo = lightsList.lights[index];
+
+			uint entryIndex = lightIndexInCluster / 2;
+			uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+			lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+			clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
+
 			lightIndexInCluster++;
 		}
+		uint directionalLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+		directionalLightOffsetData &= 0xffff0000;
+		// offset is always 0
+		directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
+		clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = directionalLightOffsetData;
 
 		uint spotLightOffset = lightIndexInCluster;
 		uint spotLightCount = 0;

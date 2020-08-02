@@ -18,7 +18,7 @@ ImageCreateInfo Texture2D::GetImageInfo()
 	ImageCreateInfo createInfo;
 
 	createInfo.setArrayLayers(1);
-	createInfo.setFormat(Format::eR8G8B8A8Srgb);
+	createInfo.setFormat(Format::eR8G8B8A8Unorm);
 	createInfo.setImageType(ImageType::e2D);
 	createInfo.setInitialLayout(ImageLayout::eUndefined);
 	createInfo.setSamples(SampleCountFlagBits::e1);
