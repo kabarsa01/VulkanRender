@@ -52,9 +52,9 @@ void Scene::Init()
 	Renderer* renderer = Engine::GetRendererInstance();
 	// hardcoding dirty sample scene 
 	CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-	cameraObj->transform.SetLocation({ 0.0f, -20.0f, 25.0f });
+	cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
 	cameraObj->transform.SetRotation({ -30.0f, 180.0f, 0.0f });
-	cameraObj->GetCameraComponent()->SetFov(60.0f);
+	cameraObj->GetCameraComponent()->SetFov(90.0f);
 	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 	cameraObj->GetCameraComponent()->SetFarPlane(200.0f);
 	cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
@@ -63,14 +63,14 @@ void Scene::Init()
 	lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 	lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
 	lightObj->GetLightComponent()->type = LT_Directional;
-	lightObj->GetLightComponent()->intensity = 1.0f;
+	lightObj->GetLightComponent()->intensity = 3.0f;
 	lightObj->GetLightComponent()->color = { 1.0f, 0.6f, 0.2f };
 
 	LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-	lightObj01->transform.SetLocation({ -25.0f, 0.0f, 0.0f });
+	lightObj01->transform.SetLocation({ -125.0f, 0.0f, 0.0f });
 	lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
-	lightObj01->GetLightComponent()->radius = 45.0f;
+	lightObj01->GetLightComponent()->radius = 245.0f;
 	lightObj01->GetLightComponent()->spotHalfAngle = 30.0f;
 	lightObj01->GetLightComponent()->intensity = 5.0f;
 	lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
@@ -83,18 +83,18 @@ void Scene::Init()
 		for (uint32_t indexY = 0; indexY < 15; indexY++)
 		{
 			//glm::vec3 color = counter % 3 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
-			//bool isSpot = true;// counter % 2;
+			//bool isSpot = false;// true;// counter % 2;
 
 			//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-			//lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 15.0, isSpot ? 20.0f : 10.0f, -1.0 * indexY * depth / 15.0 });
+			//lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 15.0, isSpot ? 20.0f : -5.0f, -1.0 * indexY * depth / 15.0 });
 			//lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 			//lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 			//lightObj02->GetLightComponent()->radius = isSpot ? 40.0f : 5.0f;
 			//lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-			//lightObj02->GetLightComponent()->intensity = isSpot ? 65.0f : 5.0f;
+			//lightObj02->GetLightComponent()->intensity = isSpot ? 15.0f : 5.0f;
 			//lightObj02->GetLightComponent()->color = color;
 
-			++counter;
+			//++counter;
 		}
 	}
 
@@ -109,19 +109,19 @@ void Scene::Init()
 			meshData->CreateBuffer();
 			tl->PushBuffers(meshData);
 
-			float width = 160;
+			float width = 100;
 			float depth = 65.0f;
-			for (uint32_t indexX = 0; indexX < 1; indexX++)
+			for (uint32_t indexX = 0; indexX < 3; indexX++)
 			{
-				for (uint32_t indexY = 0; indexY < 1; indexY++)
+				for (uint32_t indexY = 0; indexY < 3; indexY++)
 				{
 					float randomY = std::rand() / float(RAND_MAX);
 					float randomZ = std::rand() / float(RAND_MAX);
 
 					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 					mo3->GetMeshComponent()->meshData = meshData;
-					//mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 10.0, 0.0f, -1.0 * indexY * depth / 10.0 });
-					mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+					mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 2.0, 0.0f, -1.0 * indexY * depth / 2.0 });
+					//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 					mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 					mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
 					mo3->GetMeshComponent()->SetMaterial(mat);
