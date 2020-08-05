@@ -67,13 +67,13 @@ void Scene::Init()
 	lightObj->GetLightComponent()->color = { 1.0f, 0.6f, 0.2f };
 
 	LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-	lightObj01->transform.SetLocation({ 0.0f, 150.0f, 0.0f });
-	lightObj01->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
+	lightObj01->transform.SetLocation({ -25.0f, 0.0f, 0.0f });
+	lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
 	lightObj01->GetLightComponent()->type = LT_Spot;
-	lightObj01->GetLightComponent()->radius = 250.0f;
-	lightObj01->GetLightComponent()->spotHalfAngle = 15.0f;
-	lightObj01->GetLightComponent()->intensity = 15.0f;
-	lightObj01->GetLightComponent()->color = { 0.2f, 0.2f, 1.0f };
+	lightObj01->GetLightComponent()->radius = 45.0f;
+	lightObj01->GetLightComponent()->spotHalfAngle = 30.0f;
+	lightObj01->GetLightComponent()->intensity = 5.0f;
+	lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
 
 	float width = 160.0f;
 	float depth = 65.0f;

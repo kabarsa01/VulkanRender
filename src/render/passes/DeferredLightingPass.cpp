@@ -88,14 +88,12 @@ void DeferredLightingPass::OnCreate()
 		"content/shaders/ScreenSpaceVert.spv",
 		"content/shaders/DeferredLighting.spv"
 		);
-	ObjectMVPData objData;
 	lightingMaterial->SetStorageBufferExternal("clusterLightsData", clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData"));
 	lightingMaterial->SetUniformBufferExternal("lightsList", clusteringPass->computeMaterial->GetUniformBuffer("lightsList"));
 	lightingMaterial->SetUniformBufferExternal("lightsIndices", clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices"));
-	lightingMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
 	lightingMaterial->SetTexture("albedoTex", albedoTexture);
 	lightingMaterial->SetTexture("normalsTex", normalTexture);
-	lightingMaterial->SetTexture("depthTexture", depthTexture);
+	lightingMaterial->SetTexture("depthTex", depthTexture);
 	lightingMaterial->LoadResources();
 }
 
