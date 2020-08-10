@@ -21,6 +21,11 @@ public:
 	ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType);
 	void Destroy();
 
+	inline uint32_t GetWidth() { return width; }
+	inline uint32_t GetHeight() { return height; }
+	inline uint32_t GetDepth() { return depth; }
+	inline uint32_t GetMips() { return mips; }
+
 	void SetData(const std::vector<char>& inData);
 	void SetData(DeviceSize inSize, char* inData);
 	void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
@@ -85,6 +90,7 @@ protected:
 	uint32_t width = 2;
 	uint32_t height = 2;
 	uint32_t depth = 1;
+	uint32_t mips = 1;
 };
 
 

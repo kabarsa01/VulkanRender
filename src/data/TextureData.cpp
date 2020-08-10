@@ -8,9 +8,10 @@ namespace
 	static const int DESIRED_CHANNELS_COUNT = 4;
 };
 
-TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
+TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/, bool inGenMips /*= true*/)
 	: Resource(inPath)
 	, imageView(nullptr)
+	, genMips(inGenMips)
 	, cleanup(true)
 {
 	path = inPath.GetString();
@@ -46,7 +47,7 @@ bool TextureData::Load()
 	image.Create(&device);
 	image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 	image.CreateStagingBuffer(reinterpret_cast<char*>(data));
-	imageView = CreateImageView();
+	imageView = CreateImageView(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, image.GetMips(), 0, 1));
 
 	stbi_image_free(data);
 

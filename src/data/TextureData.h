@@ -7,7 +7,7 @@
 class TextureData : public Resource
 {
 public:
-	TextureData(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true);
+	TextureData(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true, bool inGenMips = true);
 	virtual ~TextureData();
 
 	virtual bool Load() override;
@@ -25,6 +25,7 @@ protected:
 	bool useAlpha;
 	bool flipVertical;
 	bool linear;
+	bool genMips;
 	bool cleanup;
 
 	int width;
@@ -32,7 +33,7 @@ protected:
 	int numChannels;
 
 	virtual ImageCreateInfo GetImageInfo() = 0;
-	virtual ImageView CreateImageView() = 0;
+	virtual ImageView CreateImageView(ImageSubresourceRange range) = 0;
 private:
 	TextureData();
 };

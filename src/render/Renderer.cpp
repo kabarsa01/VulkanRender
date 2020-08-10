@@ -348,15 +348,15 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 			AccessFlagBits::eHostWrite,
 			AccessFlagBits::eTransferWrite | AccessFlagBits::eTransferRead,
 			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
+			0, images[index]->GetMips(), 0, 1);
 
 		afterTransferBarriers[index] = images[index]->CreateLayoutBarrier(
-			ImageLayout::eTransferDstOptimal,
+			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
 			AccessFlagBits::eTransferWrite,
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
+			0, images[index]->GetMips(), 0, 1);
 	}
 
 	inCmdBuffer.pipelineBarrier(
@@ -377,6 +377,8 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 			1, &image->CreateBufferImageCopy());
 	}
 
+	GenerateMips(inCmdBuffer, images);
+
 	// final barriers for buffers and images
 	inCmdBuffer.pipelineBarrier(
 		PipelineStageFlagBits::eTransfer,
@@ -387,5 +389,58 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 		buffersTransferBarriers.data(),
 		static_cast<uint32_t>( afterTransferBarriers.size() ),
 		afterTransferBarriers.data());
+}
+
+void Renderer::GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*>& inImages)
+{
+	for (uint32_t index = 0; index < inImages.size(); index++)
+	{
+		VulkanImage* image = inImages[index];
+
+		for (uint32_t mipIndex = 1; mipIndex < image->GetMips(); mipIndex++)
+		{
+			uint32_t previousWidth = std::max(image->GetWidth() >> (mipIndex - 1), (uint32_t)1);
+			uint32_t previousHeight = std::max(image->GetHeight() >> (mipIndex - 1), (uint32_t)1);
+			uint32_t currentWidth = std::max(previousWidth >> 1, (uint32_t)1);
+			uint32_t currentHeight = std::max(previousHeight >> 1, (uint32_t)1);
+
+			ImageBlit blit;
+			std::array<Offset3D, 2> srcOffsets = { Offset3D(0, 0, 0), Offset3D(previousWidth, previousHeight, 1) };
+			blit.setSrcOffsets(srcOffsets);
+			blit.setSrcSubresource(ImageSubresourceLayers(ImageAspectFlagBits::eColor, mipIndex - 1, 0, 1));
+			std::array<Offset3D, 2> dstOffsets = { Offset3D(0, 0, 0), Offset3D(currentWidth, currentHeight, 1) };
+			blit.setDstOffsets(dstOffsets);
+			blit.setDstSubresource(ImageSubresourceLayers(ImageAspectFlagBits::eColor, mipIndex, 0, 1));
+
+			// TODO change layout for destination mip to prepare for copy
+			ImageMemoryBarrier previousMipBarrier = image->CreateLayoutBarrier(
+				ImageLayout::eUndefined,
+				ImageLayout::eTransferSrcOptimal,
+				AccessFlagBits::eTransferWrite,
+				AccessFlagBits::eTransferRead,
+				ImageAspectFlagBits::eColor,
+				mipIndex - 1, 1, 0, 1);
+			ImageMemoryBarrier currentMipBarrier = image->CreateLayoutBarrier(
+				ImageLayout::eUndefined,
+				ImageLayout::eTransferDstOptimal,
+				AccessFlagBits::eTransferRead,
+				AccessFlagBits::eTransferWrite,
+				ImageAspectFlagBits::eColor,
+				mipIndex, 1, 0, 1);
+
+			ImageMemoryBarrier barriers[] = { previousMipBarrier, currentMipBarrier };
+			inCmdBuffer.pipelineBarrier(
+				PipelineStageFlagBits::eTransfer,
+				PipelineStageFlagBits::eTransfer,
+				DependencyFlags(),
+				0, nullptr,
+				0, nullptr,
+				2, barriers);
+
+			inCmdBuffer.blitImage(*image, ImageLayout::eTransferSrcOptimal, *image, ImageLayout::eTransferDstOptimal, { blit }, Filter::eLinear);
+		}
+
+		// TODO 
+	}
 }
 

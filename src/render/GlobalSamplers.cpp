@@ -36,10 +36,10 @@ void GlobalSamplers::Create(VulkanDevice* inVulkanDevice)
 	samplerInfo.setCompareEnable(VK_FALSE);
 	samplerInfo.setMagFilter(Filter::eLinear);
 	samplerInfo.setMaxAnisotropy(2);
-	samplerInfo.setMaxLod(0);
+	samplerInfo.setMinLod(0.0f);
+	samplerInfo.setMaxLod(12.0f);
+	samplerInfo.setMipLodBias(-0.5f);
 	samplerInfo.setMinFilter(Filter::eLinear);
-	samplerInfo.setMinLod(0);
-	samplerInfo.setMipLodBias(0.0f);
 	samplerInfo.setMipmapMode(SamplerMipmapMode::eLinear);
 	samplerInfo.setUnnormalizedCoordinates(VK_FALSE);
 	repeatLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);

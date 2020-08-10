@@ -75,6 +75,9 @@ DescriptorPool VulkanDescriptorPools::ConstructDescriptorPool()
 	DescriptorPoolSize uniformPoolSize;
 	uniformPoolSize.setDescriptorCount(2048);
 	uniformPoolSize.setType(DescriptorType::eUniformBuffer);
+	DescriptorPoolSize storageBufferPoolSize;
+	storageBufferPoolSize.setDescriptorCount(64);
+	storageBufferPoolSize.setType(DescriptorType::eStorageBuffer);
 	DescriptorPoolSize samplerPoolSize;
 	samplerPoolSize.setDescriptorCount(16);
 	samplerPoolSize.setType(DescriptorType::eSampler);
@@ -82,10 +85,10 @@ DescriptorPool VulkanDescriptorPools::ConstructDescriptorPool()
 	imagePoolSize.setDescriptorCount(2048);
 	imagePoolSize.setType(DescriptorType::eSampledImage);
 
-	DescriptorPoolSize poolSizes[] = { uniformPoolSize, samplerPoolSize, imagePoolSize };
+	DescriptorPoolSize poolSizes[] = { uniformPoolSize, storageBufferPoolSize, samplerPoolSize, imagePoolSize };
 	DescriptorPoolCreateInfo descPoolInfo;
 	descPoolInfo.setFlags(DescriptorPoolCreateFlagBits::eFreeDescriptorSet | DescriptorPoolCreateFlagBits::eUpdateAfterBind);
-	descPoolInfo.setPoolSizeCount(3);
+	descPoolInfo.setPoolSizeCount(4);
 	descPoolInfo.setPPoolSizes(poolSizes);
 	descPoolInfo.setMaxSets(512);
 

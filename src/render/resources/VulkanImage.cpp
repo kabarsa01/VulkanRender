@@ -1,7 +1,6 @@
 #include "VulkanImage.h"
 #include "core/Engine.h"
 
-
 VulkanImage::VulkanImage(bool inScoped)
 	: scoped(inScoped)
 	, image(nullptr)
@@ -24,12 +23,14 @@ void VulkanImage::Create(VulkanDevice* inDevice)
 		return;
 	}
 	vulkanDevice = inDevice;
-	image = vulkanDevice->GetDevice().createImage(createInfo);
 
 	width = createInfo.extent.width;
 	height = createInfo.extent.height;
 	depth = createInfo.extent.depth;
+	mips = std::min(createInfo.mipLevels, uint32_t(floor(log2(std::max(std::max(width, height), depth))) + 1));
+	createInfo.mipLevels = mips;
 
+	image = vulkanDevice->GetDevice().createImage(createInfo);
 	memoryRequirements = vulkanDevice->GetDevice().getImageMemoryRequirements(image);
 }
 
@@ -228,7 +229,7 @@ VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32
 		return &stagingBuffer;
 	}
 
-	DeviceSize size = memoryRequirements.size;//width * height * depth * 4;
+	DeviceSize size = width * height * depth * 4;//memoryRequirements.size;//
 
 	stagingBuffer.createInfo.setSize(size);
 	stagingBuffer.createInfo.setSharingMode(inSharingMode);

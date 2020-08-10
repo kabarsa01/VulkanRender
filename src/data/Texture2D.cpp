@@ -2,8 +2,8 @@
 #include "core/Engine.h"
 #include "render/Renderer.h"
 
-Texture2D::Texture2D(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/)
-	: TextureData(inPath, inUsesAlpha, inFlipVertical, inLinear)
+Texture2D::Texture2D(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/, bool inGenMips /*= true*/)
+	: TextureData(inPath, inUsesAlpha, inFlipVertical, inLinear, inGenMips)
 {
 
 }
@@ -22,7 +22,7 @@ ImageCreateInfo Texture2D::GetImageInfo()
 	createInfo.setImageType(ImageType::e2D);
 	createInfo.setInitialLayout(ImageLayout::eUndefined);
 	createInfo.setSamples(SampleCountFlagBits::e1);
-	createInfo.setMipLevels(1);
+	createInfo.setMipLevels(genMips ? 12 : 1); // 12 just in case
 	createInfo.setSharingMode(SharingMode::eExclusive);
 	// ignored if exclusive mode is used, see Vulkan 1.2 spec
 	//createInfo.setQueueFamilyIndexCount(1); 
@@ -30,13 +30,13 @@ ImageCreateInfo Texture2D::GetImageInfo()
 	createInfo.setTiling(ImageTiling::eOptimal);
 	createInfo.setFlags(ImageCreateFlags());
 	createInfo.setExtent(Extent3D(width, height, 1));
-	createInfo.setUsage(ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
+	createInfo.setUsage(ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst | ImageUsageFlagBits::eTransferSrc);
 
 	return createInfo;
 }
 
-ImageView Texture2D::CreateImageView()
+ImageView Texture2D::CreateImageView(ImageSubresourceRange range)
 {
-	return image.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D);
+	return image.CreateView(range, ImageViewType::e2D);
 }
 

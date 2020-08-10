@@ -110,6 +110,7 @@ private:
 	//==================== METHODS ===============================
 
 	void TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex);
+	void GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*>& inImages);
 	void OnResolutionChange();
 };
 

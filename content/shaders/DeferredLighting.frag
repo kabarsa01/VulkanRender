@@ -182,8 +182,8 @@ void main() {
 
 	vec3 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv ).xyz;
 	vec3 N = texture( sampler2D( normalsTex, repeatLinearSampler ), uv ).xyz;
-	float roughness = 0.4;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
-	float metallness = 0.1;//texture( sampler2D( metallnessTex, repeatLinearSampler ), uv ).r;
+	float roughness = 0.6;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
+	float metallness = 0.0;//texture( sampler2D( metallnessTex, repeatLinearSampler ), uv ).r;
 
 	vec3 Lo = vec3(0.0);
 	vec3 V = normalize(globalData.cameraPos - pixelCoordWorld.xyz);
