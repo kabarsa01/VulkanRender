@@ -19,6 +19,8 @@ public:
 	void Create(VulkanDevice* inVulkanDevice);
 	void Destroy();
 
+	inline void SetMipLodBias(float inMipLodBias) { mipLodBias = inMipLodBias; }
+
 	std::vector<DescriptorSetLayoutBinding> GetBindings(uint32_t inStartIndex = 0);
 private:
 	static GlobalSamplers* instance;
@@ -26,12 +28,12 @@ private:
 	VulkanDevice* vulkanDevice;
 	std::vector<DescriptorSetLayoutBinding> bindings;
 	std::vector<Sampler*> samplers;
+	float mipLodBias;
 
 	GlobalSamplers();
 	GlobalSamplers(const GlobalSamplers& inOther);
 	virtual ~GlobalSamplers();
 	void operator=(const GlobalSamplers& inOther);
-
 
 	void ConstructBindings();
 };

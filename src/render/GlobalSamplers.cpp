@@ -3,6 +3,7 @@
 GlobalSamplers* GlobalSamplers::instance = new GlobalSamplers();
 
 GlobalSamplers::GlobalSamplers()
+	: mipLodBias(0.0f)
 {
 }
 
@@ -38,7 +39,7 @@ void GlobalSamplers::Create(VulkanDevice* inVulkanDevice)
 	samplerInfo.setMaxAnisotropy(2);
 	samplerInfo.setMinLod(0.0f);
 	samplerInfo.setMaxLod(12.0f);
-	samplerInfo.setMipLodBias(-0.5f);
+	samplerInfo.setMipLodBias(mipLodBias);
 	samplerInfo.setMinFilter(Filter::eLinear);
 	samplerInfo.setMipmapMode(SamplerMipmapMode::eLinear);
 	samplerInfo.setUnnormalizedCoordinates(VK_FALSE);

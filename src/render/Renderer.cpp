@@ -349,7 +349,6 @@ void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFam
 			AccessFlagBits::eTransferWrite | AccessFlagBits::eTransferRead,
 			ImageAspectFlagBits::eColor,
 			0, images[index]->GetMips(), 0, 1);
-
 		afterTransferBarriers[index] = images[index]->CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
