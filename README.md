@@ -40,7 +40,10 @@ being kind of useless
 256K << sizeRangeShift = 2M         :: 256K * 2048   = 512M chunk
 
 
+
 Backlog
+
+
 
   Volumetric fog
 
@@ -69,7 +72,10 @@ Backlog
   Async scene processing
 
 
+
 BackBacklog
+
+
 
   Input system
 
