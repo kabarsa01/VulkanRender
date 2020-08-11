@@ -8,11 +8,13 @@ and concentrate on that instead of boilerplate code needed to make vulkan work.
 Overview
 
 Clustered deferred rendering path is used. For now 5 passes are used.
+
   1. Z-prepass
   2. Compute clustering
   3. GBuffer pass
   4. Deferred lighting
   5. Post processing
+
 Material system uses spirv-cross for shader reflection and performs shader parameters matching by name.
 Mips are generated at runtime. Assimp and stb_image are used to load resources. Shadows are not there atm,
 because I might do it all eventually with mesh shading and abandon traditional vertex pipeline. IBL for PBR
