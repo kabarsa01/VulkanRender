@@ -32,29 +32,48 @@ into array where each tree layer nodes are packed after previous layer nodes, an
 being kind of useless
 
 64 << sizeRangeShift = 512          :: 64 * 2048     = 128K chunk
+
 1024 << sizeRangeShift = 8K         :: 1024 * 2048   = 2M chunk
+
 16K << sizeRangeShift = 128K        :: 16K * 2048    = 32M chunk
+
 256K << sizeRangeShift = 2M         :: 256K * 2048   = 512M chunk
 
 
 Backlog
 
   Volumetric fog
+
   IBL
+
   Mesh Shading
+
   Shadow cache ?
+
   Raytracing / SSR ?
+
   SVOGI ?
+
   Proper scene graph
+
   Occlusion culling
+
   Compute Hi-Z generation
+
   Threadpool
+
   Job system
+
   Async command buffers
+
   Async scene processing
+
 
 BackBacklog
 
   Input system
+
   Blender tools to assemble and export full scenes
+
   Physics engine integration, ODE, Buller or whatever
+
