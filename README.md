@@ -81,5 +81,5 @@ BackBacklog
 
   Blender tools to assemble and export full scenes
 
-  Physics engine integration, ODE, Buller or whatever
+  Physics engine integration, ODE, Bullet or whatever
 
