@@ -39,6 +39,7 @@ layout(location = 0) out FragmentInput {
 	vec3 worldPos;
 	vec3 worldNormal;
 	vec2 uv;
+	mat3x3 TBN;
 } fragInput;
 
 void main() {
@@ -48,6 +49,11 @@ void main() {
 	fragInput.uv = inUV;
 	mat3 normalTransformMatrix = transpose(inverse(mat3(modelMatrix)));
 	fragInput.worldNormal = normalize( normalTransformMatrix * inNormal );
+
+	vec3 T = normalize(modelMatrix * vec4(inTangent, 0.0)).xyz;
+	vec3 B = normalize(modelMatrix * vec4(inBitangent, 0.0)).xyz;
+	vec3 N = normalize(modelMatrix * vec4(inNormal, 0.0)).xyz;
+	fragInput.TBN = mat3x3(T, B, N);
 
 	gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);
 }

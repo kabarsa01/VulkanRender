@@ -38,6 +38,7 @@ layout(location = 0) in FragmentInput {
 	vec3 worldPos;
 	vec3 worldNormal;
 	vec2 uv;
+	mat3x3 TBN;
 } fragInput;
 
 layout(location = 0) out vec4 outAlbedo;
@@ -66,7 +67,8 @@ vec3 PerturbNormal()
 
 void main() {
     outAlbedo = texture( sampler2D( albedo, repeatLinearSampler ), fragInput.uv );
-	outNormal = vec4(PerturbNormal(), 1.0);
+	vec3 tangentNormal = texture( sampler2D( normal, repeatLinearSampler ), fragInput.uv ).xyz * 2.0 - 1.0;
+	outNormal = vec4(fragInput.TBN * tangentNormal, 1.0);
 }
 
 

@@ -30,6 +30,8 @@ public:
 	glm::mat4 CalculateMatrix() const;
 
 	glm::vec3 GetForwardVector() const;
+	glm::vec3 GetLeftVector() const;
+	glm::vec3 GetUpVector() const;
 protected:
 	glm::vec3 location;
 	glm::vec3 rotation;

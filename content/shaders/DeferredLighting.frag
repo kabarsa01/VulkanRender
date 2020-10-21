@@ -67,7 +67,7 @@ layout(set = 1, binding = 7) uniform LightsIndices
 	uvec2 pointPosition;
 } lightsIndices;
 
-layout(location = 0) in vec3 normal;
+//layout(location = 0) in vec3 normal;
 layout(location = 1) in vec2 uv;
 
 layout(location = 0) out vec4 outScreenColor;
@@ -162,14 +162,14 @@ void main() {
 		return;
 	}
 
-	float linearDepth = 2.0 * near * far / (far + depth * (near - far));
-	float width = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
-	float height = width / globalData.cameraAspect;
-	float pixelViewSpaceX = width * (0.5 - uv.x);
+	float linearDepth = near * far / (far + depth * (near - far));
+	float height = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
+	float width = height * globalData.cameraAspect;
+	float pixelViewSpaceX = width * (-0.5 + uv.x);
 	float pixelViewSpaceY = height * (-0.5 + uv.y);
 
-	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(-pixelViewSpaceX, pixelViewSpaceY, -linearDepth, 1.0);
-	float normalizedDepth = (linearDepth - near) / (far - near);
+	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(pixelViewSpaceX, pixelViewSpaceY, -linearDepth, 1.0);
+	pixelCoordWorld /= pixelCoordWorld.w;
 	uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it just in case
 
 	uvec2 lightsPositions = clusterLightsData.clusters[clusterX][clusterY][clusterIndex];
@@ -182,7 +182,7 @@ void main() {
 
 	vec3 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv ).xyz;
 	vec3 N = texture( sampler2D( normalsTex, repeatLinearSampler ), uv ).xyz;
-	float roughness = 0.2;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
+	float roughness = 0.4;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
 	float metallness = 0.0;//texture( sampler2D( metallnessTex, repeatLinearSampler ), uv ).r;
 
 	vec3 Lo = vec3(0.0);
@@ -195,7 +195,7 @@ void main() {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallness;
 	// some ambient lighting
-    vec3 irradiance = vec3(0.03);//texture(irradianceMap, N).rgb;
+    vec3 irradiance = vec3(0.003);//texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * albedo;
     vec3 ambient = (kD * diffuse);// * AO;
 
@@ -205,7 +205,7 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
-		float surfaceCosine = max(dot(normalize(pixelToLightDir), normal), 0.0);
+		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
 		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
 	}
@@ -235,7 +235,7 @@ void main() {
 		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
-		float surfaceCosine = max(dot(normalize(pixelToLightDir), normal), 0.0);
+		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
 		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
 		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);

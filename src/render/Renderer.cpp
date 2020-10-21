@@ -411,7 +411,7 @@ void Renderer::GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*
 			blit.setDstOffsets(dstOffsets);
 			blit.setDstSubresource(ImageSubresourceLayers(ImageAspectFlagBits::eColor, mipIndex, 0, 1));
 
-			// TODO change layout for destination mip to prepare for copy
+			// change layout for source and destination mip to prepare for copy
 			ImageMemoryBarrier previousMipBarrier = image->CreateLayoutBarrier(
 				ImageLayout::eUndefined,
 				ImageLayout::eTransferSrcOptimal,
@@ -438,8 +438,6 @@ void Renderer::GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*
 
 			inCmdBuffer.blitImage(*image, ImageLayout::eTransferSrcOptimal, *image, ImageLayout::eTransferDstOptimal, { blit }, Filter::eLinear);
 		}
-
-		// TODO 
 	}
 }
 
