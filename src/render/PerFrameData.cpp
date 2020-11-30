@@ -22,6 +22,9 @@ void PerFrameData::Create(VulkanDevice* inDevice)
 {
 	device = inDevice;
 
+	GlobalSamplers::GetInstance()->SetMipLodBias(-0.75f);
+	GlobalSamplers::GetInstance()->Create(device);
+
 	globalShaderData = new GlobalShaderData();
 	globalTransformData = new GlobalTransformData();
 
@@ -66,7 +69,6 @@ void PerFrameData::UpdateBufferData()
 
 std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
 {
-	GlobalSamplers::GetInstance()->Create(device);
 	std::vector<DescriptorSetLayoutBinding> bindings = GlobalSamplers::GetInstance()->GetBindings(0);
 
 	shaderDataBinding.setBinding(static_cast<uint32_t>( bindings.size() ));

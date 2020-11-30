@@ -55,15 +55,15 @@ void Scene::Init()
 	cameraObj->transform.SetRotation({ -30.0f, 180.0f, 0.0f });
 	cameraObj->GetCameraComponent()->SetFov(90.0f);
 	cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
-	cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
+	cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
 	cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 
 	LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
 	lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 	lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
 	lightObj->GetLightComponent()->type = LT_Directional;
-	lightObj->GetLightComponent()->intensity = 0.5f;
-	lightObj->GetLightComponent()->color = { 1.0f, 0.6f, 0.2f };
+	lightObj->GetLightComponent()->intensity = 1.0f;
+	lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 1.0f };
 
 	//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
 	//lightObj01->transform.SetLocation({ -125.0f, 0.0f, 0.0f });
