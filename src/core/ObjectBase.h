@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
 
 class Class;
 
@@ -19,7 +20,7 @@ public:
 
 	// static object creation methods
 	template <typename Type, typename ...ArgTypes>
-	static std::shared_ptr<Type> NewObject(ArgTypes ...Args);
+	static std::shared_ptr<Type> NewObject(ArgTypes&& ...args);
 	template <typename Type, typename OriginalType>
 	static std::shared_ptr<Type> Cast(std::shared_ptr<OriginalType> InPointer);
 
@@ -40,9 +41,9 @@ std::shared_ptr<Derived> ObjectBase::get_shared_from_this()
 }
 
 template<typename Type, typename ...ArgTypes>
-inline std::shared_ptr<Type> ObjectBase::NewObject(ArgTypes ...Args)
+inline std::shared_ptr<Type> ObjectBase::NewObject(ArgTypes&& ...args)
 {
-	std::shared_ptr<Type> NewObjectPtr = std::make_shared<Type>(Args...);
+	std::shared_ptr<Type> NewObjectPtr = std::make_shared<Type>(std::forward<ArgTypes>(args)...);
 	NewObjectPtr->OnInitialize();
 	return NewObjectPtr;
 }

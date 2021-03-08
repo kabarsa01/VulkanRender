@@ -16,10 +16,15 @@ public:
 	HashString();
 	HashString(const std::string& inString);
 	HashString(const char* inString);
+	HashString(const HashString& inOther);
+	HashString(HashString&& inOther);
 	virtual ~HashString();
 
 	const size_t GetHash() const;
 	const std::string& GetString() const;
+
+	HashString& operator= (const HashString& rhs) noexcept;
+	HashString& operator= (HashString&& rhs) noexcept;
 
 	bool operator== (const HashString& rhs) const noexcept;
 	bool operator!= (const HashString& rhs) const noexcept;

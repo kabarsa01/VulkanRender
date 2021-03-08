@@ -2,6 +2,18 @@
 #include "data/DataManager.h"
 #include "core/Class.h"
 
+//---------------------------------------------------------------
+// using declarations and aliases
+//---------------------------------------------------------------
+
+template<typename T1, typename T2>
+using map = std::map<T1, T2>;
+
+template<typename T>
+using shared_ptr = std::shared_ptr<T>;
+
+//---------------------------------------------------------------
+
 DataManager* DataManager::instance = new DataManager();
 
 DataManager::DataManager()

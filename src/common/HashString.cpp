@@ -38,6 +38,20 @@ HashString::HashString(const char* inString)
 {
 }
 
+HashString::HashString(const HashString& inOther)
+	: hashValue(inOther.hashValue)
+	, cachedString(inOther.cachedString)
+{
+
+}
+
+HashString::HashString(HashString&& inOther)
+	: hashValue(inOther.hashValue)
+	, cachedString(inOther.cachedString)
+{
+
+}
+
 HashString::~HashString()
 {
 }
@@ -50,6 +64,22 @@ const size_t HashString::GetHash() const
 const std::string & HashString::GetString() const
 {
 	return * cachedString;
+}
+
+HashString& HashString::operator=(HashString&& rhs) noexcept
+{
+	hashValue = rhs.hashValue;
+	cachedString = rhs.cachedString;
+
+	return *this;
+}
+
+HashString& HashString::operator=(const HashString& rhs) noexcept
+{
+	hashValue = rhs.hashValue;
+	cachedString = rhs.cachedString;
+
+	return *this;
 }
 
 bool HashString::operator==(const HashString & rhs) const noexcept

@@ -9,8 +9,7 @@
 #include "core/Class.h"
 #include "common/HashString.h"
 #include "data/Resource.h"
-
-using namespace std;
+#include <type_traits>
 
 class DataManager
 {
@@ -19,23 +18,23 @@ public:
 	static void ShutdownInstance();
 	void CleanupResources();
 
-	bool AddResource(HashString inKey, shared_ptr<Resource> inValue);
+	bool AddResource(HashString inKey, std::shared_ptr<Resource> inValue);
 	bool AddResource(ResourcePtr inValue);
-	bool DeleteResource(HashString inKey, shared_ptr<Resource> inValue);
+	bool DeleteResource(HashString inKey, std::shared_ptr<Resource> inValue);
 	bool DeleteResource(ResourcePtr inValue);
 	bool IsResourcePresent(HashString inKey);
-	shared_ptr<Resource> GetResource(HashString inKey);
+	std::shared_ptr<Resource> GetResource(HashString inKey);
 	template<class T>
-	shared_ptr<T> GetResource(HashString inKey);
+	std::shared_ptr<T> GetResource(HashString inKey);
 	template<class T>
-	shared_ptr<T> GetResourceByType(HashString inKey);
+	std::shared_ptr<T> GetResourceByType(HashString inKey);
 	template<class T, typename ...ArgTypes>
-	shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes ...args);
+	std::shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes&& ...args);
 	template<class T, typename ...ArgTypes>
-	static shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes ...args);
+	static std::shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes&& ...args);
 protected:
-	map<HashString, ResourcePtr> resourcesTable;
-	map<HashString, map<HashString, ResourcePtr>> resourcesMap;
+	std::map<HashString, ResourcePtr> resourcesTable;
+	std::map<HashString, std::map<HashString, ResourcePtr>> resourcesMap;
 private:
 	static DataManager* instance;
 
@@ -44,7 +43,7 @@ private:
 	void operator=(const DataManager& inOther) {}
 	virtual ~DataManager();
 
-	ResourcePtr GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap);
+	ResourcePtr GetResource(HashString inKey, std::map<HashString, ResourcePtr>& inMap);
 };
 
 //===========================================================================================
@@ -52,20 +51,20 @@ private:
 //===========================================================================================
 
 template<class T>
-inline shared_ptr<T> DataManager::GetResource(HashString inKey)
+inline std::shared_ptr<T> DataManager::GetResource(HashString inKey)
 {
-	return dynamic_pointer_cast<T>(GetResource(inKey));
+	return std::dynamic_pointer_cast<T>(GetResource(inKey));
 }
 
 //-----------------------------------------------------------------------------------
 
 template<class T>
-inline shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
+inline std::shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
 {
-	map<HashString, map<HashString, ResourcePtr>>::iterator it = resourcesMap.find(Class::Get<T>().GetName());
+	std::map<HashString, std::map<HashString, ResourcePtr>>::iterator it = resourcesMap.find(Class::Get<T>().GetName());
 	if (it != resourcesMap.end())
 	{
-		return dynamic_pointer_cast<T>( GetResource(inKey, resourcesMap[inKey]) );
+		return std::dynamic_pointer_cast<T>( GetResource(inKey, resourcesMap[inKey]) );
 	}
 	return nullptr;
 }
@@ -73,16 +72,16 @@ inline shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
 //-----------------------------------------------------------------------------------
 
 template<class T, typename ...ArgTypes>
-inline shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes ...args)
+inline std::shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes&& ...args)
 {
 	HashString className = Class::Get<T>().GetName();
-	map<HashString, ResourcePtr>& resourceTypeMap = resourcesMap[className];
-	map<HashString, ResourcePtr>::iterator it = resourceTypeMap.find(inKey);
+	std::map<HashString, ResourcePtr>& resourceTypeMap = resourcesMap[className];
+	std::map<HashString, ResourcePtr>::iterator it = resourceTypeMap.find(inKey);
 	if (it != resourceTypeMap.end())
 	{
-		return dynamic_pointer_cast<T>(GetResource(inKey, resourceTypeMap));
+		return std::dynamic_pointer_cast<T>(GetResource(inKey, resourceTypeMap));
 	}
-	shared_ptr<T> resource = ObjectBase::NewObject<T, HashString, ArgTypes...>(inKey, args...);
+	std::shared_ptr<T> resource = ObjectBase::NewObject<T>(inKey, std::forward<ArgTypes>(args)...);
 	if (resource.get())
 	{
 		resource->Load();
@@ -93,8 +92,8 @@ inline shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTyp
 //-----------------------------------------------------------------------------------
 
 template<class T, typename ...ArgTypes>
-static shared_ptr<T> DataManager::RequestResourceType(HashString inKey, ArgTypes ...args)
+static std::shared_ptr<T> DataManager::RequestResourceType(HashString inKey, ArgTypes&& ...args)
 {
-	return instance->RequestResourceByType<T, ArgTypes...>(inKey, args...);
+	return instance->RequestResourceByType<T>(inKey, std::forward<ArgTypes>(args)...);
 }
 

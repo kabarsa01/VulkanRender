@@ -31,11 +31,11 @@ void Scene::Init()
 
 	TransferList* tl = TransferList::GetInstance();
 
-	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
-	//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, true);
-	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool>("content/meshes/uv_base.png", false, true, false);
-	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D, bool, bool, bool, bool>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
-	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D, bool, bool, bool, bool>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
+	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
+	//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, true);
+	//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/uv_base.png", false, true, false);
+	Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
+	Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
 	tl->PushImage(&albedo->GetImage());
 	tl->PushImage(&normal->GetImage());
 
@@ -62,8 +62,8 @@ void Scene::Init()
 	lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 	lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
 	lightObj->GetLightComponent()->type = LT_Directional;
-	lightObj->GetLightComponent()->intensity = 1.0f;
-	lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 1.0f };
+	lightObj->GetLightComponent()->intensity = 0.6f;
+	lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 
 	//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
 	//lightObj01->transform.SetLocation({ -125.0f, 0.0f, 0.0f });
