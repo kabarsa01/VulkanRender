@@ -11,8 +11,8 @@
 #include "core/Engine.h"
 
 int main() {
-	Engine* Engine = Engine::GetInstance();
-	Engine->Run();
+	CGE::Engine* engine = CGE::Engine::GetInstance();
+	engine->Run();
 
 	return 0;
 }

@@ -4,28 +4,36 @@
 #include "vulkan/vulkan.hpp"
 #include <array>
 
-using namespace VULKAN_HPP_NAMESPACE;
-
-class GBufferPass : public VulkanPassBase
+namespace CGE
 {
-public:
-	GBufferPass(HashString inName);
-	void RecordCommands(CommandBuffer* inCommandBuffer) override;
-protected:
-	std::array<ClearValue, 3> clearValues;
+	using VULKAN_HPP_NAMESPACE::ClearValue;
+	using VULKAN_HPP_NAMESPACE::CommandBuffer;
+	using VULKAN_HPP_NAMESPACE::RenderPass;
+	using VULKAN_HPP_NAMESPACE::ImageView;
+	using VULKAN_HPP_NAMESPACE::Pipeline;
+	using VULKAN_HPP_NAMESPACE::PipelineLayout;
 
-	virtual void OnCreate() override;
-	virtual void OnDestroy() override {}
-	virtual RenderPass CreateRenderPass() override;
-	virtual void CreateColorAttachments(
-		std::vector<VulkanImage>& outAttachments, 
-		std::vector<ImageView>& outAttachmentViews, 
-		uint32_t inWidth, 
-		uint32_t inHeight) override;
-	virtual void CreateDepthAttachment(
-		VulkanImage& outDepthAttachment,
-		ImageView& outDepthAttachmentView,
-		uint32_t inWidth,
-		uint32_t inHeight) override;
-	virtual Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
-};
+	class GBufferPass : public VulkanPassBase
+	{
+	public:
+		GBufferPass(HashString inName);
+		void RecordCommands(CommandBuffer* inCommandBuffer) override;
+	protected:
+		std::array<ClearValue, 3> clearValues;
+	
+		virtual void OnCreate() override;
+		virtual void OnDestroy() override {}
+		virtual RenderPass CreateRenderPass() override;
+		virtual void CreateColorAttachments(
+			std::vector<VulkanImage>& outAttachments, 
+			std::vector<ImageView>& outAttachmentViews, 
+			uint32_t inWidth, 
+			uint32_t inHeight) override;
+		virtual void CreateDepthAttachment(
+			VulkanImage& outDepthAttachment,
+			ImageView& outDepthAttachmentView,
+			uint32_t inWidth,
+			uint32_t inHeight) override;
+		virtual Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
+	};
+}

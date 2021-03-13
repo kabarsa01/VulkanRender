@@ -1,79 +1,82 @@
 #include "PipelineRegistry.h"
 
-PipelineRegistry* PipelineRegistry::instance = new PipelineRegistry();
-
-PipelineRegistry::PipelineRegistry()
+namespace CGE
 {
-}
-
-PipelineRegistry::PipelineRegistry(const PipelineRegistry& inOther)
-{
-}
-
-PipelineRegistry::~PipelineRegistry()
-{
-}
-
-void PipelineRegistry::operator=(const PipelineRegistry& inOther)
-{
-}
-
-PipelineRegistry* PipelineRegistry::GetInstance()
-{
-	return instance;
-}
-
-void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice)
-{
-	Device& device = inDevice->GetDevice();
-	for (auto& passPair : pipelinesData)
+	PipelineRegistry* PipelineRegistry::instance = new PipelineRegistry();
+	
+	PipelineRegistry::PipelineRegistry()
 	{
-		for (auto& shaderPair : passPair.second)
+	}
+	
+	PipelineRegistry::PipelineRegistry(const PipelineRegistry& inOther)
+	{
+	}
+	
+	PipelineRegistry::~PipelineRegistry()
+	{
+	}
+	
+	void PipelineRegistry::operator=(const PipelineRegistry& inOther)
+	{
+	}
+	
+	PipelineRegistry* PipelineRegistry::GetInstance()
+	{
+		return instance;
+	}
+	
+	void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice)
+	{
+		Device& device = inDevice->GetDevice();
+		for (auto& passPair : pipelinesData)
 		{
-			device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
-			device.destroyPipeline(shaderPair.second.pipeline);
+			for (auto& shaderPair : passPair.second)
+			{
+				device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
+				device.destroyPipeline(shaderPair.second.pipeline);
+			}
+		}
+		pipelinesData.clear();
+	}
+	
+	void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice, HashString inPassHash)
+	{
+		Device& device = inDevice->GetDevice();
+		if (pipelinesData.find(inPassHash) != pipelinesData.end())
+		{
+			for (auto& shaderPair : pipelinesData[inPassHash])
+			{
+				device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
+				device.destroyPipeline(shaderPair.second.pipeline);
+			}
+			pipelinesData[inPassHash].clear();
 		}
 	}
-	pipelinesData.clear();
-}
-
-void PipelineRegistry::DestroyPipelines(VulkanDevice* inDevice, HashString inPassHash)
-{
-	Device& device = inDevice->GetDevice();
-	if (pipelinesData.find(inPassHash) != pipelinesData.end())
+	
+	bool PipelineRegistry::HasPipeline(HashString inPassHash, HashString inShadersHash)
 	{
-		for (auto& shaderPair : pipelinesData[inPassHash])
+		if (pipelinesData.find(inPassHash) != pipelinesData.end())
 		{
-			device.destroyPipelineLayout(shaderPair.second.pipelineLayout);
-			device.destroyPipeline(shaderPair.second.pipeline);
+			std::map<HashString, PipelineData>& passData = pipelinesData[inPassHash];
+			return passData.find(inShadersHash) != passData.end();
 		}
-		pipelinesData[inPassHash].clear();
+		return false;
 	}
-}
-
-bool PipelineRegistry::HasPipeline(HashString inPassHash, HashString inShadersHash)
-{
-	if (pipelinesData.find(inPassHash) != pipelinesData.end())
+	
+	bool PipelineRegistry::StorePipeline(HashString inPassHash, HashString inShadersHash, PipelineData inPipelineData)
 	{
-		std::map<HashString, PipelineData>& passData = pipelinesData[inPassHash];
-		return passData.find(inShadersHash) != passData.end();
+		pipelinesData[inPassHash][inShadersHash] = inPipelineData;
+		return true;
 	}
-	return false;
+	
+	PipelineData& PipelineRegistry::GetPipeline(HashString inPassHash, HashString inShadersHash)
+	{
+		return pipelinesData[inPassHash][inShadersHash];
+	}
+	
+	std::map<HashString, PipelineData>& PipelineRegistry::operator[](HashString inShaderHash)
+	{
+		return pipelinesData[inShaderHash];
+	}
+	
 }
-
-bool PipelineRegistry::StorePipeline(HashString inPassHash, HashString inShadersHash, PipelineData inPipelineData)
-{
-	pipelinesData[inPassHash][inShadersHash] = inPipelineData;
-	return true;
-}
-
-PipelineData& PipelineRegistry::GetPipeline(HashString inPassHash, HashString inShadersHash)
-{
-	return pipelinesData[inPassHash][inShadersHash];
-}
-
-std::map<HashString, PipelineData>& PipelineRegistry::operator[](HashString inShaderHash)
-{
-	return pipelinesData[inShaderHash];
-}
-

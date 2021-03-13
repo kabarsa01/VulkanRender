@@ -2,107 +2,111 @@
 #include "data/DataManager.h"
 #include "core/Class.h"
 
-//---------------------------------------------------------------
-// using declarations and aliases
-//---------------------------------------------------------------
-
-template<typename T1, typename T2>
-using map = std::map<T1, T2>;
-
-template<typename T>
-using shared_ptr = std::shared_ptr<T>;
-
-//---------------------------------------------------------------
-
-DataManager* DataManager::instance = new DataManager();
-
-DataManager::DataManager()
+namespace CGE
 {
-
-}
-
-DataManager::~DataManager()
-{
-
-}
-
-DataManager* DataManager::GetInstance()
-{
-	return instance;
-}
-
-void DataManager::ShutdownInstance()
-{
-	instance->CleanupResources();
-	if (instance != nullptr)
+	
+	//---------------------------------------------------------------
+	// using declarations and aliases
+	//---------------------------------------------------------------
+	
+	template<typename T1, typename T2>
+	using map = std::map<T1, T2>;
+	
+	template<typename T>
+	using shared_ptr = std::shared_ptr<T>;
+	
+	//---------------------------------------------------------------
+	
+	DataManager* DataManager::instance = new DataManager();
+	
+	DataManager::DataManager()
 	{
-		delete instance;
+	
 	}
-}
-
-void DataManager::CleanupResources()
-{
-	map<HashString, ResourcePtr>::iterator it = resourcesTable.begin();
-	for (; it != resourcesTable.end(); it++)
+	
+	DataManager::~DataManager()
 	{
-		it->second->Cleanup();
+	
 	}
-	resourcesTable.clear();
-	resourcesMap.clear();
-}
-
-bool DataManager::AddResource(HashString inKey, shared_ptr<Resource> inValue)
-{
-	if (inValue && ( resourcesTable.find(inKey) == resourcesTable.end() ))
+	
+	DataManager* DataManager::GetInstance()
 	{
-		resourcesTable[inKey] = inValue;
-		resourcesMap[inValue->GetClass().GetName()][inKey] = inValue;
-		return true;
+		return instance;
 	}
-
-	return false;
-}
-
-bool DataManager::AddResource(ResourcePtr inValue)
-{
-	return AddResource(inValue->GetResourceId(), inValue);
-}
-
-bool DataManager::DeleteResource(HashString inKey, shared_ptr<Resource> inValue)
-{
-	if (inValue && (resourcesTable.find(inKey) != resourcesTable.end()))
+	
+	void DataManager::ShutdownInstance()
 	{
-		resourcesTable.erase(inKey);
-		resourcesMap[inValue->GetClass().GetName()].erase(inKey);
-		return true;
+		instance->CleanupResources();
+		if (instance != nullptr)
+		{
+			delete instance;
+		}
 	}
-
-	return false;
-}
-
-bool DataManager::DeleteResource(ResourcePtr inValue)
-{
-	return DeleteResource(inValue->GetResourceId(), inValue);
-}
-
-bool DataManager::IsResourcePresent(HashString inKey)
-{
-	return resourcesTable.find(inKey) != resourcesTable.end();
-}
-
-std::shared_ptr<Resource> DataManager::GetResource(HashString inKey)
-{
-	return GetResource(inKey, resourcesTable);
-}
-
-ResourcePtr DataManager::GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap)
-{
-	map<HashString, ResourcePtr>::iterator it = inMap.find(inKey);
-	if (it != inMap.end())
+	
+	void DataManager::CleanupResources()
 	{
-		return it->second;
+		map<HashString, ResourcePtr>::iterator it = resourcesTable.begin();
+		for (; it != resourcesTable.end(); it++)
+		{
+			it->second->Cleanup();
+		}
+		resourcesTable.clear();
+		resourcesMap.clear();
 	}
-	return nullptr;
+	
+	bool DataManager::AddResource(HashString inKey, shared_ptr<Resource> inValue)
+	{
+		if (inValue && ( resourcesTable.find(inKey) == resourcesTable.end() ))
+		{
+			resourcesTable[inKey] = inValue;
+			resourcesMap[inValue->GetClass().GetName()][inKey] = inValue;
+			return true;
+		}
+	
+		return false;
+	}
+	
+	bool DataManager::AddResource(ResourcePtr inValue)
+	{
+		return AddResource(inValue->GetResourceId(), inValue);
+	}
+	
+	bool DataManager::DeleteResource(HashString inKey, shared_ptr<Resource> inValue)
+	{
+		if (inValue && (resourcesTable.find(inKey) != resourcesTable.end()))
+		{
+			resourcesTable.erase(inKey);
+			resourcesMap[inValue->GetClass().GetName()].erase(inKey);
+			return true;
+		}
+	
+		return false;
+	}
+	
+	bool DataManager::DeleteResource(ResourcePtr inValue)
+	{
+		return DeleteResource(inValue->GetResourceId(), inValue);
+	}
+	
+	bool DataManager::IsResourcePresent(HashString inKey)
+	{
+		return resourcesTable.find(inKey) != resourcesTable.end();
+	}
+	
+	std::shared_ptr<Resource> DataManager::GetResource(HashString inKey)
+	{
+		return GetResource(inKey, resourcesTable);
+	}
+	
+	ResourcePtr DataManager::GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap)
+	{
+		map<HashString, ResourcePtr>::iterator it = inMap.find(inKey);
+		if (it != inMap.end())
+		{
+			return it->second;
+		}
+		return nullptr;
+	}
+	
+	
 }
-
-

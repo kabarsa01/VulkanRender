@@ -1,8 +1,11 @@
 #pragma once
 #include <string>
 
-class ImageImporter
+namespace CGE
 {
-public:
-	void ImportImage(const std::string& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true);
-};
+	class ImageImporter
+	{
+	public:
+		void ImportImage(const std::string& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true);
+	};
+}
