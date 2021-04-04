@@ -5,11 +5,6 @@ namespace CGE
 {
 	DeviceMemoryManager* DeviceMemoryManager::staticInstance = new DeviceMemoryManager();
 	
-	namespace
-	{
-//		static const uint32_t CHUNK_ELEMENT_COUNT = 64;
-	};
-	
 	DeviceMemoryManager::DeviceMemoryManager()
 	{
 	

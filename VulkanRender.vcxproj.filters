@@ -64,6 +64,9 @@
     <Filter Include="Source Files\async">
       <UniqueIdentifier>{0147eef5-5702-42d6-a505-06f4c712b82e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\messages">
+      <UniqueIdentifier>{a8af05ee-d919-4628-8e19-5e3b89bf1285}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -225,6 +228,15 @@
     <ClCompile Include="src\async\Job.cpp">
       <Filter>Source Files\async</Filter>
     </ClCompile>
+    <ClCompile Include="src\messages\MessageBus.cpp">
+      <Filter>Source Files\messages</Filter>
+    </ClCompile>
+    <ClCompile Include="src\messages\MessageHandler.cpp">
+      <Filter>Source Files\messages</Filter>
+    </ClCompile>
+    <ClCompile Include="src\messages\Messages.cpp">
+      <Filter>Source Files\messages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -382,6 +394,15 @@
     </ClInclude>
     <ClInclude Include="src\async\Job.h">
       <Filter>Source Files\async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\messages\MessageBus.h">
+      <Filter>Source Files\messages</Filter>
+    </ClInclude>
+    <ClInclude Include="src\messages\MessageHandler.h">
+      <Filter>Source Files\messages</Filter>
+    </ClInclude>
+    <ClInclude Include="src\messages\Messages.h">
+      <Filter>Source Files\messages</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

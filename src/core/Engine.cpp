@@ -3,10 +3,12 @@
 #include "data/DataManager.h"
 #include "render/Renderer.h"
 #include "async/ThreadPool.h"
+#include "messages/MessageBus.h"
 
 namespace CGE
 {
 	static const constexpr uint32_t THREAD_COUNT = 16;
+	static const constexpr uint32_t MESSAGE_THREAD_COUNT = 4;
 
 	Engine* Engine::staticInstance = new Engine();
 	
@@ -50,6 +52,7 @@ namespace CGE
 	void Engine::Init()
 	{
 		ThreadPool::InitInstance(THREAD_COUNT);
+		MessageBus::InitInstance(MESSAGE_THREAD_COUNT);
 		// init glfw window
 		InitWindow();
 	
@@ -90,6 +93,7 @@ namespace CGE
 		glfwDestroyWindow(window);
 		glfwTerminate();
 
+		MessageBus::DestroyInstance();
 		ThreadPool::DestroyInstance();
 	}
 	

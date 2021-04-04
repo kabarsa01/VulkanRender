@@ -1,4 +1,5 @@
 #ifndef _JOB_H_
+#define _JOB_H_
 
 #include <functional>
 

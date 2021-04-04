@@ -13,6 +13,8 @@
 #include "async/ThreadPool.h"
 #include "async/Job.h"
 #include <iostream>
+#include "messages/MessageHandler.h"
+#include "messages/MessageBus.h"
 
 namespace CGE
 {
@@ -32,15 +34,55 @@ namespace CGE
 	
 	void Scene::Init()
 	{
-		for (int i = 0; i < 100; i++)
-		{
-			ThreadPool::GetInstance()->AddJob(std::make_shared<Job<void()>>([]() { for (int idx = 0; idx < 10; idx++)
-			{
-				std::this_thread::sleep_for(std::chrono::seconds(1));
-				std::cout << "thread " << std::this_thread::get_id() << " :: index " << idx << std::endl;
-			}
-			 }));
-		}
+		//for (int i = 0; i < 100; i++)
+		//{
+		//	ThreadPool::GetInstance()->AddJob(std::make_shared<Job<void()>>([]() { for (int idx = 0; idx < 10; idx++)
+		//	{
+		//		std::this_thread::sleep_for(std::chrono::seconds(1));
+		//		std::cout << "thread " << std::this_thread::get_id() << " :: index " << idx << std::endl;
+		//	}
+		//	 }));
+		//}
+
+		//{
+		//	std::vector<IMessageHandler*> handlers;
+
+		//	class MsgHndlr : public IMessageHandler
+		//	{
+		//	public:
+		//		void Handle(MessageCode code) override {
+		//			std::cout << "handling msg " << code << std::endl;
+		//		}
+		//	};
+
+		//	for (uint32_t i = 0; i < 10; i++)
+		//	{
+		//		handlers.push_back(new MsgHndlr());
+		//	}
+
+		//	for (IMessageHandler* h : handlers)
+		//	{
+		//		MessageBus::GetInstance()->Register(
+		//			h,
+		//			MessageCode::MSG_GLOBAL_UPDATE,
+		//			MessageCode::MSG_GLOBAL_INIT,
+		//			MessageCode::MSG_SCENE_PROCESSING_FINISHED);
+		//	}
+
+		//	//for (uint32_t i = 0; i < 100; i++)
+		//	{
+		//		MessageBus::GetInstance()->PublishSync(
+		//			MessageCode::MSG_GLOBAL_UPDATE,
+		//			MessageCode::MSG_GLOBAL_INIT,
+		//			MessageCode::MSG_MAX_COUNT
+		//		);
+		//	}
+
+		//	for (IMessageHandler* h : handlers)
+		//	{
+		//		MessageBus::GetInstance()->Unregister(h);
+		//	}
+		//}
 
 		modelMatrices.resize(g_GlobalTransformDataSize);
 	
