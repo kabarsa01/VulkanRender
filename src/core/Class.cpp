@@ -45,17 +45,17 @@ namespace CGE
 		return this->Name >= Other.Name;
 	}
 	
-	Class::Class()
+	constexpr Class::Class()
 		: Name( HashString::NONE )
 	{
 	}
 	
-	Class::Class(const std::string & InName)
+	constexpr Class::Class(const std::string & InName)
 		: Name( InName )
 	{
 	}
 	
-	Class::Class(const HashString & InName)
+	constexpr Class::Class(const HashString & InName)
 		: Name( InName )
 	{
 	}

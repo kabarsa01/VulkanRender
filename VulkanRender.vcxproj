@@ -235,6 +235,8 @@ exit /b</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\async\Job.cpp" />
+    <ClCompile Include="src\async\ThreadPool.cpp" />
     <ClCompile Include="src\common\HashString.cpp" />
     <ClCompile Include="src\core\Class.cpp" />
     <ClCompile Include="src\core\Engine.cpp" />
@@ -288,6 +290,8 @@ exit /b</Command>
     <ClCompile Include="src\utils\ImageUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\async\Job.h" />
+    <ClInclude Include="src\async\ThreadPool.h" />
     <ClInclude Include="src\common\HashString.h" />
     <ClInclude Include="src\core\Class.h" />
     <ClInclude Include="src\core\Engine.h" />

@@ -10,6 +10,9 @@
 #include "data/DataManager.h"
 #include "render/DataStructures.h"
 #include "light/LightObject.h"
+#include "async/ThreadPool.h"
+#include "async/Job.h"
+#include <iostream>
 
 namespace CGE
 {
@@ -29,6 +32,16 @@ namespace CGE
 	
 	void Scene::Init()
 	{
+		for (int i = 0; i < 100; i++)
+		{
+			ThreadPool::GetInstance()->AddJob(std::make_shared<Job<void()>>([]() { for (int idx = 0; idx < 10; idx++)
+			{
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+				std::cout << "thread " << std::this_thread::get_id() << " :: index " << idx << std::endl;
+			}
+			 }));
+		}
+
 		modelMatrices.resize(g_GlobalTransformDataSize);
 	
 		TransferList* tl = TransferList::GetInstance();
@@ -64,7 +77,7 @@ namespace CGE
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 		lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 0.6f;
+		lightObj->GetLightComponent()->intensity = 1.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
@@ -92,7 +105,7 @@ namespace CGE
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 5.0f;
 				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-				lightObj02->GetLightComponent()->intensity = isSpot ? 55.0f : 15.0f;
+				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 15.0f;
 				lightObj02->GetLightComponent()->color = color;
 	
 				++counter;

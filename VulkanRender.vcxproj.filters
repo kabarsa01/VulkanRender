@@ -61,6 +61,9 @@
     <Filter Include="Source Files\scene\light">
       <UniqueIdentifier>{98ca981e-fec5-465a-8cd0-f246401a1106}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\async">
+      <UniqueIdentifier>{0147eef5-5702-42d6-a505-06f4c712b82e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -216,6 +219,12 @@
     <ClCompile Include="src\scene\light\LightObject.cpp">
       <Filter>Source Files\scene\light</Filter>
     </ClCompile>
+    <ClCompile Include="src\async\ThreadPool.cpp">
+      <Filter>Source Files\async</Filter>
+    </ClCompile>
+    <ClCompile Include="src\async\Job.cpp">
+      <Filter>Source Files\async</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -367,6 +376,12 @@
     </ClInclude>
     <ClInclude Include="src\scene\light\LightObject.h">
       <Filter>Source Files\scene\light</Filter>
+    </ClInclude>
+    <ClInclude Include="src\async\ThreadPool.h">
+      <Filter>Source Files\async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\async\Job.h">
+      <Filter>Source Files\async</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -34,11 +34,11 @@ namespace CGE
 		static std::map<size_t, std::shared_ptr<Class>> Classes;
 		HashString Name;
 	
-		Class();
-		Class(const std::string& InName);
-		Class(const HashString& InName);
+		constexpr Class();
+		constexpr Class(const std::string& InName);
+		constexpr Class(const HashString& InName);
 		Class(const Class& InClass);
-		virtual ~Class();
+		~Class();
 	
 		Class& operator=(const Class& Other);
 		const Class* operator&() const;
@@ -57,8 +57,5 @@ namespace CGE
 	{
 		return * GetClass( HashString{ typeid(T).name() } );
 	}
-	
-	
-	
 	
 }

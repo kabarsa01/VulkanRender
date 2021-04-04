@@ -2,9 +2,12 @@
 #include "core/TimeManager.h"
 #include "data/DataManager.h"
 #include "render/Renderer.h"
+#include "async/ThreadPool.h"
 
 namespace CGE
 {
+	static const constexpr uint32_t THREAD_COUNT = 16;
+
 	Engine* Engine::staticInstance = new Engine();
 	
 	Engine* Engine::GetInstance()
@@ -46,6 +49,7 @@ namespace CGE
 	
 	void Engine::Init()
 	{
+		ThreadPool::InitInstance(THREAD_COUNT);
 		// init glfw window
 		InitWindow();
 	
@@ -85,6 +89,8 @@ namespace CGE
 		// glfw cleanup
 		glfwDestroyWindow(window);
 		glfwTerminate();
+
+		ThreadPool::DestroyInstance();
 	}
 	
 	void Engine::InitWindow()

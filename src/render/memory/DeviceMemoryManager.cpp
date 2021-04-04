@@ -7,7 +7,7 @@ namespace CGE
 	
 	namespace
 	{
-		static const uint32_t CHUNK_ELEMENT_COUNT = 64;
+//		static const uint32_t CHUNK_ELEMENT_COUNT = 64;
 	};
 	
 	DeviceMemoryManager::DeviceMemoryManager()

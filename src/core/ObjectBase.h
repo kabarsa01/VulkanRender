@@ -56,7 +56,4 @@ namespace CGE
 		return std::dynamic_pointer_cast<Type, OriginalType>(InPointer);
 	}
 	
-	
-	
-	
 }
