@@ -54,6 +54,7 @@ namespace CGE
 					handlersVec.erase(it);
 				}
 			}
+			m_handlerCodes.erase(handler);
 		}
 	}
 
