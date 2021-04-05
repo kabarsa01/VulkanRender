@@ -22,7 +22,7 @@ namespace CGE
 		void Unregister(IMessageHandler* handler);
 
 		template<typename ...MessageCodes>
-		void PublishSync(MessageCode code, MessageCodes... messageCodes);
+		void PublishSync(MessageCodes... messageCodes);
 	private:
 		static MessageBus* m_instance;
 
@@ -37,7 +37,6 @@ namespace CGE
 		MessageBus& operator=(MessageBus&&) = delete;
 		~MessageBus();
 
-		void PublishSync() {}
 		void NotifyHandlers(MessageCode code);
 	};
 
@@ -49,10 +48,9 @@ namespace CGE
 	}
 
 	template<typename  ...MessageCodes>
-	void MessageBus::PublishSync(MessageCode code, MessageCodes... messageCodes)
+	void MessageBus::PublishSync(MessageCodes... messageCodes)
 	{
-		NotifyHandlers(code);
-		PublishSync(messageCodes...);
+		(NotifyHandlers(messageCodes),...);
 	}
 
 }
