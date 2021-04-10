@@ -67,23 +67,10 @@ namespace CGE
 				MessageCode::MSG_SCENE_PROCESSING_FINISHED);
 			subscriber.RegisterHandlers();
 
-			//for (uint32_t i = 0; i < 10; i++)
-			//{
-			//	handlers.push_back(new MsgHndlr());
-			//}
-
-			//for (IMessageHandler* h : handlers)
-			//{
-			//	MessageBus::GetInstance()->Register(
-			//		h,
-			//		MessageCode::MSG_GLOBAL_UPDATE,
-			//		MessageCode::MSG_GLOBAL_INIT,
-			//		MessageCode::MSG_SCENE_PROCESSING_FINISHED);
-			//}
-
 			std::any payload = coop;
-			std::any payload2 = Coop{66.3f};
-			for (uint32_t i = 0; i < 10; i++)
+			Coop coop2{ 66.3f };
+			std::any payload2 = coop2;
+			for (uint32_t i = 0; i < 5; i++)
 			{
 				MessageBus::GetInstance()->PublishSync(
 					payload,

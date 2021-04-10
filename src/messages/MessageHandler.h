@@ -41,10 +41,9 @@ namespace CGE
 	class DelegateMessageHandler : public IMessageHandler
 	{
 	public:
-//		template<typename PayloadType, typename HandlerType>
 		using FuncPtr = void (HandlerType::*)(MessageCode, PayloadType);
 
-		DelegateMessageHandler(HandlerType* handler, FuncPtr/*<PayloadType, HandlerType>*/ func)
+		DelegateMessageHandler(HandlerType* handler, FuncPtr func)
 			: m_handler(handler)
 			, m_func(func)
 		{}
@@ -55,7 +54,7 @@ namespace CGE
 		}
 	protected:
 		HandlerType* m_handler;
-		FuncPtr/*<PayloadType, HandlerType>*/ m_func;
+		FuncPtr m_func;
 	};
 
 }
