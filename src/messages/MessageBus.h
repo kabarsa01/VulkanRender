@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include "messages/Messages.h"
+#include <any>
 
 namespace CGE
 {
@@ -22,7 +23,7 @@ namespace CGE
 		void Unregister(IMessageHandler* handler);
 
 		template<typename ...MessageCodes>
-		void PublishSync(MessageCodes... messageCodes);
+		void PublishSync(std::any& payload, MessageCodes... messageCodes);
 	private:
 		static MessageBus* m_instance;
 
@@ -37,7 +38,7 @@ namespace CGE
 		MessageBus& operator=(MessageBus&&) = delete;
 		~MessageBus();
 
-		void NotifyHandlers(MessageCode code);
+		void NotifyHandlers(MessageCode code, std::any& payload);
 	};
 
 	template<typename ...MessageCodes>
@@ -48,9 +49,9 @@ namespace CGE
 	}
 
 	template<typename  ...MessageCodes>
-	void MessageBus::PublishSync(MessageCodes... messageCodes)
+	void MessageBus::PublishSync(std::any& payload, MessageCodes... messageCodes)
 	{
-		(NotifyHandlers(messageCodes),...);
+		(NotifyHandlers(messageCodes, payload),...);
 	}
 
 }

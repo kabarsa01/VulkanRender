@@ -237,6 +237,9 @@
     <ClCompile Include="src\messages\Messages.cpp">
       <Filter>Source Files\messages</Filter>
     </ClCompile>
+    <ClCompile Include="src\messages\MessageSubscriber.cpp">
+      <Filter>Source Files\messages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -402,6 +405,9 @@
       <Filter>Source Files\messages</Filter>
     </ClInclude>
     <ClInclude Include="src\messages\Messages.h">
+      <Filter>Source Files\messages</Filter>
+    </ClInclude>
+    <ClInclude Include="src\messages\MessageSubscriber.h">
       <Filter>Source Files\messages</Filter>
     </ClInclude>
   </ItemGroup>

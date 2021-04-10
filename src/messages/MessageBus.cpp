@@ -58,11 +58,14 @@ namespace CGE
 		}
 	}
 
-	void MessageBus::NotifyHandlers(MessageCode code)
+	void MessageBus::NotifyHandlers(MessageCode code, std::any& payload)
 	{
 		for (IMessageHandler* handler : m_codeHandlers[code])
 		{
-			handler->Handle(code);
+			if (handler->isEnabled)
+			{
+				handler->Handle(code, payload);
+			}
 		}
 	}
 

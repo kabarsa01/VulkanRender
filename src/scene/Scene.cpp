@@ -15,6 +15,7 @@
 #include <iostream>
 #include "messages/MessageHandler.h"
 #include "messages/MessageBus.h"
+#include "messages/MessageSubscriber.h"
 
 namespace CGE
 {
@@ -44,45 +45,59 @@ namespace CGE
 		//	 }));
 		//}
 
-		//{
-		//	std::vector<IMessageHandler*> handlers;
+		{
+			std::vector<IMessageHandler*> handlers;
 
-		//	class MsgHndlr : public IMessageHandler
-		//	{
-		//	public:
-		//		void Handle(MessageCode code) override {
-		//			std::cout << "handling msg " << code << std::endl;
-		//		}
-		//	};
+			struct Coop { float f; };
+			struct Doop
+			{
+				void haldn(MessageCode code, Coop coop)
+				{
+					std::cout << "pew :: " << code << " :: -- " << coop.f << std::endl;
+				}
+			};
 
-		//	for (uint32_t i = 0; i < 10; i++)
-		//	{
-		//		handlers.push_back(new MsgHndlr());
-		//	}
+			Coop coop{ 5.2f };
+			Doop doop;
 
-		//	for (IMessageHandler* h : handlers)
-		//	{
-		//		MessageBus::GetInstance()->Register(
-		//			h,
-		//			MessageCode::MSG_GLOBAL_UPDATE,
-		//			MessageCode::MSG_GLOBAL_INIT,
-		//			MessageCode::MSG_SCENE_PROCESSING_FINISHED);
-		//	}
+			MessageSubscriber subscriber;
+			subscriber.AddHandler<Coop>(&doop, &Doop::haldn, 
+				MessageCode::MSG_GLOBAL_UPDATE,
+				MessageCode::MSG_GLOBAL_INIT,
+				MessageCode::MSG_SCENE_PROCESSING_FINISHED);
+			subscriber.RegisterHandlers();
 
-		//	//for (uint32_t i = 0; i < 100; i++)
-		//	{
-		//		MessageBus::GetInstance()->PublishSync(
-		//			MessageCode::MSG_GLOBAL_UPDATE,
-		//			MessageCode::MSG_GLOBAL_INIT,
-		//			MessageCode::MSG_MAX_COUNT
-		//		);
-		//	}
+			//for (uint32_t i = 0; i < 10; i++)
+			//{
+			//	handlers.push_back(new MsgHndlr());
+			//}
 
-		//	for (IMessageHandler* h : handlers)
-		//	{
-		//		MessageBus::GetInstance()->Unregister(h);
-		//	}
-		//}
+			//for (IMessageHandler* h : handlers)
+			//{
+			//	MessageBus::GetInstance()->Register(
+			//		h,
+			//		MessageCode::MSG_GLOBAL_UPDATE,
+			//		MessageCode::MSG_GLOBAL_INIT,
+			//		MessageCode::MSG_SCENE_PROCESSING_FINISHED);
+			//}
+
+			std::any payload = coop;
+			std::any payload2 = Coop{66.3f};
+			for (uint32_t i = 0; i < 10; i++)
+			{
+				MessageBus::GetInstance()->PublishSync(
+					payload,
+					MessageCode::MSG_GLOBAL_UPDATE,
+					MessageCode::MSG_GLOBAL_INIT,
+					MessageCode::MSG_MAX_COUNT
+				);
+				MessageBus::GetInstance()->PublishSync(
+					payload2,
+					MessageCode::MSG_GLOBAL_UPDATE,
+					MessageCode::MSG_SCENE_PROCESSING_FINISHED
+				);
+			}
+		}
 
 		modelMatrices.resize(g_GlobalTransformDataSize);
 	
