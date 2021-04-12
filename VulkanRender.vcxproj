@@ -251,6 +251,7 @@ exit /b</Command>
     <ClCompile Include="src\import\ImageImporter.cpp" />
     <ClCompile Include="src\import\MeshImporter.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\messages\Message.cpp" />
     <ClCompile Include="src\messages\MessageBus.cpp" />
     <ClCompile Include="src\messages\MessageHandler.cpp" />
     <ClCompile Include="src\messages\Messages.cpp" />
@@ -309,6 +310,7 @@ exit /b</Command>
     <ClInclude Include="src\data\TextureData.h" />
     <ClInclude Include="src\import\ImageImporter.h" />
     <ClInclude Include="src\import\MeshImporter.h" />
+    <ClInclude Include="src\messages\Message.h" />
     <ClInclude Include="src\messages\MessageBus.h" />
     <ClInclude Include="src\messages\MessageHandler.h" />
     <ClInclude Include="src\messages\Messages.h" />

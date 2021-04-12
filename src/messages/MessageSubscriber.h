@@ -13,18 +13,16 @@ namespace CGE
 	public:
 		~MessageSubscriber();
 
-		template<typename PayloadType, typename HandlerType, typename ...MessagesCodes>
-		void AddHandler(HandlerType* handler, typename DelegateMessageHandler<PayloadType, HandlerType>::FuncPtr func, MessagesCodes... codes)
+		template<typename MessageType, typename HandlerType>
+		void AddHandler(HandlerType* handler, typename DelegateMessageHandler<MessageType, HandlerType>::FuncPtr func)
 		{
 			IMessageHandler* delegateHandler = new DelegateMessageHandler(handler, func);
 			m_handlers.push_back(delegateHandler);
-			(m_codes[delegateHandler].push_back(codes), ...);
+			MessageBus::GetInstance()->Register<MessageType>(delegateHandler);
 		}
 
-		void RegisterHandlers();
 		void UnregisterHandlers();
 	private:
-		std::map<IMessageHandler*, std::vector<MessageCode>> m_codes;
 		std::vector<IMessageHandler*> m_handlers;
 	};
 

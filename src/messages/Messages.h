@@ -1,17 +1,24 @@
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
 
+#include "messages/Message.h"
+
 namespace CGE
 {
 
-	enum MessageCode : unsigned int
+	struct GlobalInitMessage : MessageBase<GlobalInitMessage>
 	{
-		MSG_GLOBAL_INIT = 0,
-		MSG_GLOBAL_UPDATE = 1,
+		bool someRandomShitflag;
+	};
 
-		MSG_SCENE_PROCESSING_FINISHED = 100,
+	struct GlobalUpdateMessage : MessageBase<GlobalUpdateMessage>
+	{
+		float deltaTime;
+	};
 
-		MSG_MAX_COUNT
+	struct SceneProcessingFinishedMessage : MessageBase<SceneProcessingFinishedMessage>
+	{
+		bool poop;
 	};
 
 }

@@ -10,17 +10,6 @@ CGE::MessageSubscriber::~MessageSubscriber()
 	}
 }
 
-void CGE::MessageSubscriber::RegisterHandlers()
-{
-	for (IMessageHandler* h : m_handlers)
-	{
-		for (MessageCode code : m_codes[h])
-		{
-			MessageBus::GetInstance()->Register(h, code);
-		}
-	}
-}
-
 void CGE::MessageSubscriber::UnregisterHandlers()
 {
 	for (IMessageHandler* h : m_handlers)

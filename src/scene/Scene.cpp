@@ -46,43 +46,34 @@ namespace CGE
 		//}
 
 		{
-			std::vector<IMessageHandler*> handlers;
-
-			struct Coop { float f; };
 			struct Doop
 			{
-				void haldn(MessageCode code, Coop coop)
+				void haldn(std::shared_ptr<GlobalUpdateMessage> msg)
 				{
-					std::cout << "pew :: " << code << " :: -- " << coop.f << std::endl;
+					std::cout << "" << msg->GetId() << " :: delta time :: " << msg->deltaTime << std::endl;
+				}
+
+				void haldn(std::shared_ptr<SceneProcessingFinishedMessage> msg)
+				{
+					std::cout << "" << msg->GetId() << std::endl;
 				}
 			};
 
-			Coop coop{ 5.2f };
 			Doop doop;
 
 			MessageSubscriber subscriber;
-			subscriber.AddHandler<Coop>(&doop, &Doop::haldn, 
-				MessageCode::MSG_GLOBAL_UPDATE,
-				MessageCode::MSG_GLOBAL_INIT,
-				MessageCode::MSG_SCENE_PROCESSING_FINISHED);
-			subscriber.RegisterHandlers();
+			subscriber.AddHandler<GlobalUpdateMessage>(&doop, &Doop::haldn);
+			subscriber.AddHandler<SceneProcessingFinishedMessage>(&doop, &Doop::haldn);
 
-			std::any payload = coop;
-			Coop coop2{ 66.3f };
-			std::any payload2 = coop2;
+			std::shared_ptr<GlobalUpdateMessage> msg1 = std::make_shared<GlobalUpdateMessage>();
+			msg1->deltaTime = 16.6f;
+			std::shared_ptr<GlobalUpdateMessage> msg2 = std::make_shared<GlobalUpdateMessage>();
+			msg2->deltaTime = 33.2f;
+			std::shared_ptr<SceneProcessingFinishedMessage> msg3 = std::make_shared<SceneProcessingFinishedMessage>();
+
 			for (uint32_t i = 0; i < 5; i++)
 			{
-				MessageBus::GetInstance()->PublishSync(
-					payload,
-					MessageCode::MSG_GLOBAL_UPDATE,
-					MessageCode::MSG_GLOBAL_INIT,
-					MessageCode::MSG_MAX_COUNT
-				);
-				MessageBus::GetInstance()->PublishSync(
-					payload2,
-					MessageCode::MSG_GLOBAL_UPDATE,
-					MessageCode::MSG_SCENE_PROCESSING_FINISHED
-				);
+				MessageBus::GetInstance()->PublishSync(msg1, msg2, msg3);
 			}
 		}
 

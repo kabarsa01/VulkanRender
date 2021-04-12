@@ -43,28 +43,28 @@ namespace CGE
 
 	void MessageBus::Unregister(IMessageHandler* handler)
 	{
-		if (m_handlerCodes.find(handler) != m_handlerCodes.end())
+		if (m_handlerMessageIds.find(handler) != m_handlerMessageIds.end())
 		{
-			for (MessageCode code : m_handlerCodes[handler])
+			for (IMessage::MessageId msgId : m_handlerMessageIds[handler])
 			{
-				auto& handlersVec = m_codeHandlers[code];
+				auto& handlersVec = m_messageIdHandlers[msgId];
 				auto it = std::find(handlersVec.cbegin(), handlersVec.cend(), handler);
 				if (it != handlersVec.cend())
 				{
 					handlersVec.erase(it);
 				}
 			}
-			m_handlerCodes.erase(handler);
+			m_handlerMessageIds.erase(handler);
 		}
 	}
 
-	void MessageBus::NotifyHandlers(MessageCode code, std::any& payload)
+	void MessageBus::NotifyHandlers(std::shared_ptr<IMessage> message)
 	{
-		for (IMessageHandler* handler : m_codeHandlers[code])
+		for (IMessageHandler* handler : m_messageIdHandlers[message->GetId()])
 		{
 			if (handler->isEnabled)
 			{
-				handler->Handle(code, payload);
+				handler->Handle(message);
 			}
 		}
 	}

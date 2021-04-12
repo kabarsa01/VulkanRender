@@ -18,18 +18,18 @@ namespace CGE
 		static void DestroyInstance();
 		static MessageBus* GetInstance();
 
-		template<typename ...MessageCodes>
-		void Register(IMessageHandler* handler, MessageCodes... codes);
+		template<typename ...MessagesTypes>
+		void Register(IMessageHandler* handler);
 		void Unregister(IMessageHandler* handler);
 
-		template<typename ...MessageCodes>
-		void PublishSync(std::any& payload, MessageCodes... messageCodes);
+		template<typename ...MessagesTypes>
+		void PublishSync(std::shared_ptr<MessagesTypes>... messages);
 	private:
 		static MessageBus* m_instance;
 
 		uint32_t m_threadCount;
-		std::map<MessageCode, std::vector<IMessageHandler*>> m_codeHandlers;
-		std::map<IMessageHandler*, std::vector<MessageCode>> m_handlerCodes;
+		std::map<IMessage::MessageId, std::vector<IMessageHandler*>> m_messageIdHandlers;
+		std::map<IMessageHandler*, std::vector<IMessage::MessageId>> m_handlerMessageIds;
 
 		MessageBus(uint32_t threadCount);
 		MessageBus(const MessageBus&) = delete;
@@ -38,20 +38,20 @@ namespace CGE
 		MessageBus& operator=(MessageBus&&) = delete;
 		~MessageBus();
 
-		void NotifyHandlers(MessageCode code, std::any& payload);
+		void NotifyHandlers(std::shared_ptr<IMessage> message);
 	};
 
-	template<typename ...MessageCodes>
-	void MessageBus::Register(IMessageHandler* handler, MessageCodes... codes)
+	template<typename ...MessagesTypes>
+	void MessageBus::Register(IMessageHandler* handler)
 	{
-		(m_codeHandlers[codes].push_back(handler), ...);
-		(m_handlerCodes[handler].push_back(codes), ...);
+		(m_messageIdHandlers[MessagesTypes::Id()].push_back(handler), ...);
+		(m_handlerMessageIds[handler].push_back(MessagesTypes::Id()), ...);
 	}
 
-	template<typename  ...MessageCodes>
-	void MessageBus::PublishSync(std::any& payload, MessageCodes... messageCodes)
+	template<typename ...MessagesTypes>
+	void MessageBus::PublishSync(std::shared_ptr<MessagesTypes>... messages)
 	{
-		(NotifyHandlers(messageCodes, payload),...);
+		(NotifyHandlers(messages),...);
 	}
 
 }
