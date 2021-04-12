@@ -21,6 +21,7 @@ namespace CGE
 			MessageBus::GetInstance()->Register<MessageType>(delegateHandler);
 		}
 
+		void EnableHandlers(bool enableFlag);
 		void UnregisterHandlers();
 	private:
 		std::vector<IMessageHandler*> m_handlers;
