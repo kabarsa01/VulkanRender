@@ -59,8 +59,8 @@ namespace CGE
 		std::shared_ptr<T> GetSceneComponent();
 	protected:
 		std::set<SceneObjectBasePtr> sceneObjectsSet;
-		std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
-		std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
+		std::map<ClassBase::ClassId, std::set<SceneObjectBasePtr>> sceneObjectsMap;
+		std::map<ClassBase::ClassId, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
 	
 		// grouped ordered data for drawing stuff
 		std::vector<HashString> shadersList;
@@ -81,8 +81,7 @@ namespace CGE
 	template<class T>
 	inline std::set<SceneObjectComponentPtr> Scene::GetSceneComponents()
 	{
-		HashString Key = Class::Get<T>().GetName();
-		return sceneObjectComponents[Key];
+		return sceneObjectComponents[Class<T>::Id()];
 	}
 	
 	//-------------------------------------------------------------------------------------------
@@ -90,9 +89,8 @@ namespace CGE
 	template<class T>
 	inline std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
 	{
-		HashString Key = Class::Get<T>().GetName();
 		std::vector<std::shared_ptr<T>> Components;
-		for (SceneObjectComponentPtr Comp : sceneObjectComponents[Key])
+		for (SceneObjectComponentPtr Comp : sceneObjectComponents[Class<T>::Id()])
 		{
 			Components.push_back(ObjectBase::Cast<T, SceneObjectComponent>( Comp ));
 		}
@@ -104,8 +102,7 @@ namespace CGE
 	template<class T>
 	inline std::shared_ptr<T> Scene::GetSceneComponent()
 	{
-		HashString Key = Class::Get<T>().GetName();
-		std::set<SceneObjectComponentPtr>& Components = sceneObjectComponents[Key];
+		std::set<SceneObjectComponentPtr>& Components = sceneObjectComponents[Class<T>::Id()];
 		if (Components.size() > 0)
 		{
 			return ObjectBase::Cast<T, SceneObjectComponent>( * Components.begin() );

@@ -4,10 +4,11 @@
 #include <vector>
 #include "data/MeshData.h"
 #include "data/Material.h"
+#include "core/Class.h"
 
 namespace CGE
 {
-	class MeshComponent : public SceneObjectComponent
+	class MeshComponent : public SceneObjectComponent, public ClassType<MeshComponent>
 	{
 	public:
 		MeshDataPtr meshData;

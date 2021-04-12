@@ -3,10 +3,11 @@
 #include "scene/SceneObjectBase.h"
 #include "LightComponent.h"
 #include <memory>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class LightObject : public SceneObjectBase
+	class LightObject : public SceneObjectBase, public ClassType<LightObject>
 	{
 	public:
 		LightObject();

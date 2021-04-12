@@ -3,10 +3,11 @@
 #include "scene/SceneObjectBase.h"
 #include "CameraComponent.h"
 #include <memory>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class CameraObject : public SceneObjectBase
+	class CameraObject : public SceneObjectBase, public ClassType<CameraObject>
 	{
 	public:
 		CameraObject();

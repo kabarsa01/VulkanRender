@@ -12,6 +12,7 @@
 #include "render/resources/VulkanDeviceMemory.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
+#include "core/Class.h"
 
 namespace CGE
 {
@@ -35,7 +36,7 @@ namespace CGE
 	};
 	
 	
-	class MeshData : public Resource
+	class MeshData : public Resource, public ClassType<MeshData>
 	{
 	public:
 		std::vector<Vertex> vertices;

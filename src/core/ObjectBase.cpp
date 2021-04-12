@@ -12,14 +12,8 @@ namespace CGE
 		OnDestroy();
 	}
 	
-	const Class & ObjectBase::GetClass()
-	{
-		return * instanceClass;
-	}
-	
 	void ObjectBase::OnInitialize()
 	{
-		instanceClass = Class::GetClass(this);
 	}
 	
 	void ObjectBase::OnDestroy()

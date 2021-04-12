@@ -21,10 +21,14 @@ namespace CGE
 		static void ShutdownInstance();
 		void CleanupResources();
 	
-		bool AddResource(HashString inKey, std::shared_ptr<Resource> inValue);
-		bool AddResource(ResourcePtr inValue);
-		bool DeleteResource(HashString inKey, std::shared_ptr<Resource> inValue);
-		bool DeleteResource(ResourcePtr inValue);
+		template<typename T>
+		bool AddResource(HashString inKey, std::shared_ptr<T> inValue);
+		template<typename T>
+		bool AddResource(std::shared_ptr<T> inValue);
+		template<typename T>
+		bool DeleteResource(HashString inKey, std::shared_ptr<T> inValue);
+		template<typename T>
+		bool DeleteResource(std::shared_ptr<T> inValue);
 		bool IsResourcePresent(HashString inKey);
 		std::shared_ptr<Resource> GetResource(HashString inKey);
 		template<class T>
@@ -36,8 +40,8 @@ namespace CGE
 		template<class T, typename ...ArgTypes>
 		static std::shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes&& ...args);
 	protected:
-		std::map<HashString, ResourcePtr> resourcesTable;
-		std::map<HashString, std::map<HashString, ResourcePtr>> resourcesMap;
+		std::map<HashString, ResourcePtr> resourceIdMap;
+		std::map<ClassBase::ClassId, std::map<HashString, ResourcePtr>> resourceTypesMap;
 	private:
 		static DataManager* instance;
 	
@@ -48,10 +52,48 @@ namespace CGE
 	
 		ResourcePtr GetResource(HashString inKey, std::map<HashString, ResourcePtr>& inMap);
 	};
-	
+
 	//===========================================================================================
 	// templated definitions
 	//===========================================================================================
+	
+	template<typename T>
+	bool DataManager::AddResource(HashString inKey, std::shared_ptr<T> inValue)
+	{
+		if (inValue && (resourceIdMap.find(inKey) == resourceIdMap.end()))
+		{
+			resourceIdMap[inKey] = inValue;
+			resourceTypesMap[Class<T>::Id()][inKey] = inValue;
+			return true;
+		}
+
+		return false;
+	}
+
+	template<typename T>
+	bool DataManager::AddResource(std::shared_ptr<T> inValue)
+	{
+		return AddResource(inValue->GetResourceId(), inValue);
+	}
+
+	template<typename T>
+	bool DataManager::DeleteResource(HashString inKey, std::shared_ptr<T> inValue)
+	{
+		if (inValue && (resourceIdMap.find(inKey) != resourceIdMap.end()))
+		{
+			resourceIdMap.erase(inKey);
+			resourceTypesMap[Class<T>::Id()].erase(inKey);
+			return true;
+		}
+
+		return false;
+	}
+
+	template<typename T>
+	bool DataManager::DeleteResource(std::shared_ptr<T> inValue)
+	{
+		return DeleteResource(inValue->GetResourceId(), inValue);
+	}
 	
 	template<class T>
 	inline std::shared_ptr<T> DataManager::GetResource(HashString inKey)
@@ -64,10 +106,10 @@ namespace CGE
 	template<class T>
 	inline std::shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
 	{
-		std::map<HashString, std::map<HashString, ResourcePtr>>::iterator it = resourcesMap.find(Class::Get<T>().GetName());
-		if (it != resourcesMap.end())
+		std::map<HashString, std::map<HashString, ResourcePtr>>::iterator it = resourceTypesMap.find(Class<T>::Id());
+		if (it != resourceTypesMap.end())
 		{
-			return std::dynamic_pointer_cast<T>( GetResource(inKey, resourcesMap[inKey]) );
+			return std::dynamic_pointer_cast<T>( GetResource(inKey, resourceTypesMap[inKey]) );
 		}
 		return nullptr;
 	}
@@ -77,12 +119,11 @@ namespace CGE
 	template<class T, typename ...ArgTypes>
 	inline std::shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes&& ...args)
 	{
-		HashString className = Class::Get<T>().GetName();
-		std::map<HashString, ResourcePtr>& resourceTypeMap = resourcesMap[className];
-		std::map<HashString, ResourcePtr>::iterator it = resourceTypeMap.find(inKey);
-		if (it != resourceTypeMap.end())
+		std::map<HashString, ResourcePtr>& resourceType = resourceTypesMap[Class<T>::Id()];
+		std::map<HashString, ResourcePtr>::iterator it = resourceType.find(inKey);
+		if (it != resourceType.end())
 		{
-			return std::dynamic_pointer_cast<T>(GetResource(inKey, resourceTypeMap));
+			return std::dynamic_pointer_cast<T>(GetResource(inKey, resourceType));
 		}
 		std::shared_ptr<T> resource = ObjectBase::NewObject<T>(inKey, std::forward<ArgTypes>(args)...);
 		if (resource.get())

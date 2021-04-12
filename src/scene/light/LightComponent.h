@@ -3,6 +3,7 @@
 #include "scene/SceneObjectComponent.h"
 
 #include <glm/ext/vector_float3.hpp>
+#include "core/Class.h"
 
 namespace CGE
 {
@@ -14,7 +15,7 @@ namespace CGE
 		LT_MAX
 	};
 	
-	class LightComponent : public SceneObjectComponent
+	class LightComponent : public SceneObjectComponent, public ClassType<LightComponent>
 	{
 	public:
 		LightType type;

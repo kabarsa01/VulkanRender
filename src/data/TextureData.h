@@ -3,10 +3,11 @@
 #include "data/Resource.h"
 #include "render/resources/VulkanImage.h"
 #include <string>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class TextureData : public Resource
+	class TextureData : public Resource, public ClassType<TextureData>
 	{
 	public:
 		TextureData(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true, bool inGenMips = true);

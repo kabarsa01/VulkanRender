@@ -6,6 +6,7 @@
 #include "data/Texture2D.h"
 #include "render/shader/Shader.h"
 #include "render/objects/VulkanDescriptorSet.h"
+#include "core/Class.h"
 
 namespace CGE
 {
@@ -16,7 +17,7 @@ namespace CGE
 	
 	class VulkanDevice;
 	
-	class Material : public Resource
+	class Material : public Resource, public ClassType<Material>
 	{
 	public:
 		Material(HashString inId);

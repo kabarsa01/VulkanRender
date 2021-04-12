@@ -2,23 +2,22 @@
 
 #include <memory>
 #include <type_traits>
+#include "Class.h"
 
 namespace CGE
-{
-	class Class;
-	
+{	
 	#define THIS_PTR(Type) std::dynamic_pointer_cast<Type>(shared_from_this())
 	
-	class ObjectBase : public std::enable_shared_from_this<ObjectBase>
+	class ObjectBase : public std::enable_shared_from_this<ObjectBase>, public ClassType<ObjectBase>
 	{
 	public:
 		ObjectBase();
 		virtual ~ObjectBase();
 	
-		const Class& GetClass();
-	
 		template <typename Derived>
 		std::shared_ptr<Derived> get_shared_from_this();
+
+		ClassBase* GetClass() { return instanceClass; }
 	
 		// static object creation methods
 		template <typename Type, typename ...ArgTypes>
@@ -29,7 +28,7 @@ namespace CGE
 		virtual void OnInitialize();
 		virtual void OnDestroy();
 	private:
-		std::shared_ptr<Class> instanceClass;
+		ClassBase* instanceClass;
 	};
 	
 	//-----------------------------------------------------------------------------------

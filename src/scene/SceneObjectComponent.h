@@ -7,7 +7,7 @@ namespace CGE
 
 	class SceneObjectBase;
 	
-	class SceneObjectComponent : public ObjectBase
+	class SceneObjectComponent : public ObjectBase, public ClassType<SceneObjectComponent>
 	{
 	public:
 		bool isTickEnabled = true;

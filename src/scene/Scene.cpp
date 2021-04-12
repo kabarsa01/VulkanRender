@@ -16,6 +16,7 @@
 #include "messages/MessageHandler.h"
 #include "messages/MessageBus.h"
 #include "messages/MessageSubscriber.h"
+#include "core/Class.h"
 
 namespace CGE
 {
@@ -196,23 +197,23 @@ namespace CGE
 	void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)
 	{
 		sceneObjectsSet.insert(inSceneObject);
-		sceneObjectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
+		sceneObjectsMap[inSceneObject->GetClass()->GetId()].insert(inSceneObject);
 	}
 	
 	void Scene::RemoveSceneObject(SceneObjectBasePtr inSceneObject)
 	{
 		sceneObjectsSet.erase(inSceneObject);
-		sceneObjectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
+		sceneObjectsMap[inSceneObject->GetClass()->GetId()].erase(inSceneObject);
 	}
 	
 	void Scene::RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
+		sceneObjectComponents[inSceneObjectComponent->GetClass()->GetId()].insert(inSceneObjectComponent);
 	}
 	
 	void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
+		sceneObjectComponents[inSceneObjectComponent->GetClass()->GetId()].erase(inSceneObjectComponent);
 	}
 	
 	void Scene::PrepareObjectsLists()
@@ -227,7 +228,7 @@ namespace CGE
 		matToMeshToTransform.clear();
 		materialToMeshDataToIndex.clear();
 	
-		const Class& meshDataClass = Class::Get<MeshComponent>();
+		//const ClassBase* meshDataClass = Class<MeshComponent>::Get();
 		std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>();
 		for (MeshComponentPtr meshComponent : meshes)
 		{

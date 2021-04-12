@@ -7,10 +7,11 @@
 
 #include "scene/SceneObjectComponent.h"
 #include <memory>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class CameraComponent : public SceneObjectComponent
+	class CameraComponent : public SceneObjectComponent, public ClassType<CameraComponent>
 	{
 	public:
 		CameraComponent(std::shared_ptr<SceneObjectBase> inParent);

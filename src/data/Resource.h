@@ -5,10 +5,11 @@
 
 #include "core/ObjectBase.h"
 #include "common/HashString.h"
+#include "core/Class.h"
 
 namespace CGE
 {
-	class Resource : public ObjectBase
+	class Resource : public ObjectBase, public ClassType<Resource>
 	{
 	public:
 		Resource(HashString inId);

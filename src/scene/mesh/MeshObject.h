@@ -3,10 +3,11 @@
 #include "scene/SceneObjectBase.h"
 #include "scene/mesh/MeshComponent.h"
 #include <memory>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class MeshObject : public SceneObjectBase
+	class MeshObject : public SceneObjectBase, public ClassType<MeshObject>
 	{
 	public:
 		MeshObject();

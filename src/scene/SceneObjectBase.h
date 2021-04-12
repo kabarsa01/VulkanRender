@@ -12,7 +12,7 @@ namespace CGE
 	class SceneObjectComponent;
 	typedef std::shared_ptr<SceneObjectComponent> SceneObjectComponentPtr;
 	
-	class SceneObjectBase : public ObjectBase
+	class SceneObjectBase : public ObjectBase, public ClassType<SceneObjectBase>
 	{
 	public:
 		// fields
@@ -58,10 +58,10 @@ namespace CGE
 	template<class T>
 	inline SceneObjectComponentPtr SceneObjectBase::GetComponent()
 	{
-		const Class& searchedClass = Class::Get<T>();
+		Class<T>* searchedClass = Class<T>::Get();
 		for (SceneObjectComponentPtr component : components)
 		{
-			if (searchedClass == component->GetClass())
+			if (searchedClass->Equals(component->GetClass()))
 			{
 				return component;
 			}

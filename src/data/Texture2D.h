@@ -2,10 +2,11 @@
 
 #include "TextureData.h"
 #include <memory>
+#include "core/Class.h"
 
 namespace CGE
 {
-	class Texture2D : public TextureData
+	class Texture2D : public TextureData, public ClassType<Texture2D>
 	{
 	public:
 		Texture2D(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true, bool inGenMips = true);
