@@ -243,6 +243,12 @@
     <ClCompile Include="src\messages\Message.cpp">
       <Filter>Source Files\messages</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\Octree.cpp">
+      <Filter>Source Files\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ObjectPool.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -415,6 +421,12 @@
     </ClInclude>
     <ClInclude Include="src\messages\Message.h">
       <Filter>Source Files\messages</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\Octree.h">
+      <Filter>Source Files\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\ObjectPool.h">
+      <Filter>Source Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

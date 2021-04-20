@@ -241,6 +241,7 @@ exit /b</Command>
     <ClCompile Include="src\core\Class.cpp" />
     <ClCompile Include="src\core\Engine.cpp" />
     <ClCompile Include="src\core\ObjectBase.cpp" />
+    <ClCompile Include="src\core\ObjectPool.cpp" />
     <ClCompile Include="src\core\TimeManager.cpp" />
     <ClCompile Include="src\data\DataManager.cpp" />
     <ClCompile Include="src\data\Material.cpp" />
@@ -287,6 +288,7 @@ exit /b</Command>
     <ClCompile Include="src\scene\light\LightObject.cpp" />
     <ClCompile Include="src\scene\mesh\MeshComponent.cpp" />
     <ClCompile Include="src\scene\mesh\MeshObject.cpp" />
+    <ClCompile Include="src\scene\Octree.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneObjectBase.cpp" />
     <ClCompile Include="src\scene\SceneObjectComponent.cpp" />
@@ -301,6 +303,7 @@ exit /b</Command>
     <ClInclude Include="src\core\Class.h" />
     <ClInclude Include="src\core\Engine.h" />
     <ClInclude Include="src\core\ObjectBase.h" />
+    <ClInclude Include="src\core\ObjectPool.h" />
     <ClInclude Include="src\core\TimeManager.h" />
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\Material.h" />
@@ -346,6 +349,7 @@ exit /b</Command>
     <ClInclude Include="src\scene\light\LightObject.h" />
     <ClInclude Include="src\scene\mesh\MeshComponent.h" />
     <ClInclude Include="src\scene\mesh\MeshObject.h" />
+    <ClInclude Include="src\scene\Octree.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneObjectBase.h" />
     <ClInclude Include="src\scene\SceneObjectComponent.h" />
