@@ -39,6 +39,8 @@ being kind of useless
 
 256K << sizeRangeShift = 2M         :: 256K * 2048   = 512M chunk
 
+Job system is based on quite simple templated job taking something callable. There's a message bus with only synchronous
+notification for now with a plan to be extended with multithreaded messages delivery.
 
 
 Backlog
@@ -62,10 +64,6 @@ Backlog
   Occlusion culling
 
   Compute Hi-Z generation
-
-  Threadpool
-
-  Job system
 
   Async command buffers
 
