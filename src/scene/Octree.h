@@ -43,7 +43,7 @@ namespace CGE
 
 		uint8_t CalculatePointSubnodeIndex(const glm::vec3& point)
 		{
-			glm::vec3 middlePoint = node->position + (node->size * 0.5f);
+			glm::vec3 middlePoint = position + (size * 0.5f);
 
 			uint8_t xPart = 4 * (point.x > middlePoint.x);
 			uint8_t yPart = 2 * (point.y > middlePoint.y);
