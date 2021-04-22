@@ -17,7 +17,8 @@ namespace CGE
 		ObjectPool();
 		~ObjectPool();
 
-		T* Get(uint32_t offset) { return m_objects + offset; };
+		T* Get(uint32_t offset) { return m_objects + offset; }
+		uint32_t GetIndex(T* base) { return base - m_objects; }
 
 		T* Acquire(uint32_t amount);
 		void Release(T* objects, uint32_t amount);

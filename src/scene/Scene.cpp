@@ -17,12 +17,20 @@
 #include "messages/MessageBus.h"
 #include "messages/MessageSubscriber.h"
 #include "core/ObjectPool.h"
+#include "scene/Octree.h"
 
 namespace CGE
 {
+
+	uint8_t CalculateTransformCellIndex(SceneObjectBasePtr object, OctreeNode<SceneObjectBasePtr>* node)
+	{
+		return node->CalculatePointSubnodeIndex(object->transform.GetLocation());
+	}
+
 	Scene::Scene()
 		: ObjectBase()
 	{
+		sceneTree = new Octree<SceneObjectBasePtr>(&CalculateTransformCellIndex);
 	}
 	
 	Scene::~Scene()
@@ -36,32 +44,6 @@ namespace CGE
 	
 	void Scene::Init()
 	{
-		ObjectPool<uint32_t, 13> intPool;
-		uint32_t* chunk1 = intPool.Acquire(3);
-		chunk1[0] = 45;
-		chunk1[1] = 5;
-		chunk1[1] = 77;
-
-		uint32_t* chunk2 = intPool.Acquire(2);
-		chunk2[0] = 223;
-		chunk2[1] = 567;
-
-		uint32_t* chunk3 = intPool.Acquire(5);
-		chunk3[0] = 2236;
-		chunk3[1] = 5677;
-
-		uint32_t* chunk4 = intPool.Acquire(2);
-		chunk4[0] = 22366;
-		chunk4[1] = 56774;
-
-		intPool.Release(chunk3, 5);
-		intPool.Release(chunk1, 3);
-		intPool.Release(chunk4, 2);
-		intPool.Release(chunk2, 2);
-
-		uint32_t sixth = *intPool.Get(5);
-		uint32_t fifth = *intPool.Get(4);
-
 		//for (int i = 0; i < 100; i++)
 		//{
 		//	ThreadPool::GetInstance()->AddJob(std::make_shared<Job<void()>>([]() { for (int idx = 0; idx < 10; idx++)
@@ -209,6 +191,12 @@ namespace CGE
 	
 		MeshData::FullscreenQuad()->CreateBuffer();
 		tl->PushBuffers(MeshData::FullscreenQuad());
+
+		for (SceneObjectBasePtr objPtr : sceneObjectsSet)
+		{
+			sceneTree->AddObject(objPtr);
+		}
+		sceneTree->Update();
 	}
 	
 	void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)

@@ -77,6 +77,8 @@ namespace CGE
 				}
 			}
 		}
+
+		throw std::exception("Failure. Cannot create descriptor pool.");
 	}
 	
 	DescriptorPool VulkanDescriptorPools::ConstructDescriptorPool()

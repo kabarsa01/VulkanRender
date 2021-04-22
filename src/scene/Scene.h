@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <memory>
@@ -10,11 +11,13 @@
 #include "common/HashString.h"
 #include "glm/fwd.hpp"
 #include "glm/detail/type_mat4x4.hpp"
-#include <unordered_map>
 
 namespace CGE
 {
 	
+	template<class T>
+	class Octree;
+
 	class SceneObjectBase;
 	typedef std::shared_ptr<SceneObjectBase> SceneObjectBasePtr;
 	class SceneObjectComponent;
@@ -61,6 +64,8 @@ namespace CGE
 		std::set<SceneObjectBasePtr> sceneObjectsSet;
 		std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
 		std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
+
+		Octree<SceneObjectBasePtr>* sceneTree;
 	
 		// grouped ordered data for drawing stuff
 		std::vector<HashString> shadersList;
