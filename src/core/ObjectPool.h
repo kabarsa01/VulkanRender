@@ -2,6 +2,7 @@
 #define _OBJECT_POOL_H_
 
 #include <set>
+#include <mutex>
 
 namespace CGE
 {
@@ -10,11 +11,11 @@ namespace CGE
 	// Simple object pool for different needs
 	//============================================================================================================
 
-	template<typename T, uint32_t poolSize>
+	template<typename T>
 	class ObjectPool
 	{
 	public:
-		ObjectPool();
+		ObjectPool(uint32_t poolSize);
 		~ObjectPool();
 
 		T* Get(uint32_t offset) { return m_objects + offset; }
@@ -34,8 +35,10 @@ namespace CGE
 
 		using BlockIter = typename std::set<PoolBlockRecord>::iterator;
 
+		uint32_t m_poolSize;
 		T* m_objects;
 		std::set<PoolBlockRecord> m_freeBlocks;
+		std::mutex m_mutex;
 
 		BlockIter MergeBlocks(BlockIter& first, BlockIter& second);
 	};
@@ -43,27 +46,30 @@ namespace CGE
 	//============================================================================================================
 	//============================================================================================================
 
-	template<typename T, uint32_t poolSize>
-	ObjectPool<T, poolSize>::ObjectPool()
+	template<typename T>
+	ObjectPool<T>::ObjectPool(uint32_t poolSize)
+		: m_poolSize(poolSize)
 	{
-		m_objects = new T[poolSize];
-		m_freeBlocks.emplace(0, poolSize);
+		m_objects = new T[m_poolSize];
+		m_freeBlocks.emplace(0, m_poolSize);
 	}
 
 	//------------------------------------------------------------------------------------------------------------
 
-	template<typename T, uint32_t poolSize>
-	ObjectPool<T, poolSize>::~ObjectPool()
+	template<typename T>
+	ObjectPool<T>::~ObjectPool()
 	{
 		delete[] m_objects;
 	}
 
 	//------------------------------------------------------------------------------------------------------------
 
-	template<typename T, uint32_t poolSize>
-	T* ObjectPool<T, poolSize>::Acquire(uint32_t amount)
+	template<typename T>
+	T* ObjectPool<T>::Acquire(uint32_t amount)
 	{
-		assert(amount <= poolSize);
+		std::scoped_lock lock(m_mutex);
+
+		assert(amount <= m_poolSize);
 
 		uint32_t pos = UINT32_MAX;
 		for (PoolBlockRecord rec : m_freeBlocks)
@@ -95,12 +101,14 @@ namespace CGE
 
 	//------------------------------------------------------------------------------------------------------------
 
-	template<typename T, uint32_t poolSize>
-	void ObjectPool<T, poolSize>::Release(T* objects, uint32_t amount)
+	template<typename T>
+	void ObjectPool<T>::Release(T* objects, uint32_t amount)
 	{
+		std::scoped_lock lock(m_mutex);
+
 		assert(objects);
 		uint32_t pos = static_cast<uint32_t>(objects - m_objects);
-		assert(pos < poolSize);
+		assert(pos < m_poolSize);
 
 		auto iter = m_freeBlocks.emplace(pos, amount).first;
 		if (iter != m_freeBlocks.begin())
@@ -118,8 +126,8 @@ namespace CGE
 
 	//------------------------------------------------------------------------------------------------------------
 
-	template<typename T, uint32_t poolSize>
-	typename ObjectPool<T, poolSize>::BlockIter ObjectPool<T, poolSize>::MergeBlocks(BlockIter& first, BlockIter& second)
+	template<typename T>
+	typename ObjectPool<T>::BlockIter ObjectPool<T>::MergeBlocks(BlockIter& first, BlockIter& second)
 	{
 		if ((first->position + first->size) == second->position)
 		{

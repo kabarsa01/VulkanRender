@@ -22,6 +22,11 @@
 namespace CGE
 {
 
+	namespace
+	{
+		constexpr const uint32_t OCTREE_NODE_POOL_SIZE = 250'000;
+	}
+
 	uint8_t CalculateTransformCellIndex(SceneObjectBasePtr object, OctreeNode<SceneObjectBasePtr>* node)
 	{
 		return node->CalculatePointSubnodeIndex(object->transform.GetLocation());
@@ -30,7 +35,7 @@ namespace CGE
 	Scene::Scene()
 		: ObjectBase()
 	{
-		sceneTree = new Octree<SceneObjectBasePtr>(&CalculateTransformCellIndex);
+		sceneTree = new Octree<SceneObjectBasePtr>(OCTREE_NODE_POOL_SIZE, &CalculateTransformCellIndex);
 	}
 	
 	Scene::~Scene()
