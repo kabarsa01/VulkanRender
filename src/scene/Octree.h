@@ -154,8 +154,8 @@ namespace CGE
 		, m_nodePool(nodePoolSize)
 	{
 		m_rootNode = m_nodePool.Acquire(1);
-		m_rootNode->position = glm::vec3(-300.0f, -300.0f, -300.0f);
-		m_rootNode->size = glm::vec3(600.0f, 600.0f, 600.0f);
+		m_rootNode->position = glm::vec3(-1000.0f, -1000.0f, -1000.0f);
+		m_rootNode->size = glm::vec3(2000.0f, 2000.0f, 2000.0f);
 	}
 
 	//---------------------------------------------------------------------------------------------
@@ -254,6 +254,8 @@ namespace CGE
 	template<typename T>
 	void Octree<T>::ThreadUpdateNode(std::shared_ptr<std::promise<void>> promise)
 	{
+		uint32_t retryCounter = 0;
+
 		while (true)
 		{
 			m_nodeListMutex.lock();
@@ -261,6 +263,11 @@ namespace CGE
 			if (m_nodeProcessingList.size() == 0)
 			{
 				m_nodeListMutex.unlock();
+				if (retryCounter++ < 100)
+				{
+					std::this_thread::yield();
+					continue;
+				}
 				promise->set_value();
 				break;
 			}
