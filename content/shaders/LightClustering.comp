@@ -138,7 +138,7 @@ void main() {
 			continue;
 		}
 
-		// TODO: find the light source intersections for this cluster
+		// find the light source intersections for this cluster
 		// first we find our cluster bounds for AABB. clusters are small so it's an 'okay' approximation
 
 		float clusterNear = -1.0 * near * pow(far/near, float(clusterIndex)/64.0);

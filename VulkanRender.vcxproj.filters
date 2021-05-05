@@ -249,6 +249,12 @@
     <ClCompile Include="src\core\ObjectPool.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\SceneStructures.cpp">
+      <Filter>Source Files\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\Math3D.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -427,6 +433,12 @@
     </ClInclude>
     <ClInclude Include="src\core\ObjectPool.h">
       <Filter>Source Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\SceneStructures.h">
+      <Filter>Source Files\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\Math3D.h">
+      <Filter>Source Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

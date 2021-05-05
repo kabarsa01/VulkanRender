@@ -126,6 +126,8 @@ namespace CGE
 		Octree(uint32_t nodePoolSize, std::function<CompareFunc>&& compareFunc);
 		~Octree() {}
 
+		void SetNodeMinSize(float nodeMinSize) { m_nodeMinSize = nodeMinSize; }
+
 		inline void AddObject(T object);
 		inline void Update();
 	private:
@@ -133,7 +135,7 @@ namespace CGE
 		OctreeNode<T>* m_rootNode;
 		std::function<CompareFunc> m_compareFunc;
 		ObjectPool<OctreeNode<T>> m_nodePool;
-		float nodeMinSize = 1.0f;
+		float m_nodeMinSize = 1.0f;
 		std::list<OctreeNode<T>*> m_nodeProcessingList;
 		std::mutex m_nodeListMutex;
 		std::vector<std::future<void>> m_futures;
@@ -216,7 +218,7 @@ namespace CGE
 			return nullptr;
 		}
 		glm::vec3& nodeSize = node->size;
-		if (nodeSize.x <= nodeMinSize || nodeSize.y <= nodeMinSize || nodeSize.z <= nodeMinSize)
+		if (nodeSize.x <= m_nodeMinSize || nodeSize.y <= m_nodeMinSize || nodeSize.z <= m_nodeMinSize)
 		{
 			return nullptr;
 		}
