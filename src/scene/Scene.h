@@ -41,7 +41,7 @@ namespace CGE
 		void RemoveSceneObject(SceneObjectBasePtr inSceneObject);
 	
 		void RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
-		void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);
+		void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);	
 	
 		void PrepareObjectsLists();
 		inline std::vector<HashString>& GetShadersList() { return shadersList; }

@@ -111,18 +111,8 @@ namespace CGE
 		return true;
 	}
 
-	bool FrustumIntersect(const Frustum& f, const AABB& aabb)
+	bool FrustumIntersectSlow(const Frustum& f, const AABB& aabb)
 	{
-		bool isPointsInAABB = IsPointInAABB(aabb, f.origin);
-		for (uint8_t index = 0; index < 4; index++)
-		{
-			isPointsInAABB = isPointsInAABB || IsPointInAABB(aabb, f.points[index]);
-		}
-		if (isPointsInAABB)
-		{
-			return true;
-		}
-
 		bool isPointsInFrustum = false;
 		// xmin points frustum check
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.min.x, aabb.min.y, aabb.min.z));
@@ -140,7 +130,25 @@ namespace CGE
 			return true;
 		}
 
-		// TODO frustum edges (rays) against AABB to have fully precise test
+		bool isPointsInAABB = IsPointInAABB(aabb, f.origin);
+		for (uint8_t index = 0; index < 4; index++)
+		{
+			isPointsInAABB = isPointsInAABB || IsPointInAABB(aabb, f.points[index]);
+		}
+		if (isPointsInAABB)
+		{
+			return true;
+		}
+
+		// frustum edges (rays) against AABB to have fully precise test
+		bool isRayIntersect = false;
+		for (uint8_t idx = 0; idx < 4; idx++)
+		{
+			isRayIntersect = isRayIntersect || RayIntersect(aabb, { f.origin, f.points[idx] - f.origin });
+			isRayIntersect = isRayIntersect || RayIntersect(aabb, { f.points[idx], f.points[(idx + 1) % 4] - f.points[idx] });
+		}
+
+		return isRayIntersect;
 	}
 
 }
