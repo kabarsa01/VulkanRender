@@ -3,6 +3,7 @@
 #include <map>
 #include <unordered_map>
 #include <set>
+#include <list>
 #include <vector>
 #include <memory>
 
@@ -75,6 +76,8 @@ namespace CGE
 		std::unordered_map<HashString, std::unordered_map<HashString, uint32_t>> materialToMeshDataToIndex;
 		std::vector<glm::mat4> modelMatrices;
 		uint32_t relevantMatricesCount;
+
+		std::list<SceneObjectBasePtr> GatherObjectsInFrustum();
 	};
 	
 	typedef std::shared_ptr<Scene> ScenePtr;

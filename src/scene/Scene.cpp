@@ -18,6 +18,7 @@
 #include "messages/MessageSubscriber.h"
 #include "core/ObjectPool.h"
 #include "scene/Octree.h"
+#include "utils/Math3D.h"
 
 namespace CGE
 {
@@ -31,6 +32,15 @@ namespace CGE
 	{
 		return node->CalculatePointSubnodeIndex(object->transform.GetLocation());
 	}
+
+	bool IsNodeInFrustum(const Frustum& object, OctreeNode<SceneObjectBasePtr>* node)
+	{
+		AABB aabb;
+		aabb.min = node->position;
+		aabb.max = aabb.min + node->size;
+		return FrustumIntersectSlow(object, aabb);
+	}
+
 
 	Scene::Scene()
 		: ObjectBase()
@@ -228,6 +238,8 @@ namespace CGE
 	
 	void Scene::PrepareObjectsLists()
 	{
+		GatherObjectsInFrustum();
+
 		/*
 		single threaded simple scene data processing for batching and instancing. later it'll become multi threaded procedure
 		with scene data stored in tree as it should
@@ -305,4 +317,17 @@ namespace CGE
 	
 		PrepareObjectsLists();
 	}
+
+	std::list<SceneObjectBasePtr> Scene::GatherObjectsInFrustum()
+	{
+		std::list<SceneObjectBasePtr> objects;
+
+		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>());
+		objects = sceneTree->Query<Frustum>(frustum, IsNodeInFrustum);
+
+		return objects;
+	}
+
 }
+
+

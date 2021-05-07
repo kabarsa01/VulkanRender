@@ -19,6 +19,7 @@ namespace CGE
 		//---------------------------------------------------------------------------
 		// Accessors
 		//---------------------------------------------------------------------------
+		// FOV is vertical
 		float GetFov() const { return fov; }
 		void SetFov(float inFov) { this->fov = inFov; }
 	

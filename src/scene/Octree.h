@@ -122,6 +122,8 @@ namespace CGE
 	{
 	public:
 		using CompareFunc = uint8_t(T, OctreeNode<T>*);
+		template<typename QueryObj>
+		using QueryCompareFunc = bool(const QueryObj&, OctreeNode<T>*);
 
 		Octree(uint32_t nodePoolSize, std::function<CompareFunc>&& compareFunc);
 		~Octree() {}
@@ -130,6 +132,9 @@ namespace CGE
 
 		inline void AddObject(T object);
 		inline void Update();
+
+		template<typename U>
+		inline std::list<T> Query(const U& u, std::function<QueryCompareFunc<U>> func);
 	private:
 		std::deque<T> m_objects;
 		OctreeNode<T>* m_rootNode;
@@ -143,6 +148,11 @@ namespace CGE
 		OctreeNode<T>* UpdateNode(OctreeNode<T>* node);
 
 		void ThreadUpdateNode(std::shared_ptr<std::promise<void>> promise);
+		template<typename QueryObjType>
+		void ThreadQueryNode(std::shared_ptr<std::promise<void>> promise, 
+			const QueryObjType& queryObj,
+			std::function<QueryCompareFunc<QueryObjType>> func,
+			std::list<T>& output);
 	};
 
 	//---------------------------------------------------------------------------------------------
@@ -203,6 +213,41 @@ namespace CGE
 			f.wait();
 		}
 		m_futures.clear();
+	}
+
+	//---------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------
+
+	template<typename T>
+	template<typename U>
+	std::list<T> Octree<T>::Query(const U& u, std::function<QueryCompareFunc<U>> func)
+	{
+		std::list<T> objects;
+		if (m_rootNode->children == nullptr || !func(u, m_rootNode))
+		{
+			return objects;
+		}
+
+		m_nodeProcessingList.push_back(m_rootNode->children);
+
+		for (uint8_t idx = 0; idx < 16; idx++)
+		{
+			auto promise = std::make_shared<std::promise<void>>();
+			m_futures.emplace_back(promise->get_future());
+			std::function<void()> processFunc = [this, promise, &u, func, &objects]()
+			{
+				ThreadQueryNode(promise, u, func, objects);
+			};
+			ThreadPool::GetInstance()->AddJob(CreateJobPtr<void()>(std::move(processFunc)));
+		}
+
+		for (std::future<void>& f : m_futures)
+		{
+			f.wait();
+		}
+		m_futures.clear();
+
+		return objects;
 	}
 
 	//---------------------------------------------------------------------------------------------
@@ -287,6 +332,58 @@ namespace CGE
 					m_nodeListMutex.lock();
 					m_nodeProcessingList.push_back(nodes);
 					m_nodeListMutex.unlock();
+				}
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------
+
+	template<typename T>
+	template<typename QueryObjType>
+	void Octree<T>::ThreadQueryNode(std::shared_ptr<std::promise<void>> promise,
+		const QueryObjType& queryObj,
+		std::function<QueryCompareFunc<QueryObjType>> func,
+		std::list<T>& output)
+	{
+		uint32_t retryCounter = 0;
+
+		while (true)
+		{
+			m_nodeListMutex.lock();
+
+			if (m_nodeProcessingList.size() == 0)
+			{
+				m_nodeListMutex.unlock();
+				if (retryCounter++ < 100)
+				{
+					std::this_thread::yield();
+					continue;
+				}
+				promise->set_value();
+				break;
+			}
+
+			OctreeNode<T>* currentNodes = m_nodeProcessingList.front();
+			m_nodeProcessingList.pop_front();
+
+			m_nodeListMutex.unlock();
+
+			for (uint8_t idx = 0; idx < 8; idx++)
+			{
+				OctreeNode<T>* node = reinterpret_cast<OctreeNode<T>*>(currentNodes + idx);
+				if (func(queryObj, node))
+				{
+					std::list<T>& objects = node->objects;
+					output.insert(output.end(), objects.begin(), objects.end());
+
+					if (node->children)
+					{
+						m_nodeListMutex.lock();
+						m_nodeProcessingList.push_back(node->children);
+						m_nodeListMutex.unlock();
+					}
 				}
 			}
 		}
