@@ -158,7 +158,7 @@ namespace CGE
 		inline void Update();
 
 		template<typename QueryObj, typename Output>
-		inline void Query(const QueryObj& u, std::function<QueryCompareFunc<QueryObj>> func, Output& output);
+		inline void Query(const QueryObj& queryObj, std::function<QueryCompareFunc<QueryObj>> func, Output& output);
 	private:
 		std::deque<T> m_objects;
 		OctreeNode<T>* m_rootNode;
