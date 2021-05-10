@@ -14,6 +14,25 @@ namespace CGE
 {
 
 	//=============================================================================================
+	// OCTREE NODE PAYLOAD
+	//=============================================================================================
+	//=============================================================================================
+	//
+	//=============================================================================================
+
+	template<typename T>
+	struct OctreeNodePayload
+	{
+		void Add(T&) {}
+		void Remove(T&) {}
+		template<class Output>
+		void WriteOutput(Output&) {}
+	};
+
+	//=============================================================================================
+	//
+	//=============================================================================================
+	//=============================================================================================
 	// OCTREE NODE
 	//=============================================================================================
 
@@ -28,6 +47,7 @@ namespace CGE
 		glm::vec3 size;
 
 		std::list<T> objects;
+		OctreeNodePayload<T>* payload;
 		std::mutex mutex;
 
 		OctreeNode()
@@ -36,6 +56,7 @@ namespace CGE
 			, position {0.0f, 0.0f, 0.0f}
 			, size { 0.0f, 0.0f, 0.0f }
 		{
+			payload = new OctreeNodePayload<T>();
 		}
 
 		OctreeNode(glm::vec3 inPosition, glm::vec3 inSize)
@@ -44,7 +65,10 @@ namespace CGE
 			, position(inPosition)
 			, size(inSize)
 		{
+			payload = new OctreeNodePayload<T>();
 		}
+
+		~OctreeNode() { delete payload; }
 
 		void Lock()
 		{
@@ -133,8 +157,8 @@ namespace CGE
 		inline void AddObject(T object);
 		inline void Update();
 
-		template<typename U>
-		inline std::list<T> Query(const U& u, std::function<QueryCompareFunc<U>> func);
+		template<typename QueryObj, typename Output>
+		inline void Query(const QueryObj& u, std::function<QueryCompareFunc<QueryObj>> func, Output& output);
 	private:
 		std::deque<T> m_objects;
 		OctreeNode<T>* m_rootNode;
@@ -143,16 +167,17 @@ namespace CGE
 		float m_nodeMinSize = 1.0f;
 		std::list<OctreeNode<T>*> m_nodeProcessingList;
 		std::mutex m_nodeListMutex;
+		std::mutex m_queryOutputMutex;
 		std::vector<std::future<void>> m_futures;
 
 		OctreeNode<T>* UpdateNode(OctreeNode<T>* node);
 
 		void ThreadUpdateNode(std::shared_ptr<std::promise<void>> promise);
-		template<typename QueryObjType>
+		template<typename QueryObj, typename Output>
 		void ThreadQueryNode(std::shared_ptr<std::promise<void>> promise, 
-			const QueryObjType& queryObj,
-			std::function<QueryCompareFunc<QueryObjType>> func,
-			std::list<T>& output);
+			const QueryObj& queryObj,
+			std::function<QueryCompareFunc<QueryObj>> func,
+			Output& output);
 	};
 
 	//---------------------------------------------------------------------------------------------
@@ -219,13 +244,12 @@ namespace CGE
 	//---------------------------------------------------------------------------------------------
 
 	template<typename T>
-	template<typename U>
-	std::list<T> Octree<T>::Query(const U& u, std::function<QueryCompareFunc<U>> func)
+	template<typename QueryObj, typename Output>
+	void Octree<T>::Query(const QueryObj& queryObj, std::function<QueryCompareFunc<QueryObj>> func, Output& output)
 	{
-		std::list<T> objects;
-		if (m_rootNode->children == nullptr || !func(u, m_rootNode))
+		if (m_rootNode->children == nullptr || !func(queryObj, m_rootNode))
 		{
-			return objects;
+			return;
 		}
 
 		m_nodeProcessingList.push_back(m_rootNode->children);
@@ -234,9 +258,9 @@ namespace CGE
 		{
 			auto promise = std::make_shared<std::promise<void>>();
 			m_futures.emplace_back(promise->get_future());
-			std::function<void()> processFunc = [this, promise, &u, func, &objects]()
+			std::function<void()> processFunc = [this, promise, &queryObj, func, &output]()
 			{
-				ThreadQueryNode(promise, u, func, objects);
+				ThreadQueryNode(promise, queryObj, func, output);
 			};
 			ThreadPool::GetInstance()->AddJob(CreateJobPtr<void()>(std::move(processFunc)));
 		}
@@ -246,8 +270,6 @@ namespace CGE
 			f.wait();
 		}
 		m_futures.clear();
-
-		return objects;
 	}
 
 	//---------------------------------------------------------------------------------------------
@@ -258,35 +280,46 @@ namespace CGE
 	{
 		std::scoped_lock<std::mutex> lock(node->mutex);
 
+		bool leafNode = false;
 		if (node->objects.size() <= 1)
 		{
-			return nullptr;
+			leafNode = true;
 		}
 		glm::vec3& nodeSize = node->size;
 		if (nodeSize.x <= m_nodeMinSize || nodeSize.y <= m_nodeMinSize || nodeSize.z <= m_nodeMinSize)
 		{
-			return nullptr;
+			leafNode = true;
 		}
+		if (leafNode)
+		{
+			for (T& obj : node->objects)
+			{
+				node->payload->Add(obj);
+			}
+			node->objects.clear();
+			return nullptr;
+		}			
+
 
 		if (!node->CreateChildren(m_nodePool, true))
 		{
 			return nullptr;
 		}
 
-		for (auto iter = node->objects.begin(); iter != node->objects.end();)
+		for (auto iter = node->objects.begin(); iter != node->objects.end(); iter++)
 		{
 			T object = *iter;
 			uint8_t cell = m_compareFunc(object, node);
 			if (cell < 8)
 			{
 				node->children[cell].objects.push_back(object);
-				iter = node->objects.erase(iter);
 			}
 			else
 			{
-				++iter;
+				node->payload->Add(object);
 			}
 		}
+		node->objects.clear();
 		for (uint8_t idx = 0; idx < 8; idx++)
 		{
 			node->children[idx].Unlock();
@@ -341,11 +374,11 @@ namespace CGE
 	//---------------------------------------------------------------------------------------------
 
 	template<typename T>
-	template<typename QueryObjType>
+	template<typename QueryObj, typename Output>
 	void Octree<T>::ThreadQueryNode(std::shared_ptr<std::promise<void>> promise,
-		const QueryObjType& queryObj,
-		std::function<QueryCompareFunc<QueryObjType>> func,
-		std::list<T>& output)
+		const QueryObj& queryObj,
+		std::function<QueryCompareFunc<QueryObj>> func,
+		Output& output)
 	{
 		uint32_t retryCounter = 0;
 
@@ -375,8 +408,9 @@ namespace CGE
 				OctreeNode<T>* node = reinterpret_cast<OctreeNode<T>*>(currentNodes + idx);
 				if (func(queryObj, node))
 				{
-					std::list<T>& objects = node->objects;
-					output.insert(output.end(), objects.begin(), objects.end());
+					m_queryOutputMutex.lock();
+					node->payload->WriteOutput(output);
+					m_queryOutputMutex.unlock();
 
 					if (node->children)
 					{

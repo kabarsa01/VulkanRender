@@ -27,6 +27,23 @@ namespace CGE
 	typedef std::shared_ptr<Material> MaterialPtr;
 	class MeshData;
 	typedef std::shared_ptr<MeshData> MeshDataPtr;
+
+	//=======================================================================================================
+	//=======================================================================================================
+
+	struct SceneObjectsPack
+	{
+		std::set<SceneObjectBasePtr> objectsList;
+		std::map<HashString, std::set<SceneObjectBasePtr>> objectsMap;
+		std::map<HashString, std::set<SceneObjectComponentPtr>> componentsMap;
+
+		void Add(SceneObjectBasePtr object);
+		void Remove(SceneObjectBasePtr object);
+		void Clear();
+	};
+
+	//=======================================================================================================
+	//=======================================================================================================
 	
 	class Scene : public ObjectBase
 	{
@@ -62,9 +79,12 @@ namespace CGE
 		template<class T>
 		std::shared_ptr<T> GetSceneComponent();
 	protected:
-		std::set<SceneObjectBasePtr> sceneObjectsSet;
-		std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
-		std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
+		SceneObjectsPack primaryPack;
+		SceneObjectsPack frustumPack;
+
+		//std::set<SceneObjectBasePtr> sceneObjectsSet;
+		//std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
+		//std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
 
 		Octree<SceneObjectBasePtr>* sceneTree;
 	
@@ -77,7 +97,14 @@ namespace CGE
 		std::vector<glm::mat4> modelMatrices;
 		uint32_t relevantMatricesCount;
 
-		std::list<SceneObjectBasePtr> GatherObjectsInFrustum();
+		void GatherObjectsInFrustum();
+
+		template<class T>
+		std::set<SceneObjectComponentPtr>& GetSceneComponents(SceneObjectsPack& objectPack);
+		template<class T>
+		std::vector<std::shared_ptr<T>> GetSceneComponentsCast(SceneObjectsPack& objectPack);
+		template<class T>
+		std::shared_ptr<T> GetSceneComponent(SceneObjectsPack& objectPack);
 	};
 	
 	typedef std::shared_ptr<Scene> ScenePtr;
@@ -87,37 +114,62 @@ namespace CGE
 	//=============================================================================================================
 	
 	template<class T>
-	inline std::set<SceneObjectComponentPtr> Scene::GetSceneComponents()
+	inline std::set<SceneObjectComponentPtr>& Scene::GetSceneComponents(SceneObjectsPack& objectPack)
 	{
 		HashString Key = Class::Get<T>().GetName();
-		return sceneObjectComponents[Key];
+		return objectPack.componentsMap[Key];
 	}
-	
+
 	//-------------------------------------------------------------------------------------------
 	
 	template<class T>
-	inline std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
+	std::set<SceneObjectComponentPtr> Scene::GetSceneComponents()
+	{
+		return GetSceneComponents<T>(primaryPack);
+	}
+
+	//-------------------------------------------------------------------------------------------
+	
+	template<class T>
+	inline std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast(SceneObjectsPack& objectPack)
 	{
 		HashString Key = Class::Get<T>().GetName();
 		std::vector<std::shared_ptr<T>> Components;
-		for (SceneObjectComponentPtr Comp : sceneObjectComponents[Key])
+		for (SceneObjectComponentPtr Comp : objectPack.componentsMap[Key])
 		{
 			Components.push_back(ObjectBase::Cast<T, SceneObjectComponent>( Comp ));
 		}
 		return Components;
 	}
-	
+
 	//-------------------------------------------------------------------------------------------
 	
 	template<class T>
-	inline std::shared_ptr<T> Scene::GetSceneComponent()
+	std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
+	{
+		return GetSceneComponentsCast<T>(primaryPack);
+	}
+
+	//-------------------------------------------------------------------------------------------
+	
+	template<class T>
+	inline std::shared_ptr<T> Scene::GetSceneComponent(SceneObjectsPack& objectPack)
 	{
 		HashString Key = Class::Get<T>().GetName();
-		std::set<SceneObjectComponentPtr>& Components = sceneObjectComponents[Key];
+		std::set<SceneObjectComponentPtr>& Components = objectPack.componentsMap[Key];
 		if (Components.size() > 0)
 		{
 			return ObjectBase::Cast<T, SceneObjectComponent>( * Components.begin() );
 		}
 		return nullptr;
 	}
+
+	//-------------------------------------------------------------------------------------------
+
+	template<class T>
+	std::shared_ptr<T> Scene::GetSceneComponent()
+	{
+		return GetSceneComponent<T>(primaryPack);
+	}
+
 }

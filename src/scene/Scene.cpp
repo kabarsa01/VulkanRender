@@ -28,10 +28,16 @@ namespace CGE
 		constexpr const uint32_t OCTREE_NODE_POOL_SIZE = 250'000;
 	}
 
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+
 	uint8_t CalculateTransformCellIndex(SceneObjectBasePtr object, OctreeNode<SceneObjectBasePtr>* node)
 	{
 		return node->CalculatePointSubnodeIndex(object->transform.GetLocation());
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 
 	bool IsNodeInFrustum(const Frustum& object, OctreeNode<SceneObjectBasePtr>* node)
 	{
@@ -41,21 +47,96 @@ namespace CGE
 		return FrustumIntersectSlow(object, aabb);
 	}
 
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+
+	template<>
+	struct OctreeNodePayload<SceneObjectBasePtr>
+	{
+		SceneObjectsPack objectsPack;
+
+		void Add(SceneObjectBasePtr object)
+		{
+			objectsPack.Add(object);
+		}
+		void Remove(SceneObjectBasePtr object)
+		{
+			objectsPack.Remove(object);
+		}
+		void WriteOutput(SceneObjectsPack& outPack)
+		{
+			outPack.objectsList.insert(objectsPack.objectsList.begin(), objectsPack.objectsList.end());
+			for (auto& pair : objectsPack.objectsMap)
+			{
+				outPack.objectsMap[pair.first].insert(pair.second.begin(), pair.second.end());
+			}
+			for (auto& pair : objectsPack.componentsMap)
+			{
+				outPack.componentsMap[pair.first].insert(pair.second.begin(), pair.second.end());
+			}
+		}
+	};
+
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void SceneObjectsPack::Add(SceneObjectBasePtr object)
+	{
+		objectsList.insert(object);
+		objectsMap[object->GetClass().GetName()].insert(object);
+		for (SceneObjectComponentPtr comp : object->GetComponents())
+		{
+			componentsMap[comp->GetClass().GetName()].insert(comp);
+		}
+	}
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void SceneObjectsPack::Remove(SceneObjectBasePtr object)
+	{
+		objectsList.erase(object);
+		objectsMap[object->GetClass().GetName()].erase(object);
+		for (SceneObjectComponentPtr comp : object->GetComponents())
+		{
+			componentsMap[comp->GetClass().GetName()].erase(comp);
+		}
+	}
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void SceneObjectsPack::Clear()
+	{
+		objectsList.clear();
+		objectsMap.clear();
+		componentsMap.clear();
+	}
+
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------
 
 	Scene::Scene()
 		: ObjectBase()
 	{
 		sceneTree = new Octree<SceneObjectBasePtr>(OCTREE_NODE_POOL_SIZE, &CalculateTransformCellIndex);
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	Scene::~Scene()
 	{
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::OnInitialize()
 	{
 		ObjectBase::OnInitialize();
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::Init()
 	{
@@ -126,7 +207,7 @@ namespace CGE
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
-		cameraObj->transform.SetRotation({ -30.0f, 180.0f, 0.0f });
+		cameraObj->transform.SetRotation({ -30.0f, 110.0f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(90.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
@@ -207,34 +288,44 @@ namespace CGE
 		MeshData::FullscreenQuad()->CreateBuffer();
 		tl->PushBuffers(MeshData::FullscreenQuad());
 
-		for (SceneObjectBasePtr objPtr : sceneObjectsSet)
+		for (SceneObjectBasePtr objPtr : primaryPack.objectsList)
 		{
 			sceneTree->AddObject(objPtr);
 		}
 		sceneTree->Update();
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)
 	{
-		sceneObjectsSet.insert(inSceneObject);
-		sceneObjectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
+		primaryPack.objectsList.insert(inSceneObject);
+		primaryPack.objectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RemoveSceneObject(SceneObjectBasePtr inSceneObject)
 	{
-		sceneObjectsSet.erase(inSceneObject);
-		sceneObjectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
+		primaryPack.objectsList.erase(inSceneObject);
+		primaryPack.objectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
+		primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		sceneObjectComponents[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
+		primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::PrepareObjectsLists()
 	{
@@ -251,7 +342,7 @@ namespace CGE
 		materialToMeshDataToIndex.clear();
 	
 		const Class& meshDataClass = Class::Get<MeshComponent>();
-		std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>();
+		std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>(frustumPack);
 		for (MeshComponentPtr meshComponent : meshes)
 		{
 			MaterialPtr material = meshComponent->material;
@@ -293,18 +384,25 @@ namespace CGE
 		}
 		relevantMatricesCount = counter;
 	}
+
+	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::PerFrameUpdate()
 	{
 		float deltaTime = TimeManager::GetInstance()->GetDeltaTime();
-		for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
-		{
-			if (sceneObject->isTickEnabled)
-			{
-				sceneObject->Tick(deltaTime);
-				sceneObject->TickComponents(deltaTime);
-			}
-		}
+
+		auto msg = std::make_shared<GlobalUpdateMessage>();
+		msg->deltaTime = deltaTime;
+		MessageBus::GetInstance()->PublishSync(msg);
+
+		//for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
+		//{
+		//	if (sceneObject->isTickEnabled)
+		//	{
+		//		sceneObject->Tick(deltaTime);
+		//		sceneObject->TickComponents(deltaTime);
+		//	}
+		//}
 	
 		// DIRTY TESTING SCENE
 		std::vector<MeshComponentPtr> meshComps = GetSceneComponentsCast<MeshComponent>();
@@ -318,14 +416,13 @@ namespace CGE
 		PrepareObjectsLists();
 	}
 
-	std::list<SceneObjectBasePtr> Scene::GatherObjectsInFrustum()
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void Scene::GatherObjectsInFrustum()
 	{
-		std::list<SceneObjectBasePtr> objects;
-
-		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>());
-		objects = sceneTree->Query<Frustum>(frustum, IsNodeInFrustum);
-
-		return objects;
+		frustumPack.Clear();
+		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
+		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
 	}
 
 }
