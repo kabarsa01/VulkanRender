@@ -1,7 +1,7 @@
 {
     "rdocCaptureSettings": 1,
     "settings": {
-        "autoStart": false,
+        "autoStart": true,
         "commandLine": "",
         "environment": [
         ],
@@ -11,15 +11,15 @@
         "options": {
             "allowFullscreen": true,
             "allowVSync": true,
-            "apiValidation": false,
-            "captureAllCmdLists": false,
-            "captureCallstacks": false,
+            "apiValidation": true,
+            "captureAllCmdLists": true,
+            "captureCallstacks": true,
             "captureCallstacksOnlyDraws": false,
             "debugOutputMute": true,
             "delayForDebugger": 0,
             "hookIntoChildren": false,
-            "refAllResources": false,
-            "verifyBufferAccess": false
+            "refAllResources": true,
+            "verifyBufferAccess": true
         },
         "queuedFrameCap": 0,
         "workingDir": "D:/GitHub/VulkanRender"

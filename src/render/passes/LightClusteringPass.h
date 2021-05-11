@@ -18,6 +18,7 @@ namespace CGE
 		Texture2DPtr depthTexture;
 	
 		LightClusteringPass(HashString inName);
+		void UpdateData();
 		void RecordCommands(CommandBuffer* inCommandBuffer) override;
 	protected:
 		ClusterLightsData* clusterLightData;

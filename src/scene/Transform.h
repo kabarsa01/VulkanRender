@@ -25,7 +25,6 @@ namespace CGE
 		void AddScale(const glm::vec3& inScale);
 
 		void MarkDirty();
-		glm::mat4 GetMatrix() const;
 		glm::mat4& GetMatrix();
 
 		glm::mat4 CalculateRotationMatrix() const;

@@ -59,15 +59,6 @@ namespace CGE
 		isDirty = true;
 	}
 	
-	glm::mat4 Transform::GetMatrix() const
-	{
-		if (isDirty)
-		{
-			return CalculateMatrix();
-		}
-		return matrix;
-	}
-	
 	glm::mat4& Transform::GetMatrix()
 	{
 		if (isDirty)

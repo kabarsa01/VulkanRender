@@ -19,10 +19,10 @@ namespace CGE
 	
 	}
 	
-	void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
+	void LightClusteringPass::UpdateData()
 	{
 		ScenePtr scene = Engine::GetSceneInstance();
-		std::vector<LightComponentPtr> lights = scene->GetSceneComponentsCast<LightComponent>();
+		std::vector<LightComponentPtr> lights = scene->GetSceneComponentsInFrustumCast<LightComponent>();
 		std::map<LightType, std::vector<LightInfo>> sortedLights;
 		for (LightComponentPtr lightComp : lights)
 		{
@@ -33,7 +33,7 @@ namespace CGE
 			info.rai.x = lightComp->radius;
 			info.rai.y = lightComp->spotHalfAngle;
 			info.rai.z = lightComp->intensity;
-	
+
 			sortedLights[lightComp->type].push_back(info);
 		}
 		lightsIndices->directionalPosition.x = 0;
@@ -42,17 +42,20 @@ namespace CGE
 		lightsIndices->pointPosition.y = static_cast<uint32_t>(sortedLights[LT_Point].size());
 		lightsIndices->spotPosition.x = lightsIndices->pointPosition.x + lightsIndices->pointPosition.y;
 		lightsIndices->spotPosition.y = static_cast<uint32_t>(sortedLights[LT_Spot].size());
-	
+
 		std::memcpy(&lightsList->lights[lightsIndices->directionalPosition.x], sortedLights[LT_Directional].data(), sizeof(LightInfo) * lightsIndices->directionalPosition.y);
 		std::memcpy(&lightsList->lights[lightsIndices->spotPosition.x], sortedLights[LT_Spot].data(), sizeof(LightInfo) * lightsIndices->spotPosition.y);
 		std::memcpy(&lightsList->lights[lightsIndices->pointPosition.x], sortedLights[LT_Point].data(), sizeof(LightInfo) * lightsIndices->pointPosition.y);
-	
+
 		computeMaterial->UpdateUniformBuffer<LightsList>("lightsList", *lightsList);
 		computeMaterial->UpdateUniformBuffer<LightsIndices>("lightsIndices", *lightsIndices);
-	
+	}
+
+	void LightClusteringPass::RecordCommands(CommandBuffer* inCommandBuffer)
+	{
 		// barriers ----------------------------------------------
 		ImageMemoryBarrier depthTextureBarrier = depthTexture->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
+			ImageLayout::eDepthStencilAttachmentOptimal,
 			ImageLayout::eShaderReadOnlyOptimal,
 			AccessFlagBits::eShaderWrite,
 			AccessFlagBits::eShaderRead,
@@ -65,12 +68,18 @@ namespace CGE
 			AccessFlagBits::eShaderWrite,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
+		VulkanBuffer& clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferMemoryBarrier clusterDataBarrier = clusterBuffer.CreateMemoryBarrier(
+			0, 0,
+			AccessFlagBits::eShaderRead,
+			AccessFlagBits::eShaderWrite);
 		std::array<ImageMemoryBarrier, 2> barriers{ depthTextureBarrier, clustersTextureBarrier };
 		inCommandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eAllGraphics,
 			PipelineStageFlagBits::eComputeShader,
 			DependencyFlags(),
-			0, nullptr, 0, nullptr,
+			0, nullptr,
+			1, &clusterDataBarrier,
 			static_cast<uint32_t>( barriers.size() ), barriers.data());
 	
 		PipelineData& pipelineData = FindPipeline(computeMaterial);

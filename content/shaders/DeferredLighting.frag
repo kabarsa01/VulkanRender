@@ -234,7 +234,7 @@ void main() {
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / lightRadiusSqr;
+		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
 		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
 		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;

@@ -60,9 +60,9 @@ uint Pack16BitIndex(uint lightIndexData, uint lightIndexInCluster, uint lightInd
 {
 	uint bitOffset = 16 * (lightIndexInCluster % 2);
 	// nullify
-	lightIndexData &= 0xffff0000 >> bitOffset;
+	lightIndexData &= bitOffset == 0 ? 0xffff0000 : 0x0000ffff;//0xffff0000 >> bitOffset;
 	// set
-	lightIndexData |= lightIndexGlobal << bitOffset;
+	lightIndexData |= (lightIndexGlobal & 0x0000ffff) << bitOffset;
 
 	return lightIndexData;
 }
@@ -250,7 +250,7 @@ void main() {
 		pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
 		clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
 
-		vec4 color = vec4(depth, depth, depth, 1.0);
+		//vec4 color = vec4(depth, depth, depth, 1.0);
 		//imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
 	}
 }

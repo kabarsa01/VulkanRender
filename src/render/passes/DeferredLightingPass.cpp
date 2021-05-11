@@ -43,7 +43,7 @@ namespace CGE
 			0, 1, 0, 1);
 		std::array<ImageMemoryBarrier, 2> barriers{ attachmentBarrier, depthTextureBarrier };
 		inCommandBuffer->pipelineBarrier(
-			PipelineStageFlagBits::eVertexShader,
+			PipelineStageFlagBits::eVertexShader | PipelineStageFlagBits::eComputeShader,
 			PipelineStageFlagBits::eFragmentShader,
 			DependencyFlags(),
 			0, nullptr,

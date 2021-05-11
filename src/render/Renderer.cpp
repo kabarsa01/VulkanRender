@@ -121,6 +121,7 @@ namespace CGE
 		}
 	
 		perFrameData->UpdateBufferData();
+		lightClusteringPass->UpdateData();
 	
 		CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
 	
@@ -136,22 +137,22 @@ namespace CGE
 		// render passes
 		// z prepass
 		zPrepass->RecordCommands(&cmdBuffer);
-		//--------------------------------------------------------
+		//----------------------------------------------------------
 		lightClusteringPass->RecordCommands(&cmdBuffer);
 		//// barriers ----------------------------------------------
-		ImageMemoryBarrier clustersTextureBarrier = lightClusteringPass->image.CreateLayoutBarrier(
-			ImageLayout::eGeneral,
-			ImageLayout::eShaderReadOnlyOptimal,
-			AccessFlagBits::eShaderWrite,
-			AccessFlagBits::eShaderRead,
-			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		cmdBuffer.pipelineBarrier(
-			PipelineStageFlagBits::eComputeShader,
-			PipelineStageFlagBits::eVertexShader,
-			DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			1, &clustersTextureBarrier);
+		//ImageMemoryBarrier clustersTextureBarrier = lightClusteringPass->image.CreateLayoutBarrier(
+		//	ImageLayout::eGeneral,
+		//	ImageLayout::eShaderReadOnlyOptimal,
+		//	AccessFlagBits::eShaderWrite,
+		//	AccessFlagBits::eShaderRead,
+		//	ImageAspectFlagBits::eColor,
+		//	0, 1, 0, 1);
+		//cmdBuffer.pipelineBarrier(
+		//	PipelineStageFlagBits::eComputeShader,
+		//	PipelineStageFlagBits::eVertexShader,
+		//	DependencyFlags(),
+		//	0, nullptr, 0, nullptr,
+		//	1, &clustersTextureBarrier);
 		//--------------------------------------------------------
 		// gbuffer pass
 		gBufferPass->RecordCommands(&cmdBuffer);

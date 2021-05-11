@@ -77,6 +77,8 @@ namespace CGE
 		template<class T>
 		std::vector<std::shared_ptr<T>> GetSceneComponentsCast();
 		template<class T>
+		std::vector<std::shared_ptr<T>> GetSceneComponentsInFrustumCast();
+		template<class T>
 		std::shared_ptr<T> GetSceneComponent();
 	protected:
 		SceneObjectsPack primaryPack;
@@ -148,6 +150,13 @@ namespace CGE
 	std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
 	{
 		return GetSceneComponentsCast<T>(primaryPack);
+	}
+
+	template<class T>
+	std::vector<std::shared_ptr<T>>
+		Scene::GetSceneComponentsInFrustumCast()
+	{
+		return GetSceneComponentsCast<T>(frustumPack);
 	}
 
 	//-------------------------------------------------------------------------------------------

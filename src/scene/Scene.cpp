@@ -207,7 +207,7 @@ namespace CGE
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
-		cameraObj->transform.SetRotation({ -30.0f, 110.0f, 0.0f });
+		cameraObj->transform.SetRotation({ -30.0f, -158.34f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(90.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
@@ -217,7 +217,7 @@ namespace CGE
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 		lightObj->transform.SetRotation({ -40.0f, -90.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 1.6f;
+		lightObj->GetLightComponent()->intensity = 0.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
@@ -395,14 +395,14 @@ namespace CGE
 		msg->deltaTime = deltaTime;
 		MessageBus::GetInstance()->PublishSync(msg);
 
-		//for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
-		//{
-		//	if (sceneObject->isTickEnabled)
-		//	{
-		//		sceneObject->Tick(deltaTime);
-		//		sceneObject->TickComponents(deltaTime);
-		//	}
-		//}
+		/*for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
+		{
+			if (sceneObject->isTickEnabled)
+			{
+				sceneObject->Tick(deltaTime);
+				sceneObject->TickComponents(deltaTime);
+			}
+		}*/
 	
 		// DIRTY TESTING SCENE
 		std::vector<MeshComponentPtr> meshComps = GetSceneComponentsCast<MeshComponent>();
@@ -411,6 +411,13 @@ namespace CGE
 			float multiplierY = deltaTime * 10.0f;
 			float multiplierZ = deltaTime * 10.0f;
 			meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
+		}
+
+		double time = TimeManager::GetInstance()->GetTime();
+		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
+		if (cam)
+		{
+			cam->GetParent()->transform.SetRotation({-30.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();

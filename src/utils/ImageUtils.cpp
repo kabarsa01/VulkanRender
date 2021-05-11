@@ -25,7 +25,7 @@ namespace CGE
 		colorAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
 		colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
-		colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled);
+		colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
 		colorAttachmentImage.Create(inDevice);
 		colorAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 	
@@ -47,7 +47,7 @@ namespace CGE
 		depthAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
 		depthAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		depthAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
-		depthAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled);
+		depthAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
 		depthAttachmentImage.Create(inDevice);
 		depthAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 	

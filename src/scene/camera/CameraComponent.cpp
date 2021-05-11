@@ -26,7 +26,7 @@ namespace CGE
 	{
 		glm::vec3 eye = parent->transform.GetLocation();
 		glm::vec3 direction = parent->transform.GetForwardVector();
-		return glm::lookAt(eye, eye + direction, glm::vec3{ 0.0f, 1.0f, 0.0f });
+		return glm::lookAt(eye, eye + direction, parent->transform.GetUpVector());
 	}
 	
 	glm::mat4 CameraComponent::CalculateProjectionMatrix() const
