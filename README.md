@@ -49,22 +49,22 @@ Frustum culling is implemented on CPU and uses job system. Still need to experim
 //---------- Backlog
 
 
-  Volumetric fog
-  IBL
-  Mesh Shading
-  Shadow cache ?
-  Raytracing / SSR ?
-  SVOGI ?
-  Occlusion culling
-  Compute Hi-Z generation
-  Async command buffers
-  Async scene processing
+  Volumetric fog,
+  IBL,
+  Mesh Shading,
+  Shadow cache ?,
+  Raytracing / SSR ?,
+  SVOGI ?,
+  Occlusion culling,
+  Compute Hi-Z generation,
+  Async command buffers,
+  Async scene processing,
 
 
 //---------- BackBacklog
 
 
-  Input system
-  Blender tools to assemble and export full scenes
+  Input system,
+  Blender tools to assemble and export full scenes,
   Physics engine integration, ODE, Bullet or whatever
 
