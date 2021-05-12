@@ -234,7 +234,7 @@ namespace CGE
 		uint32_t counter = 0;
 		for (uint32_t indexX = 0; indexX < 5; indexX++)
 		{
-			for (uint32_t indexY = 0; indexY < 5; indexY++)
+			for (uint32_t indexY = 0; indexY < 15; indexY++)
 			{
 				glm::vec3 color = counter % 3 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
 				bool isSpot = counter % 2;
@@ -267,7 +267,7 @@ namespace CGE
 				float depth = 65.0f;
 				for (uint32_t indexX = 0; indexX < 5; indexX++)
 				{
-					for (uint32_t indexY = 0; indexY < 5; indexY++)
+					for (uint32_t indexY = 0; indexY < 15; indexY++)
 					{
 						float randomY = std::rand() / float(RAND_MAX);
 						float randomZ = std::rand() / float(RAND_MAX);
