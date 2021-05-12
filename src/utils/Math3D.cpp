@@ -102,11 +102,27 @@ namespace CGE
 		return true;
 	}
 
+	float PlaneIntersect(const AABB& aabb, const PlaneNorm& plane)
+	{
+		glm::vec3 extents = (aabb.max - aabb.min) * 0.5f;
+		float extentsProjected = glm::abs( glm::dot(plane.normal, extents) );
+
+		float distanceProjected = glm::dot( plane.normal, aabb.min + extents - plane.point );
+		if (glm::abs(distanceProjected) < extentsProjected)
+		{
+			return 0;
+		}
+		// return distance to plane
+		return distanceProjected - (glm::sign(distanceProjected) * extentsProjected);
+	}
+
 	bool FrustumIntersectSlow(const Frustum& f, const AABB& aabb)
 	{
 		bool isPointsInFrustum = false;
+
+		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, aabb.min);
+		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, aabb.max);
 		// xmin points frustum check
-		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.min.x, aabb.min.y, aabb.min.z));
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.min.x, aabb.min.y, aabb.max.z));
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.min.x, aabb.max.y, aabb.min.z));
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.min.x, aabb.max.y, aabb.max.z));
@@ -114,8 +130,6 @@ namespace CGE
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.max.x, aabb.min.y, aabb.min.z));
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.max.x, aabb.min.y, aabb.max.z));
 		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.max.x, aabb.max.y, aabb.min.z));
-		isPointsInFrustum = isPointsInFrustum || IsPointInFrustum(f, glm::vec3(aabb.max.x, aabb.max.y, aabb.max.z));
-
 		if (isPointsInFrustum)
 		{
 			return true;
@@ -140,6 +154,18 @@ namespace CGE
 		}
 
 		return isRayIntersect;
+	}
+
+	bool FrustumIntersect(const Frustum& f, const AABB& aabb)
+	{
+		for (uint8_t idx = 0; idx < 5; idx++)
+		{
+			if (PlaneIntersect(aabb, f.planes[idx]) < 0.0f)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

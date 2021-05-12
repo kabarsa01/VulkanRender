@@ -73,7 +73,9 @@ namespace CGE
 	bool IsPointInAABB(const AABB& aabb, const glm::vec3& p);
 
 	bool RayIntersect(const AABB& aabb, const Ray& ray);
+	float PlaneIntersect(const AABB& aabb, const PlaneNorm& plane);
 	bool FrustumIntersectSlow(const Frustum& f, const AABB& aabb);
+	bool FrustumIntersect(const Frustum& f, const AABB& aabb);
 
 }
 

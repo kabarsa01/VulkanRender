@@ -132,6 +132,7 @@ exit /b</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
