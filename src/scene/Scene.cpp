@@ -207,7 +207,7 @@ namespace CGE
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
-		cameraObj->transform.SetRotation({ -30.0f, -180.0f, 0.0f });
+		cameraObj->transform.SetRotation({ -20.0f, -180.0f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(60.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
@@ -229,10 +229,10 @@ namespace CGE
 		//lightObj01->GetLightComponent()->intensity = 5.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
 	
-		float width = 100.0f;
-		float depth = 65.0f;
+		float width = 350.0f;
+		float depth = 350.0f;
 		uint32_t counter = 0;
-		for (uint32_t indexX = 0; indexX < 5; indexX++)
+		for (uint32_t indexX = 0; indexX < 15; indexX++)
 		{
 			for (uint32_t indexY = 0; indexY < 15; indexY++)
 			{
@@ -240,7 +240,7 @@ namespace CGE
 				bool isSpot = counter % 2;
 	
 				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 4.0, isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / 4.0 });
+				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 14.0, isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / 14.0 });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 5.0f;
@@ -263,9 +263,9 @@ namespace CGE
 				meshData->CreateBuffer();
 				tl->PushBuffers(meshData);
 	
-				float width = 100;
-				float depth = 65.0f;
-				for (uint32_t indexX = 0; indexX < 5; indexX++)
+				float width = 350.0f;
+				float depth = 350.0f;
+				for (uint32_t indexX = 0; indexX < 15; indexX++)
 				{
 					for (uint32_t indexY = 0; indexY < 15; indexY++)
 					{
@@ -274,7 +274,7 @@ namespace CGE
 	
 						MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 						mo3->GetMeshComponent()->meshData = meshData;
-						mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 4.0, 0.0f, -1.0 * indexY * depth / 4.0 });
+						mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 14.0, 0.0f, -1.0 * indexY * depth / 14.0 });
 						//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 						mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 						mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
@@ -417,7 +417,7 @@ namespace CGE
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
 		if (cam)
 		{
-			cam->GetParent()->transform.SetRotation({-30.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
+			cam->GetParent()->transform.SetRotation({-20.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();
