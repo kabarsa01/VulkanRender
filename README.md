@@ -41,43 +41,30 @@ being kind of useless
 
 Job system is based on quite simple templated job taking something callable. There's a message bus with only synchronous
 notification for now with a plan to be extended with multithreaded messages delivery.
+Scene graph is a simple templated octree with some template specialization for SceneObjectBase and it's components.
+Octree allocates node pool straight away so several MB being taken for this, I think it's about 16MB to 32MB at the moment.
+Frustum culling is implemented on CPU and uses job system. Still need to experiment with some threading schemes for this.
 
 
-Backlog
-
+//---------- Backlog
 
 
   Volumetric fog
-
   IBL
-
   Mesh Shading
-
   Shadow cache ?
-
   Raytracing / SSR ?
-
   SVOGI ?
-
-  Proper scene graph
-
   Occlusion culling
-
   Compute Hi-Z generation
-
   Async command buffers
-
   Async scene processing
 
 
-
-BackBacklog
-
+//---------- BackBacklog
 
 
   Input system
-
   Blender tools to assemble and export full scenes
-
   Physics engine integration, ODE, Bullet or whatever
 
