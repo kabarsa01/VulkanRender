@@ -206,10 +206,11 @@ exit /b</Command>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -217,7 +218,7 @@ exit /b</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;spirv_cross\spirv-cross-core.lib;spirv_cross\spirv-cross-cpp.lib;spirv_cross\spirv-cross-glsl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;spirv_cross\release\spirv-cross-core.lib;spirv_cross\release\spirv-cross-cpp.lib;spirv_cross\release\spirv-cross-glsl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call :treeProcess

@@ -206,9 +206,9 @@ namespace CGE
 		Renderer* renderer = Engine::GetRendererInstance();
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
-		cameraObj->transform.SetRotation({ -20.0f, -180.0f, 0.0f });
-		cameraObj->GetCameraComponent()->SetFov(60.0f);
+		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 45.0f });
+		cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
+		cameraObj->GetCameraComponent()->SetFov(40.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
@@ -229,18 +229,20 @@ namespace CGE
 		//lightObj01->GetLightComponent()->intensity = 5.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
 	
-		float width = 350.0f;
-		float depth = 350.0f;
+		float width = 300.0f;
+		float depth = 300.0f;
 		uint32_t counter = 0;
-		for (uint32_t indexX = 0; indexX < 15; indexX++)
+		uint32_t countX = 15;
+		uint32_t countY = 15;
+		for (uint32_t indexX = 0; indexX < countX; indexX++)
 		{
-			for (uint32_t indexY = 0; indexY < 15; indexY++)
+			for (uint32_t indexY = 0; indexY < countY; indexY++)
 			{
 				glm::vec3 color = counter % 3 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
 				bool isSpot = counter % 2;
 	
 				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / 14.0, isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / 14.0 });
+				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 1), isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / float(countY - 1) });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 5.0f;
@@ -263,18 +265,20 @@ namespace CGE
 				meshData->CreateBuffer();
 				tl->PushBuffers(meshData);
 	
-				float width = 350.0f;
-				float depth = 350.0f;
-				for (uint32_t indexX = 0; indexX < 15; indexX++)
+				float width = 300.0f;
+				float depth = 300.0f;
+				uint32_t countX = 15;
+				uint32_t countY = 15;
+				for (uint32_t indexX = 0; indexX < countX; indexX++)
 				{
-					for (uint32_t indexY = 0; indexY < 15; indexY++)
+					for (uint32_t indexY = 0; indexY < countY; indexY++)
 					{
 						float randomY = std::rand() / float(RAND_MAX);
 						float randomZ = std::rand() / float(RAND_MAX);
 	
 						MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 						mo3->GetMeshComponent()->meshData = meshData;
-						mo3->transform.SetLocation({ -width * 0.5f + indexX * width / 14.0, 0.0f, -1.0 * indexY * depth / 14.0 });
+						mo3->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 1), 0.0f, -1.0 * indexY * depth / float(countY - 1) });
 						//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 						mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 						mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
@@ -417,7 +421,7 @@ namespace CGE
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
 		if (cam)
 		{
-			cam->GetParent()->transform.SetRotation({-20.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
+			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();
