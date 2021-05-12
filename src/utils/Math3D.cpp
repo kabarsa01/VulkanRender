@@ -17,7 +17,7 @@ namespace CGE
 		f.nearPlane = cameraComp->GetNearPlane();
 
 		float fov = cameraComp->GetFov();
-		float halfHeight = cameraComp->GetFarPlane() * glm::tan(fov * 0.5f);
+		float halfHeight = cameraComp->GetFarPlane() * glm::tan(glm::radians(fov * 0.5f));
 		float halfWidth = halfHeight * cameraComp->GetAspectRatio();
 		glm::vec3 halfHeightVec = tr.GetUpVector() * halfHeight;
 		glm::vec3 halfWidthVec = tr.GetLeftVector() * halfWidth;
@@ -34,7 +34,7 @@ namespace CGE
 		{
 			glm::vec3 first = f.points[idx] - f.origin;
 			glm::vec3 second = f.points[(idx+1) % 4] - f.points[idx];
-			glm::vec3 normal = glm::cross(first, second);
+			glm::vec3 normal = glm::normalize( glm::cross(first, second) );
 			if (glm::dot(normal, farCenter - f.points[idx]) <= 0)
 			{
 				normal *= -1.0f;

@@ -207,8 +207,8 @@ namespace CGE
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 25.0f });
-		cameraObj->transform.SetRotation({ -30.0f, -158.34f, 0.0f });
-		cameraObj->GetCameraComponent()->SetFov(90.0f);
+		cameraObj->transform.SetRotation({ -30.0f, -180.0f, 0.0f });
+		cameraObj->GetCameraComponent()->SetFov(60.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));

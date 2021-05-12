@@ -164,7 +164,7 @@ namespace CGE
 		OctreeNode<T>* m_rootNode;
 		std::function<CompareFunc> m_compareFunc;
 		ObjectPool<OctreeNode<T>> m_nodePool;
-		float m_nodeMinSize = 1.0f;
+		float m_nodeMinSize = 0.5f;
 		std::list<OctreeNode<T>*> m_nodeProcessingList;
 		std::mutex m_nodeListMutex;
 		std::mutex m_queryOutputMutex;
