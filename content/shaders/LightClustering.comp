@@ -59,10 +59,11 @@ layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 uint Pack16BitIndex(uint lightIndexData, uint lightIndexInCluster, uint lightIndexGlobal)
 {
 	uint bitOffset = 16 * (lightIndexInCluster % 2);
+	uint nullBits = 0xffff0000;
 	// nullify
-	lightIndexData &= bitOffset == 0 ? 0xffff0000 : 0x0000ffff;//0xffff0000 >> bitOffset;
+	lightIndexData &= nullBits >> bitOffset;
 	// set
-	lightIndexData |= (lightIndexGlobal & 0x0000ffff) << bitOffset;
+	lightIndexData |= lightIndexGlobal << bitOffset;
 
 	return lightIndexData;
 }
