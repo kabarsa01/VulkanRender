@@ -4,6 +4,7 @@
 #include <list>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <future>
 #include <functional>
 
@@ -168,6 +169,9 @@ namespace CGE
 		std::list<OctreeNode<T>*> m_nodeProcessingList;
 		std::mutex m_nodeListMutex;
 		std::mutex m_queryOutputMutex;
+		std::condition_variable m_nodeListCondition;
+		std::atomic<uint32_t> m_nodesTotal;
+		std::atomic<uint32_t> m_nodesProcessed;
 		std::vector<std::future<void>> m_futures;
 
 		OctreeNode<T>* UpdateNode(OctreeNode<T>* node);
@@ -253,6 +257,9 @@ namespace CGE
 		}
 
 		m_nodeProcessingList.push_back(m_rootNode->children);
+
+		m_nodesTotal.store(1);
+		m_nodesProcessed.store(0);
 
 		for (uint8_t idx = 0; idx < 16; idx++)
 		{
@@ -343,7 +350,7 @@ namespace CGE
 			if (m_nodeProcessingList.size() == 0)
 			{
 				m_nodeListMutex.unlock();
-				if (retryCounter++ < 100)
+				if (retryCounter++ < 10)
 				{
 					std::this_thread::yield();
 					continue;
@@ -380,46 +387,76 @@ namespace CGE
 		std::function<QueryCompareFunc<QueryObj>> func,
 		Output& output)
 	{
-		uint32_t retryCounter = 0;
+		OctreeNode<T>* currentNodes = nullptr;
+		static bool waitForProc = false;
+		bool currentThreadFlag = false;
 
 		while (true)
 		{
-			m_nodeListMutex.lock();
-
-			if (m_nodeProcessingList.size() == 0)
 			{
-				m_nodeListMutex.unlock();
-				if (retryCounter++ < 100)
+				std::unique_lock<std::mutex> lock(m_nodeListMutex);
+
+				if (m_nodeProcessingList.size() == 0)
 				{
-					std::this_thread::yield();
-					continue;
+					m_nodeListCondition.wait(lock,
+					[this]() -> bool {
+						if (waitForProc) return false;
+						if (m_nodesProcessed < m_nodesTotal)
+						{
+							return m_nodeProcessingList.size() > 0;
+						}
+						return true;
+					});
+					if (m_nodesProcessed >= m_nodesTotal && m_nodeProcessingList.size() == 0)
+					{
+						promise->set_value();
+						m_nodeListCondition.notify_all();
+						break;
+					}
 				}
-				promise->set_value();
-				break;
+
+				currentNodes = m_nodeProcessingList.front();
+				m_nodeProcessingList.pop_front();
+				m_nodesTotal.fetch_add(8);
+				if (m_nodeProcessingList.empty())
+				{
+					waitForProc = true;
+					currentThreadFlag = true;
+				}
 			}
-
-			OctreeNode<T>* currentNodes = m_nodeProcessingList.front();
-			m_nodeProcessingList.pop_front();
-
-			m_nodeListMutex.unlock();
 
 			for (uint8_t idx = 0; idx < 8; idx++)
 			{
 				OctreeNode<T>* node = reinterpret_cast<OctreeNode<T>*>(currentNodes + idx);
 				if (func(queryObj, node))
 				{
+					{
+						std::scoped_lock<std::mutex> lock(m_nodeListMutex);
+						if (node->children)
+						{
+							m_nodeProcessingList.push_back(node->children);
+							m_nodeListCondition.notify_one();
+						}
+						else
+						{
+							m_nodesTotal.fetch_sub(1);
+						}
+						if (waitForProc && currentThreadFlag)
+						{
+							waitForProc = false;
+							currentThreadFlag = false;
+						};
+					}
 					m_queryOutputMutex.lock();
 					node->payload->WriteOutput(output);
 					m_queryOutputMutex.unlock();
-
-					if (node->children)
-					{
-						m_nodeListMutex.lock();
-						m_nodeProcessingList.push_back(node->children);
-						m_nodeListMutex.unlock();
-					}
+				}
+				else
+				{
+					m_nodesTotal.fetch_sub(1);
 				}
 			}
+			m_nodesProcessed.fetch_add(1);
 		}
 	}
 
