@@ -151,7 +151,7 @@ namespace CGE
 		using QueryCompareFunc = bool(const QueryObj&, OctreeNode<T>*);
 
 		Octree(uint32_t nodePoolSize, std::function<CompareFunc>&& compareFunc);
-		~Octree() {}
+		~Octree();
 
 		void SetNodeMinSize(float nodeMinSize) { m_nodeMinSize = nodeMinSize; }
 
@@ -165,7 +165,17 @@ namespace CGE
 		OctreeNode<T>* m_rootNode;
 		std::function<CompareFunc> m_compareFunc;
 		ObjectPool<OctreeNode<T>> m_nodePool;
+		OctreeNode<T>** m_nodeRecords;
+		OctreeNode<T>** m_nodeResults;
+		std::promise<void> m_nodeProcessingPromise;
+		std::atomic<uint32_t> m_nodeReserveCounter;
+		std::atomic<uint32_t> m_nodeAddedCounter;
+		std::atomic<uint32_t> m_nodeProcessingCounter;
+		std::atomic<uint32_t> m_nodeProcessedCounter;
+		std::atomic<uint32_t> m_nodeResultCounter;
+
 		float m_nodeMinSize = 1.0f;
+
 		std::list<OctreeNode<T>*> m_nodeProcessingList;
 		std::mutex m_nodeListMutex;
 		std::mutex m_queryOutputMutex;
@@ -178,10 +188,7 @@ namespace CGE
 
 		void ThreadUpdateNode(std::shared_ptr<std::promise<void>> promise);
 		template<typename QueryObj, typename Output>
-		void ThreadQueryNode(std::shared_ptr<std::promise<void>> promise, 
-			const QueryObj& queryObj,
-			std::function<QueryCompareFunc<QueryObj>> func,
-			Output& output);
+		void ThreadQueryNode(const QueryObj& queryObj, std::function<QueryCompareFunc<QueryObj>> func, Output& output);
 	};
 
 	//---------------------------------------------------------------------------------------------
@@ -197,6 +204,16 @@ namespace CGE
 		m_rootNode = m_nodePool.Acquire(1);
 		m_rootNode->position = glm::vec3(-1000.0f, -1000.0f, -1000.0f);
 		m_rootNode->size = glm::vec3(2000.0f, 2000.0f, 2000.0f);
+
+		m_nodeRecords = new OctreeNode<T>*[nodePoolSize];
+		m_nodeResults = new OctreeNode<T>*[nodePoolSize];
+	}
+
+	template<typename T>
+	CGE::Octree<T>::~Octree()
+	{
+		delete[] m_nodeRecords;
+		delete[] m_nodeResults;
 	}
 
 	//---------------------------------------------------------------------------------------------
@@ -261,22 +278,33 @@ namespace CGE
 		m_nodesTotal.store(1);
 		m_nodesProcessed.store(0);
 
-		for (uint8_t idx = 0; idx < 16; idx++)
+		m_nodeResultCounter.store(1);
+		m_nodeResults[0] = m_rootNode;
+
+		if (m_rootNode->children)
 		{
-			auto promise = std::make_shared<std::promise<void>>();
-			m_futures.emplace_back(promise->get_future());
-			std::function<void()> processFunc = [this, promise, &queryObj, func, &output]()
+			m_nodeProcessingCounter.store(0);
+			m_nodeProcessedCounter.store(0);
+			m_nodeReserveCounter.store(1);
+			m_nodeAddedCounter.store(1);
+			m_nodeRecords[0] = m_rootNode->children;
+
+			std::future<void> future = m_nodeProcessingPromise.get_future();
+			std::function<void()> processFunc = [this, &queryObj, func, &output]()
 			{
-				ThreadQueryNode(promise, queryObj, func, output);
+				ThreadQueryNode(queryObj, func, output);
 			};
 			ThreadPool::GetInstance()->AddJob(CreateJobPtr<void()>(std::move(processFunc)));
+			future.wait();
+
+			m_nodeProcessingPromise.~promise<void>();
+			new(&m_nodeProcessingPromise) std::promise<void>();
 		}
 
-		for (std::future<void>& f : m_futures)
+		for (uint32_t idx = 0; idx < m_nodeResultCounter; idx++)
 		{
-			f.wait();
+			m_nodeResults[idx]->payload->WriteOutput(output);
 		}
-		m_futures.clear();
 	}
 
 	//---------------------------------------------------------------------------------------------
@@ -382,81 +410,43 @@ namespace CGE
 
 	template<typename T>
 	template<typename QueryObj, typename Output>
-	void Octree<T>::ThreadQueryNode(std::shared_ptr<std::promise<void>> promise,
-		const QueryObj& queryObj,
-		std::function<QueryCompareFunc<QueryObj>> func,
-		Output& output)
+	void Octree<T>::ThreadQueryNode(const QueryObj& queryObj, std::function<QueryCompareFunc<QueryObj>> func, Output& output)
 	{
-		OctreeNode<T>* currentNodes = nullptr;
-		static bool waitForProc = false;
-		bool currentThreadFlag = false;
-
-		while (true)
+		if (m_nodeProcessedCounter > m_nodeAddedCounter)
 		{
+			return;
+		}
+
+		uint32_t nodeProcIndex = m_nodeProcessingCounter.fetch_add(1);
+		OctreeNode<T>* currentNodes = m_nodeRecords[nodeProcIndex];
+
+		for (uint8_t idx = 0; idx < 8; idx++)
+		{
+			OctreeNode<T>* node = reinterpret_cast<OctreeNode<T>*>(currentNodes + idx);
+			if (func(queryObj, node))
 			{
-				std::unique_lock<std::mutex> lock(m_nodeListMutex);
-
-				if (m_nodeProcessingList.size() == 0)
+				if (node->children)
 				{
-					m_nodeListCondition.wait(lock,
-					[this]() -> bool {
-						if (waitForProc) return false;
-						if (m_nodesProcessed < m_nodesTotal)
-						{
-							return m_nodeProcessingList.size() > 0;
-						}
-						return true;
-					});
-					if (m_nodesProcessed >= m_nodesTotal && m_nodeProcessingList.size() == 0)
+					uint32_t nodeStoreIndex = m_nodeReserveCounter.fetch_add(1);
+					m_nodeRecords[nodeStoreIndex] = node->children;
+					m_nodeAddedCounter.fetch_add(1);
+
+					std::function<void()> processFunc = [this, &queryObj, func, &output]()
 					{
-						promise->set_value();
-						m_nodeListCondition.notify_all();
-						break;
-					}
-				}
+						ThreadQueryNode(queryObj, func, output);
+					};
+					ThreadPool::GetInstance()->AddJob(CreateJobPtr<void()>(std::move(processFunc)));
 
-				currentNodes = m_nodeProcessingList.front();
-				m_nodeProcessingList.pop_front();
-				m_nodesTotal.fetch_add(8);
-				if (m_nodeProcessingList.empty())
-				{
-					waitForProc = true;
-					currentThreadFlag = true;
 				}
+				uint32_t nodeResult = m_nodeResultCounter.fetch_add(1);
+				m_nodeResults[nodeResult] = node;
 			}
+		}
 
-			for (uint8_t idx = 0; idx < 8; idx++)
-			{
-				OctreeNode<T>* node = reinterpret_cast<OctreeNode<T>*>(currentNodes + idx);
-				if (func(queryObj, node))
-				{
-					{
-						std::scoped_lock<std::mutex> lock(m_nodeListMutex);
-						if (node->children)
-						{
-							m_nodeProcessingList.push_back(node->children);
-							m_nodeListCondition.notify_one();
-						}
-						else
-						{
-							m_nodesTotal.fetch_sub(1);
-						}
-						if (waitForProc && currentThreadFlag)
-						{
-							waitForProc = false;
-							currentThreadFlag = false;
-						};
-					}
-					m_queryOutputMutex.lock();
-					node->payload->WriteOutput(output);
-					m_queryOutputMutex.unlock();
-				}
-				else
-				{
-					m_nodesTotal.fetch_sub(1);
-				}
-			}
-			m_nodesProcessed.fetch_add(1);
+		uint32_t nodeProcessed = m_nodeProcessedCounter.fetch_add(1);
+		if (nodeProcessed >= m_nodeAddedCounter - 1)
+		{
+			m_nodeProcessingPromise.set_value();
 		}
 	}
 

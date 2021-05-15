@@ -34,8 +34,8 @@ namespace CGE
 	struct SceneObjectsPack
 	{
 		std::set<SceneObjectBasePtr> objectsList;
-		std::map<HashString, std::set<SceneObjectBasePtr>> objectsMap;
-		std::map<HashString, std::set<SceneObjectComponentPtr>> componentsMap;
+		std::unordered_map<HashString, std::set<SceneObjectBasePtr>> objectsMap;
+		std::unordered_map<HashString, std::set<SceneObjectComponentPtr>> componentsMap;
 
 		void Add(SceneObjectBasePtr object);
 		void Remove(SceneObjectBasePtr object);

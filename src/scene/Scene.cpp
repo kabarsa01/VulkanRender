@@ -66,14 +66,9 @@ namespace CGE
 		}
 		void WriteOutput(SceneObjectsPack& outPack)
 		{
-			outPack.objectsList.insert(objectsPack.objectsList.begin(), objectsPack.objectsList.end());
-			for (auto& pair : objectsPack.objectsMap)
+			for (auto it = objectsPack.objectsList.begin(); it != objectsPack.objectsList.end(); it++)
 			{
-				outPack.objectsMap[pair.first].insert(pair.second.begin(), pair.second.end());
-			}
-			for (auto& pair : objectsPack.componentsMap)
-			{
-				outPack.componentsMap[pair.first].insert(pair.second.begin(), pair.second.end());
+				outPack.Add(*it);
 			}
 		}
 	};
@@ -210,7 +205,7 @@ namespace CGE
 		cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(40.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
-		cameraObj->GetCameraComponent()->SetFarPlane(4000.0f);
+		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 	
 		LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
@@ -431,15 +426,15 @@ namespace CGE
 
 	void Scene::GatherObjectsInFrustum()
 	{
-		//auto startTime = std::chrono::high_resolution_clock::now();
+		auto startTime = std::chrono::high_resolution_clock::now();
 
 		frustumPack.Clear();
 		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
 		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
 
-		//auto currentTime = std::chrono::high_resolution_clock::now();
-		//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
-		//std::printf("scene frustum query time is %f microseconds\n", deltaTime);
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+		std::printf("scene frustum query time is %f microseconds\n", deltaTime);
 	}
 
 }
