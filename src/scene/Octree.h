@@ -418,6 +418,10 @@ namespace CGE
 		}
 
 		uint32_t nodeProcIndex = m_nodeProcessingCounter.fetch_add(1);
+		if (nodeProcIndex > m_nodeAddedCounter - 1)
+		{
+			return;
+		}
 		OctreeNode<T>* currentNodes = m_nodeRecords[nodeProcIndex];
 
 		for (uint8_t idx = 0; idx < 8; idx++)
