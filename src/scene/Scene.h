@@ -34,13 +34,37 @@ namespace CGE
 	struct SceneObjectsPack
 	{
 		std::set<SceneObjectBasePtr> objectsList;
-		std::unordered_map<HashString, std::set<SceneObjectBasePtr>> objectsMap;
-		std::unordered_map<HashString, std::set<SceneObjectComponentPtr>> componentsMap;
+		std::map<HashString, std::set<SceneObjectBasePtr>> objectsMap;
+		std::map<HashString, std::set<SceneObjectComponentPtr>> componentsMap;
 
 		void Add(SceneObjectBasePtr object);
 		void Remove(SceneObjectBasePtr object);
 		void Clear();
+
+		template<class T>
+		std::vector<std::shared_ptr<T>> GetComponentsCast();
+		template<class T>
+		std::set<SceneObjectComponentPtr>& GetComponents();
 	};
+
+	template<class T>
+	std::vector<std::shared_ptr<T>> SceneObjectsPack::GetComponentsCast()
+	{
+		HashString key = Class::Get<T>().GetName();
+		std::vector<std::shared_ptr<T>> components;
+		for (SceneObjectComponentPtr comp : componentsMap[key])
+		{
+			components.push_back(ObjectBase::Cast<T, SceneObjectComponent>(comp));
+		}
+		return components;
+	}
+
+	template<class T>
+	inline std::set<SceneObjectComponentPtr>& SceneObjectsPack::GetComponents()
+	{
+		HashString key = Class::Get<T>().GetName();
+		return componentsMap[key];
+	}
 
 	//=======================================================================================================
 	//=======================================================================================================

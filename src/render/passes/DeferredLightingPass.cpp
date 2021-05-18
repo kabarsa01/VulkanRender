@@ -231,7 +231,7 @@ namespace CGE
 		pipelineInfo.setBasePipelineHandle(Pipeline());
 		pipelineInfo.setBasePipelineIndex(-1);
 	
-		return GetVulkanDevice()->GetDevice().createGraphicsPipeline(GetVulkanDevice()->GetPipelineCache(), pipelineInfo);
+		return GetVulkanDevice()->GetDevice().createGraphicsPipeline(GetVulkanDevice()->GetPipelineCache(), pipelineInfo).value;
 	}
 	
 }

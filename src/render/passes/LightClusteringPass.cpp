@@ -152,7 +152,7 @@ namespace CGE
 		pipelineCreateInfo.setLayout(inLayout);
 		pipelineCreateInfo.setStage(inMaterial->GetComputeStageInfo());
 	
-		return GetVulkanDevice()->GetDevice().createComputePipeline(GetVulkanDevice()->GetPipelineCache(), pipelineCreateInfo);
+		return GetVulkanDevice()->GetDevice().createComputePipeline(GetVulkanDevice()->GetPipelineCache(), pipelineCreateInfo).value;
 	}
 	
 }

@@ -28,6 +28,7 @@ namespace CGE
 		void Remove(T&) {}
 		template<class Output>
 		void WriteOutput(Output&) {}
+		bool IsEmpty() { return true; }
 	};
 
 	//=============================================================================================
@@ -157,6 +158,8 @@ namespace CGE
 
 		inline void AddObject(T object);
 		inline void Update();
+		inline OctreeNode<T>** GetNodeQueryResults() { return m_nodeResults; }
+		inline uint32_t GetNodeQueryResultCount() { return m_nodeResultCounter; }
 
 		template<typename QueryObj, typename Output>
 		inline void Query(const QueryObj& queryObj, std::function<QueryCompareFunc<QueryObj>> func, Output& output);
@@ -208,6 +211,9 @@ namespace CGE
 		m_nodeRecords = new OctreeNode<T>*[nodePoolSize];
 		m_nodeResults = new OctreeNode<T>*[nodePoolSize];
 	}
+
+	//---------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------
 
 	template<typename T>
 	CGE::Octree<T>::~Octree()
@@ -442,8 +448,11 @@ namespace CGE
 					ThreadPool::GetInstance()->AddJob(CreateJobPtr<void()>(std::move(processFunc)));
 
 				}
-				uint32_t nodeResult = m_nodeResultCounter.fetch_add(1);
-				m_nodeResults[nodeResult] = node;
+				if (!node->payload->IsEmpty())
+				{
+					uint32_t nodeResult = m_nodeResultCounter.fetch_add(1);
+					m_nodeResults[nodeResult] = node;
+				}
 			}
 		}
 

@@ -299,6 +299,7 @@ exit /b</Command>
     <ClCompile Include="src\stb\stb_image.cpp" />
     <ClCompile Include="src\utils\ImageUtils.cpp" />
     <ClCompile Include="src\utils\Math3D.cpp" />
+    <ClCompile Include="src\utils\MTArrayWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\async\Job.h" />
@@ -362,6 +363,7 @@ exit /b</Command>
     <ClInclude Include="src\stb\stb_image.h" />
     <ClInclude Include="src\utils\ImageUtils.h" />
     <ClInclude Include="src\utils\Math3D.h" />
+    <ClInclude Include="src\utils\MTArrayWrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

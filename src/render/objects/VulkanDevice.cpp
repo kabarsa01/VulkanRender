@@ -129,7 +129,7 @@ namespace CGE
 			bool layerFound = false;
 			for (LayerProperties prop : layerProps)
 			{
-				std::string availableLayerName(prop.layerName);
+				std::string availableLayerName(&prop.layerName[0]);
 				if (availableLayerName == layer)
 				{
 					layerFound = true;

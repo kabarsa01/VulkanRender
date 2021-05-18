@@ -71,6 +71,10 @@ namespace CGE
 				outPack.Add(*it);
 			}
 		}
+		bool IsEmpty()
+		{ 
+			return objectsPack.objectsList.empty(); 
+		}
 	};
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -80,11 +84,11 @@ namespace CGE
 	void SceneObjectsPack::Add(SceneObjectBasePtr object)
 	{
 		objectsList.insert(object);
-		objectsMap[object->GetClass().GetName()].insert(object);
 		for (SceneObjectComponentPtr comp : object->GetComponents())
 		{
 			componentsMap[comp->GetClass().GetName()].insert(comp);
 		}
+		objectsMap[object->GetClass().GetName()].insert(object);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -346,11 +350,11 @@ namespace CGE
 		{
 			MaterialPtr material = meshComponent->material;
 			MeshDataPtr meshData = meshComponent->meshData;
-	
+
 			HashString shaderHash = material->GetShaderHash();
 			HashString materialId = material->GetResourceId();
 			HashString meshDataId = meshData->GetResourceId();
-	
+
 			if (shaderToMaterial.find(shaderHash) == shaderToMaterial.end())
 			{
 				shadersList.push_back(shaderHash);
@@ -365,7 +369,7 @@ namespace CGE
 			}
 			matToMeshToTransform[materialId][meshDataId].push_back(meshComponent->GetParent()->transform.CalculateMatrix());
 		}
-	
+
 		uint32_t counter = 0;
 		for (HashString& shaderHash : shadersList)
 		{
@@ -426,15 +430,15 @@ namespace CGE
 
 	void Scene::GatherObjectsInFrustum()
 	{
-		auto startTime = std::chrono::high_resolution_clock::now();
+		//auto startTime = std::chrono::high_resolution_clock::now();
 
 		frustumPack.Clear();
 		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
 		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
 
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
-		std::printf("scene frustum query time is %f microseconds\n", deltaTime);
+		//auto currentTime = std::chrono::high_resolution_clock::now();
+		//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+		//std::printf("scene frustum query time is %f microseconds\n", deltaTime);
 	}
 
 }

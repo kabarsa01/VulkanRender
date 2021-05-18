@@ -75,8 +75,16 @@ namespace CGE
 	
 			TimeManager::GetInstance()->UpdateTime();
 	
+			auto sceneStartTime = std::chrono::high_resolution_clock::now();
 			sceneInstance->PerFrameUpdate();
+			auto sceneCurrentTime = std::chrono::high_resolution_clock::now();
+			double sceneDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(sceneCurrentTime - sceneStartTime).count();
+			std::printf("scene update time is %f microseconds\n", sceneDeltaTime);
+			auto renderStartTime = std::chrono::high_resolution_clock::now();
 			rendererInstance->RenderFrame();
+			auto renderCurrentTime = std::chrono::high_resolution_clock::now();
+			double renderDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(renderCurrentTime - renderStartTime).count();
+			std::printf("render update time is %f microseconds\n", renderDeltaTime);
 		}
 	
 		rendererInstance->WaitForDevice();
