@@ -4,6 +4,8 @@
 #include <iostream>
 #include "../memory/DeviceMemoryManager.h"
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace CGE
 {
 	using VULKAN_HPP_NAMESPACE::ApplicationInfo;
@@ -26,6 +28,10 @@ namespace CGE
 	
 	void VulkanDevice::Create(const char* inAppName, const char* inEngine, bool inValidationEnabled, HWND inHwnd)
 	{
+		vk::DynamicLoader dl;
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+
 		if (inValidationEnabled && !CheckValidationLayerSupport()) {
 			throw std::runtime_error("validation layers requested, but not available!");
 		}
@@ -40,11 +46,17 @@ namespace CGE
 	
 		uint32_t glfwInstanceExtensionsCount;
 		const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwInstanceExtensionsCount);
+		std::vector<const char*> instanceExtensions;
+		for (uint32_t idx = 0; idx < glfwInstanceExtensionsCount; idx++)
+		{
+			instanceExtensions.push_back(glfwExtensions[idx]);
+		}
+		instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	
 		InstanceCreateInfo instanceCreateInfo;
 		instanceCreateInfo.setPApplicationInfo(&applicationInfo);
-		instanceCreateInfo.setEnabledExtensionCount(glfwInstanceExtensionsCount);
-		instanceCreateInfo.setPpEnabledExtensionNames(glfwExtensions);
+		instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(instanceExtensions.size()));
+		instanceCreateInfo.setPpEnabledExtensionNames(instanceExtensions.data());
 	
 		if (inValidationEnabled)
 		{
@@ -57,6 +69,9 @@ namespace CGE
 		}
 	
 		instance = createInstance(instanceCreateInfo);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
+
 		Win32SurfaceCreateInfoKHR surfaceCreateInfo;
 		surfaceCreateInfo.setHwnd(inHwnd);
 		surfaceCreateInfo.setHinstance(GetModuleHandle(nullptr));
@@ -93,11 +108,13 @@ namespace CGE
 		deviceCreateInfo.setPQueueCreateInfos(queueCreateInfoVector.data());
 		deviceCreateInfo.setQueueCreateInfoCount((uint32_t)queueCreateInfoVector.size());
 		deviceCreateInfo.setPEnabledFeatures(&deviceFeatures);
-		deviceCreateInfo.setEnabledExtensionCount((uint32_t)requiredExtensions.size());
-		deviceCreateInfo.setPpEnabledExtensionNames(requiredExtensions.data());
+		deviceCreateInfo.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size());
+		deviceCreateInfo.setPpEnabledExtensionNames(requiredDeviceExtensions.data());
 		deviceCreateInfo.setEnabledLayerCount(0);
 	
 		device = physicalDevice.GetDevice().createDevice(deviceCreateInfo);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
 	
 		graphicsQueue = device.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
 		computeQueue = device.getQueue(queueFamilyIndices.computeFamily.value(), 0);
@@ -197,7 +214,7 @@ namespace CGE
 	{
 		bool familiesSupported = inPhysicalDevice.SupportsQueueFamilies(QueueFlagBits::eGraphics | QueueFlagBits::eCompute);
 		familiesSupported &= inPhysicalDevice.SupportsQueueFamily(inSurface); // present queue family should be supported
-		bool extensionsSupported = inPhysicalDevice.SupportsExtensions(requiredExtensions);
+		bool extensionsSupported = inPhysicalDevice.SupportsExtensions(requiredDeviceExtensions);
 		bool swapChainSupported = false;
 		if (extensionsSupported)
 		{

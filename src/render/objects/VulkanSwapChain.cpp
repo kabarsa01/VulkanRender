@@ -42,7 +42,7 @@ namespace CGE
 	void VulkanSwapChain::Destroy()
 	{
 		Device& device = vulkanDevice->GetDevice();
-		device.waitForFences(backBuffersCount, cmdBuffersFences.data(), VK_TRUE, UINT64_MAX);
+		auto res = device.waitForFences(backBuffersCount, cmdBuffersFences.data(), VK_TRUE, UINT64_MAX);
 	
 		DestroyForResolution();
 	
@@ -161,8 +161,8 @@ namespace CGE
 		}
 		imageIndex = imageIndexResult.value;
 	
-		vulkanDevice->GetDevice().waitForFences(1, &cmdBuffersFences[imageIndex], VK_TRUE, UINT64_MAX);
-		vulkanDevice->GetDevice().resetFences(1, &cmdBuffersFences[imageIndex]);
+		auto res = vulkanDevice->GetDevice().waitForFences(1, &cmdBuffersFences[imageIndex], VK_TRUE, UINT64_MAX);
+		res = vulkanDevice->GetDevice().resetFences(1, &cmdBuffersFences[imageIndex]);
 	
 		return imageIndex;
 	}

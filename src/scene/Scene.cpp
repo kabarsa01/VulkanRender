@@ -285,7 +285,6 @@ namespace CGE
 					}
 				}
 			}
-	
 		}
 	
 		MeshData::FullscreenQuad()->CreateBuffer();
@@ -430,14 +429,14 @@ namespace CGE
 
 	void Scene::GatherObjectsInFrustum()
 	{
-		//auto startTime = std::chrono::high_resolution_clock::now();
+		auto startTime = std::chrono::high_resolution_clock::now();
 
 		frustumPack.Clear();
 		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
 		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
 
-		//auto currentTime = std::chrono::high_resolution_clock::now();
-		//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
 		//std::printf("scene frustum query time is %f microseconds\n", deltaTime);
 	}
 

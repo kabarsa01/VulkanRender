@@ -258,6 +258,9 @@
     <ClCompile Include="src\utils\MTArrayWrapper.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\passes\RTShadowPass.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -445,6 +448,9 @@
     </ClInclude>
     <ClInclude Include="src\utils\MTArrayWrapper.h">
       <Filter>Source Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\passes\RTShadowPass.h">
+      <Filter>Source Files\render\passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 #pragma once
 
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+
 #include <vulkan/vulkan.hpp>
 #include "VulkanPhysicalDevice.h"
 
@@ -44,8 +46,15 @@ namespace CGE
 		const std::vector<const char*> validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
-		std::vector<const char*> requiredExtensions = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		std::vector<const char*> requiredDeviceExtensions = {
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+			VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+			VK_KHR_RAY_QUERY_EXTENSION_NAME,
+			VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, // required by acceleration structure
+			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, // required by acceleration structure
+			VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, // required by acceleration structure
+			VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME
 		};
 	
 		Instance instance;

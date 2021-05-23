@@ -123,7 +123,7 @@ exit /b</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR;VULKAN_HPP_DISPATCH_LOADER_DYNAMIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -138,7 +138,7 @@ exit /b</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\libs;$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;spirv_cross\spirv-cross-core.lib;spirv_cross\spirv-cross-cpp.lib;spirv_cross\spirv-cross-glsl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp\assimp-vc140-mt.lib;glfw\lib-vc2017\glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;spirv_cross\spirv-cross-core.lib;spirv_cross\spirv-cross-cpp.lib;spirv_cross\spirv-cross-glsl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
@@ -203,7 +203,7 @@ exit /b</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);VK_USE_PLATFORM_WIN32_KHR;VULKAN_HPP_DISPATCH_LOADER_DYNAMIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)3rdparty\includes;$(VULKAN_SDK)\Include;$(SolutionDir)\3rdparty\shaderc;$(SolutionDir)\3rdparty;$(SolutionDir)\3rdparty\glm;$(SolutionDir)\3rdparty\glfw-3.3.1.bin.WIN64\include;$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -273,6 +273,7 @@ exit /b</Command>
     <ClCompile Include="src\render\passes\GBufferPass.cpp" />
     <ClCompile Include="src\render\passes\LightClusteringPass.cpp" />
     <ClCompile Include="src\render\passes\PostProcessPass.cpp" />
+    <ClCompile Include="src\render\passes\RTShadowPass.cpp" />
     <ClCompile Include="src\render\passes\VulkanPassBase.cpp" />
     <ClCompile Include="src\render\passes\ZPrepass.cpp" />
     <ClCompile Include="src\render\PerFrameData.cpp" />
@@ -337,6 +338,7 @@ exit /b</Command>
     <ClInclude Include="src\render\passes\GBufferPass.h" />
     <ClInclude Include="src\render\passes\LightClusteringPass.h" />
     <ClInclude Include="src\render\passes\PostProcessPass.h" />
+    <ClInclude Include="src\render\passes\RTShadowPass.h" />
     <ClInclude Include="src\render\passes\VulkanPassBase.h" />
     <ClInclude Include="src\render\passes\ZPrepass.h" />
     <ClInclude Include="src\render\PerFrameData.h" />
