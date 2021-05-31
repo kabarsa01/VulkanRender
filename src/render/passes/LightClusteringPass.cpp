@@ -21,7 +21,7 @@ namespace CGE
 	
 	void LightClusteringPass::UpdateData()
 	{
-		ScenePtr scene = Engine::GetSceneInstance();
+		Scene* scene = Engine::GetSceneInstance();
 		std::vector<LightComponentPtr> lights = scene->GetSceneComponentsInFrustumCast<LightComponent>();
 		std::map<LightType, std::vector<LightInfo>> sortedLights;
 		for (LightComponentPtr lightComp : lights)

@@ -28,7 +28,7 @@ namespace CGE
 			0, nullptr, 0, nullptr,
 			1, &depthTextureBarrier);
 	
-		ScenePtr scene = Engine::GetSceneInstance();
+		Scene* scene = Engine::GetSceneInstance();
 	
 		RenderPassBeginInfo passBeginInfo;
 		passBeginInfo.setRenderPass(GetRenderPass());

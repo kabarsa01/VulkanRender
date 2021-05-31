@@ -2,7 +2,8 @@
 #include <fstream>
 #include <streambuf>
 #include "core/Engine.h"
-#include "../Renderer.h"
+#include "render/ShaderRegistry.h"
+#include "render/Renderer.h"
 
 namespace CGE
 {
@@ -43,12 +44,15 @@ namespace CGE
 	
 		ExtractBindingsInfo();
 		CreateShaderModule();
+
+		Engine::Get()->GetShaderRegistry()->AddShader(get_shared_from_this<Shader>());
 		return true;
 	}
 	
 	bool Shader::Cleanup()
 	{
 		DestroyShaderModule();
+		Engine::Get()->GetShaderRegistry()->RemoveShader(get_shared_from_this<Shader>());
 		return true;
 	}
 	

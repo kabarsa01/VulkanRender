@@ -31,7 +31,7 @@ namespace CGE
 			0, nullptr, 0, nullptr,
 			static_cast<uint32_t>(barriers.size()), barriers.data());
 	
-		ScenePtr scene = Engine::GetSceneInstance();
+		Scene* scene = Engine::GetSceneInstance();
 	
 		RenderPassBeginInfo passBeginInfo;
 		passBeginInfo.setRenderPass(GetRenderPass());

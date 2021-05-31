@@ -69,13 +69,11 @@ namespace CGE
 	//=======================================================================================================
 	//=======================================================================================================
 	
-	class Scene : public ObjectBase
+	class Scene
 	{
 	public:
 		Scene();
 		virtual ~Scene();
-	
-		virtual void OnInitialize() override;
 	
 		void Init();
 		
@@ -132,8 +130,6 @@ namespace CGE
 		template<class T>
 		std::shared_ptr<T> GetSceneComponent(SceneObjectsPack& objectPack);
 	};
-	
-	typedef std::shared_ptr<Scene> ScenePtr;
 	
 	//=============================================================================================================
 	// TEMPLATED DEFINITIONS

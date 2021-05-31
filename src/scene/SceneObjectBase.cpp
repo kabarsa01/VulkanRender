@@ -17,7 +17,7 @@ namespace CGE
 	{
 		ObjectBase::OnInitialize();
 	
-		ScenePtr scene = Engine::GetInstance()->GetScene();
+		Scene* scene = Engine::GetSceneInstance();
 		scene->RegisterSceneObject(get_shared_from_this<SceneObjectBase>());
 	
 		IntializeComponents();
@@ -27,7 +27,7 @@ namespace CGE
 	{
 		components.push_back(inComponent);
 	
-		ScenePtr scene = Engine::GetInstance()->GetScene();
+		Scene* scene = Engine::GetSceneInstance();
 		scene->RegisterSceneObjectComponent(inComponent);
 	
 		return true;
@@ -55,7 +55,7 @@ namespace CGE
 	
 	void SceneObjectBase::OnDestroy()
 	{
-		ScenePtr Scene = Engine::GetInstance()->GetScene();
+		Scene* Scene = Engine::GetSceneInstance();
 		ObjectBase::OnDestroy();
 	}
 	

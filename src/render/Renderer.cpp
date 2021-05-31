@@ -231,7 +231,7 @@ namespace CGE
 		lightClusteringPass->Destroy();
 		delete lightClusteringPass;
 	
-		ScenePtr scene = Engine::GetSceneInstance();
+		Scene* scene = Engine::GetSceneInstance();
 		MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
 		meshComp->meshData->DestroyBuffer();
 	

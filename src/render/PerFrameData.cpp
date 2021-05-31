@@ -123,7 +123,7 @@ namespace CGE
 		globalShaderData->time = TimeManager::GetInstance()->GetTime();
 		globalShaderData->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
 	
-		ScenePtr scene = Engine::GetSceneInstance();
+		Scene* scene = Engine::GetSceneInstance();
 		CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	
 		globalShaderData->worldToView = camComp->CalculateViewMatrix();

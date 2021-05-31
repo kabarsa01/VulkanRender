@@ -6,6 +6,8 @@
 namespace CGE
 {
 
+	namespace vk = VULKAN_HPP_NAMESPACE;
+
 	class RTShadowPass : public VulkanPassBase
 	{
 	public:
@@ -21,6 +23,10 @@ namespace CGE
 		RenderPass CreateRenderPass() override;
 		void OnCreate() override;
 		void OnDestroy() override;
+
+	private:
+		vk::Pipeline m_rtPipeline;
+		vk::PipelineLayout m_rtPipelineLayout;
 	};
 
 }

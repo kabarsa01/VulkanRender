@@ -8,23 +8,28 @@
 
 namespace CGE
 {
+	class Scene;
 	class Renderer;
+	class ShaderRegistry;
 	
 	class Engine
 	{
 	public:
+		static Engine* Get();
 		static Engine* GetInstance();
-		static ScenePtr GetSceneInstance();
+		static Scene* GetSceneInstance();
 		static Renderer* GetRendererInstance();
 	
 		void Run();
 	
-		ScenePtr GetScene();
+		Scene* GetScene();
 		Renderer* GetRenderer();
+		ShaderRegistry* GetShaderRegistry();
 		GLFWwindow* GetGlfwWindow();
 	protected:
-		ScenePtr sceneInstance;
-		Renderer* rendererInstance;
+		Scene* m_sceneInstance;
+		Renderer* m_rendererInstance;
+		ShaderRegistry* m_shaderRegistry;
 	
 		void Init();
 		void MainLoop();
@@ -33,15 +38,15 @@ namespace CGE
 		void InitWindow();
 		static void FramebufferResizeCallback(GLFWwindow* inWindow, int inWidth, int inHeight);
 	private:
-		static Engine* staticInstance;
+		static Engine* m_staticInstance;
 	
-		GLFWwindow* window;
-		int windowWidth = 1600;
-		int windowHeight = 900;
+		GLFWwindow* m_window;
+		int m_windowWidth = 1600;
+		int m_windowHeight = 900;
 	
 		Engine();
 		Engine(const Engine& inOther) {}
 		void operator=(const Engine& inOther) {}
-		virtual ~Engine();
+		~Engine();
 	};
 }

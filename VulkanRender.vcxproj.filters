@@ -67,6 +67,9 @@
     <Filter Include="Source Files\messages">
       <UniqueIdentifier>{a8af05ee-d919-4628-8e19-5e3b89bf1285}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{a50fc7fd-dd06-4fdd-83fa-08ae4cdf5dff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -261,6 +264,12 @@
     <ClCompile Include="src\render\passes\RTShadowPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\ShaderRegistry.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\Singleton.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -452,5 +461,34 @@
     <ClInclude Include="src\render\passes\RTShadowPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\ShaderRegistry.h">
+      <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\Singleton.h">
+      <Filter>Source Files\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="content\shaders\DeferredLighting.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\GBufferFrag.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\GBufferVert.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\LightClustering.comp">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\PostProcessFrag.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\PostProcessVert.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\ScreenSpaceVert.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -28,7 +28,6 @@ namespace CGE
 
 		auto func = PFN_vkCreateDeferredOperationKHR(vkGetDeviceProcAddr(nativeDevice, "createDeferredOperationKHR"));
 		vk::DeferredOperationKHR deferredOperation;
-//		func(nativeDevice, nullptr, & (deferredOperation.operator VkDeferredOperationKHR()));
 
 		//------------------------------------------------------------------
 		// shader stages and groups
@@ -59,12 +58,12 @@ namespace CGE
 		pipelineInfo.setPStages(nullptr);
 
 		auto result = nativeDevice.createRayTracingPipelineKHR(deferredOperation, pipelineCache, pipelineInfo);
-//		if (result.result != vk::Result::eSuccess)
+		if (result.result != vk::Result::eSuccess)
 		{
 			return Pipeline();
 		}
 
-//		return result.value;
+		return result.value;
 	}
 
 	RenderPass RTShadowPass::CreateRenderPass()
