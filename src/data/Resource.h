@@ -18,8 +18,8 @@ namespace CGE
 		virtual void OnDestroy() override;
 		HashString GetResourceId();
 	
-		virtual bool Load() = 0;
-		virtual bool Cleanup() = 0;
+		virtual bool Create() = 0;
+		virtual bool Destroy();
 		bool IsValid();
 	protected:
 		HashString id;

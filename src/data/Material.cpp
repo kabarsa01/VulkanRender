@@ -238,12 +238,12 @@ namespace CGE
 		return storageBuffers[inName];
 	}
 	
-	bool Material::Load()
+	bool Material::Create()
 	{
 		return true;
 	}
 	
-	bool Material::Cleanup()
+	bool Material::Destroy()
 	{
 		// cleanup buffers. textures are resources themselves and will be cleaned by data manager
 		for (auto& pair : buffers)

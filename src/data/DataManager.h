@@ -10,9 +10,17 @@
 #include "common/HashString.h"
 #include "data/Resource.h"
 #include <type_traits>
+#include <atomic>
+#include <mutex>
 
 namespace CGE
 {
+
+	struct ResourceRecord
+	{
+		std::atomic<int> useCounter;
+		ResourcePtr resource;
+	};
 	
 	class DataManager
 	{
@@ -21,11 +29,9 @@ namespace CGE
 		static void ShutdownInstance();
 		void CleanupResources();
 	
-		bool AddResource(HashString inKey, std::shared_ptr<Resource> inValue);
+		bool HasResource(HashString inKey);
 		bool AddResource(ResourcePtr inValue);
-		bool DeleteResource(HashString inKey, std::shared_ptr<Resource> inValue);
 		bool DeleteResource(ResourcePtr inValue);
-		bool IsResourcePresent(HashString inKey);
 		std::shared_ptr<Resource> GetResource(HashString inKey);
 		template<class T>
 		std::shared_ptr<T> GetResource(HashString inKey);
@@ -36,10 +42,11 @@ namespace CGE
 		template<class T, typename ...ArgTypes>
 		static std::shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes&& ...args);
 	protected:
-		std::map<HashString, ResourcePtr> resourcesTable;
-		std::map<HashString, std::map<HashString, ResourcePtr>> resourcesMap;
+		std::mutex m_mutex;
+		std::map<HashString, ResourcePtr> m_resourcesTable;
+		std::map<HashString, std::map<HashString, ResourcePtr>> m_resourcesMap;
 	private:
-		static DataManager* instance;
+		static DataManager* m_instance;
 	
 		DataManager();
 		DataManager(const DataManager& inOther) {}
@@ -64,10 +71,10 @@ namespace CGE
 	template<class T>
 	inline std::shared_ptr<T> DataManager::GetResourceByType(HashString inKey)
 	{
-		std::map<HashString, std::map<HashString, ResourcePtr>>::iterator it = resourcesMap.find(Class::Get<T>().GetName());
-		if (it != resourcesMap.end())
+		std::map<HashString, std::map<HashString, ResourcePtr>>::iterator it = m_resourcesMap.find(Class::Get<T>().GetName());
+		if (it != m_resourcesMap.end())
 		{
-			return std::dynamic_pointer_cast<T>( GetResource(inKey, resourcesMap[inKey]) );
+			return std::dynamic_pointer_cast<T>( GetResource(inKey, m_resourcesMap[inKey]) );
 		}
 		return nullptr;
 	}
@@ -78,7 +85,7 @@ namespace CGE
 	inline std::shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes&& ...args)
 	{
 		HashString className = Class::Get<T>().GetName();
-		std::map<HashString, ResourcePtr>& resourceTypeMap = resourcesMap[className];
+		std::map<HashString, ResourcePtr>& resourceTypeMap = m_resourcesMap[className];
 		std::map<HashString, ResourcePtr>::iterator it = resourceTypeMap.find(inKey);
 		if (it != resourceTypeMap.end())
 		{
@@ -87,7 +94,7 @@ namespace CGE
 		std::shared_ptr<T> resource = ObjectBase::NewObject<T>(inKey, std::forward<ArgTypes>(args)...);
 		if (resource.get())
 		{
-			resource->Load();
+			resource->Create();
 		}
 		return resource;
 	}
@@ -97,7 +104,7 @@ namespace CGE
 	template<class T, typename ...ArgTypes>
 	static std::shared_ptr<T> DataManager::RequestResourceType(HashString inKey, ArgTypes&& ...args)
 	{
-		return instance->RequestResourceByType<T>(inKey, std::forward<ArgTypes>(args)...);
+		return m_instance->RequestResourceByType<T>(inKey, std::forward<ArgTypes>(args)...);
 	}
 }
 

@@ -32,10 +32,10 @@ namespace CGE
 	
 	TextureData::~TextureData()
 	{
-		Cleanup();
+		Destroy();
 	}
 	
-	bool TextureData::Load()
+	bool TextureData::Create()
 	{
 		unsigned char* data;
 		stbi_set_flip_vertically_on_load(flipVertical);
@@ -58,7 +58,7 @@ namespace CGE
 		return true;
 	}
 	
-	bool TextureData::Cleanup()
+	bool TextureData::Destroy()
 	{
 		if (!cleanup)
 		{

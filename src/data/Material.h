@@ -68,8 +68,8 @@ namespace CGE
 		inline const std::string& GetFragmentEntrypoint() const { return fragmentEntrypoint; };
 		inline const std::string& GetComputeEntrypoint() const { return computeEntrypoint; };
 	
-		bool Load() override;
-		bool Cleanup() override;
+		bool Create() override;
+		bool Destroy() override;
 	
 		std::vector<DescriptorSetLayoutBinding>& GetBindings();
 		std::vector<WriteDescriptorSet>& GetDescriptorWrites();

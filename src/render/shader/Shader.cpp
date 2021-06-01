@@ -21,7 +21,7 @@ namespace CGE
 		DestroyShaderModule();
 	}
 	
-	bool Shader::Load()
+	bool Shader::Create()
 	{
 		if (shaderModule)
 		{
@@ -49,7 +49,7 @@ namespace CGE
 		return true;
 	}
 	
-	bool Shader::Cleanup()
+	bool Shader::Destroy()
 	{
 		DestroyShaderModule();
 		Engine::Get()->GetShaderRegistry()->RemoveShader(get_shared_from_this<Shader>());

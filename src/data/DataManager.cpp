@@ -1,6 +1,7 @@
 
 #include "data/DataManager.h"
 #include "core/Class.h"
+#include <assert.h>
 
 namespace CGE
 {
@@ -17,7 +18,7 @@ namespace CGE
 	
 	//---------------------------------------------------------------
 	
-	DataManager* DataManager::instance = new DataManager();
+	DataManager* DataManager::m_instance = new DataManager();
 	
 	DataManager::DataManager()
 	{
@@ -31,75 +32,75 @@ namespace CGE
 	
 	DataManager* DataManager::GetInstance()
 	{
-		return instance;
+		return m_instance;
 	}
 	
 	void DataManager::ShutdownInstance()
 	{
-		instance->CleanupResources();
-		if (instance != nullptr)
+		m_instance->CleanupResources();
+		if (m_instance != nullptr)
 		{
-			delete instance;
+			delete m_instance;
 		}
 	}
 	
 	void DataManager::CleanupResources()
 	{
-		map<HashString, ResourcePtr>::iterator it = resourcesTable.begin();
-		for (; it != resourcesTable.end(); it++)
+		std::scoped_lock<std::mutex> lock(m_mutex);
+		map<HashString, ResourcePtr>::iterator it = m_resourcesTable.begin();
+		for (; it != m_resourcesTable.end(); it++)
 		{
-			it->second->Cleanup();
+			it->second->Destroy();
 		}
-		resourcesTable.clear();
-		resourcesMap.clear();
+		m_resourcesTable.clear();
+		m_resourcesMap.clear();
 	}
 	
-	bool DataManager::AddResource(HashString inKey, shared_ptr<Resource> inValue)
+	bool DataManager::HasResource(HashString inKey)
 	{
-		if (inValue && ( resourcesTable.find(inKey) == resourcesTable.end() ))
-		{
-			resourcesTable[inKey] = inValue;
-			resourcesMap[inValue->GetClass().GetName()][inKey] = inValue;
-			return true;
-		}
-	
-		return false;
+		std::scoped_lock<std::mutex> lock(m_mutex);
+		return m_resourcesTable.find(inKey) != m_resourcesTable.end();
 	}
 	
 	bool DataManager::AddResource(ResourcePtr inValue)
 	{
-		return AddResource(inValue->GetResourceId(), inValue);
-	}
-	
-	bool DataManager::DeleteResource(HashString inKey, shared_ptr<Resource> inValue)
-	{
-		if (inValue && (resourcesTable.find(inKey) != resourcesTable.end()))
+		std::scoped_lock<std::mutex> lock(m_mutex);
+
+		HashString key = inValue->GetResourceId();
+		if (inValue && (m_resourcesTable.find(key) == m_resourcesTable.end()))
 		{
-			resourcesTable.erase(inKey);
-			resourcesMap[inValue->GetClass().GetName()].erase(inKey);
+			m_resourcesTable[key] = inValue;
+			m_resourcesMap[inValue->GetClass().GetName()][key] = inValue;
 			return true;
 		}
-	
+
+		assert(false);
 		return false;
 	}
 	
 	bool DataManager::DeleteResource(ResourcePtr inValue)
 	{
-		return DeleteResource(inValue->GetResourceId(), inValue);
-	}
-	
-	bool DataManager::IsResourcePresent(HashString inKey)
-	{
-		return resourcesTable.find(inKey) != resourcesTable.end();
+		std::scoped_lock<std::mutex> lock(m_mutex);
+
+		HashString key = inValue->GetResourceId();
+		if (inValue && (m_resourcesTable.find(key) != m_resourcesTable.end()))
+		{
+			m_resourcesTable.erase(key);
+			m_resourcesMap[inValue->GetClass().GetName()].erase(key);
+			return true;
+		}
+
+		return false;
 	}
 	
 	std::shared_ptr<Resource> DataManager::GetResource(HashString inKey)
 	{
-		return GetResource(inKey, resourcesTable);
+		return GetResource(inKey, m_resourcesTable);
 	}
 	
 	ResourcePtr DataManager::GetResource(HashString inKey, map<HashString, ResourcePtr>& inMap)
 	{
+		std::scoped_lock<std::mutex> lock(m_mutex);
 		map<HashString, ResourcePtr>::iterator it = inMap.find(inKey);
 		if (it != inMap.end())
 		{

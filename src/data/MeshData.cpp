@@ -170,12 +170,12 @@ namespace CGE
 		);
 	}
 	
-	bool MeshData::Load()
+	bool MeshData::Create()
 	{
 		return true;
 	}
 	
-	bool MeshData::Cleanup()
+	bool MeshData::Destroy()
 	{
 		DestroyBuffer();
 		return true;

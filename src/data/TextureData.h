@@ -12,8 +12,8 @@ namespace CGE
 		TextureData(const HashString& inPath, bool inUsesAlpha = false, bool inFlipVertical = true, bool inLinear = true, bool inGenMips = true);
 		virtual ~TextureData();
 	
-		virtual bool Load() override;
-		virtual bool Cleanup() override;
+		virtual bool Create() override;
+		virtual bool Destroy() override;
 	
 		void CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup = false);
 	

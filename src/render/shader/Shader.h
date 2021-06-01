@@ -36,8 +36,8 @@ namespace CGE
 		Shader(const HashString& inPath);
 		virtual ~Shader();
 	
-		virtual bool Load() override;
-		virtual bool Cleanup() override;
+		virtual bool Create() override;
+		virtual bool Destroy() override;
 	
 		ShaderModule GetShaderModule();
 		void DestroyShaderModule();

@@ -48,8 +48,8 @@ namespace CGE
 		virtual void OnDestroy() override;
 	
 		// Inherited via Resource
-		virtual bool Load() override;
-		virtual bool Cleanup() override;
+		virtual bool Create() override;
+		virtual bool Destroy() override;
 	
 		void CreateBuffer();
 		void DestroyBuffer();

@@ -1,6 +1,7 @@
 
 #include "data/Resource.h"
 #include "data/DataManager.h"
+#include <assert.h>
 
 namespace CGE
 {
@@ -8,6 +9,7 @@ namespace CGE
 		: ObjectBase()
 		, id{ inId }
 	{
+		assert(!DataManager::GetInstance()->HasResource(id));
 	}
 	
 	void Resource::SetValid(bool inValid)
@@ -29,14 +31,14 @@ namespace CGE
 	void Resource::OnInitialize()
 	{
 		ObjectBase::OnInitialize();
-		DataManager::GetInstance()->AddResource(id, get_shared_from_this<Resource>());
+		DataManager::GetInstance()->AddResource(get_shared_from_this<Resource>());
 	}
 	
 	void Resource::OnDestroy()
 	{
-		Cleanup();
+		Destroy();
 		isValidFlag = false;
-		// ask data manager to destroy this resource ???
+		// TODO: ask data manager to destroy this resource ???
 		ObjectBase::OnDestroy();
 	}
 	
@@ -45,6 +47,11 @@ namespace CGE
 		return id;
 	}
 	
+	bool Resource::Destroy()
+	{
+		return DataManager::GetInstance()->DeleteResource(get_shared_from_this<Resource>());
+	}
+
 	bool Resource::IsValid()
 	{
 		return isValidFlag;
