@@ -19,14 +19,15 @@ namespace CGE
 		HashString GetResourceId();
 	
 		virtual bool Create() = 0;
-		virtual bool Destroy();
 		bool IsValid();
 	protected:
-		HashString id;
+		friend class DataManager;
+		HashString m_id;
 	
 		void SetValid(bool inValid);
+		virtual bool Destroy() = 0;
 	private:
-		bool isValidFlag = false;
+		bool m_isValidFlag = false;
 	
 		Resource();
 	};

@@ -7,19 +7,19 @@ namespace CGE
 {
 	Resource::Resource(HashString inId)
 		: ObjectBase()
-		, id{ inId }
+		, m_id{ inId }
 	{
-		assert(!DataManager::GetInstance()->HasResource(id));
+		assert(!DataManager::GetInstance()->HasResource(m_id));
 	}
 	
 	void Resource::SetValid(bool inValid)
 	{
-		isValidFlag = inValid;
+		m_isValidFlag = inValid;
 	}
 	
 	Resource::Resource()
 		: ObjectBase{}
-		, id{HashString::NONE}
+		, m_id{HashString::NONE}
 	{
 	
 	}
@@ -37,24 +37,25 @@ namespace CGE
 	void Resource::OnDestroy()
 	{
 		Destroy();
-		isValidFlag = false;
+		m_isValidFlag = false;
 		// TODO: ask data manager to destroy this resource ???
 		ObjectBase::OnDestroy();
 	}
 	
 	HashString Resource::GetResourceId()
 	{
-		return id;
+		return m_id;
 	}
 	
-	bool Resource::Destroy()
-	{
-		return DataManager::GetInstance()->DeleteResource(get_shared_from_this<Resource>());
-	}
+	//bool Resource::Destroy()
+	//{
+	//	DataManager::GetInstance()->DecreaseUsageCount(m_id);
+	//	return true;
+	//}
 
 	bool Resource::IsValid()
 	{
-		return isValidFlag;
+		return m_isValidFlag;
 	}
 	
 }
