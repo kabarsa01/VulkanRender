@@ -2,6 +2,7 @@
 #include "data/DataManager.h"
 #include "core/Class.h"
 #include <assert.h>
+#include <random>
 
 namespace CGE
 {
@@ -22,7 +23,9 @@ namespace CGE
 	
 	DataManager::DataManager()
 	{
-	
+		m_resourcesTable.reserve(1024 * 128);
+		m_resourcesMap.reserve(128);
+		m_garbageScanIterator = m_resourcesTable.begin();
 	}
 	
 	DataManager::~DataManager()
@@ -75,7 +78,9 @@ namespace CGE
 		if (m_resourcesTable.find(key) == m_resourcesTable.end())
 		{
 			m_resourcesTable[key] = inValue;
+			m_resourcesMap[inValue->GetClass().GetName()].reserve(1024 * 16);
 			m_resourcesMap[inValue->GetClass().GetName()][key] = inValue;
+
 			return true;
 		}
 
@@ -128,6 +133,43 @@ namespace CGE
 		}
 
 		return false;
+	}
+
+	void DataManager::ScanForAbandonedResources()
+	{
+		std::random_device rd;
+		std::mt19937 rng(rd);
+		std::uniform_int_distribution<uint32_t> dist(0, m_resourcesTable.size() - 1);
+
+		{
+			std::scoped_lock<std::mutex> lock(m_mutex);
+
+			auto it = m_resourcesTable.begin();
+			std::advance(it, dist(rng));
+
+			auto endIt = m_resourcesTable.end();
+			uint16_t counter = 0;
+			while (it != endIt)
+			{
+				if (it->second.use_count() == 2)
+				{
+					m_cleanupChain[m_cleanupChainIndex].push_back(it->second);
+					m_resourcesMap[it->second->GetClass().GetName()].erase(it->first);
+					it = m_resourcesTable.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+				if (counter++ >= 10)
+				{
+					break;
+				}
+			}
+		}
+
+		m_cleanupChainIndex = (m_cleanupChainIndex + 1) % m_cleanupChain.size();
+		m_cleanupChain[m_cleanupChainIndex].clear();
 	}
 
 }
