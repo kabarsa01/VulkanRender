@@ -3,6 +3,7 @@
 #include "core/Class.h"
 #include <assert.h>
 #include <random>
+#include <chrono>
 
 namespace CGE
 {
@@ -25,7 +26,6 @@ namespace CGE
 	{
 		m_resourcesTable.reserve(1024 * 128);
 		m_resourcesMap.reserve(128);
-		m_garbageScanIterator = m_resourcesTable.begin();
 	}
 	
 	DataManager::~DataManager()
@@ -138,7 +138,7 @@ namespace CGE
 	void DataManager::ScanForAbandonedResources()
 	{
 		std::random_device rd;
-		std::mt19937 rng(rd);
+		std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<uint32_t> dist(0, m_resourcesTable.size() - 1);
 
 		{

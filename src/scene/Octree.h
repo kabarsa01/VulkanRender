@@ -48,7 +48,7 @@ namespace CGE
 		glm::vec3 position;
 		glm::vec3 size;
 
-		std::list<T> objects;
+		std::vector<T> objects;
 		OctreeNodePayload<T>* payload;
 		std::mutex mutex;
 
@@ -347,9 +347,8 @@ namespace CGE
 			return nullptr;
 		}
 
-		for (auto iter = node->objects.begin(); iter != node->objects.end(); iter++)
+		for (T& object : node->objects)
 		{
-			T object = *iter;
 			uint8_t cell = m_compareFunc(object, node);
 			if (cell < 8)
 			{
