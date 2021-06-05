@@ -66,6 +66,8 @@ namespace CGE
 		// fullscreen quad instance to be used for screen space stuff
 		static std::shared_ptr<MeshData> FullscreenQuad();
 	private:
+		static std::shared_ptr<MeshData> m_fullscreenQuad;
+
 		VulkanBuffer vertexBuffer;
 		VulkanBuffer indexBuffer;
 	

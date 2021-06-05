@@ -97,6 +97,10 @@ namespace CGE
 			auto renderCurrentTime = std::chrono::high_resolution_clock::now();
 			double renderDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(renderCurrentTime - renderStartTime).count();
 //			std::printf("render update time is %f microseconds\n", renderDeltaTime);
+
+			auto updateMsg = std::make_shared<GlobalUpdateMessage>();
+			updateMsg->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
+			MessageBus::GetInstance()->PublishSync(updateMsg);
 		}
 	
 		m_rendererInstance->WaitForDevice();

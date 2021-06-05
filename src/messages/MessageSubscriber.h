@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "messages/MessageHandler.h"
+#include "messages/MessageBus.h"
 
 namespace CGE
 {

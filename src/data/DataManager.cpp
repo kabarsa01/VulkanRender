@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <random>
 #include <chrono>
+#include "async/Job.h"
+#include "async/ThreadPool.h"
 
 namespace CGE
 {
@@ -20,12 +22,15 @@ namespace CGE
 	
 	//---------------------------------------------------------------
 	
-	DataManager* DataManager::m_instance = new DataManager();
+	DataManager* DataManager::m_instance = nullptr;
+	std::mutex DataManager::m_staticMutex;
 	
 	DataManager::DataManager()
 	{
 		m_resourcesTable.reserve(1024 * 128);
 		m_resourcesMap.reserve(128);
+
+		m_messageSubscriber.AddHandler<GlobalUpdateMessage>(this, &DataManager::HandleUpdate);
 	}
 	
 	DataManager::~DataManager()
@@ -35,15 +40,28 @@ namespace CGE
 	
 	DataManager* DataManager::GetInstance()
 	{
+		if (!m_instance)
+		{
+			std::scoped_lock<std::mutex> lock(m_staticMutex);
+			if (!m_instance)
+			{
+				m_instance = new DataManager();
+			}
+		}
 		return m_instance;
 	}
 	
 	void DataManager::ShutdownInstance()
 	{
 		m_instance->CleanupResources();
-		if (m_instance != nullptr)
+		if (m_instance)
 		{
-			delete m_instance;
+			std::scoped_lock<std::mutex> lock(m_staticMutex);
+			if (m_instance)
+			{
+				delete m_instance;
+				m_instance = nullptr;
+			}
 		}
 	}
 	
@@ -135,8 +153,16 @@ namespace CGE
 		return false;
 	}
 
+	void DataManager::HandleUpdate(std::shared_ptr<GlobalUpdateMessage> updateMsg)
+	{
+		std::function func = [this]() { ScanForAbandonedResources(); };
+		std::shared_ptr<Job<void()>> job = std::make_shared<Job<void()>>(std::move(func));
+		ThreadPool::GetInstance()->AddJob(job);
+	}
+
 	void DataManager::ScanForAbandonedResources()
 	{
+		printf("DataManager::ScanForAbandonedResources");
 		std::random_device rd;
 		std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<uint32_t> dist(0, m_resourcesTable.size() - 1);

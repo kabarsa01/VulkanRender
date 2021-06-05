@@ -14,6 +14,7 @@
 #include "core/Class.h"
 #include "common/HashString.h"
 #include "data/Resource.h"
+#include "messages/MessageSubscriber.h"
 
 namespace CGE
 {
@@ -40,6 +41,9 @@ namespace CGE
 		std::unordered_map<HashString, std::unordered_map<HashString, ResourcePtr>> m_resourcesMap;
 	private:
 		static DataManager* m_instance;
+		static std::mutex m_staticMutex;
+
+		MessageSubscriber m_messageSubscriber;
 		std::array<std::vector<ResourcePtr>, 4> m_cleanupChain;
 		uint32_t m_cleanupChainIndex = 0;
 	
@@ -52,6 +56,7 @@ namespace CGE
 		bool DeleteResource(ResourcePtr inValue);
 		bool DeleteResource(HashString key);
 
+		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> updateMsg);
 		void ScanForAbandonedResources();
 	};
 	

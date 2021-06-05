@@ -29,6 +29,8 @@ namespace CGE
 	
 		std::string fullscreenQuadId = "MeshData_FullscreenQuad";
 	};
+
+	std::shared_ptr<MeshData> MeshData::m_fullscreenQuad = nullptr;
 	
 	//-------------------------------------------------------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------------------------------------------------------
@@ -163,11 +165,15 @@ namespace CGE
 	
 	MeshDataPtr MeshData::FullscreenQuad()
 	{
-		return DataManager::GetInstance()->RequestResourceByType<MeshData, const std::vector<Vertex>&, const std::vector<unsigned int>&>(
-			fullscreenQuadId,
-			quadVertices,
-			quadIndices
-		);
+		if (!m_fullscreenQuad)
+		{
+			m_fullscreenQuad = DataManager::GetInstance()->RequestResourceByType<MeshData, const std::vector<Vertex>&, const std::vector<unsigned int>&>(
+				fullscreenQuadId,
+				quadVertices,
+				quadIndices
+				);
+		}
+		return m_fullscreenQuad;
 	}
 	
 	bool MeshData::Create()
