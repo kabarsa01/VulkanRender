@@ -49,7 +49,6 @@ namespace CGE
 	
 		// Inherited via Resource
 		virtual bool Create() override;
-		virtual bool Destroy() override;
 	
 		void CreateBuffer();
 		void DestroyBuffer();
@@ -65,6 +64,8 @@ namespace CGE
 		static VertexInputBindingDescription GetBindingDescription(uint32_t inDesiredBinding);
 		// fullscreen quad instance to be used for screen space stuff
 		static std::shared_ptr<MeshData> FullscreenQuad();
+	protected:
+		virtual bool Destroy() override;
 	private:
 		static std::shared_ptr<MeshData> m_fullscreenQuad;
 

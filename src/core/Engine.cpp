@@ -91,12 +91,12 @@ namespace CGE
 			m_sceneInstance->PerFrameUpdate();
 			auto sceneCurrentTime = std::chrono::high_resolution_clock::now();
 			double sceneDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(sceneCurrentTime - sceneStartTime).count();
-//			std::printf("scene update time is %f microseconds\n", sceneDeltaTime);
+			std::printf("scene update time is %f microseconds\n", sceneDeltaTime);
 			auto renderStartTime = std::chrono::high_resolution_clock::now();
 			m_rendererInstance->RenderFrame();
 			auto renderCurrentTime = std::chrono::high_resolution_clock::now();
 			double renderDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(renderCurrentTime - renderStartTime).count();
-//			std::printf("render update time is %f microseconds\n", renderDeltaTime);
+			std::printf("render update time is %f microseconds\n", renderDeltaTime);
 
 			auto updateMsg = std::make_shared<GlobalUpdateMessage>();
 			updateMsg->deltaTime = TimeManager::GetInstance()->GetDeltaTime();

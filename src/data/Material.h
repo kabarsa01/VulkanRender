@@ -69,7 +69,6 @@ namespace CGE
 		inline const std::string& GetComputeEntrypoint() const { return computeEntrypoint; };
 	
 		bool Create() override;
-		bool Destroy() override;
 	
 		std::vector<DescriptorSetLayoutBinding>& GetBindings();
 		std::vector<WriteDescriptorSet>& GetDescriptorWrites();
@@ -107,6 +106,8 @@ namespace CGE
 		void ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inResources, std::vector<DescriptorSetLayoutBinding>& inOutBindings);
 		template<class T>
 		void PrepareDescriptorWrites(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inDescInfos, std::vector<WriteDescriptorSet>& inOutDescriptorWrites);
+
+		bool Destroy() override;
 	};
 	
 	typedef std::shared_ptr<Material> MaterialPtr;

@@ -287,6 +287,9 @@ namespace CGE
 			sceneTree->AddObject(objPtr);
 		}
 		sceneTree->Update();
+
+		//DataManager::GetInstance()->GetResourceByType<Shader>(HashString("ddddddd"));
+		//DataManager::GetInstance()->GetResourcesByType<Shader>();
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -424,7 +427,20 @@ namespace CGE
 		auto startTime = std::chrono::high_resolution_clock::now();
 
 		frustumPack.Clear();
-		Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
+		//Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
+		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
+		Transform& tr = cam->GetParent()->transform;
+		float extendedFrustumOffset = 50.0f;
+		Frustum frustum = CreateFrustum(
+			tr.GetLocation() - tr.GetForwardVector() * extendedFrustumOffset,
+			tr.GetForwardVector(),
+			tr.GetUpVector(),
+			tr.GetLeftVector(),
+			cam->GetNearPlane(),
+			cam->GetFarPlane() + extendedFrustumOffset,
+			cam->GetFov(),
+			cam->GetAspectRatio()
+		);
 		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
 
 		auto currentTime = std::chrono::high_resolution_clock::now();

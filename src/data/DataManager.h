@@ -30,6 +30,8 @@ namespace CGE
 		bool AddResource(ResourcePtr inValue);
 		std::shared_ptr<Resource> GetResource(HashString inKey);
 		template<class T>
+		std::vector<std::shared_ptr<T>> GetResourcesByType();
+		template<class T>
 		std::shared_ptr<T> GetResourceByType(HashString inKey);
 		template<class T, typename ...ArgTypes>
 		std::shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes&& ...args);
@@ -59,10 +61,32 @@ namespace CGE
 		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> updateMsg);
 		void ScanForAbandonedResources();
 	};
-	
+
 	//===========================================================================================
 	// templated definitions
 	//===========================================================================================
+
+	template<class T>
+	std::vector<std::shared_ptr<T>> DataManager::GetResourcesByType()
+	{
+		std::vector< std::shared_ptr<T>> result;
+
+		{
+			std::scoped_lock<std::mutex> lock(m_mutex);
+			auto it = m_resourcesMap.find(Class::Get<T>().GetName());
+			if (it != m_resourcesMap.end())
+			{
+				for (auto& pair : it->second)
+				{
+					result.push_back(std::dynamic_pointer_cast<T>(pair.second));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	//-----------------------------------------------------------------------------------
 	
 	template<class T>
 	inline std::shared_ptr<T> DataManager::GetResourceByType(HashString inKey)

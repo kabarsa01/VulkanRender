@@ -226,7 +226,7 @@ goto :eof
 
 :treeProcess
 rem Do whatever you want here over the files of this subdir, for example:
-for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator -V %%f -o %%~nf.spv
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
 for /D %%d in (*) do (
     cd %%d
     call :treeProcess
@@ -282,6 +282,7 @@ exit /b</Command>
     <ClCompile Include="src\render\resources\VulkanBuffer.cpp" />
     <ClCompile Include="src\render\resources\VulkanDeviceMemory.cpp" />
     <ClCompile Include="src\render\resources\VulkanImage.cpp" />
+    <ClCompile Include="src\render\RtScene.cpp" />
     <ClCompile Include="src\render\ShaderRegistry.cpp" />
     <ClCompile Include="src\render\shader\VulkanShaderModule.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
@@ -349,6 +350,7 @@ exit /b</Command>
     <ClInclude Include="src\render\resources\VulkanBuffer.h" />
     <ClInclude Include="src\render\resources\VulkanDeviceMemory.h" />
     <ClInclude Include="src\render\resources\VulkanImage.h" />
+    <ClInclude Include="src\render\RtScene.h" />
     <ClInclude Include="src\render\ShaderRegistry.h" />
     <ClInclude Include="src\render\shader\VulkanShaderModule.h" />
     <ClInclude Include="src\render\shader\Shader.h" />

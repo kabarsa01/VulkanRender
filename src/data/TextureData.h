@@ -13,7 +13,6 @@ namespace CGE
 		virtual ~TextureData();
 	
 		virtual bool Create() override;
-		virtual bool Destroy() override;
 	
 		void CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup = false);
 	
@@ -36,6 +35,8 @@ namespace CGE
 	
 		virtual ImageCreateInfo GetImageInfo() = 0;
 		virtual ImageView CreateImageView(ImageSubresourceRange range) = 0;
+
+		virtual bool Destroy() override;
 	private:
 		TextureData();
 	};

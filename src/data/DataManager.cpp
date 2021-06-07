@@ -162,10 +162,9 @@ namespace CGE
 
 	void DataManager::ScanForAbandonedResources()
 	{
-		printf("DataManager::ScanForAbandonedResources");
 		std::random_device rd;
-		std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count());
-		std::uniform_int_distribution<uint32_t> dist(0, m_resourcesTable.size() - 1);
+		std::mt19937 rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
+		std::uniform_int_distribution<uint32_t> dist(0, static_cast<uint32_t>(m_resourcesTable.size()) - 1);
 
 		{
 			std::scoped_lock<std::mutex> lock(m_mutex);

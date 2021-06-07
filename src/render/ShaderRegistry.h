@@ -1,6 +1,7 @@
 #ifndef __SHADER_REGISTRY_H__
 #define __SHADER_REGISTRY_H__
 
+#include <vector>
 #include <mutex>
 #include <set>
 
@@ -20,7 +21,7 @@ namespace CGE
 	private:
 		friend class Shader;
 
-		std::set<ShaderPtr> m_shaderSet;
+		std::vector<ShaderPtr> m_shaderSet;
 
 		void AddShader(ShaderPtr shader);
 		void RemoveShader(ShaderPtr shader);

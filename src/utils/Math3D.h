@@ -66,6 +66,16 @@ namespace CGE
 	};
 
 	Frustum CreateFrustum(CameraComponentPtr cameraComp);
+	Frustum CreateFrustum(
+		const glm::vec3& origin,
+		const glm::vec3& forward,
+		const glm::vec3& up,
+		const glm::vec3& left,
+		float nearDistance,
+		float farDistance,
+		float fovVertical,
+		float aspectRatio
+	);
 
 	bool FComp(float f1, float f2, float epsilon = 0.0001f);
 

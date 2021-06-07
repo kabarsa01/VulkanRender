@@ -270,6 +270,9 @@
     <ClCompile Include="src\utils\Singleton.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\RtScene.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -466,6 +469,9 @@
     </ClInclude>
     <ClInclude Include="src\utils\Singleton.h">
       <Filter>Source Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\RtScene.h">
+      <Filter>Source Files\render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

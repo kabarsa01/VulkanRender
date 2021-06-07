@@ -8,19 +8,40 @@ namespace CGE
 
 	Frustum CreateFrustum(CameraComponentPtr cameraComp)
 	{
+		Transform& tr = cameraComp->GetParent()->transform;
+		return CreateFrustum(
+			tr.GetLocation(),
+			tr.GetForwardVector(),
+			tr.GetUpVector(),
+			tr.GetLeftVector(),
+			cameraComp->GetNearPlane(),
+			cameraComp->GetFarPlane(),
+			cameraComp->GetFov(),
+			cameraComp->GetAspectRatio()
+		);
+	}
+
+	Frustum CreateFrustum(
+		const glm::vec3& origin, 
+		const glm::vec3& forward, 
+		const glm::vec3& up, 
+		const glm::vec3& left, 
+		float nearDistance, 
+		float farDistance, 
+		float fovVertical, 
+		float aspectRatio)
+	{
 		Frustum f;
 
-		Transform& tr = cameraComp->GetParent()->transform;
-		f.origin = tr.GetLocation();
-		f.forwardDir = tr.GetForwardVector();
-		f.farPlane = cameraComp->GetFarPlane();
-		f.nearPlane = cameraComp->GetNearPlane();
+		f.origin = origin;
+		f.forwardDir = forward;
+		f.farPlane = farDistance;
+		f.nearPlane = nearDistance;
 
-		float fov = cameraComp->GetFov();
-		float halfHeight = cameraComp->GetFarPlane() * glm::tan(glm::radians(fov * 0.5f));
-		float halfWidth = halfHeight * cameraComp->GetAspectRatio();
-		glm::vec3 halfHeightVec = tr.GetUpVector() * halfHeight;
-		glm::vec3 halfWidthVec = tr.GetLeftVector() * halfWidth;
+		float halfHeight = farDistance * glm::tan(glm::radians(fovVertical * 0.5f));
+		float halfWidth = halfHeight * aspectRatio;
+		glm::vec3 halfHeightVec = up * halfHeight;
+		glm::vec3 halfWidthVec = left * halfWidth;
 		glm::vec3 farCenter = f.origin + (f.forwardDir * f.farPlane);
 
 		// points should go around
@@ -33,8 +54,8 @@ namespace CGE
 		for (uint8_t idx = 0; idx < 4; idx++)
 		{
 			glm::vec3 first = f.points[idx] - f.origin;
-			glm::vec3 second = f.points[(idx+1) % 4] - f.points[idx];
-			glm::vec3 normal = glm::normalize( glm::cross(first, second) );
+			glm::vec3 second = f.points[(idx + 1) % 4] - f.points[idx];
+			glm::vec3 normal = glm::normalize(glm::cross(first, second));
 			if (glm::dot(normal, farCenter - f.points[idx]) <= 0)
 			{
 				normal *= -1.0f;
