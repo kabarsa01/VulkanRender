@@ -118,7 +118,7 @@ namespace CGE
 
 	Scene::Scene()
 	{
-		sceneTree = new Octree<SceneObjectBasePtr>(OCTREE_NODE_POOL_SIZE, &CalculateTransformCellIndex);
+		m_sceneTree = new Octree<SceneObjectBasePtr>(OCTREE_NODE_POOL_SIZE, &CalculateTransformCellIndex);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ namespace CGE
 			}
 		}
 
-		modelMatrices.resize(g_GlobalTransformDataSize);
+		m_modelMatrices.resize(g_GlobalTransformDataSize);
 	
 		TransferList* tl = TransferList::GetInstance();
 	
@@ -282,11 +282,11 @@ namespace CGE
 		MeshData::FullscreenQuad()->CreateBuffer();
 		tl->PushBuffers(MeshData::FullscreenQuad());
 
-		for (SceneObjectBasePtr objPtr : primaryPack.objectsList)
+		for (SceneObjectBasePtr objPtr : m_primaryPack.objectsList)
 		{
-			sceneTree->AddObject(objPtr);
+			m_sceneTree->AddObject(objPtr);
 		}
-		sceneTree->Update();
+		m_sceneTree->Update();
 
 		//DataManager::GetInstance()->GetResourceByType<Shader>(HashString("ddddddd"));
 		//DataManager::GetInstance()->GetResourcesByType<Shader>();
@@ -296,30 +296,30 @@ namespace CGE
 	
 	void Scene::RegisterSceneObject(SceneObjectBasePtr inSceneObject)
 	{
-		primaryPack.objectsList.insert(inSceneObject);
-		primaryPack.objectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
+		m_primaryPack.objectsList.insert(inSceneObject);
+		m_primaryPack.objectsMap[inSceneObject->GetClass().GetName()].insert(inSceneObject);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RemoveSceneObject(SceneObjectBasePtr inSceneObject)
 	{
-		primaryPack.objectsList.erase(inSceneObject);
-		primaryPack.objectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
+		m_primaryPack.objectsList.erase(inSceneObject);
+		m_primaryPack.objectsMap[inSceneObject->GetClass().GetName()].erase(inSceneObject);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RegisterSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
+		m_primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].insert(inSceneObjectComponent);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
 	
 	void Scene::RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent)
 	{
-		primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
+		m_primaryPack.componentsMap[inSceneObjectComponent->GetClass().GetName()].erase(inSceneObjectComponent);
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -332,14 +332,14 @@ namespace CGE
 		single threaded simple scene data processing for batching and instancing. later it'll become multi threaded procedure
 		with scene data stored in tree as it should
 		*/
-		shadersList.clear();
-		shaderToMaterial.clear();
-		materialToMeshData.clear();
-		matToMeshToTransform.clear();
-		materialToMeshDataToIndex.clear();
+		m_shadersList.clear();
+		m_shaderToMaterial.clear();
+		m_materialToMeshData.clear();
+		m_matToMeshToTransform.clear();
+		m_materialToMeshDataToIndex.clear();
 	
 		const Class& meshDataClass = Class::Get<MeshComponent>();
-		std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>(frustumPack);
+		std::vector<MeshComponentPtr> meshes = GetSceneComponentsCast<MeshComponent>(m_frustumPack);
 		for (MeshComponentPtr meshComponent : meshes)
 		{
 			MaterialPtr material = meshComponent->material;
@@ -349,37 +349,37 @@ namespace CGE
 			HashString materialId = material->GetResourceId();
 			HashString meshDataId = meshData->GetResourceId();
 
-			if (shaderToMaterial.find(shaderHash) == shaderToMaterial.end())
+			if (m_shaderToMaterial.find(shaderHash) == m_shaderToMaterial.end())
 			{
-				shadersList.push_back(shaderHash);
+				m_shadersList.push_back(shaderHash);
 			}
-			if (materialToMeshData.find(materialId) == materialToMeshData.end())
+			if (m_materialToMeshData.find(materialId) == m_materialToMeshData.end())
 			{
-				shaderToMaterial[shaderHash].push_back(material);
+				m_shaderToMaterial[shaderHash].push_back(material);
 			}
-			if (matToMeshToTransform[materialId].find(meshDataId) == matToMeshToTransform[materialId].end())
+			if (m_matToMeshToTransform[materialId].find(meshDataId) == m_matToMeshToTransform[materialId].end())
 			{
-				materialToMeshData[materialId].push_back(meshData);
+				m_materialToMeshData[materialId].push_back(meshData);
 			}
-			matToMeshToTransform[materialId][meshDataId].push_back(meshComponent->GetParent()->transform.CalculateMatrix());
+			m_matToMeshToTransform[materialId][meshDataId].push_back(meshComponent->GetParent()->transform.CalculateMatrix());
 		}
 
 		uint32_t counter = 0;
-		for (HashString& shaderHash : shadersList)
+		for (HashString& shaderHash : m_shadersList)
 		{
-			for (MaterialPtr material : shaderToMaterial[shaderHash])
+			for (MaterialPtr material : m_shaderToMaterial[shaderHash])
 			{
-				for (MeshDataPtr meshData : materialToMeshData[material->GetResourceId()])
+				for (MeshDataPtr meshData : m_materialToMeshData[material->GetResourceId()])
 				{
-					materialToMeshDataToIndex[material->GetResourceId()][meshData->GetResourceId()] = counter;
-					for (glm::mat4& modelMatrix : matToMeshToTransform[material->GetResourceId()][meshData->GetResourceId()])
+					m_materialToMeshDataToIndex[material->GetResourceId()][meshData->GetResourceId()] = counter;
+					for (glm::mat4& modelMatrix : m_matToMeshToTransform[material->GetResourceId()][meshData->GetResourceId()])
 					{
-						modelMatrices[counter++] = modelMatrix;
+						m_modelMatrices[counter++] = modelMatrix;
 					}
 				}
 			}
 		}
-		relevantMatricesCount = counter;
+		m_relevantMatricesCount = counter;
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -411,7 +411,7 @@ namespace CGE
 		}
 
 		double time = TimeManager::GetInstance()->GetTime();
-		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
+		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
 			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
@@ -422,13 +422,20 @@ namespace CGE
 
 	//-----------------------------------------------------------------------------------------------------------------
 
+	SceneObjectsPack& Scene::GetObjectsPack(bool isFrustumCulled)
+	{
+		return isFrustumCulled ? m_frustumPack : m_primaryPack;
+	}
+
+	//-----------------------------------------------------------------------------------------------------------------
+
 	void Scene::GatherObjectsInFrustum()
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 
-		frustumPack.Clear();
+		m_frustumPack.Clear();
 		//Frustum frustum = CreateFrustum(GetSceneComponent<CameraComponent>(primaryPack));
-		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(primaryPack);
+		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		Transform& tr = cam->GetParent()->transform;
 		float extendedFrustumOffset = 50.0f;
 		Frustum frustum = CreateFrustum(
@@ -441,7 +448,7 @@ namespace CGE
 			cam->GetFov(),
 			cam->GetAspectRatio()
 		);
-		sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, frustumPack);
+		m_sceneTree->Query<Frustum, SceneObjectsPack>(frustum, IsNodeInFrustum, m_frustumPack);
 
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();

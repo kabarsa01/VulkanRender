@@ -14,6 +14,7 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::AccessFlags;
 	using VULKAN_HPP_NAMESPACE::Buffer;
 	using VULKAN_HPP_NAMESPACE::BufferCopy;
+	using VULKAN_HPP_NAMESPACE::BufferUsageFlags;
 	using VULKAN_HPP_NAMESPACE::BufferCreateInfo;
 	using VULKAN_HPP_NAMESPACE::BufferMemoryBarrier;
 	using VULKAN_HPP_NAMESPACE::DescriptorBufferInfo;
@@ -27,6 +28,7 @@ namespace CGE
 		virtual ~VulkanBuffer();
 	
 		void Create(VulkanDevice* inDevice);
+		void Create(VulkanDevice* inDevice, DeviceSize inSize, BufferUsageFlags inFlags);
 		void Destroy();
 	
 		void SetData(const std::vector<char>& inData);
@@ -47,6 +49,7 @@ namespace CGE
 		Buffer GetBuffer() const;
 		MemoryRequirements GetMemoryRequirements();
 		MemoryRecord& GetMemoryRecord();
+		vk::DeviceAddress GetDeviceAddress();
 	
 		operator Buffer() const { return buffer; }
 		operator bool() const { return buffer; }

@@ -35,6 +35,11 @@ namespace CGE
 		Cleanup();
 	}
 	
+	uint64_t Engine::GetFrameCount()
+	{
+		return m_frameCount;
+	}
+
 	Renderer* Engine::GetRendererInstance()
 	{
 		return m_staticInstance->GetRenderer();
@@ -101,6 +106,10 @@ namespace CGE
 			auto updateMsg = std::make_shared<GlobalUpdateMessage>();
 			updateMsg->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
 			MessageBus::GetInstance()->PublishSync(updateMsg);
+
+			auto flipMsg = std::make_shared<GlobalFlipMessage>();
+			flipMsg->frameCount = m_frameCount++;
+			MessageBus::GetInstance()->PublishSync(flipMsg);
 		}
 	
 		m_rendererInstance->WaitForDevice();

@@ -36,6 +36,19 @@ namespace CGE
 		descriptorInfo.setRange(createInfo.size);
 	}
 	
+	void VulkanBuffer::Create(VulkanDevice* inDevice, DeviceSize inSize, BufferUsageFlags inFlags)
+	{
+		if (buffer)
+		{
+			return;
+		}
+		createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
+		createInfo.setUsage(inFlags);
+		createInfo.setSize(inSize);
+
+		Create(inDevice);
+	}
+
 	void VulkanBuffer::SetData(const std::vector<char>& inData)
 	{
 		data = inData;
@@ -187,4 +200,11 @@ namespace CGE
 	}
 	
 	
+	vk::DeviceAddress VulkanBuffer::GetDeviceAddress()
+	{
+		vk::BufferDeviceAddressInfo bufferInfo;
+		bufferInfo.setBuffer(buffer);
+		return vulkanDevice->GetDevice().getBufferAddress(bufferInfo);
+	}
+
 }

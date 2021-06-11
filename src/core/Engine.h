@@ -22,6 +22,7 @@ namespace CGE
 	
 		void Run();
 	
+		uint64_t GetFrameCount();
 		Scene* GetScene();
 		Renderer* GetRenderer();
 		ShaderRegistry* GetShaderRegistry();
@@ -39,6 +40,8 @@ namespace CGE
 		static void FramebufferResizeCallback(GLFWwindow* inWindow, int inWidth, int inHeight);
 	private:
 		static Engine* m_staticInstance;
+
+		uint64_t m_frameCount = 0;
 	
 		GLFWwindow* m_window;
 		int m_windowWidth = 1600;

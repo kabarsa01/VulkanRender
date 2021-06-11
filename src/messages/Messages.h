@@ -11,9 +11,16 @@ namespace CGE
 		bool someRandomShitflag;
 	};
 
+	// per frame update called after scene and render update routine completion
 	struct GlobalUpdateMessage : MessageBase<GlobalUpdateMessage>
 	{
 		float deltaTime;
+	};
+
+	// frame flip at the end of the frame processing after present was called
+	struct GlobalFlipMessage : MessageBase<GlobalFlipMessage>
+	{
+		uint64_t frameCount;
 	};
 
 	struct SceneProcessingFinishedMessage : MessageBase<SceneProcessingFinishedMessage>

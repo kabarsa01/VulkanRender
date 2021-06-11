@@ -37,6 +37,8 @@ namespace CGE
 		std::shared_ptr<T> RequestResourceByType(HashString inKey, ArgTypes&& ...args);
 		template<class T, typename ...ArgTypes>
 		static std::shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes&& ...args);
+		template<class T>
+		std::unordered_map<HashString, ResourcePtr>& GetResourcesTable();
 	protected:
 		std::mutex m_mutex;
 		std::unordered_map<HashString, ResourcePtr> m_resourcesTable;
@@ -128,5 +130,14 @@ namespace CGE
 	{
 		return m_instance->RequestResourceByType<T>(inKey, std::forward<ArgTypes>(args)...);
 	}
+
+	//-----------------------------------------------------------------------------------
+
+	template<class T>
+	std::unordered_map<HashString, ResourcePtr>& DataManager::GetResourcesTable()
+	{
+		return m_resourcesMap[Class::Get<T>().GetName()];
+	}
+
 }
 

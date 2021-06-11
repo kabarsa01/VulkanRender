@@ -84,15 +84,17 @@ namespace CGE
 		void RemoveSceneObjectComponent(SceneObjectComponentPtr inSceneObjectComponent);	
 	
 		void PrepareObjectsLists();
-		inline std::vector<HashString>& GetShadersList() { return shadersList; }
-		inline std::unordered_map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return shaderToMaterial; }
-		inline std::unordered_map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return materialToMeshData; }
-		inline std::unordered_map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform(const HashString& materialId) { return matToMeshToTransform[materialId]; }
-		inline std::unordered_map<HashString, uint32_t>& GetMeshDataToIndex(const HashString& materialId) { return materialToMeshDataToIndex[materialId]; }
-		inline std::vector<glm::mat4>& GetModelMatrices() { return modelMatrices; }
-		inline uint32_t GetRelevantMatricesCount() { return relevantMatricesCount; }
+		inline std::vector<HashString>& GetShadersList() { return m_shadersList; }
+		inline std::unordered_map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return m_shaderToMaterial; }
+		inline std::unordered_map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return m_materialToMeshData; }
+		inline std::unordered_map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform(const HashString& materialId) { return m_matToMeshToTransform[materialId]; }
+		inline std::unordered_map<HashString, uint32_t>& GetMeshDataToIndex(const HashString& materialId) { return m_materialToMeshDataToIndex[materialId]; }
+		inline std::vector<glm::mat4>& GetModelMatrices() { return m_modelMatrices; }
+		inline uint32_t GetRelevantMatricesCount() { return m_relevantMatricesCount; }
 	
 		void PerFrameUpdate();
+
+		SceneObjectsPack& GetObjectsPack(bool isFrustumCulled);
 	
 		template<class T>
 		std::set<SceneObjectComponentPtr> GetSceneComponents();
@@ -103,23 +105,23 @@ namespace CGE
 		template<class T>
 		std::shared_ptr<T> GetSceneComponent();
 	protected:
-		SceneObjectsPack primaryPack;
-		SceneObjectsPack frustumPack;
+		SceneObjectsPack m_primaryPack;
+		SceneObjectsPack m_frustumPack;
 
 		//std::set<SceneObjectBasePtr> sceneObjectsSet;
 		//std::map<HashString, std::set<SceneObjectBasePtr>> sceneObjectsMap;
 		//std::map<HashString, std::set<SceneObjectComponentPtr>> sceneObjectComponents;
 
-		Octree<SceneObjectBasePtr>* sceneTree;
+		Octree<SceneObjectBasePtr>* m_sceneTree;
 	
 		// grouped ordered data for drawing stuff
-		std::vector<HashString> shadersList;
-		std::unordered_map<HashString, std::vector<MaterialPtr>> shaderToMaterial;
-		std::unordered_map<HashString, std::vector<MeshDataPtr>> materialToMeshData;
-		std::unordered_map<HashString, std::unordered_map<HashString, std::vector<glm::mat4>>> matToMeshToTransform;
-		std::unordered_map<HashString, std::unordered_map<HashString, uint32_t>> materialToMeshDataToIndex;
-		std::vector<glm::mat4> modelMatrices;
-		uint32_t relevantMatricesCount;
+		std::vector<HashString> m_shadersList;
+		std::unordered_map<HashString, std::vector<MaterialPtr>> m_shaderToMaterial;
+		std::unordered_map<HashString, std::vector<MeshDataPtr>> m_materialToMeshData;
+		std::unordered_map<HashString, std::unordered_map<HashString, std::vector<glm::mat4>>> m_matToMeshToTransform;
+		std::unordered_map<HashString, std::unordered_map<HashString, uint32_t>> m_materialToMeshDataToIndex;
+		std::vector<glm::mat4> m_modelMatrices;
+		uint32_t m_relevantMatricesCount;
 
 		void GatherObjectsInFrustum();
 
@@ -147,7 +149,7 @@ namespace CGE
 	template<class T>
 	std::set<SceneObjectComponentPtr> Scene::GetSceneComponents()
 	{
-		return GetSceneComponents<T>(primaryPack);
+		return GetSceneComponents<T>(m_primaryPack);
 	}
 
 	//-------------------------------------------------------------------------------------------
@@ -169,14 +171,14 @@ namespace CGE
 	template<class T>
 	std::vector<std::shared_ptr<T>> Scene::GetSceneComponentsCast()
 	{
-		return GetSceneComponentsCast<T>(primaryPack);
+		return GetSceneComponentsCast<T>(m_primaryPack);
 	}
 
 	template<class T>
 	std::vector<std::shared_ptr<T>>
 		Scene::GetSceneComponentsInFrustumCast()
 	{
-		return GetSceneComponentsCast<T>(frustumPack);
+		return GetSceneComponentsCast<T>(m_frustumPack);
 	}
 
 	//-------------------------------------------------------------------------------------------
@@ -198,7 +200,7 @@ namespace CGE
 	template<class T>
 	std::shared_ptr<T> Scene::GetSceneComponent()
 	{
-		return GetSceneComponent<T>(primaryPack);
+		return GetSceneComponent<T>(m_primaryPack);
 	}
 
 }
