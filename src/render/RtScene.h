@@ -2,42 +2,18 @@
 #define __RT_SCENE_H__
 
 #include <vector>
+#include <array>
 #include <vulkan/vulkan.hpp>
 
 #include "messages/MessageSubscriber.h"
 #include "resources/VulkanBuffer.h"
 #include "common/HashString.h"
+#include "utils/RTUtils.h"
+#include "shader/RtShader.h"
+#include <unordered_map>
 
 namespace CGE
 {
-
-	//-------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------
-
-	struct AccelStructure
-	{
-		vk::AccelerationStructureKHR accelerationStructure;
-		VulkanBuffer buffer;
-	};
-
-	struct AccelStructureBuildInfo
-	{
-		vk::AccelerationStructureBuildGeometryInfoKHR geometryInfo;
-		std::vector<vk::AccelerationStructureGeometryKHR> geometries;
-		std::vector<vk::AccelerationStructureBuildRangeInfoKHR> rangeInfos;
-		vk::AccelerationStructureBuildSizesInfoKHR buildSizes;
-		VulkanBuffer scratchBuffer;
-	};
-
-	struct AccelStructuresBuildInfos
-	{
-		std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> geometryInfos;
-		std::vector<vk::AccelerationStructureGeometryKHR*> geometries;
-		std::vector<vk::AccelerationStructureBuildRangeInfoKHR*> rangeInfos;
-		std::vector<vk::AccelerationStructureBuildSizesInfoKHR> buildSizes;
-		std::vector<VulkanBuffer> scratchBuffers;
-	};
 
 	//-------------------------------------------------------------------------------------
 	//-------------------------------------------------------------------------------------
@@ -51,12 +27,19 @@ namespace CGE
 		RtScene();
 		~RtScene();
 
+		void UpdateShaders();
 		void BuildMeshBlases(vk::CommandBuffer* cmdBuff);
 		void BuildSceneTlas(vk::CommandBuffer* cmdBuff);
 	private:
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;
 		AccelStructure m_tlas;
+		// shaders data
+		std::vector<RtShaderPtr> m_shaders;
+		std::unordered_map<HashString, uint32_t> m_shaderIndices;
+		std::array<std::vector<RtShaderPtr>, static_cast<uint32_t>(ERtShaderType::RST_MAX)> m_shadersByType;
+		// groups data
+		std::vector<vk::RayTracingShaderGroupCreateInfoKHR> m_groups;
 
 		uint32_t m_frameIndexTruncated;
 		std::array<AccelStructuresBuildInfos, 3> m_buildInfosArray; // TODO do something with multi buffering

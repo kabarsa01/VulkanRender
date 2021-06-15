@@ -273,6 +273,15 @@
     <ClCompile Include="src\render\RtScene.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\RTUtils.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\shader\RtShader.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data\RtMaterial.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -472,6 +481,15 @@
     </ClInclude>
     <ClInclude Include="src\render\RtScene.h">
       <Filter>Source Files\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\RTUtils.h">
+      <Filter>Source Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\RtShader.h">
+      <Filter>Source Files\render\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\RtMaterial.h">
+      <Filter>Source Files\data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

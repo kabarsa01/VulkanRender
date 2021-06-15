@@ -3,6 +3,8 @@
 #include "scene/mesh/MeshComponent.h"
 #include "data/DataManager.h"
 #include "Renderer.h"
+#include "utils/RTUtils.h"
+#include "core/ObjectBase.h"
 
 namespace CGE
 {
@@ -19,6 +21,25 @@ namespace CGE
 	RtScene::~RtScene()
 	{
 
+	}
+
+	void RtScene::UpdateShaders()
+	{
+		for (auto& shaderList : m_shadersByType)
+		{
+			shaderList.clear();
+		}
+
+		std::unordered_map<HashString, ResourcePtr>& shadersTable = DataManager::GetInstance()->GetResourcesTable<RtShader>();
+
+		for (auto& pair : shadersTable)
+		{
+			RtShaderPtr shader = ObjectBase::Cast<RtShader>(pair.second);
+
+			m_shadersByType[shader->GetTypeIntegral()].push_back(shader);
+			m_shaderIndices[pair.first] = m_shaders.size();
+			m_shaders.push_back(shader);
+		}
 	}
 
 	void RtScene::BuildMeshBlases(vk::CommandBuffer* cmdBuff)
@@ -43,15 +64,7 @@ namespace CGE
 			using BASF = vk::BuildAccelerationStructureFlagBitsKHR;
 
 			{
-				vk::AccelerationStructureGeometryTrianglesDataKHR trisData;
-				trisData.setVertexFormat(vk::Format::eR32G32B32Sfloat);
-				trisData.setVertexStride(sizeof(Vertex));
-				trisData.setVertexData(meshData->GetVertexBuffer().GetDeviceAddress());
-				trisData.setMaxVertex(meshData->GetVertexCount());
-				trisData.setIndexType(vk::IndexType::eUint32);
-				trisData.setIndexData(meshData->GetIndexBuffer().GetDeviceAddress());
-				trisData.setTransformData({}); // identity
-
+				vk::AccelerationStructureGeometryTrianglesDataKHR trisData = RTUtils::GetGeometryTrianglesData(meshData);
 				// it's a union, set triangles or aabb/inst here
 				vk::AccelerationStructureGeometryDataKHR geomData;
 				geomData.setTriangles(trisData);
@@ -154,11 +167,14 @@ namespace CGE
 
 	void RtScene::BuildSceneTlas(vk::CommandBuffer* cmdBuff)
 	{
+		m_groups.clear();
+
 		Scene* scene = Engine::GetSceneInstance();
 		SceneObjectsPack& sceneObjects = scene->GetObjectsPack(false);
 
 		for (SceneObjectComponentPtr sceneComp : sceneObjects.componentsMap[Class::Get<MeshComponent>().GetName()])
 		{
+			MeshComponentPtr meshComp = ObjectBase::Cast<MeshComponent>(sceneComp);
 
 		}
 	}
