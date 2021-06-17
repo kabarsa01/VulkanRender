@@ -4,6 +4,7 @@
 #include <vector>
 #include "data/MeshData.h"
 #include "data/Material.h"
+#include "data/RtMaterial.h"
 
 namespace CGE
 {
@@ -12,6 +13,7 @@ namespace CGE
 	public:
 		MeshDataPtr meshData;
 		MaterialPtr material;
+		RtMaterialPtr rtMaterial;
 		bool castShadows = true;
 	
 		MeshComponent(std::shared_ptr<SceneObjectBase> inParent);
@@ -19,6 +21,7 @@ namespace CGE
 	
 		void SetMeshData(MeshDataPtr inMeshData);
 		void SetMaterial(MaterialPtr inMaterial);
+		void SetRtMaterial(RtMaterialPtr inRtMaterial);
 	
 		virtual void OnInitialize() override;
 	protected:

@@ -5,6 +5,10 @@
 #include "Renderer.h"
 #include "utils/RTUtils.h"
 #include "core/ObjectBase.h"
+#include "data/RtMaterial.h"
+#include "scene/SceneObjectComponent.h"
+#include "scene/SceneObjectBase.h"
+#include "scene/Transform.h"
 
 namespace CGE
 {
@@ -23,8 +27,24 @@ namespace CGE
 
 	}
 
+	void RtScene::Init()
+	{
+		// make a buffer for 16K instances
+		m_instancesBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress);
+		m_instancesBuffer.createInfo.setSize(sizeof(vk::AccelerationStructureInstanceKHR) * 1024 * 16);
+		m_instancesBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
+		m_instancesBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
+		m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+		m_instancesBuffer.CreateStagingBuffer();
+	}
+
 	void RtScene::UpdateShaders()
 	{
+		m_groups.clear();
+		m_stages.clear();
+		m_shaders.clear();
+		m_shaderIndices.clear();
+		m_materialGroupIndices.clear();
 		for (auto& shaderList : m_shadersByType)
 		{
 			shaderList.clear();
@@ -37,9 +57,89 @@ namespace CGE
 			RtShaderPtr shader = ObjectBase::Cast<RtShader>(pair.second);
 
 			m_shadersByType[shader->GetTypeIntegral()].push_back(shader);
-			m_shaderIndices[pair.first] = m_shaders.size();
+			m_shaderIndices[pair.first] = static_cast<uint32_t>(m_shaders.size());
 			m_shaders.push_back(shader);
+
+			vk::PipelineShaderStageCreateInfo stageInfo;
+			stageInfo.setModule(shader->GetShaderModule());
+			stageInfo.setPName("main");
+			stageInfo.setStage(shader->GetStageFlags());
+			m_stages.push_back(stageInfo);
 		}
+
+		// process ray gen shaders
+		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_RAY_GEN)], m_groups);
+		// remember hit groups offset
+		m_missGroupsOffset = static_cast<uint32_t>(m_groups.size());
+		// process miss shaders
+		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_MISS)], m_groups);
+		// remember hit groups offset
+		m_hitGroupsOffset = static_cast<uint32_t>(m_groups.size());
+		// process materials as hit groups
+		std::unordered_map<HashString, ResourcePtr>& materialsTable = DataManager::GetInstance()->GetResourcesTable<RtMaterial>();
+		for (auto& pair : materialsTable)
+		{
+			RtMaterialPtr mat = ObjectBase::Cast<RtMaterial>(pair.second);
+			if (!mat->HasHitGroup())
+			{
+				continue;
+			}
+			RtShaderPtr intersect = mat->GetShader(ERtShaderType::RST_INTERSECT);
+			RtShaderPtr anyHit = mat->GetShader(ERtShaderType::RST_ANY_HIT);
+			RtShaderPtr closestHit = mat->GetShader(ERtShaderType::RST_CLOSEST_HIT);
+
+			vk::RayTracingShaderGroupTypeKHR type = intersect ? vk::RayTracingShaderGroupTypeKHR::eProceduralHitGroup : vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup;
+
+			vk::RayTracingShaderGroupCreateInfoKHR groupInfo;
+			groupInfo.setType(type);
+			groupInfo.setGeneralShader(VK_SHADER_UNUSED_KHR);
+			groupInfo.setIntersectionShader(intersect ? m_shaderIndices[intersect->GetResourceId()] : VK_SHADER_UNUSED_KHR);
+			groupInfo.setAnyHitShader(anyHit ? m_shaderIndices[anyHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
+			groupInfo.setIntersectionShader(closestHit ? m_shaderIndices[closestHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
+
+			m_materialGroupIndices[mat->GetResourceId()] = static_cast<uint32_t>(m_groups.size());
+			m_groups.push_back(groupInfo);
+		}
+	}
+
+	void RtScene::UpdateInstances()
+	{
+		Scene* scene = Engine::GetSceneInstance();
+		SceneObjectsPack& sceneObjects = scene->GetObjectsPack(false);
+
+		m_instances.clear();
+
+		uint32_t instanceIndex = 0;
+		for (SceneObjectComponentPtr sceneComp : sceneObjects.componentsMap[Class::Get<MeshComponent>().GetName()])
+		{
+			MeshComponentPtr meshComp = ObjectBase::Cast<MeshComponent>(sceneComp);
+			if (!meshComp->rtMaterial)
+			{
+				continue;
+			}
+
+			vk::AccelerationStructureInstanceKHR instance = RTUtils::GetAccelerationStructureInstance(meshComp);
+			vk::Device& device = Engine::GetRendererInstance()->GetDevice();
+			vk::DeviceAddress accelAddr = device.getAccelerationStructureAddressKHR(m_blasTable[meshComp->meshData->GetResourceId()].accelerationStructure);
+			instance.setAccelerationStructureReference(accelAddr);
+			instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
+			instance.setInstanceCustomIndex(instanceIndex++);
+			uint32_t sbtOffset = m_materialGroupIndices[meshComp->rtMaterial->GetResourceId()] - m_hitGroupsOffset;
+			instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
+			instance.setMask(0xFFFFFFFF);
+
+			glm::mat4x4 mat = meshComp->GetParent()->transform.GetMatrix();
+			mat = glm::transpose(mat);
+			memcpy(&instance.transform, &mat, sizeof(instance.transform));
+
+			m_instances.push_back(instance);
+		}
+
+
+		m_instancesBuffer.CopyTo(
+			sizeof(vk::AccelerationStructureInstanceKHR) * m_instances.size(),
+			reinterpret_cast<const char*>(m_instances.data()),
+			true);
 	}
 
 	void RtScene::BuildMeshBlases(vk::CommandBuffer* cmdBuff)
@@ -122,8 +222,6 @@ namespace CGE
 				scratchBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 				// add scratch buffer
 				accBuildInfos.scratchBuffers.push_back(scratchBuffer);
-				// set scratch buffer
-				accBuildInfos.geometryInfos.back().setScratchData(accBuildInfos.scratchBuffers.back().GetDeviceAddress());
 			}
 
 			{
@@ -146,6 +244,10 @@ namespace CGE
 				// create acceleration structure
 				as.accelerationStructure = device.createAccelerationStructureKHR(accelStructInfo);
 			}
+
+			// update geom info
+			accBuildInfos.geometryInfos.back().setScratchData(accBuildInfos.scratchBuffers.back().GetDeviceAddress());
+			accBuildInfos.geometryInfos.back().setDstAccelerationStructure(as.accelerationStructure);
 		}
 		cmdBuff->buildAccelerationStructuresKHR(
 			static_cast<uint32_t>( accBuildInfos.geometryInfos.size() ),
@@ -167,16 +269,30 @@ namespace CGE
 
 	void RtScene::BuildSceneTlas(vk::CommandBuffer* cmdBuff)
 	{
-		m_groups.clear();
+		vk::DeviceOrHostAddressConstKHR instancesAddr;
+		instancesAddr.setDeviceAddress(m_instancesBuffer.GetDeviceAddress());
 
-		Scene* scene = Engine::GetSceneInstance();
-		SceneObjectsPack& sceneObjects = scene->GetObjectsPack(false);
+		vk::AccelerationStructureGeometryInstancesDataKHR instancesData;
+		instancesData.setArrayOfPointers(VK_FALSE);
+		instancesData.setData(instancesAddr);
 
-		for (SceneObjectComponentPtr sceneComp : sceneObjects.componentsMap[Class::Get<MeshComponent>().GetName()])
-		{
-			MeshComponentPtr meshComp = ObjectBase::Cast<MeshComponent>(sceneComp);
+		vk::AccelerationStructureGeometryDataKHR geometryData;
+		geometryData.setInstances(instancesData);
 
-		}
+		vk::AccelerationStructureGeometryKHR geometry;
+		geometry.setGeometry(geometryData);
+		geometry.setFlags(vk::GeometryFlagBitsKHR::eOpaque);
+		geometry.setGeometryType(vk::GeometryTypeKHR::eInstances);
+
+
+
+		vk::AccelerationStructureBuildGeometryInfoKHR geomInfo;
+		geomInfo.setMode(vk::BuildAccelerationStructureModeKHR::eBuild);
+		geomInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
+		geomInfo.setGeometryCount(1);
+		geomInfo.setPGeometries(&geometry);
+
+//		cmdBuff->buildAccelerationStructuresKHR()
 	}
 
 	void RtScene::CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos)
@@ -193,6 +309,22 @@ namespace CGE
 		buildInfos.geometryInfos.clear();
 		buildInfos.rangeInfos.clear();
 		buildInfos.scratchBuffers.clear();
+	}
+
+	void RtScene::FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups)
+	{
+		for (RtShaderPtr shader : shaders)
+		{
+			vk::RayTracingShaderGroupCreateInfoKHR groupInfo;
+
+			groupInfo.setType(vk::RayTracingShaderGroupTypeKHR::eGeneral);
+			groupInfo.setGeneralShader(m_shaderIndices[shader->GetResourceId()]);
+			groupInfo.setIntersectionShader(VK_SHADER_UNUSED_KHR);
+			groupInfo.setAnyHitShader(VK_SHADER_UNUSED_KHR);
+			groupInfo.setIntersectionShader(VK_SHADER_UNUSED_KHR);
+
+			groups.push_back(groupInfo);
+		}
 	}
 
 	void RtScene::HandleUpdate(std::shared_ptr<GlobalUpdateMessage> msg)

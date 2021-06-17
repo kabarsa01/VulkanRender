@@ -40,6 +40,11 @@ namespace CGE
 		material = inMaterial;
 	}
 	
+	void MeshComponent::SetRtMaterial(RtMaterialPtr inRtMaterial)
+	{
+		rtMaterial = inRtMaterial;
+	}
+
 	void MeshComponent::OnInitialize()
 	{
 		SceneObjectComponent::OnInitialize();

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <array>
+#include <unordered_map>
 #include <vulkan/vulkan.hpp>
 
 #include "messages/MessageSubscriber.h"
@@ -10,7 +11,6 @@
 #include "common/HashString.h"
 #include "utils/RTUtils.h"
 #include "shader/RtShader.h"
-#include <unordered_map>
 
 namespace CGE
 {
@@ -27,7 +27,10 @@ namespace CGE
 		RtScene();
 		~RtScene();
 
+		void Init();
+
 		void UpdateShaders();
+		void UpdateInstances();
 		void BuildMeshBlases(vk::CommandBuffer* cmdBuff);
 		void BuildSceneTlas(vk::CommandBuffer* cmdBuff);
 	private:
@@ -36,15 +39,23 @@ namespace CGE
 		AccelStructure m_tlas;
 		// shaders data
 		std::vector<RtShaderPtr> m_shaders;
+		std::vector<vk::PipelineShaderStageCreateInfo> m_stages;
 		std::unordered_map<HashString, uint32_t> m_shaderIndices;
 		std::array<std::vector<RtShaderPtr>, static_cast<uint32_t>(ERtShaderType::RST_MAX)> m_shadersByType;
 		// groups data
 		std::vector<vk::RayTracingShaderGroupCreateInfoKHR> m_groups;
+		std::unordered_map<HashString, uint32_t> m_materialGroupIndices;
+		uint32_t m_missGroupsOffset;
+		uint32_t m_hitGroupsOffset;
 
+		std::vector<vk::AccelerationStructureInstanceKHR> m_instances;
 		uint32_t m_frameIndexTruncated;
 		std::array<AccelStructuresBuildInfos, 3> m_buildInfosArray; // TODO do something with multi buffering
 
+		VulkanBuffer m_instancesBuffer;
+
 		void CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos);
+		void FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups);
 
 		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> msg);
 		void HandleFlip(std::shared_ptr<GlobalFlipMessage> msg);

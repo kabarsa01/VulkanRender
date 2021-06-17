@@ -16,6 +16,15 @@ namespace CGE
 		RST_MAX
 	};
 
+	inline ERtShaderType FromInt(uint8_t value)
+	{
+		return static_cast<ERtShaderType>(value);
+	}
+	inline uint8_t ToInt(ERtShaderType type)
+	{
+		return static_cast<uint8_t>(type);
+	}
+
 	class RtShader : public Shader
 	{
 	public:
@@ -23,7 +32,8 @@ namespace CGE
 		virtual ~RtShader();
 
 		ERtShaderType GetType() { return m_type; }
-		uint32_t GetTypeIntegral() { return static_cast<uint32_t>(m_type); }
+		uint8_t GetTypeIntegral() { return static_cast<uint8_t>(m_type); }
+		vk::ShaderStageFlagBits GetStageFlags();
 	private:
 		ERtShaderType m_type;
 	};

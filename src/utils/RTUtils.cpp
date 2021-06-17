@@ -36,8 +36,8 @@ namespace CGE
 		mat = glm::transpose(mat);
 		memcpy(&instance.transform, &mat, sizeof(instance.transform));
 
-		instance.setInstanceShaderBindingTableRecordOffset(0);
-		instance.setInstanceCustomIndex(0);
+		instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
+		instance.setMask(0xFFFF);
 
 		return instance;
 	}
