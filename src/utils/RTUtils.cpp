@@ -42,5 +42,40 @@ namespace CGE
 		return instance;
 	}
 
+	void RTUtils::CleanupAccelerationStructure(AccelStructure& accelStructure)
+	{
+		if (accelStructure.accelerationStructure)
+		{
+			Engine::GetRendererInstance()->GetDevice().destroyAccelerationStructureKHR(accelStructure.accelerationStructure);
+		}
+		accelStructure.buffer.Destroy();
+	}
+
+	void RTUtils::CleanupBuildInfo(AccelStructureBuildInfo& buildInfo)
+	{
+		delete[] buildInfo.rangeInfos;
+		buildInfo.geometries.clear();
+		buildInfo.scratchBuffer.Destroy();
+
+		buildInfo.buildSizes = vk::AccelerationStructureBuildSizesInfoKHR{};
+		buildInfo.geometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR{};
+	}
+
+	void RTUtils::CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos)
+	{
+		for (uint32_t idx = 0; idx < buildInfos.geometryInfos.size(); idx++)
+		{
+			delete[] buildInfos.geometries[idx];
+			delete[] buildInfos.rangeInfos[idx];
+			buildInfos.scratchBuffers[idx].Destroy();
+		}
+
+		buildInfos.buildSizes.clear();
+		buildInfos.geometries.clear();
+		buildInfos.geometryInfos.clear();
+		buildInfos.rangeInfos.clear();
+		buildInfos.scratchBuffers.clear();
+	}
+
 }
 

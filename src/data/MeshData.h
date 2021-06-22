@@ -95,7 +95,7 @@ namespace CGE
 		DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 	
 		inBuffer.createInfo.setSize(size);
-		inBuffer.createInfo.setUsage(usage | BufferUsageFlagBits::eTransferDst);
+		inBuffer.createInfo.setUsage(usage | BufferUsageFlagBits::eTransferDst | BufferUsageFlagBits::eShaderDeviceAddress);
 		inBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 		inBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
 		inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);

@@ -52,6 +52,10 @@ namespace CGE
 			instanceExtensions.push_back(glfwExtensions[idx]);
 		}
 		instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+		for (auto ext : requiredDeviceExtensions)
+		{
+//			instanceExtensions.push_back(ext);
+		}
 	
 		InstanceCreateInfo instanceCreateInfo;
 		instanceCreateInfo.setPApplicationInfo(&applicationInfo);
@@ -103,14 +107,24 @@ namespace CGE
 	
 		PhysicalDeviceFeatures deviceFeatures;
 		deviceFeatures.setFragmentStoresAndAtomics(VK_TRUE);
+
+		vk::PhysicalDeviceFeatures2 features2;
+		//vk::PhysicalDeviceVulkan11Features features11;
+		vk::PhysicalDeviceVulkan12Features features12;
+		vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelFeature;
+		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeature;
+		features2.pNext = &features12;
+		features12.pNext = &accelFeature;
+		accelFeature.pNext = &rtPipelineFeature;
+		physicalDevice.GetDevice().getFeatures2(&features2);
 	
 		DeviceCreateInfo deviceCreateInfo;
 		deviceCreateInfo.setPQueueCreateInfos(queueCreateInfoVector.data());
 		deviceCreateInfo.setQueueCreateInfoCount((uint32_t)queueCreateInfoVector.size());
-		deviceCreateInfo.setPEnabledFeatures(&deviceFeatures);
 		deviceCreateInfo.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size());
 		deviceCreateInfo.setPpEnabledExtensionNames(requiredDeviceExtensions.data());
 		deviceCreateInfo.setEnabledLayerCount(0);
+		deviceCreateInfo.pNext = &features2;
 	
 		device = physicalDevice.GetDevice().createDevice(deviceCreateInfo);
 

@@ -28,6 +28,7 @@ namespace CGE
 		~RtScene();
 
 		void Init();
+		void Cleanup();
 
 		void UpdateShaders();
 		void UpdateInstances();
@@ -37,6 +38,7 @@ namespace CGE
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;
 		AccelStructure m_tlas;
+		AccelStructureBuildInfo m_tlasBuildInfo;
 		// shaders data
 		std::vector<RtShaderPtr> m_shaders;
 		std::vector<vk::PipelineShaderStageCreateInfo> m_stages;
@@ -49,12 +51,10 @@ namespace CGE
 		uint32_t m_hitGroupsOffset;
 
 		std::vector<vk::AccelerationStructureInstanceKHR> m_instances;
+		VulkanBuffer m_instancesBuffer;
 		uint32_t m_frameIndexTruncated;
 		std::array<AccelStructuresBuildInfos, 3> m_buildInfosArray; // TODO do something with multi buffering
 
-		VulkanBuffer m_instancesBuffer;
-
-		void CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos);
 		void FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups);
 
 		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> msg);

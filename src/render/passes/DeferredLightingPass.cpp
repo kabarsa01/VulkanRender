@@ -1,5 +1,5 @@
 #include "DeferredLightingPass.h"
-#include "utils/ImageUtils.h"
+#include "utils/ResourceUtils.h"
 #include "data/MeshData.h"
 #include "GBufferPass.h"
 #include "data/DataManager.h"
@@ -143,7 +143,7 @@ namespace CGE
 	
 	void DeferredLightingPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
 	{
-		VulkanImage colorAttachmentImage = ImageUtils::CreateColorAttachment(GetVulkanDevice(), inWidth, inHeight, true); // do not forget 16 bit float
+		VulkanImage colorAttachmentImage = ResourceUtils::CreateColorAttachment(GetVulkanDevice(), inWidth, inHeight, true); // do not forget 16 bit float
 		outAttachments.push_back(colorAttachmentImage);
 		outAttachmentViews.push_back(colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
 	}

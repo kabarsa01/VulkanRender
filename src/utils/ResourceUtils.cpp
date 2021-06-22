@@ -1,4 +1,4 @@
-#include "ImageUtils.h"
+#include "ResourceUtils.h"
 
 namespace CGE
 {
@@ -10,7 +10,7 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::Extent3D;
 	using VULKAN_HPP_NAMESPACE::ImageUsageFlagBits;
 	
-	VulkanImage ImageUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, bool in16BitFloat)
+	VulkanImage ResourceUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, bool in16BitFloat)
 	{
 		VulkanImage colorAttachmentImage;
 		colorAttachmentImage.createInfo.setArrayLayers(1);
@@ -32,7 +32,7 @@ namespace CGE
 		return colorAttachmentImage;
 	}
 	
-	VulkanImage ImageUtils::CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	VulkanImage ResourceUtils::CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
 	{
 		VulkanImage depthAttachmentImage;
 		depthAttachmentImage.createInfo.setArrayLayers(1);
@@ -54,4 +54,20 @@ namespace CGE
 		return depthAttachmentImage;
 	}
 	
+	VulkanBuffer ResourceUtils::CreateBuffer(VulkanDevice* inDevice, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, vk::MemoryPropertyFlags inMemProps, bool inWithStaging/* = false*/)
+	{
+		VulkanBuffer buffer;
+		buffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
+		buffer.createInfo.setSize(inSize);
+		buffer.createInfo.setUsage(inUsage);
+		buffer.Create(inDevice);
+		buffer.BindMemory(inMemProps);
+		if (inWithStaging)
+		{
+			buffer.CreateStagingBuffer();
+		}
+
+		return buffer;
+	}
+
 }

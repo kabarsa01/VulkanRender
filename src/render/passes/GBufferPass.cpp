@@ -1,5 +1,5 @@
 #include "GBufferPass.h"
-#include "utils/ImageUtils.h"
+#include "utils/ResourceUtils.h"
 #include "data/MeshData.h"
 #include "scene/mesh/MeshComponent.h"
 
@@ -153,18 +153,18 @@ namespace CGE
 		VulkanDevice* vulkanDevice = GetVulkanDevice();
 	
 		// albedo
-		VulkanImage albedoAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
+		VulkanImage albedoAttachmentImage = ResourceUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight);
 		outAttachments.push_back(albedoAttachmentImage);
 		outAttachmentViews.push_back( albedoAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D) );
 		// normal
-		VulkanImage normalAttachmentImage = ImageUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight, true);
+		VulkanImage normalAttachmentImage = ResourceUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight, true);
 		outAttachments.push_back(normalAttachmentImage);
 		outAttachmentViews.push_back(normalAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
 	}
 	
 	void GBufferPass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
 	{
-		outDepthAttachment = ImageUtils::CreateDepthAttachment(GetVulkanDevice(), inWidth, inHeight);
+		outDepthAttachment = ResourceUtils::CreateDepthAttachment(GetVulkanDevice(), inWidth, inHeight);
 		outDepthAttachmentView = outDepthAttachment.CreateView({ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 }, ImageViewType::e2D);
 	}
 	

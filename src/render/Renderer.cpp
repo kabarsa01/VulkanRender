@@ -29,6 +29,8 @@
 #include "PipelineRegistry.h"
 #include "passes/DeferredLightingPass.h"
 #include "passes/LightClusteringPass.h"
+#include "utils/Singleton.h"
+#include "RtScene.h"
 
 namespace CGE
 {
@@ -101,6 +103,8 @@ namespace CGE
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 		postProcessPass->SetResolution(width, height);
 		postProcessPass->Create();
+
+		Singleton<RtScene>::GetInstance()->Init();
 	}
 	
 	void Renderer::RenderFrame()
@@ -131,9 +135,15 @@ namespace CGE
 	
 		// begin command buffer record
 		cmdBuffer.begin(beginInfo);
+
+		Singleton<RtScene>::GetInstance()->UpdateShaders();
+		Singleton<RtScene>::GetInstance()->BuildMeshBlases(&cmdBuffer);
+		Singleton<RtScene>::GetInstance()->UpdateInstances();
 		// copy new data
 		TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
-	
+
+		Singleton<RtScene>::GetInstance()->BuildSceneTlas(&cmdBuffer);
+
 		// render passes
 		// z prepass
 		zPrepass->RecordCommands(&cmdBuffer);
@@ -239,6 +249,8 @@ namespace CGE
 		delete perFrameData;
 	
 		PipelineRegistry::GetInstance()->DestroyPipelines(&device);
+
+		Singleton<RtScene>::GetInstance()->Cleanup();
 	
 		descriptorPools.Destroy();
 		commandBuffers.Destroy();

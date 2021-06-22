@@ -47,6 +47,16 @@ namespace CGE
 			|| m_shaderRecords[ToInt(ERtShaderType::RST_CLOSEST_HIT)].shader;
 	}
 
+	bool RtMaterial::Create()
+	{
+		return true;
+	}
+
+	bool RtMaterial::Destroy()
+	{
+		return true;
+	}
+
 }
 
 

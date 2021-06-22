@@ -25,7 +25,7 @@ namespace CGE
 	{
 		vk::AccelerationStructureBuildGeometryInfoKHR geometryInfo;
 		std::vector<vk::AccelerationStructureGeometryKHR> geometries;
-		std::vector<vk::AccelerationStructureBuildRangeInfoKHR> rangeInfos;
+		vk::AccelerationStructureBuildRangeInfoKHR* rangeInfos;
 		vk::AccelerationStructureBuildSizesInfoKHR buildSizes;
 		VulkanBuffer scratchBuffer;
 	};
@@ -51,6 +51,10 @@ namespace CGE
 		static vk::AccelerationStructureGeometryTrianglesDataKHR GetGeometryTrianglesData(MeshDataPtr meshData);
 		static vk::AccelerationStructureGeometryInstancesDataKHR GetGeometryInstancesData(MeshDataPtr meshData);
 		static vk::AccelerationStructureInstanceKHR GetAccelerationStructureInstance(MeshComponentPtr meshComp);
+
+		static void CleanupAccelerationStructure(AccelStructure& accelStructure);
+		static void CleanupBuildInfo(AccelStructureBuildInfo& buildInfo);
+		static void CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos);
 	};
 
 	//-------------------------------------------------------------------------------------

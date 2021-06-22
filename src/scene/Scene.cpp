@@ -246,6 +246,7 @@ namespace CGE
 		}
 	
 		{
+			RtMaterialPtr rtMat = DataManager::RequestResourceType<RtMaterial>("rt_mat");
 			MeshImporter importer;
 			//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
 			importer.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
@@ -274,6 +275,7 @@ namespace CGE
 						mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 						mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
 						mo3->GetMeshComponent()->SetMaterial(mat);
+						mo3->GetMeshComponent()->SetRtMaterial(rtMat);
 					}
 				}
 			}

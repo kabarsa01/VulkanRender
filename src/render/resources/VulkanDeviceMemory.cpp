@@ -55,10 +55,14 @@ namespace CGE
 	void VulkanDeviceMemory::Allocate(DeviceSize inSize, uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags)
 	{
 		device = Engine::GetRendererInstance()->GetVulkanDevice();
+
+		vk::MemoryAllocateFlagsInfo flagsInfo = {};
+		flagsInfo.setFlags(vk::MemoryAllocateFlagBits::eDeviceAddress);
 	
 		vk::MemoryAllocateInfo memoryInfo;
 		memoryInfo.setAllocationSize(inSize);
 		memoryInfo.setMemoryTypeIndex(FindMemoryTypeStatic(inMemTypeBits, inMemPropertyFlags));
+		memoryInfo.pNext = &flagsInfo;
 		deviceMemory = device.allocateMemory(memoryInfo);
 	
 		size = inSize;

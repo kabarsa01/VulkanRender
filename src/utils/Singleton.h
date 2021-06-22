@@ -28,6 +28,8 @@ namespace CGE
 	
 	template<typename T>
 	T* Singleton<T>::m_instance = nullptr;
+	template<typename T>
+	std::mutex Singleton<T>::m_mutex;
 
 	template<typename T>
 	T* Singleton<T>::GetInstance()

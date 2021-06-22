@@ -9,6 +9,7 @@
 #include "scene/SceneObjectComponent.h"
 #include "scene/SceneObjectBase.h"
 #include "scene/Transform.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -30,12 +31,25 @@ namespace CGE
 	void RtScene::Init()
 	{
 		// make a buffer for 16K instances
-		m_instancesBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress);
+		m_instancesBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferDst);
 		m_instancesBuffer.createInfo.setSize(sizeof(vk::AccelerationStructureInstanceKHR) * 1024 * 16);
 		m_instancesBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
 		m_instancesBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
 		m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 		m_instancesBuffer.CreateStagingBuffer();
+	}
+
+	void RtScene::Cleanup()
+	{
+		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
+
+		for (auto& pair : m_blasTable)
+		{
+			RTUtils::CleanupAccelerationStructure(pair.second);
+		}
+		RTUtils::CleanupAccelerationStructure(m_tlas);
+		RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
+		m_instancesBuffer.Destroy();
 	}
 
 	void RtScene::UpdateShaders()
@@ -135,11 +149,14 @@ namespace CGE
 			m_instances.push_back(instance);
 		}
 
-
-		m_instancesBuffer.CopyTo(
-			sizeof(vk::AccelerationStructureInstanceKHR) * m_instances.size(),
-			reinterpret_cast<const char*>(m_instances.data()),
-			true);
+		if (m_instances.size() > 0)
+		{
+			m_instancesBuffer.CopyTo(
+				sizeof(vk::AccelerationStructureInstanceKHR) * m_instances.size(),
+				reinterpret_cast<const char*>(m_instances.data()),
+				true);
+			// TODO barrier
+		}
 	}
 
 	void RtScene::BuildMeshBlases(vk::CommandBuffer* cmdBuff)
@@ -205,7 +222,7 @@ namespace CGE
 			{
 				vk::AccelerationStructureBuildSizesInfoKHR sizesInfo;
 				device.getAccelerationStructureBuildSizesKHR(
-					VULKAN_HPP_NAMESPACE::AccelerationStructureBuildTypeKHR::eDevice,
+					vk::AccelerationStructureBuildTypeKHR::eDevice,
 					&accBuildInfos.geometryInfos.back(),
 					&accBuildInfos.rangeInfos.back()->primitiveCount,
 					&sizesInfo
@@ -217,7 +234,7 @@ namespace CGE
 				VulkanBuffer scratchBuffer;
 				scratchBuffer.createInfo.setSize(accBuildInfos.buildSizes.back().buildScratchSize);
 				scratchBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eShaderDeviceAddress);
-				scratchBuffer.createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
+				scratchBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
 				scratchBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
 				scratchBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 				// add scratch buffer
@@ -237,7 +254,6 @@ namespace CGE
 				vk::AccelerationStructureCreateInfoKHR accelStructInfo;
 				accelStructInfo.setBuffer(as.buffer);
 				accelStructInfo.setType(vk::AccelerationStructureTypeKHR::eBottomLevel);
-				accelStructInfo.setDeviceAddress(as.buffer.GetDeviceAddress());
 				accelStructInfo.setCreateFlags({});
 				accelStructInfo.setOffset(0);
 				accelStructInfo.setSize(accBuildInfos.buildSizes.back().accelerationStructureSize); // accel struct size
@@ -249,8 +265,14 @@ namespace CGE
 			accBuildInfos.geometryInfos.back().setScratchData(accBuildInfos.scratchBuffers.back().GetDeviceAddress());
 			accBuildInfos.geometryInfos.back().setDstAccelerationStructure(as.accelerationStructure);
 		}
+
+		if (accBuildInfos.geometryInfos.size() == 0)
+		{
+			return;
+		}
+
 		cmdBuff->buildAccelerationStructuresKHR(
-			static_cast<uint32_t>( accBuildInfos.geometryInfos.size() ),
+			static_cast<uint32_t>(accBuildInfos.geometryInfos.size()),
 			accBuildInfos.geometryInfos.data(),
 			accBuildInfos.rangeInfos.data()
 		);
@@ -269,46 +291,95 @@ namespace CGE
 
 	void RtScene::BuildSceneTlas(vk::CommandBuffer* cmdBuff)
 	{
-		vk::DeviceOrHostAddressConstKHR instancesAddr;
-		instancesAddr.setDeviceAddress(m_instancesBuffer.GetDeviceAddress());
-
-		vk::AccelerationStructureGeometryInstancesDataKHR instancesData;
-		instancesData.setArrayOfPointers(VK_FALSE);
-		instancesData.setData(instancesAddr);
-
-		vk::AccelerationStructureGeometryDataKHR geometryData;
-		geometryData.setInstances(instancesData);
-
-		vk::AccelerationStructureGeometryKHR geometry;
-		geometry.setGeometry(geometryData);
-		geometry.setFlags(vk::GeometryFlagBitsKHR::eOpaque);
-		geometry.setGeometryType(vk::GeometryTypeKHR::eInstances);
-
-
-
-		vk::AccelerationStructureBuildGeometryInfoKHR geomInfo;
-		geomInfo.setMode(vk::BuildAccelerationStructureModeKHR::eBuild);
-		geomInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
-		geomInfo.setGeometryCount(1);
-		geomInfo.setPGeometries(&geometry);
-
-//		cmdBuff->buildAccelerationStructuresKHR()
-	}
-
-	void RtScene::CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos)
-	{
-		for (uint32_t idx = 0; idx < buildInfos.geometryInfos.size(); idx++)
+		if (m_instances.size() == 0)
 		{
-			delete[] buildInfos.geometries[idx];
-			delete[] buildInfos.rangeInfos[idx];
-			buildInfos.scratchBuffers[idx].Destroy();
+			return;
 		}
 
-		buildInfos.buildSizes.clear();
-		buildInfos.geometries.clear();
-		buildInfos.geometryInfos.clear();
-		buildInfos.rangeInfos.clear();
-		buildInfos.scratchBuffers.clear();
+		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
+		RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
+		RTUtils::CleanupAccelerationStructure(m_tlas);
+
+		{
+			vk::DeviceOrHostAddressConstKHR instancesAddr;
+			instancesAddr.setDeviceAddress(m_instancesBuffer.GetDeviceAddress());
+
+			vk::AccelerationStructureGeometryInstancesDataKHR instancesData;
+			instancesData.setArrayOfPointers(VK_FALSE);
+			instancesData.setData(instancesAddr);
+
+			vk::AccelerationStructureGeometryDataKHR geometryData;
+			geometryData.setInstances(instancesData);
+
+			vk::AccelerationStructureGeometryKHR geometry;
+			geometry.setGeometry(geometryData);
+			geometry.setFlags(vk::GeometryFlagBitsKHR::eOpaque);
+			geometry.setGeometryType(vk::GeometryTypeKHR::eInstances);
+			m_tlasBuildInfo.geometries.push_back(geometry);
+		}
+
+		m_tlasBuildInfo.geometryInfo.setMode(vk::BuildAccelerationStructureModeKHR::eBuild);
+		//m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
+		m_tlasBuildInfo.geometryInfo.setGeometryCount(static_cast<uint32_t>(m_tlasBuildInfo.geometries.size()));
+		m_tlasBuildInfo.geometryInfo.setPGeometries(m_tlasBuildInfo.geometries.data());
+
+		m_tlasBuildInfo.buildSizes = device.getAccelerationStructureBuildSizesKHR(
+			vk::AccelerationStructureBuildTypeKHR::eDevice, 
+			m_tlasBuildInfo.geometryInfo,
+			{ static_cast<uint32_t>( m_instances.size() )}
+		);
+
+		{
+			m_tlas.buffer = ResourceUtils::CreateBuffer(
+				&Engine::GetRendererInstance()->GetVulkanDevice(),
+				m_tlasBuildInfo.buildSizes.accelerationStructureSize,
+				vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
+				vk::MemoryPropertyFlagBits::eDeviceLocal
+			);
+			m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBuffer(
+				&Engine::GetRendererInstance()->GetVulkanDevice(),
+				m_tlasBuildInfo.buildSizes.buildScratchSize,
+				vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
+				vk::MemoryPropertyFlagBits::eDeviceLocal
+			);
+		}
+
+		{
+			vk::AccelerationStructureCreateInfoKHR accelInfo;
+			accelInfo.setBuffer(m_tlas.buffer);
+			accelInfo.setOffset(0);
+			accelInfo.setSize(m_tlasBuildInfo.buildSizes.accelerationStructureSize);
+			accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
+			m_tlas.accelerationStructure = device.createAccelerationStructureKHR(accelInfo);
+		}
+
+		m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
+		m_tlasBuildInfo.geometryInfo.setScratchData(m_tlasBuildInfo.scratchBuffer.GetDeviceAddress());
+
+		{
+			m_tlasBuildInfo.rangeInfos = new vk::AccelerationStructureBuildRangeInfoKHR[1];
+			m_tlasBuildInfo.rangeInfos->setPrimitiveCount(static_cast<uint32_t>(m_instances.size()));
+			m_tlasBuildInfo.rangeInfos->setFirstVertex(0);
+			m_tlasBuildInfo.rangeInfos->setPrimitiveOffset(0);
+			m_tlasBuildInfo.rangeInfos->setTransformOffset(0);
+		}
+
+		if (m_tlasBuildInfo.geometries.size() == 0)
+		{
+			return;
+		}
+
+		cmdBuff->buildAccelerationStructuresKHR(1, &m_tlasBuildInfo.geometryInfo, &m_tlasBuildInfo.rangeInfos);
+		// waiting for blas's to build
+		vk::MemoryBarrier barrier;
+		barrier.setSrcAccessMask(vk::AccessFlagBits::eAccelerationStructureWriteKHR);
+		barrier.setDstAccessMask(vk::AccessFlagBits::eAccelerationStructureReadKHR);
+		cmdBuff->pipelineBarrier(
+			vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
+			vk::PipelineStageFlagBits::eRayTracingShaderKHR | vk::PipelineStageFlagBits::eFragmentShader,
+			vk::DependencyFlags(),
+			1, &barrier,
+			0, nullptr, 0, nullptr);
 	}
 
 	void RtScene::FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups)
@@ -335,7 +406,7 @@ namespace CGE
 	void RtScene::HandleFlip(std::shared_ptr<GlobalFlipMessage> msg)
 	{
 		m_frameIndexTruncated = (m_frameIndexTruncated + 1) % m_buildInfosArray.size();
-		CleanupBuildInfos(m_buildInfosArray[m_frameIndexTruncated]);
+		RTUtils::CleanupBuildInfos(m_buildInfosArray[m_frameIndexTruncated]);
 	}
 
 }

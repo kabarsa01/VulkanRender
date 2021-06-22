@@ -11,7 +11,7 @@
 #include "scene/Transform.h"
 #include "data/DataManager.h"
 #include "../PerFrameData.h"
-#include "utils/ImageUtils.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {

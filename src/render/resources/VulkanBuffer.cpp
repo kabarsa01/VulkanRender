@@ -136,7 +136,7 @@ namespace CGE
 	
 		stagingBuffer = new VulkanBuffer();
 		stagingBuffer->createInfo.setSize(inSize);
-		stagingBuffer->createInfo.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
+		stagingBuffer->createInfo.setUsage(createInfo.usage | vk::BufferUsageFlagBits::eTransferSrc);
 		stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
 		stagingBuffer->Create(vulkanDevice);
 		stagingBuffer->BindMemory(MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);

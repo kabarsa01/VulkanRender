@@ -302,7 +302,7 @@ exit /b</Command>
     <ClCompile Include="src\scene\SceneStructures.cpp" />
     <ClCompile Include="src\scene\Transform.cpp" />
     <ClCompile Include="src\stb\stb_image.cpp" />
-    <ClCompile Include="src\utils\ImageUtils.cpp" />
+    <ClCompile Include="src\utils\ResourceUtils.cpp" />
     <ClCompile Include="src\utils\Math3D.cpp" />
     <ClCompile Include="src\utils\MTArrayWrapper.cpp" />
     <ClCompile Include="src\utils\RTUtils.cpp" />
@@ -373,7 +373,7 @@ exit /b</Command>
     <ClInclude Include="src\scene\SceneStructures.h" />
     <ClInclude Include="src\scene\Transform.h" />
     <ClInclude Include="src\stb\stb_image.h" />
-    <ClInclude Include="src\utils\ImageUtils.h" />
+    <ClInclude Include="src\utils\ResourceUtils.h" />
     <ClInclude Include="src\utils\Math3D.h" />
     <ClInclude Include="src\utils\MTArrayWrapper.h" />
     <ClInclude Include="src\utils\RTUtils.h" />

@@ -20,6 +20,8 @@ namespace CGE
 		void SetShader(ERtShaderType type, std::string path, std::string entrypoint);
 		RtShaderPtr GetShader(ERtShaderType type);
 		bool HasHitGroup();
+
+		bool Create() override;
 	private:
 		struct RtShaderRecord
 		{
@@ -29,6 +31,9 @@ namespace CGE
 		};
 
 		std::array<RtShaderRecord, static_cast<uint8_t>(ERtShaderType::RST_MAX)> m_shaderRecords;
+	protected:
+		bool Destroy() override;
+
 	};
 
 	typedef std::shared_ptr<RtMaterial> RtMaterialPtr;
