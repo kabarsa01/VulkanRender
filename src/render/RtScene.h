@@ -34,6 +34,8 @@ namespace CGE
 		void UpdateInstances();
 		void BuildMeshBlases(vk::CommandBuffer* cmdBuff);
 		void BuildSceneTlas(vk::CommandBuffer* cmdBuff);
+
+		AccelStructure& GetTlas() { return m_tlas; }
 	private:
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;

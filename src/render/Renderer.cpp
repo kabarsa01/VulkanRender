@@ -87,6 +87,8 @@ namespace CGE
 	
 		perFrameData = new PerFrameData();
 		perFrameData->Create(&device);
+
+		Singleton<RtScene>::GetInstance()->Init();
 	
 		zPrepass = new ZPrepass(HashString("ZPrepass"));
 		zPrepass->SetResolution(width, height);
@@ -103,8 +105,6 @@ namespace CGE
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 		postProcessPass->SetResolution(width, height);
 		postProcessPass->Create();
-
-		Singleton<RtScene>::GetInstance()->Init();
 	}
 	
 	void Renderer::RenderFrame()

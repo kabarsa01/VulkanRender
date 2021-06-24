@@ -37,6 +37,28 @@ namespace CGE
 		m_instancesBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
 		m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 		m_instancesBuffer.CreateStagingBuffer();
+
+
+		// just an experiment, create very big acceleration structure and buffer and just rebuild it in place
+		m_tlas.buffer = ResourceUtils::CreateBuffer(
+			&Engine::GetRendererInstance()->GetVulkanDevice(),
+			1024 * 1024 * 4,//m_tlasBuildInfo.buildSizes.accelerationStructureSize,
+			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
+			vk::MemoryPropertyFlagBits::eDeviceLocal
+		);
+		m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBuffer(
+			&Engine::GetRendererInstance()->GetVulkanDevice(),
+			1024 * 1024 * 8,
+			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
+			vk::MemoryPropertyFlagBits::eDeviceLocal
+		);
+
+		vk::AccelerationStructureCreateInfoKHR accelInfo;
+		accelInfo.setBuffer(m_tlas.buffer);
+		accelInfo.setOffset(0);
+		accelInfo.setSize(1024 * 1024 * 4/*m_tlasBuildInfo.buildSizes.accelerationStructureSize*/);
+		accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
+		m_tlas.accelerationStructure = Engine::GetRendererInstance()->GetDevice().createAccelerationStructureKHR(accelInfo);
 	}
 
 	void RtScene::Cleanup()
@@ -297,8 +319,13 @@ namespace CGE
 		}
 
 		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
-		RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
-		RTUtils::CleanupAccelerationStructure(m_tlas);
+
+		delete[] m_tlasBuildInfo.rangeInfos;
+		m_tlasBuildInfo.geometries.clear();
+		m_tlasBuildInfo.buildSizes = vk::AccelerationStructureBuildSizesInfoKHR{};
+		m_tlasBuildInfo.geometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR{};
+		//RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
+		//RTUtils::CleanupAccelerationStructure(m_tlas);
 
 		{
 			vk::DeviceOrHostAddressConstKHR instancesAddr;
@@ -323,13 +350,13 @@ namespace CGE
 		m_tlasBuildInfo.geometryInfo.setGeometryCount(static_cast<uint32_t>(m_tlasBuildInfo.geometries.size()));
 		m_tlasBuildInfo.geometryInfo.setPGeometries(m_tlasBuildInfo.geometries.data());
 
-		m_tlasBuildInfo.buildSizes = device.getAccelerationStructureBuildSizesKHR(
+		/*m_tlasBuildInfo.buildSizes = device.getAccelerationStructureBuildSizesKHR(
 			vk::AccelerationStructureBuildTypeKHR::eDevice, 
 			m_tlasBuildInfo.geometryInfo,
 			{ static_cast<uint32_t>( m_instances.size() )}
-		);
+		);*/
 
-		{
+		/*{
 			m_tlas.buffer = ResourceUtils::CreateBuffer(
 				&Engine::GetRendererInstance()->GetVulkanDevice(),
 				m_tlasBuildInfo.buildSizes.accelerationStructureSize,
@@ -351,7 +378,7 @@ namespace CGE
 			accelInfo.setSize(m_tlasBuildInfo.buildSizes.accelerationStructureSize);
 			accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
 			m_tlas.accelerationStructure = device.createAccelerationStructureKHR(accelInfo);
-		}
+		}*/
 
 		m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
 		m_tlasBuildInfo.geometryInfo.setScratchData(m_tlasBuildInfo.scratchBuffer.GetDeviceAddress());

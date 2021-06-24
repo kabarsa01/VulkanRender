@@ -140,6 +140,7 @@ namespace CGE
 		bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv, DescriptorType::eSampler);
 		bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv, DescriptorType::eSampledImage);
 		bindings[DescriptorType::eStorageImage] = ExtractBindingInfo(resources.storage_images, spirv, DescriptorType::eStorageImage);
+		bindings[DescriptorType::eAccelerationStructureKHR] = ExtractBindingInfo(resources.acceleration_structures, spirv, DescriptorType::eAccelerationStructureKHR);
 		// rejected sibling
 		bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv, DescriptorType::eCombinedImageSampler);
 	}

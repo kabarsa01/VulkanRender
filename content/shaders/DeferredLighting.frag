@@ -1,6 +1,7 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_EXT_ray_tracing : require
+#extension GL_EXT_ray_query : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_GOOGLE_include_directive : enable
@@ -70,6 +71,8 @@ layout(set = 1, binding = 7) uniform LightsIndices
 	uvec2 spotPosition;
 	uvec2 pointPosition;
 } lightsIndices;
+
+layout(set = 1, binding = 8) uniform accelerationStructureEXT topLevelAS;
 
 //layout(location = 0) in vec3 normal;
 layout(location = 1) in vec2 uv;
@@ -211,7 +214,36 @@ void main() {
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
 		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
+		float shadowFactor = 0.0f;
+
+//		if (surfaceCosine > 0.0)
+		{
+			rayQueryEXT rayQuery;
+			rayQueryInitializeEXT(rayQuery, topLevelAS,
+								  gl_RayFlagsTerminateOnFirstHitEXT,
+								  0, pixelCoordWorld.xyz, 0.0, normalize(pixelToLightDir.xyz), 150.0f);
+
+			while(rayQueryProceedEXT(rayQuery)) {
+				if (rayQueryGetIntersectionTypeEXT(rayQuery, false) ==
+					gl_RayQueryCandidateIntersectionTriangleEXT)
+				{
+					// Determine if an opaque triangle hit occurred
+					rayQueryConfirmIntersectionEXT(rayQuery);
+				}
+			}
+
+			if (rayQueryGetIntersectionTypeEXT(rayQuery, true) ==
+				gl_RayQueryCommittedIntersectionNoneEXT)
+			{
+				// Not shadow!
+				shadowFactor = 1.0f;
+			} else {
+				shadowFactor = 0.0f;
+				// Shadow!
+			}
+		}
+
+		Lo += shadowFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{

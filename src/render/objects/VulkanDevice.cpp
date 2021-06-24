@@ -113,9 +113,13 @@ namespace CGE
 		vk::PhysicalDeviceVulkan12Features features12;
 		vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelFeature;
 		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeature;
+		vk::PhysicalDeviceRayQueryFeaturesKHR rayQueryFeature;
+		rayQueryFeature.setRayQuery(VK_TRUE);
+
 		features2.pNext = &features12;
 		features12.pNext = &accelFeature;
 		accelFeature.pNext = &rtPipelineFeature;
+		rtPipelineFeature.pNext = &rayQueryFeature;
 		physicalDevice.GetDevice().getFeatures2(&features2);
 	
 		DeviceCreateInfo deviceCreateInfo;

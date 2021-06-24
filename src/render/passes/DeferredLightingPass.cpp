@@ -6,6 +6,8 @@
 #include "../DataStructures.h"
 #include "LightClusteringPass.h"
 #include "ZPrepass.h"
+#include "../RtScene.h"
+#include "utils/Singleton.h"
 
 namespace CGE
 {
@@ -98,6 +100,8 @@ namespace CGE
 		lightingMaterial->SetTexture("albedoTex", albedoTexture);
 		lightingMaterial->SetTexture("normalsTex", normalTexture);
 		lightingMaterial->SetTexture("depthTex", depthTexture);
+		lightingMaterial->SetAccelerationStructure("topLevelAS", Singleton<RtScene>::GetInstance()->GetTlas().accelerationStructure);
+
 		lightingMaterial->LoadResources();
 	}
 	

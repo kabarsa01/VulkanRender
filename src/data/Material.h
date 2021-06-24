@@ -52,6 +52,7 @@ namespace CGE
 		void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
 		void SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
+		void SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct);
 		template<typename T>
 		void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 		void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
@@ -88,10 +89,12 @@ namespace CGE
 		std::map<HashString, Texture2DPtr> storageImages2D;
 		std::map<HashString, VulkanBuffer> buffers;
 		std::map<HashString, VulkanBuffer> storageBuffers;
+		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
 	
 		std::vector<DescriptorSetLayoutBinding> descriptorBindings;
 		std::map<HashString, DescriptorImageInfo> imageDescInfos;
 		std::map<HashString, DescriptorBufferInfo> bufferDescInfos;
+		std::map<HashString, vk::WriteDescriptorSetAccelerationStructureKHR> accelStructDescInfos;
 		std::vector<WriteDescriptorSet> descriptorWrites;
 	
 		VulkanDevice* vulkanDevice;
@@ -187,6 +190,9 @@ namespace CGE
 				break;
 			case DescriptorType::eStorageBuffer:
 				writeDescriptorSet.setPBufferInfo(&bufferDescInfos[info.name]);
+				break;
+			case DescriptorType::eAccelerationStructureKHR:
+				writeDescriptorSet.setPNext(&accelStructDescInfos[info.name]);
 				break;
 			}
 	

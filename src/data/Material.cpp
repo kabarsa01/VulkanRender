@@ -190,6 +190,11 @@ namespace CGE
 		storageBuffers[inName].SetCleanup(false);
 	}
 	
+	void Material::SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct)
+	{
+		accelerationStructures[inName] = inAccelStruct;
+	}
+
 	void Material::SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 	{
 		VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
@@ -296,6 +301,14 @@ namespace CGE
 		{
 			bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
 		}
+
+		for (auto& pair : accelerationStructures)
+		{
+			vk::WriteDescriptorSetAccelerationStructureKHR accelStructDescWrite;
+			accelStructDescWrite.setAccelerationStructureCount(1);
+			accelStructDescWrite.setPAccelerationStructures(&pair.second);
+			accelStructDescInfos[pair.first] = accelStructDescWrite;
+		}
 	}
 	
 	ShaderPtr Material::InitShader(const std::string& inResourcePath)
@@ -307,6 +320,12 @@ namespace CGE
 			ProcessDescriptorType<Texture2DPtr>(DescriptorType::eStorageImage, shader, storageImages2D, descriptorBindings);
 			ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, shader, buffers, descriptorBindings);
 			ProcessDescriptorType<VulkanBuffer>(DescriptorType::eStorageBuffer, shader, storageBuffers, descriptorBindings);
+			ProcessDescriptorType<vk::AccelerationStructureKHR>(
+				DescriptorType::eAccelerationStructureKHR, 
+				shader, 
+				accelerationStructures, 
+				descriptorBindings);
+
 			return shader;
 		}
 		return ShaderPtr();
@@ -320,6 +339,11 @@ namespace CGE
 			PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eStorageImage, inShader, imageDescInfos, descriptorWrites);
 			PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, inShader, bufferDescInfos, descriptorWrites);
 			PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eStorageBuffer, inShader, bufferDescInfos, descriptorWrites);
+			PrepareDescriptorWrites<vk::WriteDescriptorSetAccelerationStructureKHR>(
+				DescriptorType::eAccelerationStructureKHR, 
+				inShader, 
+				accelStructDescInfos, 
+				descriptorWrites);
 		}
 	}
 	
