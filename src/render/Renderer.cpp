@@ -136,6 +136,8 @@ namespace CGE
 		// begin command buffer record
 		cmdBuffer.begin(beginInfo);
 
+		TransferResources(cmdBuffer, device.GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
+
 		Singleton<RtScene>::GetInstance()->UpdateShaders();
 		Singleton<RtScene>::GetInstance()->BuildMeshBlases(&cmdBuffer);
 		Singleton<RtScene>::GetInstance()->UpdateInstances();

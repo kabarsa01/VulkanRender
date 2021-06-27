@@ -37,7 +37,7 @@ namespace CGE
 		memcpy(&instance.transform, &mat, sizeof(instance.transform));
 
 		instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
-		instance.setMask(0xFFFF);
+		instance.setMask(0xFFFFFFFF);
 
 		return instance;
 	}

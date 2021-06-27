@@ -202,7 +202,7 @@ void main() {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallness;
 	// some ambient lighting
-    vec3 irradiance = vec3(0.003);//texture(irradianceMap, N).rgb;
+    vec3 irradiance = vec3(0.01);//texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * albedo;
     vec3 ambient = (kD * diffuse);// * AO;
 
@@ -216,12 +216,12 @@ void main() {
 
 		float shadowFactor = 0.0f;
 
-//		if (surfaceCosine > 0.0)
+		if (surfaceCosine > 0.0)
 		{
 			rayQueryEXT rayQuery;
 			rayQueryInitializeEXT(rayQuery, topLevelAS,
 								  gl_RayFlagsTerminateOnFirstHitEXT,
-								  0, pixelCoordWorld.xyz, 0.0, normalize(pixelToLightDir.xyz), 150.0f);
+								  0xffffffff, pixelCoordWorld.xyz, 0.1f, normalize(pixelToLightDir.xyz), 150.0f);
 
 			while(rayQueryProceedEXT(rayQuery)) {
 				if (rayQueryGetIntersectionTypeEXT(rayQuery, false) ==

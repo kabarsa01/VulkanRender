@@ -162,7 +162,7 @@ namespace CGE
 			instance.setInstanceCustomIndex(instanceIndex++);
 			uint32_t sbtOffset = m_materialGroupIndices[meshComp->rtMaterial->GetResourceId()] - m_hitGroupsOffset;
 			instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
-			instance.setMask(0xFFFFFFFF);
+			instance.setMask(0xffffffff);
 
 			glm::mat4x4 mat = meshComp->GetParent()->transform.GetMatrix();
 			mat = glm::transpose(mat);
@@ -397,6 +397,7 @@ namespace CGE
 		}
 
 		cmdBuff->buildAccelerationStructuresKHR(1, &m_tlasBuildInfo.geometryInfo, &m_tlasBuildInfo.rangeInfos);
+
 		// waiting for blas's to build
 		vk::MemoryBarrier barrier;
 		barrier.setSrcAccessMask(vk::AccessFlagBits::eAccelerationStructureWriteKHR);
