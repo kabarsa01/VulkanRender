@@ -6,6 +6,8 @@
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_GOOGLE_include_directive : enable
 
+#include "RayCommon.glsl"
+
 layout(early_fragment_tests) in;
 
 layout(push_constant) uniform PushConst
@@ -214,36 +216,16 @@ void main() {
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
 		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
-		float shadowFactor = 0.0f;
-
+		bool isShadow = false;
 		if (surfaceCosine > 0.0)
 		{
-			rayQueryEXT rayQuery;
-			rayQueryInitializeEXT(rayQuery, topLevelAS,
-								  gl_RayFlagsTerminateOnFirstHitEXT,
-								  0xffffffff, pixelCoordWorld.xyz, 0.1f, normalize(pixelToLightDir.xyz), 150.0f);
-
-			while(rayQueryProceedEXT(rayQuery)) {
-				if (rayQueryGetIntersectionTypeEXT(rayQuery, false) ==
-					gl_RayQueryCandidateIntersectionTriangleEXT)
-				{
-					// Determine if an opaque triangle hit occurred
-					rayQueryConfirmIntersectionEXT(rayQuery);
-				}
-			}
-
-			if (rayQueryGetIntersectionTypeEXT(rayQuery, true) ==
-				gl_RayQueryCommittedIntersectionNoneEXT)
-			{
-				// Not shadow!
-				shadowFactor = 1.0f;
-			} else {
-				shadowFactor = 0.0f;
-				// Shadow!
-			}
+			isShadow = RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
 		}
 
-		Lo += shadowFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
+		if (!isShadow)
+		{
+			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
+		}
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
@@ -251,6 +233,11 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+
+		if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+		{
+			continue;
+		}
 
 		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
 		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
@@ -268,6 +255,12 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+
+		if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+		{
+			continue;
+		}
+
 		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);

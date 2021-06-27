@@ -229,16 +229,16 @@ namespace CGE
 		{
 			for (uint32_t indexY = 0; indexY < countY; indexY++)
 			{
-				glm::vec3 color = counter % 3 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
-				bool isSpot = counter % 2;
+				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
+				bool isSpot = false;// counter % 2;
 	
 				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 1), isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / float(countY - 1) });
+				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 0.5f), isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / float(countY - 1) });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
-				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 5.0f;
+				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 15.0f;
 				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 15.0f;
+				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
 				lightObj02->GetLightComponent()->color = color;
 	
 				++counter;
