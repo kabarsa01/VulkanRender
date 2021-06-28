@@ -514,5 +514,8 @@
     <None Include="content\shaders\ScreenSpaceVert.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\RayCommon.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -386,6 +386,7 @@ exit /b</Command>
     <None Include="content\shaders\LightClustering.comp" />
     <None Include="content\shaders\PostProcessFrag.frag" />
     <None Include="content\shaders\PostProcessVert.vert" />
+    <None Include="content\shaders\RayCommon.glsl" />
     <None Include="content\shaders\ScreenSpaceVert.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

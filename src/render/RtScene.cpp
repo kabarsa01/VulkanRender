@@ -14,6 +14,9 @@
 namespace CGE
 {
 
+	constexpr static uint64_t TLAS_SIZE_BYTES = 1024 * 1024 * 8;
+	constexpr static uint64_t TLAS_SCRATCH_SIZE_BYTES = 1024 * 1024 * 16;
+
 	RtScene::RtScene()
 		: m_frameIndexTruncated(0)
 	{
@@ -42,13 +45,13 @@ namespace CGE
 		// just an experiment, create very big acceleration structure and buffer and just rebuild it in place
 		m_tlas.buffer = ResourceUtils::CreateBuffer(
 			&Engine::GetRendererInstance()->GetVulkanDevice(),
-			1024 * 1024 * 4,//m_tlasBuildInfo.buildSizes.accelerationStructureSize,
+			TLAS_SIZE_BYTES,
 			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
 			vk::MemoryPropertyFlagBits::eDeviceLocal
 		);
 		m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBuffer(
 			&Engine::GetRendererInstance()->GetVulkanDevice(),
-			1024 * 1024 * 8,
+			TLAS_SCRATCH_SIZE_BYTES,
 			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
 			vk::MemoryPropertyFlagBits::eDeviceLocal
 		);
@@ -56,7 +59,7 @@ namespace CGE
 		vk::AccelerationStructureCreateInfoKHR accelInfo;
 		accelInfo.setBuffer(m_tlas.buffer);
 		accelInfo.setOffset(0);
-		accelInfo.setSize(1024 * 1024 * 4/*m_tlasBuildInfo.buildSizes.accelerationStructureSize*/);
+		accelInfo.setSize(TLAS_SIZE_BYTES);
 		accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
 		m_tlas.accelerationStructure = Engine::GetRendererInstance()->GetDevice().createAccelerationStructureKHR(accelInfo);
 	}
@@ -105,7 +108,7 @@ namespace CGE
 
 		// process ray gen shaders
 		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_RAY_GEN)], m_groups);
-		// remember hit groups offset
+		// remember miss groups offset
 		m_missGroupsOffset = static_cast<uint32_t>(m_groups.size());
 		// process miss shaders
 		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_MISS)], m_groups);
@@ -324,8 +327,6 @@ namespace CGE
 		m_tlasBuildInfo.geometries.clear();
 		m_tlasBuildInfo.buildSizes = vk::AccelerationStructureBuildSizesInfoKHR{};
 		m_tlasBuildInfo.geometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR{};
-		//RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
-		//RTUtils::CleanupAccelerationStructure(m_tlas);
 
 		{
 			vk::DeviceOrHostAddressConstKHR instancesAddr;
@@ -346,40 +347,8 @@ namespace CGE
 		}
 
 		m_tlasBuildInfo.geometryInfo.setMode(vk::BuildAccelerationStructureModeKHR::eBuild);
-		//m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
 		m_tlasBuildInfo.geometryInfo.setGeometryCount(static_cast<uint32_t>(m_tlasBuildInfo.geometries.size()));
 		m_tlasBuildInfo.geometryInfo.setPGeometries(m_tlasBuildInfo.geometries.data());
-
-		/*m_tlasBuildInfo.buildSizes = device.getAccelerationStructureBuildSizesKHR(
-			vk::AccelerationStructureBuildTypeKHR::eDevice, 
-			m_tlasBuildInfo.geometryInfo,
-			{ static_cast<uint32_t>( m_instances.size() )}
-		);*/
-
-		/*{
-			m_tlas.buffer = ResourceUtils::CreateBuffer(
-				&Engine::GetRendererInstance()->GetVulkanDevice(),
-				m_tlasBuildInfo.buildSizes.accelerationStructureSize,
-				vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
-				vk::MemoryPropertyFlagBits::eDeviceLocal
-			);
-			m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBuffer(
-				&Engine::GetRendererInstance()->GetVulkanDevice(),
-				m_tlasBuildInfo.buildSizes.buildScratchSize,
-				vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
-				vk::MemoryPropertyFlagBits::eDeviceLocal
-			);
-		}
-
-		{
-			vk::AccelerationStructureCreateInfoKHR accelInfo;
-			accelInfo.setBuffer(m_tlas.buffer);
-			accelInfo.setOffset(0);
-			accelInfo.setSize(m_tlasBuildInfo.buildSizes.accelerationStructureSize);
-			accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
-			m_tlas.accelerationStructure = device.createAccelerationStructureKHR(accelInfo);
-		}*/
-
 		m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
 		m_tlasBuildInfo.geometryInfo.setScratchData(m_tlasBuildInfo.scratchBuffer.GetDeviceAddress());
 

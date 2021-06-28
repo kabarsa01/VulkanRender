@@ -214,10 +214,10 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
-		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
+		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
 		bool isShadow = false;
-		if (surfaceCosine > 0.0)
+		if (surfaceCosine > 0.0f)
 		{
 			isShadow = RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
 		}
@@ -233,10 +233,13 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
-
-		if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+		float surfaceCosine = dot(normalize(pixelToLightDir), N);
+		if (surfaceCosine > 0.0f)
 		{
-			continue;
+			if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+			{
+				continue;
+			}
 		}
 
 		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
@@ -255,16 +258,18 @@ void main() {
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
-
-		if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+		float surfaceCosine = dot(normalize(pixelToLightDir), N);
+		if (surfaceCosine > 0.0f)
 		{
-			continue;
+			if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+			{
+				continue;
+			}
 		}
 
 		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
-		float surfaceCosine = max(dot(normalize(pixelToLightDir), N), 0.0);
 
 		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
 		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
