@@ -16,8 +16,7 @@ Clustered deferred rendering path is used. For now 5 passes are used.
   5. Post processing
 
 Material system uses spirv-cross for shader reflection and performs shader parameters matching by name.
-Mips are generated at runtime. Assimp and stb_image are used to load resources. Shadows are not there atm,
-because I might do it all eventually with mesh shading and abandon traditional vertex pipeline. IBL for PBR
+Mips are generated at runtime. Assimp and stb_image are used to load resources. IBL for PBR
 is not there too, I'd be glad to replace it all with raytracing solutions. One big buffer is used for
 transform data, it takes 64MB for now and should store 1024x1024 model matrices. Scene is very primitive 
 with no accelerations structure used. Objects are batched by shaders-->material-->uniqueMeshData-->instances.
@@ -45,6 +44,8 @@ Scene graph is a simple templated octree with some template specialization for S
 Octree allocates node pool straight away so several MB being taken for this, I think it's about 16MB to 32MB at the moment.
 Frustum culling is implemented on CPU and uses job system. Still need to experiment with some threading schemes for this.
 
+Shadows are implemented using hardware ray tracing. So only ray tracing capable gpu's are supported. Soft shadows are
+planned using separate RT pass. Shadows use clustered lights data.
 
 //---------- Backlog
 
@@ -52,9 +53,9 @@ Frustum culling is implemented on CPU and uses job system. Still need to experim
   Volumetric fog,
   IBL,
   Mesh Shading,
-  Shadow cache ?,
-  Raytracing / SSR ?,
+  SSR ?,
   SVOGI ?,
+  RTGI,
   Occlusion culling,
   Compute Hi-Z generation,
   Async command buffers,
