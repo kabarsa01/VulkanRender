@@ -8,8 +8,8 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::DescriptorSetLayoutCreateInfo;
 
 	VulkanDescriptorSet::VulkanDescriptorSet()
-		: set(nullptr)
-		, layout(nullptr)
+		: m_set(nullptr)
+		, m_layout(nullptr)
 	{
 	
 	}
@@ -21,10 +21,10 @@ namespace CGE
 	
 	void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice)
 	{
-		vulkanDevice = inVulkanDevice;
+		m_vulkanDevice = inVulkanDevice;
 		CreateLayout();
 	
-		set = Engine::GetRendererInstance()->GetDescriptorPools().AllocateSet({layout}, pool)[0];
+		m_set = Engine::GetRendererInstance()->GetDescriptorPools().AllocateSet({m_layout}, m_pool)[0];
 	}
 	
 	void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, std::vector<VulkanDescriptorSet*>& inSets)
@@ -37,7 +37,7 @@ namespace CGE
 		std::vector<DescriptorSetLayout> layouts;
 		for (uint32_t index = 0; index < inCount; index++)
 		{
-			inSets[index]->vulkanDevice = inVulkanDevice;
+			inSets[index]->m_vulkanDevice = inVulkanDevice;
 			layouts.push_back(inSets[index]->CreateLayout());
 		}
 	
@@ -46,27 +46,120 @@ namespace CGE
 	
 		for (uint32_t index = 0; index < inCount; index++)
 		{
-			inSets[index]->set = sets[index];
-			inSets[index]->pool = pool;
+			inSets[index]->m_set = sets[index];
+			inSets[index]->m_pool = pool;
 		}
 	}
 	
+	std::vector<VulkanDescriptorSet> VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, const std::vector<ShaderPtr>& inShaders)
+	{
+		std::vector<VulkanDescriptorSet> result;
+
+		uint32_t maxSet = 0;
+		std::unordered_map<uint32_t, std::unordered_map<uint32_t, BindingInfo>> sets;
+		for (ShaderPtr shader : inShaders)
+		{
+			for (auto& pair : shader->GetBindingsTypes())
+			{
+				for (BindingInfo& info : pair.second)
+				{
+					if (info.set > maxSet) maxSet = info.set;
+					sets[info.set][info.binding] = info;
+				}
+			}
+		}
+
+		result.resize(maxSet);
+
+		for (auto& setPair : sets)
+		{
+			VulkanDescriptorSet& set = result[setPair.first];
+			for (auto& bindingInfoPair : setPair.second)
+			{
+				set.AddBinding(bindingInfoPair.second.ToLayoutBinding());
+			}
+			set.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
+		}
+
+		return result;
+	}
+
+	VulkanDescriptorSet VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, const std::vector<ShaderPtr>& inShaders, uint32_t inSetIndex)
+	{
+		VulkanDescriptorSet result;
+
+		for (ShaderPtr shader : inShaders)
+		{
+			for (auto& pair : shader->GetBindingsTypes())
+			{
+				for (BindingInfo& info : pair.second)
+				{
+					if (info.set == inSetIndex)
+					{
+						result.AddBinding(info.ToLayoutBinding());
+					}
+				}
+			}
+		}
+
+		result.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
+
+		return result;
+	}
+
+	std::vector<VulkanDescriptorSet> VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, const std::vector<RtShaderPtr>& inShaders)
+	{
+		std::vector<ShaderPtr> shaders;
+		shaders.resize(inShaders.size());
+		for (uint32_t idx = 0; idx < shaders.size(); idx++)
+		{
+			shaders[idx] = inShaders[idx];
+		}
+		return Create(inVulkanDevice, shaders);
+	}
+
+	VulkanDescriptorSet VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice, const std::vector<RtShaderPtr>& inShaders, uint32_t inSetIndex)
+	{
+		std::vector<ShaderPtr> shaders;
+		shaders.resize(inShaders.size());
+		for (uint32_t idx = 0; idx < shaders.size(); idx++)
+		{
+			shaders[idx] = inShaders[idx];
+		}
+		return Create(inVulkanDevice, shaders, inSetIndex);
+	}
+
+	void VulkanDescriptorSet::Update(std::vector<vk::WriteDescriptorSet>& writes)
+	{
+		for (vk::WriteDescriptorSet& write : writes)
+		{
+			write.setDstSet(m_set);
+		}
+
+		m_vulkanDevice->GetDevice().updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+	}
+
 	void VulkanDescriptorSet::Destroy()
 	{
-		if (layout)
+		if (m_layout)
 		{
-			vulkanDevice->GetDevice().destroyDescriptorSetLayout(layout);
-			layout = nullptr;
-			vulkanDevice->GetDevice().freeDescriptorSets(pool, { set });
-			set = nullptr;
+			m_vulkanDevice->GetDevice().destroyDescriptorSetLayout(m_layout);
+			m_layout = nullptr;
+			m_vulkanDevice->GetDevice().freeDescriptorSets(m_pool, { m_set });
+			m_set = nullptr;
 		}
 	}
 	
 	void VulkanDescriptorSet::SetBindings(const std::vector<DescriptorSetLayoutBinding>& inBindings)
 	{
-		bindings = inBindings;
+		m_bindings = inBindings;
 	}
-	
+
+	void VulkanDescriptorSet::AddBinding(const DescriptorSetLayoutBinding& inBinding)
+	{
+		m_bindings.push_back(inBinding);
+	}
+
 	std::vector<DescriptorSetLayoutBinding> VulkanDescriptorSet::ProduceCustomBindings()
 	{
 		return {};
@@ -74,18 +167,18 @@ namespace CGE
 	
 	DescriptorSetLayout& VulkanDescriptorSet::CreateLayout()
 	{
-		if (bindings.size() == 0)
+		if (m_bindings.size() == 0)
 		{
-			bindings = ProduceCustomBindings();
+			m_bindings = ProduceCustomBindings();
 		}
 	
 		DescriptorSetLayoutCreateInfo layoutInfo;
-		layoutInfo.setBindingCount(static_cast<uint32_t>(bindings.size()));
-		layoutInfo.setPBindings(bindings.data());
+		layoutInfo.setBindingCount(static_cast<uint32_t>(m_bindings.size()));
+		layoutInfo.setPBindings(m_bindings.data());
 	
-		layout = vulkanDevice->GetDevice().createDescriptorSetLayout(layoutInfo);
+		m_layout = m_vulkanDevice->GetDevice().createDescriptorSetLayout(layoutInfo);
 	
-		return layout;
+		return m_layout;
 	}
 	
 }

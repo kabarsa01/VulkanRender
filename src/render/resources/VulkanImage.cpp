@@ -46,7 +46,7 @@ namespace CGE
 		memoryRequirements = vulkanDevice->GetDevice().getImageMemoryRequirements(image);
 	}
 	
-	ImageView VulkanImage::CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType)
+	ImageView VulkanImage::CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const
 	{
 		ImageViewCreateInfo imageViewInfo;
 		imageViewInfo.setComponents(ComponentMapping());
@@ -57,7 +57,7 @@ namespace CGE
 	
 		return vulkanDevice->GetDevice().createImageView(imageViewInfo);
 	}
-	
+
 	void VulkanImage::Destroy()
 	{
 		DestroyStagingBuffer();

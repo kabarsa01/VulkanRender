@@ -31,6 +31,7 @@
 #include "passes/LightClusteringPass.h"
 #include "utils/Singleton.h"
 #include "RtScene.h"
+#include "passes/RTShadowPass.h"
 
 namespace CGE
 {
@@ -99,6 +100,9 @@ namespace CGE
 		gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
 		gBufferPass->SetResolution(width, height);
 		gBufferPass->Create();
+		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
+		rtShadowPass->SetResolution(width, height);
+		rtShadowPass->Create();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
 		deferredLightingPass->SetResolution(width, height);
 		deferredLightingPass->Create();
@@ -238,6 +242,8 @@ namespace CGE
 		delete deferredLightingPass;
 		gBufferPass->Destroy();
 		delete gBufferPass;
+		rtShadowPass->Destroy();
+		delete rtShadowPass;
 		zPrepass->Destroy();
 		delete zPrepass;
 		lightClusteringPass->Destroy();
@@ -251,7 +257,6 @@ namespace CGE
 		delete perFrameData;
 	
 		PipelineRegistry::GetInstance()->DestroyPipelines(&device);
-
 		Singleton<RtScene>::GetInstance()->Cleanup();
 	
 		descriptorPools.Destroy();

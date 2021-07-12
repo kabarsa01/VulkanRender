@@ -34,7 +34,7 @@ namespace CGE
 		virtual ~VulkanImage();
 	
 		void Create(VulkanDevice* inDevice);
-		ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType);
+		ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const;
 		void Destroy();
 	
 		inline uint32_t GetWidth() { return width; }

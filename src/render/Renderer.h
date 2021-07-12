@@ -43,6 +43,7 @@ namespace CGE
 	class LightClusteringPass;
 	class ZPrepass;
 	class GBufferPass;
+	class RTShadowPass;
 	class DeferredLightingPass;
 	class PostProcessPass;
 	
@@ -107,6 +108,7 @@ namespace CGE
 		ZPrepass* zPrepass;
 		LightClusteringPass* lightClusteringPass;
 		GBufferPass* gBufferPass;
+		RTShadowPass* rtShadowPass;
 		DeferredLightingPass* deferredLightingPass;
 		PostProcessPass* postProcessPass;
 	

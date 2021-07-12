@@ -12,8 +12,8 @@ namespace CGE
 	Shader::Shader(const HashString& inPath)
 		: Resource(inPath)
 	{
-		filePath = inPath.GetString();
-		shaderModule = nullptr;
+		m_filePath = inPath.GetString();
+		m_shaderModule = nullptr;
 	}
 	
 	Shader::~Shader()
@@ -23,23 +23,23 @@ namespace CGE
 	
 	bool Shader::Create()
 	{
-		if (shaderModule)
+		if (m_shaderModule)
 		{
 			return true;
 		}
 	
-		std::ifstream file(filePath, std::ios::binary);
+		std::ifstream file(m_filePath, std::ios::binary);
 		if (!file.is_open()) {
 			throw std::runtime_error("failed to open file!");
 		}
-		binary.clear();
+		m_binary.clear();
 	
 		file.seekg(0, std::ios::end);
 		size_t size = file.tellg();
-		binary.resize(size);
+		m_binary.resize(size);
 		file.seekg(0, std::ios::beg);
 	
-		file.read(binary.data(), size);
+		file.read(m_binary.data(), size);
 		file.close();
 	
 		ExtractBindingsInfo();
@@ -58,50 +58,72 @@ namespace CGE
 	
 	ShaderModule Shader::GetShaderModule()
 	{
-		return shaderModule;
+		return m_shaderModule;
 	}
 	
 	void Shader::DestroyShaderModule()
 	{
-		if (shaderModule)
+		if (m_shaderModule)
 		{
-			Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().destroyShaderModule(shaderModule);
-			shaderModule = nullptr;
+			Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().destroyShaderModule(m_shaderModule);
+			m_shaderModule = nullptr;
 		}
 	}
 	
 	const std::vector<char>& Shader::GetCode() const
 	{
-		return binary;
+		return m_binary;
 	}
 	
-	std::vector<BindingInfo>& Shader::GetBindings(DescriptorType inDescriptorType)
+	std::vector<BindingInfo>& Shader::GetAllBindings()
 	{
-		return bindings[inDescriptorType];
+		return m_bindings;
+	}
+
+	std::vector<BindingInfo>& Shader::GetBindingsTypes(DescriptorType inDescriptorType)
+	{
+		return m_bindingsTypes[inDescriptorType];
 	}
 	
+	bool Shader::HasBinding(HashString name)
+	{
+		return m_bindingsNames.find(name) != m_bindingsNames.end();
+	}
+
+	BindingInfo Shader::GetBindingSafe(HashString name)
+	{
+		if (m_bindingsNames.find(name) != m_bindingsNames.end())
+		{
+			return m_bindingsNames[name];
+		}
+		return BindingInfo();
+	}
+
+	BindingInfo& Shader::GetBinding(HashString name)
+	{
+		return m_bindingsNames[name];
+	}
+
 	void Shader::CreateShaderModule()
 	{
-		if (shaderModule)
+		if (m_shaderModule)
 		{
 			return;
 		}
 	
 		vk::ShaderModuleCreateInfo createInfo;
 		// size in bytes, even though code is uint32_t*
-		createInfo.setCodeSize(binary.size());
-		createInfo.setPCode(reinterpret_cast<const uint32_t*>(binary.data()));
+		createInfo.setCodeSize(m_binary.size());
+		createInfo.setPCode(reinterpret_cast<const uint32_t*>(m_binary.data()));
 	
-		shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
+		m_shaderModule = Engine::GetRendererInstance()->GetVulkanDevice().GetDevice().createShaderModule(createInfo);
 	}
 	
-	std::vector<BindingInfo> Shader::ExtractBindingInfo(
+	void Shader::ExtractBindingInfo(
 		SPIRV_CROSS_NAMESPACE::SmallVector<SPIRV_CROSS_NAMESPACE::Resource>& inResources, 
 		SPIRV_CROSS_NAMESPACE::Compiler& inCompiler, 
 		DescriptorType inDescriptorType)
-	{
-		std::vector<BindingInfo> bindingsVector;
-	
+	{	
 		for (SPIRV_CROSS_NAMESPACE::Resource& resource : inResources)
 		{
 			BindingInfo info;
@@ -124,25 +146,26 @@ namespace CGE
 			}
 			printf("Resource %s with block name %s at set = %u, binding = %u\n", info.name.GetString().c_str(), info.blockName.GetString().c_str(), info.set, info.binding);
 	
-			bindingsVector.push_back(info);
+			// populate internal structures
+			m_bindings.push_back(info);
+			m_bindingsTypes[inDescriptorType].push_back(info);
+			m_bindingsNames[info.name] = info;
 		}
-		
-		return bindingsVector;
 	}
 	
 	void Shader::ExtractBindingsInfo()
 	{
-		SPIRV_CROSS_NAMESPACE::Compiler spirv(reinterpret_cast<const uint32_t*>(binary.data()), binary.size() / sizeof(uint32_t));
+		SPIRV_CROSS_NAMESPACE::Compiler spirv(reinterpret_cast<const uint32_t*>(m_binary.data()), m_binary.size() / sizeof(uint32_t));
 		SPIRV_CROSS_NAMESPACE::ShaderResources resources = spirv.get_shader_resources();
 	
-		bindings[DescriptorType::eUniformBuffer] = ExtractBindingInfo(resources.uniform_buffers, spirv, DescriptorType::eUniformBuffer);
-		bindings[DescriptorType::eStorageBuffer] = ExtractBindingInfo(resources.storage_buffers, spirv, DescriptorType::eStorageBuffer);
-		bindings[DescriptorType::eSampler] = ExtractBindingInfo(resources.separate_samplers, spirv, DescriptorType::eSampler);
-		bindings[DescriptorType::eSampledImage] = ExtractBindingInfo(resources.separate_images, spirv, DescriptorType::eSampledImage);
-		bindings[DescriptorType::eStorageImage] = ExtractBindingInfo(resources.storage_images, spirv, DescriptorType::eStorageImage);
-		bindings[DescriptorType::eAccelerationStructureKHR] = ExtractBindingInfo(resources.acceleration_structures, spirv, DescriptorType::eAccelerationStructureKHR);
+		ExtractBindingInfo(resources.uniform_buffers, spirv, DescriptorType::eUniformBuffer);
+		ExtractBindingInfo(resources.storage_buffers, spirv, DescriptorType::eStorageBuffer);
+		ExtractBindingInfo(resources.separate_samplers, spirv, DescriptorType::eSampler);
+		ExtractBindingInfo(resources.separate_images, spirv, DescriptorType::eSampledImage);
+		ExtractBindingInfo(resources.storage_images, spirv, DescriptorType::eStorageImage);
+		ExtractBindingInfo(resources.acceleration_structures, spirv, DescriptorType::eAccelerationStructureKHR);
 		// rejected sibling
-		bindings[DescriptorType::eCombinedImageSampler] = ExtractBindingInfo(resources.sampled_images, spirv, DescriptorType::eCombinedImageSampler);
+		ExtractBindingInfo(resources.sampled_images, spirv, DescriptorType::eCombinedImageSampler);
 	}
 	
 }

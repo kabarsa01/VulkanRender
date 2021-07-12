@@ -208,6 +208,8 @@ void main() {
     vec3 diffuse = irradiance * albedo;
     vec3 ambient = (kD * diffuse);// * AO;
 
+	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.01f);
+
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
@@ -219,7 +221,7 @@ void main() {
 		bool isShadow = false;
 		if (surfaceCosine > 0.0f)
 		{
-			isShadow = RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
+			isShadow = RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
 		}
 
 		if (!isShadow)
@@ -236,7 +238,7 @@ void main() {
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 		if (surfaceCosine > 0.0f)
 		{
-			if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
 			{
 				continue;
 			}
@@ -261,7 +263,7 @@ void main() {
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 		if (surfaceCosine > 0.0f)
 		{
-			if (RayQueryIsShadow(topLevelAS, pixelCoordWorld.xyz, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
 			{
 				continue;
 			}

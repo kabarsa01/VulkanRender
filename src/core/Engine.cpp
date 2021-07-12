@@ -91,6 +91,8 @@ namespace CGE
 			glfwPollEvents();
 	
 			TimeManager::GetInstance()->UpdateTime();
+
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPreUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
 	
 			auto sceneStartTime = std::chrono::high_resolution_clock::now();
 			m_sceneInstance->PerFrameUpdate();
@@ -103,13 +105,10 @@ namespace CGE
 			double renderDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(renderCurrentTime - renderStartTime).count();
 			std::printf("render update time is %f microseconds\n", renderDeltaTime);
 
-			auto updateMsg = std::make_shared<GlobalUpdateMessage>();
-			updateMsg->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
-			MessageBus::GetInstance()->PublishSync(updateMsg);
-
-			auto flipMsg = std::make_shared<GlobalFlipMessage>();
-			flipMsg->frameCount = m_frameCount++;
-			MessageBus::GetInstance()->PublishSync(flipMsg);
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalFlipMessage>(m_frameCount));
+			// just not to forget let it increment in a separate statement
+			++m_frameCount;
 		}
 	
 		m_rendererInstance->WaitForDevice();

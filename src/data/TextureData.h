@@ -18,9 +18,13 @@ namespace CGE
 	
 		inline VulkanImage& GetImage() { return image; }
 		ImageView& GetImageView();
+		ImageView GetImageView() const;
+		vk::DescriptorImageInfo& GetDescriptorInfo(vk::ImageLayout layout);
+		vk::DescriptorImageInfo GetDescriptorInfo(vk::ImageLayout layout) const;
 	protected:
 		VulkanImage image;
 		ImageView imageView;
+		vk::DescriptorImageInfo descriptorInfo;
 	
 		std::string path;
 		bool useAlpha;
@@ -40,4 +44,6 @@ namespace CGE
 	private:
 		TextureData();
 	};
+
+	typedef std::shared_ptr<TextureData> TextureDataPtr;
 }

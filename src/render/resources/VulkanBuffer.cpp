@@ -179,6 +179,11 @@ namespace CGE
 		return descriptorInfo;
 	}
 	
+	DescriptorBufferInfo VulkanBuffer::GetDescriptorInfo() const
+	{
+		return descriptorInfo;
+	}
+
 	Buffer& VulkanBuffer::GetBuffer()
 	{
 		return buffer;

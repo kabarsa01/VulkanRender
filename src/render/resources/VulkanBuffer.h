@@ -44,6 +44,7 @@ namespace CGE
 		BufferCopy CreateBufferCopy();
 		BufferMemoryBarrier CreateMemoryBarrier(uint32_t inSrcQueue, uint32_t inDstQueue, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask);
 		DescriptorBufferInfo& GetDescriptorInfo();
+		DescriptorBufferInfo GetDescriptorInfo() const;
 	
 		Buffer& GetBuffer();
 		Buffer GetBuffer() const;

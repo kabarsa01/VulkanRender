@@ -140,28 +140,20 @@ namespace CGE
 	template<class T>
 	void Material::ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inResources, std::vector<DescriptorSetLayoutBinding>& inOutBindings)
 	{
-		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindings(inType);
+		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindingsTypes(inType);
 		for (BindingInfo& info : bindingInfoVector)
 		{
-			if (inResources.find(info.name) == inResources.end())
+			if (inResources.find(info.name) != inResources.end())
 			{
-				continue;
+				inOutBindings.push_back(info.ToLayoutBinding());
 			}
-	
-			DescriptorSetLayoutBinding binding;
-			binding.setBinding(info.binding);
-			binding.setDescriptorType(info.descriptorType);
-			binding.setDescriptorCount(info.IsArray() ? info.arrayDimensions[0] : 1);
-			binding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
-	
-			inOutBindings.push_back(binding);
 		}
 	}
 	
 	template<class T>
 	void Material::PrepareDescriptorWrites(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inDescInfos, std::vector<WriteDescriptorSet>& inOutDescriptorWrites)
 	{
-		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindings(inType);
+		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindingsTypes(inType);
 		for (BindingInfo& info : bindingInfoVector)
 		{
 			if (inDescInfos.find(info.name) == inDescInfos.end())

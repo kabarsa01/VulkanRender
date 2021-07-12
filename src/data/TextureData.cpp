@@ -89,9 +89,27 @@ namespace CGE
 	{
 		return imageView;
 	}
-	
-	
-	
-	
-	
+		
+	ImageView TextureData::GetImageView() const
+	{
+		return imageView;
+	}
+
+	vk::DescriptorImageInfo& TextureData::GetDescriptorInfo(vk::ImageLayout layout)
+	{
+		descriptorInfo.setImageLayout(layout);
+		descriptorInfo.setImageView(GetImageView());
+
+		return descriptorInfo;
+	}
+
+	vk::DescriptorImageInfo TextureData::GetDescriptorInfo(vk::ImageLayout layout) const
+	{
+		vk::DescriptorImageInfo descInfo;
+		descInfo.setImageLayout(layout);
+		descInfo.setImageView(GetImageView());
+
+		return descriptorInfo;
+	}
+
 }

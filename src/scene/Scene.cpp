@@ -140,39 +140,6 @@ namespace CGE
 		//	}
 		//	 }));
 		//}
-
-		{
-			struct Doop
-			{
-				void haldn(std::shared_ptr<GlobalUpdateMessage> msg)
-				{
-					std::cout << "" << msg->GetId() << " :: delta time :: " << msg->deltaTime << std::endl;
-				}
-
-				void haldn(std::shared_ptr<SceneProcessingFinishedMessage> msg)
-				{
-					std::cout << "" << msg->GetId() << std::endl;
-				}
-			};
-
-			Doop doop;
-
-			MessageSubscriber subscriber;
-			subscriber.AddHandler<GlobalUpdateMessage>(&doop, &Doop::haldn);
-			subscriber.AddHandler<SceneProcessingFinishedMessage>(&doop, &Doop::haldn);
-
-			std::shared_ptr<GlobalUpdateMessage> msg1 = std::make_shared<GlobalUpdateMessage>();
-			msg1->deltaTime = 16.6f;
-			std::shared_ptr<GlobalUpdateMessage> msg2 = std::make_shared<GlobalUpdateMessage>();
-			msg2->deltaTime = 33.2f;
-			std::shared_ptr<SceneProcessingFinishedMessage> msg3 = std::make_shared<SceneProcessingFinishedMessage>();
-
-			for (uint32_t i = 0; i < 5; i++)
-			{
-				MessageBus::GetInstance()->PublishSync(msg1, msg2, msg3);
-			}
-		}
-
 		m_modelMatrices.resize(g_GlobalTransformDataSize);
 	
 		TransferList* tl = TransferList::GetInstance();
@@ -220,8 +187,8 @@ namespace CGE
 		//lightObj01->GetLightComponent()->intensity = 5.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
 	
-		float width = 300.0f;
-		float depth = 300.0f;
+		float width = 500.0f;
+		float depth = 500.0f;
 		uint32_t counter = 0;
 		uint32_t countX = 15;
 		uint32_t countY = 15;
@@ -236,7 +203,7 @@ namespace CGE
 				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 0.5f), isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / float(countY - 1) });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
-				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 15.0f;
+				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
 				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
 				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
 				lightObj02->GetLightComponent()->color = color;
@@ -257,8 +224,8 @@ namespace CGE
 				meshData->CreateBuffer();
 				tl->PushBuffers(meshData);
 	
-				float width = 300.0f;
-				float depth = 300.0f;
+				float width = 500.0f;
+				float depth = 500.0f;
 				uint32_t countX = 15;
 				uint32_t countY = 15;
 				for (uint32_t indexX = 0; indexX < countX; indexX++)
@@ -389,11 +356,6 @@ namespace CGE
 	void Scene::PerFrameUpdate()
 	{
 		float deltaTime = TimeManager::GetInstance()->GetDeltaTime();
-
-		auto msg = std::make_shared<GlobalUpdateMessage>();
-		msg->deltaTime = deltaTime;
-		MessageBus::GetInstance()->PublishSync(msg);
-
 		/*for (SceneObjectBasePtr sceneObject : sceneObjectsSet)
 		{
 			if (sceneObject->isTickEnabled)

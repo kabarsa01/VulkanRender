@@ -36,6 +36,9 @@ namespace CGE
 		void BuildSceneTlas(vk::CommandBuffer* cmdBuff);
 
 		AccelStructure& GetTlas() { return m_tlas; }
+		std::vector<RtShaderPtr>& GetShaders() { return m_shaders; }
+		std::vector<vk::PipelineShaderStageCreateInfo>& GetShaderStages() { return m_stages; }
+		std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& GetShaderGroups() { return m_groups; }
 	private:
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;

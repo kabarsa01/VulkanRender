@@ -282,6 +282,9 @@
     <ClCompile Include="src\utils\ResourceUtils.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\shader\ShaderResourceMapper.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -490,6 +493,9 @@
     </ClInclude>
     <ClInclude Include="src\utils\ResourceUtils.h">
       <Filter>Source Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\ShaderResourceMapper.h">
+      <Filter>Source Files\render\shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
