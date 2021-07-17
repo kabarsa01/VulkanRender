@@ -6,37 +6,39 @@
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_GOOGLE_include_directive : enable
 
-#include "RayCommon.glsl"
+#include "CommonFrameData.glsl"
+#include "CommonRay.glsl"
+#include "CommonLight.glsl"
 
 layout(early_fragment_tests) in;
 
-layout(push_constant) uniform PushConst
-{
-	uint transformIndexOffset;
-} pushConst;
-
-layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
-layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
-layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
-layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
-layout(set = 0, binding = 4) uniform ShaderGlobalData
-{
-	mat4 worldToView;
-	mat4 viewToProj;
-	vec3 cameraPos;
-	vec3 viewVector;
-	float time;
-	float deltaTime;
-	float cameraNear;
-	float cameraFar;
-	float cameraFov;
-	float cameraAspect;
-} globalData;
-
-layout(set = 0, binding = 5) readonly buffer GlobalTransformData
-{
-	mat4 modelToWorld[];
-} globalTransformData;
+//layout(push_constant) uniform PushConst
+//{
+//	uint transformIndexOffset;
+//} pushConst;
+//
+//layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
+//layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
+//layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
+//layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
+//layout(set = 0, binding = 4) uniform ShaderGlobalData
+//{
+//	mat4 worldToView;
+//	mat4 viewToProj;
+//	vec3 cameraPos;
+//	vec3 viewVector;
+//	float time;
+//	float deltaTime;
+//	float cameraNear;
+//	float cameraFar;
+//	float cameraFov;
+//	float cameraAspect;
+//} globalData;
+//
+//layout(set = 0, binding = 5) readonly buffer GlobalTransformData
+//{
+//	mat4 modelToWorld[];
+//} globalTransformData;
 
 layout(set = 1, binding = 0) uniform texture2D albedoTex;
 layout(set = 1, binding = 1) uniform texture2D normalsTex;
@@ -45,7 +47,7 @@ layout(set = 1, binding = 3) uniform texture2D metallnessTex;
 layout(set = 1, binding = 4) uniform texture2D depthTex;
 
 // Pi =)
-const float PI = 3.14159265359;
+//const float PI = 3.14159265359;
 
 // light clustering data
 layout(set = 1, binding = 5) readonly buffer ClusterLightsData
@@ -80,83 +82,6 @@ layout(set = 1, binding = 8) uniform accelerationStructureEXT topLevelAS;
 layout(location = 1) in vec2 uv;
 
 layout(location = 0) out vec4 outScreenColor;
-
-uint UnpackLightIndex(uint packedIndices, uint indexPosition)
-{
-	uint bitOffset = 16 * (indexPosition % 2);
-	return (packedIndices >> bitOffset) & 0x0000ffff;
-}
-
-vec3 CalculateSpec(vec3 inViewDir, vec3 inLightDir, vec3 inNormal, vec3 inSpecColor, float inSpecStrength)
-{
-    // blinn-phong intermediate vector and spec value calculation
-	vec3 intermediate = normalize(inViewDir + inLightDir);
-	return inSpecColor * pow(max(dot(intermediate, inNormal), 0.0), 32) * inSpecStrength;
-}
-
-vec3 FresnelSchlick(float cosTheta, vec3 F0)
-{
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-}
-
-vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
-{
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
-}  
-
-float DistributionGGX(vec3 N, vec3 H, float roughness)
-{
-    float a      = roughness * roughness;
-    float a2     = a*a;
-    float NdotH  = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH*NdotH;
-	
-    float num   = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-	
-    return num / denom;
-}
-
-float GeometrySchlickGGX(float NdotV, float roughness)
-{
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
-
-    float num   = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-	
-    return num / denom;
-}
-
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
-{
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2  = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1  = GeometrySchlickGGX(NdotL, roughness);
-	
-    return ggx1 * ggx2;
-}
-
-vec3 CalculateLightInfluence(vec3 albedo, vec3 N, vec3 V, vec3 F, vec3 inPixelToLightDir, vec3 inLightColor, vec3 kD, float roughness)
-{
-		vec3 L = normalize(inPixelToLightDir);
-        vec3 H = normalize(V + L);
-
-        float attenuation = 1.0;
-        vec3 radiance = inLightColor * attenuation;// * (1.0 - shadowAttenuation);
-
-        float NDF = DistributionGGX(N, H, roughness);  
-        float G = GeometrySmith(N, V, L, roughness);
-
-        vec3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-        vec3 specular = numerator / max(denominator, 0.001);
-  
-        float NdotL = max(dot(N, L), 0.0);        
-        return (kD * albedo / PI + specular) * radiance * NdotL;
-}
 
 void main() {
 	uint clusterX = uint(clamp(uv.x * 32.0, 0, 31));

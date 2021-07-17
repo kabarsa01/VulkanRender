@@ -39,6 +39,13 @@ namespace CGE
 		std::vector<RtShaderPtr>& GetShaders() { return m_shaders; }
 		std::vector<vk::PipelineShaderStageCreateInfo>& GetShaderStages() { return m_stages; }
 		std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& GetShaderGroups() { return m_groups; }
+
+		uint32_t GetMissGroupsOffset() { return m_missGroupsOffset; }
+		uint32_t GetHitGroupsOffset() { return m_hitGroupsOffset; }
+
+		uint32_t GetRayGenGroupsSize() { return m_missGroupsOffset; }
+		uint32_t GetMissGroupsSize() { return m_hitGroupsOffset - m_missGroupsOffset; }
+		uint32_t GetHitGroupsSize() { return m_groups.size() - m_hitGroupsOffset; }
 	private:
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;
@@ -54,6 +61,8 @@ namespace CGE
 		std::unordered_map<HashString, uint32_t> m_materialGroupIndices;
 		uint32_t m_missGroupsOffset;
 		uint32_t m_hitGroupsOffset;
+		// SBT data
+		//VulkanBuffer m_sbtBuffer;
 
 		std::vector<vk::AccelerationStructureInstanceKHR> m_instances;
 		VulkanBuffer m_instancesBuffer;

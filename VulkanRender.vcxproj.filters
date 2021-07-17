@@ -520,7 +520,19 @@
     <None Include="content\shaders\ScreenSpaceVert.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="content\shaders\RayCommon.glsl">
+    <None Include="content\shaders\CommonFrameData.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\CommonRay.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayMissShadows.rmiss">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayGenShadows.rgen">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\CommonLight.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

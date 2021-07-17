@@ -192,7 +192,7 @@ namespace CGE
 
 	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const vk::AccelerationStructureKHR& accelStruct, const BindingInfo& info, vk::WriteDescriptorSetAccelerationStructureKHR& outDescInfo)
 	{
-
+		return CreateWriteDescriptor(accelStruct, info.descriptorType, info.binding, outDescInfo);
 	}
 
 	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const vk::AccelerationStructureKHR& accelStruct, vk::DescriptorType type, uint32_t binding, vk::WriteDescriptorSetAccelerationStructureKHR& outDescInfo)

@@ -147,7 +147,7 @@ goto :eof
 
 :treeProcess
 rem Do whatever you want here over the files of this subdir, for example:
-for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
 for /D %%d in (*) do (
     cd %%d
     call :treeProcess
@@ -226,7 +226,7 @@ goto :eof
 
 :treeProcess
 rem Do whatever you want here over the files of this subdir, for example:
-for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
 for /D %%d in (*) do (
     cd %%d
     call :treeProcess
@@ -382,13 +382,17 @@ exit /b</Command>
     <ClInclude Include="src\utils\Singleton.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="content\shaders\CommonFrameData.glsl" />
+    <None Include="content\shaders\CommonLight.glsl" />
+    <None Include="content\shaders\CommonRay.glsl" />
     <None Include="content\shaders\DeferredLighting.frag" />
     <None Include="content\shaders\GBufferFrag.frag" />
     <None Include="content\shaders\GBufferVert.vert" />
     <None Include="content\shaders\LightClustering.comp" />
     <None Include="content\shaders\PostProcessFrag.frag" />
     <None Include="content\shaders\PostProcessVert.vert" />
-    <None Include="content\shaders\RayCommon.glsl" />
+    <None Include="content\shaders\RayGenShadows.rgen" />
+    <None Include="content\shaders\RayMissShadows.rmiss" />
     <None Include="content\shaders\ScreenSpaceVert.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

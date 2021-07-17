@@ -182,6 +182,10 @@ namespace CGE
 			gBufferBarriers.data());
 		//--------------------------------------------------------
 		// deferred lighting pass
+		rtShadowPass->RecordCommands(&cmdBuffer);
+		//--------------------------------------------------------
+		//--------------------------------------------------------
+		// deferred lighting pass
 		deferredLightingPass->RecordCommands(&cmdBuffer);
 		//--------------------------------------------------------
 		ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(

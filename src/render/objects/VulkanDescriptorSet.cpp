@@ -69,14 +69,19 @@ namespace CGE
 			}
 		}
 
-		result.resize(maxSet);
+		if (sets.size() == 0)
+		{
+			return result;
+		}
+		result.resize(maxSet + 1);
 
 		for (auto& setPair : sets)
 		{
 			VulkanDescriptorSet& set = result[setPair.first];
 			for (auto& bindingInfoPair : setPair.second)
 			{
-				set.AddBinding(bindingInfoPair.second.ToLayoutBinding());
+				vk::DescriptorSetLayoutBinding layoutBinding = bindingInfoPair.second.ToLayoutBinding();
+				set.AddBinding(layoutBinding);
 			}
 			set.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
 		}

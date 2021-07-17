@@ -40,7 +40,16 @@ namespace CGE
 			layoutBinding.setBinding(binding);
 			layoutBinding.setDescriptorType(descriptorType);
 			layoutBinding.setDescriptorCount(IsArray() ? arrayDimensions[0] : 1);
-			layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAllGraphics | vk::ShaderStageFlagBits::eCompute);
+			layoutBinding.setStageFlags(
+				vk::ShaderStageFlagBits::eAllGraphics
+				| vk::ShaderStageFlagBits::eCompute
+				| vk::ShaderStageFlagBits::eRaygenKHR
+				| vk::ShaderStageFlagBits::eMissKHR
+				| vk::ShaderStageFlagBits::eAnyHitKHR
+				| vk::ShaderStageFlagBits::eClosestHitKHR
+				| vk::ShaderStageFlagBits::eIntersectionKHR
+				| vk::ShaderStageFlagBits::eCallableKHR
+			);
 			return layoutBinding;
 		}
 	};

@@ -111,7 +111,7 @@ namespace CGE
 					sampledImageInfo = new vk::DescriptorImageInfo();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(sampledImageInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<Texture2DPtr>(rec.resource),
+						std::any_cast<TextureDataPtr>(rec.resource),
 						pair.first,
 						rec.binding,
 						vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -123,7 +123,7 @@ namespace CGE
 					storageImageInfo = new vk::DescriptorImageInfo();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(storageImageInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<Texture2DPtr>(rec.resource),
+						std::any_cast<TextureDataPtr>(rec.resource),
 						pair.first,
 						rec.binding,
 						vk::ImageLayout::eGeneral,
