@@ -46,7 +46,7 @@ namespace CGE
 			0, 0,
 			vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead);
-		ImageMemoryBarrier attachmentBarrier = m_visibilityTex1->GetImage().CreateLayoutBarrier(
+		ImageMemoryBarrier attachmentBarrier = m_visibilityTex->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eGeneral,
 			vk::AccessFlagBits::eShaderRead,
@@ -87,7 +87,7 @@ namespace CGE
 		rayHitRegion.setSize(m_handleSizeAligned * rtScene->GetHitGroupsSize());
 		rayHitRegion.setStride(m_handleSizeAligned);
 
-		inCommandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, {0,0,0}, GetWidth(), GetHeight(), 1);
+		inCommandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, {0,0,0}, GetWidth() / 2, GetHeight() / 2, 1);
 	}
 
 	void RTShadowPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
@@ -100,10 +100,99 @@ namespace CGE
 
 	Pipeline RTShadowPass::CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 	{
+		return nullptr;
+	}
+
+	RenderPass RTShadowPass::CreateRenderPass()
+	{
+		return RenderPass();
+	}
+
+	void RTShadowPass::OnCreate()
+	{
+		RtScene* rtScene = Singleton<RtScene>::GetInstance();
+		Renderer* renderer = Engine::GetRendererInstance();
+		VulkanDevice& device = renderer->GetVulkanDevice();
+
+		m_rtPipeline = nullptr;
+		m_rtPipelineLayout = nullptr;
+
+		m_visibilityBuffer = ResourceUtils::CreateImage2D(
+			&device,
+			GetWidth() / 2,
+			GetHeight() / 2,
+			vk::Format::eR32Uint,//R8G8B8A8Unorm, 
+			vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled);
+		m_visibilityView = m_visibilityBuffer.CreateView(ResourceUtils::CreateColorSubresRange(), ImageViewType::e2D);
+
+		m_visibilityTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsVisibilityTexture");
+		m_visibilityTex->CreateFromExternal(m_visibilityBuffer, m_visibilityView, true);
+
+		ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
+		GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
+		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
+
+		// obtain resources that were created by other passes
+		m_normalsTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsNormalTexture");
+		m_normalsTex->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
+		m_depthTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsDepthTexture");
+		m_depthTex->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
+		m_clusterLightsData = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+		m_clusterLightsData.SetCleanup(false);
+		m_lightsList = clusteringPass->computeMaterial->GetUniformBuffer("lightsList");
+		m_lightsList.SetCleanup(false);
+		m_lightsIndices = clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices");
+		m_lightsIndices.SetCleanup(false);
+
+		m_shaderResourceMapper.AddSampledImage("normalTex", m_normalsTex);
+		m_shaderResourceMapper.AddSampledImage("depthTex", m_depthTex);
+		m_shaderResourceMapper.AddStorageBuffer("clusterLightsData", m_clusterLightsData);
+		m_shaderResourceMapper.AddUniformBuffer("lightsList", m_lightsList);
+		m_shaderResourceMapper.AddUniformBuffer("lightsIndices", m_lightsIndices);
+		// visibility image
+		m_shaderResourceMapper.AddStorageImage("visibilityTex", m_visibilityTex);
+		m_shaderResourceMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
+
+		m_rayGenShader = DataManager::RequestResourceType<RtShader>("content/shaders/RayGenShadows.spv", ERtShaderType::RST_RAY_GEN);
+		m_rayMissShader = DataManager::RequestResourceType<RtShader>("content/shaders/RayMissShadows.spv", ERtShaderType::RST_MISS);
+	}
+
+	void RTShadowPass::OnDestroy()
+	{
+		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
+		// TODO cleanup
+		m_sbtBuffer.Destroy();
+		device.destroyPipeline(m_rtPipeline);
+		device.destroyPipelineLayout(m_rtPipelineLayout);
+	}
+
+	void RTShadowPass::HandlePreUpdate(std::shared_ptr<GlobalPreUpdateMessage> msg)
+	{
+		if (!m_rtPipeline)
+		{
+			UpdateShaderResources();
+			UpdatePipeline();
+		}
+	}
+
+	void RTShadowPass::UpdateShaderResources()
+	{
+		Renderer* renderer = Engine::GetRendererInstance();
+		VulkanDevice& device = renderer->GetVulkanDevice();
+		RtScene* rtScene = Singleton<RtScene>::GetInstance();
+
+		std::vector<RtShaderPtr>& shaders = rtScene->GetShaders();
+		m_shaderResourceMapper.SetShaders(shaders);
+
+		m_shaderResourceMapper.Update();
+	}
+
+	void RTShadowPass::UpdatePipeline()
+	{
 		RtScene* rtScene = Singleton<RtScene>::GetInstance();
 		if (rtScene->GetShaderGroups().size() == 0)
 		{
-			return nullptr;
+			return;
 		}
 
 		VulkanDevice* device = GetVulkanDevice();
@@ -111,14 +200,10 @@ namespace CGE
 
 		PerFrameData* frameData = Engine::GetRendererInstance()->GetPerFrameData();
 
-		//vk::PipelineCacheCreateInfo pipelineCacheInfo;
-		//vk::PipelineCache pipelineCache = nativeDevice.createPipelineCache(pipelineCacheInfo);
-
-		vk::DeferredOperationKHR deferredOperation;
-
 		nativeDevice.destroyPipeline(m_rtPipeline);
 		nativeDevice.destroyPipelineLayout(m_rtPipelineLayout);
-
+		m_rtPipeline = nullptr;
+		m_rtPipelineLayout = nullptr;
 		//------------------------------------------------------------------
 		// get descriptor sets from shaders
 		m_sets.clear();
@@ -151,11 +236,11 @@ namespace CGE
 		auto pipelineResult = nativeDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInfo);
 		if (pipelineResult.result != vk::Result::eSuccess)
 		{
-			return nullptr;
+			return;
 		}
 		m_rtPipeline = pipelineResult.value;
 
-		vk::StructureChain<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR> structChain = 
+		vk::StructureChain<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR> structChain =
 			device->GetPhysicalDevice().GetDevice().getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
 		m_rtProps = structChain.get<vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
 		uint32_t handleSize = m_rtProps.shaderGroupHandleSize;
@@ -163,7 +248,7 @@ namespace CGE
 		// nvidia recommended to use base alignment
 		// we avoid using power of two version formula just in case. who knows
 		m_handleSizeAligned = alignment * ((handleSize + alignment - 1) / alignment);
-		uint32_t groupCount = static_cast<uint32_t>( rtScene->GetShaderGroups().size() );
+		uint32_t groupCount = static_cast<uint32_t>(rtScene->GetShaderGroups().size());
 		uint64_t sbtSize = groupCount * m_handleSizeAligned;
 		std::vector<char> shadersHandles(sbtSize);
 
@@ -174,7 +259,7 @@ namespace CGE
 		}
 		m_sbtBuffer.Destroy();
 		m_sbtBuffer = ResourceUtils::CreateBuffer(
-			device, 
+			device,
 			sbtSize,
 			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -191,89 +276,6 @@ namespace CGE
 			}
 			m_sbtBuffer.CopyTo(sbtSize, alignedShadersHandles.data(), true);
 		}
-
-		return m_rtPipeline;
-	}
-
-	RenderPass RTShadowPass::CreateRenderPass()
-	{
-		return RenderPass();
-	}
-
-	void RTShadowPass::OnCreate()
-	{
-		RtScene* rtScene = Singleton<RtScene>::GetInstance();
-		Renderer* renderer = Engine::GetRendererInstance();
-		VulkanDevice& device = renderer->GetVulkanDevice();
-
-		int width = renderer->GetWidth();
-		int height = renderer->GetHeight();
-
-		m_visibilityBuffer1 = ResourceUtils::CreateImage2D(
-			&device,
-			width,
-			height,
-			vk::Format::eR32Uint,//R8G8B8A8Unorm, 
-			vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled);
-		m_visibilityView1 = m_visibilityBuffer1.CreateView(ResourceUtils::CreateColorSubresRange(), ImageViewType::e2D);
-
-		m_visibilityTex1 = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsVisibilityTexture");
-		m_visibilityTex1->CreateFromExternal(m_visibilityBuffer1, m_visibilityView1, true);
-
-		ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
-		GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
-		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
-
-		// obtain resources that were created by other passes
-		m_normalsTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsNormalTexture");
-		m_normalsTex->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
-		m_depthTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsDepthTexture");
-		m_depthTex->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
-		m_clusterLightsData = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
-		m_clusterLightsData.SetCleanup(false);
-		m_lightsList = clusteringPass->computeMaterial->GetUniformBuffer("lightsList");
-		m_lightsList.SetCleanup(false);
-		m_lightsIndices = clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices");
-		m_lightsIndices.SetCleanup(false);
-
-		m_shaderResourceMapper.AddSampledImage("normalTex", m_normalsTex);
-		m_shaderResourceMapper.AddSampledImage("depthTex", m_depthTex);
-		m_shaderResourceMapper.AddStorageBuffer("clusterLightsData", m_clusterLightsData);
-		m_shaderResourceMapper.AddUniformBuffer("lightsList", m_lightsList);
-		m_shaderResourceMapper.AddUniformBuffer("lightsIndices", m_lightsIndices);
-		// visibility image
-		m_shaderResourceMapper.AddStorageImage("visibilityTex1", m_visibilityTex1);
-		m_shaderResourceMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
-
-		m_rayGenShader = DataManager::RequestResourceType<RtShader>("content/shaders/RayGenShadows.spv", ERtShaderType::RST_RAY_GEN);
-		m_rayMissShader = DataManager::RequestResourceType<RtShader>("content/shaders/RayMissShadows.spv", ERtShaderType::RST_MISS);
-	}
-
-	void RTShadowPass::OnDestroy()
-	{
-		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
-		// TODO cleanup
-		m_sbtBuffer.Destroy();
-		device.destroyPipeline(m_rtPipeline);
-		device.destroyPipelineLayout(m_rtPipelineLayout);
-	}
-
-	void RTShadowPass::HandlePreUpdate(std::shared_ptr<GlobalPreUpdateMessage> msg)
-	{
-		UpdateShaderResources();
-		CreatePipeline(nullptr, {}, {});
-	}
-
-	void RTShadowPass::UpdateShaderResources()
-	{
-		Renderer* renderer = Engine::GetRendererInstance();
-		VulkanDevice& device = renderer->GetVulkanDevice();
-		RtScene* rtScene = Singleton<RtScene>::GetInstance();
-
-		std::vector<RtShaderPtr>& shaders = rtScene->GetShaders();
-		m_shaderResourceMapper.SetShaders(shaders);
-
-		m_shaderResourceMapper.Update();
 	}
 
 }

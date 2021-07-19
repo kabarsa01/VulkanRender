@@ -36,7 +36,7 @@ layout(set = 1, binding = 4) uniform LightsIndices
 } lightsIndices;
 
 layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
-layout(set = 1, binding = 6, r32ui) uniform uimage2D visibilityTex1;
+layout(set = 1, binding = 6, r32ui) uniform uimage2D visibilityTex;
 
 uint WriteVisibility(uint vis, uint index, bool visible)
 {
@@ -102,7 +102,7 @@ void main()
 
 		if (surfaceCosine > 0.0f)
 		{
-			bool isVisible = false;
+			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
 				  rayFlags,                 // rayFlags
 				  0xFF,                     // cullMask
@@ -133,7 +133,7 @@ void main()
 
 		if (surfaceCosine > 0.0f)
 		{
-			bool isVisible = false;
+			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
 				  rayFlags,                 // rayFlags
 				  0xFF,                     // cullMask
@@ -164,7 +164,7 @@ void main()
 
 		if (surfaceCosine > 0.0f)
 		{
-			bool isVisible = false;
+			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
 				  rayFlags,                 // rayFlags
 				  0xFF,                     // cullMask
@@ -181,5 +181,5 @@ void main()
 		}
 	}
 
-	imageStore(visibilityTex1, ivec2(gl_LaunchIDEXT.xy), uvec4(visibility,visibility,visibility,visibility));
+	imageStore(visibilityTex, ivec2(gl_LaunchIDEXT.xy), uvec4(visibility,0,0,0));
 }
