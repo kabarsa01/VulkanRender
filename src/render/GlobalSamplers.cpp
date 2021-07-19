@@ -44,7 +44,8 @@ namespace CGE
 		samplerInfo.setAddressModeW(SamplerAddressMode::eRepeat);
 		samplerInfo.setAnisotropyEnable(VK_FALSE);
 		samplerInfo.setBorderColor(BorderColor::eIntOpaqueBlack);
-		samplerInfo.setCompareEnable(VK_FALSE);
+		samplerInfo.setCompareEnable(VK_TRUE);
+		samplerInfo.setCompareOp(vk::CompareOp::eAlways);
 		samplerInfo.setMagFilter(Filter::eLinear);
 		samplerInfo.setMaxAnisotropy(2);
 		samplerInfo.setMinLod(0.0f);

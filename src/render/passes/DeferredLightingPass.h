@@ -14,6 +14,7 @@ namespace CGE
 		Texture2DPtr albedoTexture;
 		Texture2DPtr normalTexture;
 		Texture2DPtr depthTexture;
+		Texture2DPtr visibilityTexture;
 	
 		virtual void OnCreate() override;
 		virtual void OnDestroy() override {}

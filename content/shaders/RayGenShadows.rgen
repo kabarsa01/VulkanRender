@@ -45,10 +45,9 @@ uint WriteVisibility(uint vis, uint index, bool visible)
 
 void main() 
 {
+	float tMin = 0.001f;
+	float tMax = 1000.f;
     uint  rayFlags = gl_RayFlagsOpaqueEXT;
-    float tMin     = 0.001;
-    float tMax     = 10000.0;
-
 
 	uint visibility = 0;
 
@@ -85,7 +84,7 @@ void main()
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec3 N = texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz;
-	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.01f);
+	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.1f);
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{

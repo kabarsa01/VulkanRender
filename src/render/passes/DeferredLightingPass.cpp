@@ -8,6 +8,7 @@
 #include "ZPrepass.h"
 #include "../RtScene.h"
 #include "utils/Singleton.h"
+#include "RTShadowPass.h"
 
 namespace CGE
 {
@@ -43,9 +44,16 @@ namespace CGE
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		std::array<ImageMemoryBarrier, 2> barriers{ attachmentBarrier, depthTextureBarrier };
+		ImageMemoryBarrier visibilityTextureBarrier = visibilityTexture->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eShaderWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		std::array<ImageMemoryBarrier, 3> barriers{ attachmentBarrier, depthTextureBarrier, visibilityTextureBarrier };
 		inCommandBuffer->pipelineBarrier(
-			PipelineStageFlagBits::eVertexShader | PipelineStageFlagBits::eComputeShader,
+			PipelineStageFlagBits::eVertexShader | PipelineStageFlagBits::eComputeShader | PipelineStageFlagBits::eRayTracingShaderKHR,
 			PipelineStageFlagBits::eFragmentShader,
 			DependencyFlags(),
 			0, nullptr,
@@ -81,6 +89,7 @@ namespace CGE
 		ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
 		GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
 		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
+		RTShadowPass* rtShadowPass = GetRenderer()->GetRTShadowPass();
 	
 		albedoTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingAlbedoTexture");
 		albedoTexture->CreateFromExternal(gBufferPass->GetAttachments()[0], gBufferPass->GetAttachmentViews()[0]);
@@ -88,6 +97,8 @@ namespace CGE
 		normalTexture->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
 		depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingDepthTexture");
 		depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
+		visibilityTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingVisibilityTexture");
+		visibilityTexture->CreateFromExternal(rtShadowPass->GetVisibilityTexture(), false);
 	
 		lightingMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
 			"DeferredLightingMaterial",
@@ -100,6 +111,7 @@ namespace CGE
 		lightingMaterial->SetTexture("albedoTex", albedoTexture);
 		lightingMaterial->SetTexture("normalsTex", normalTexture);
 		lightingMaterial->SetTexture("depthTex", depthTexture);
+		lightingMaterial->SetTexture("visibilityTex", visibilityTexture);
 		lightingMaterial->SetAccelerationStructure("topLevelAS", Singleton<RtScene>::GetInstance()->GetTlas().accelerationStructure);
 
 		lightingMaterial->LoadResources();

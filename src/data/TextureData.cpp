@@ -84,6 +84,13 @@ namespace CGE
 		imageView = inImageView;
 		cleanup = inCleanup;
 	}
+
+	void TextureData::CreateFromExternal(std::shared_ptr<TextureData> texture, bool inCleanup/* = false*/)
+	{
+		image = texture->image;
+		imageView = texture->imageView;
+		cleanup = inCleanup;
+	}
 	
 	ImageView& TextureData::GetImageView()
 	{

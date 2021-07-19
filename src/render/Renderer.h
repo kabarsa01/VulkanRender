@@ -76,6 +76,7 @@ namespace CGE
 		ZPrepass* GetZPrepass() { return zPrepass; }
 		LightClusteringPass* GetLightClusteringPass() { return lightClusteringPass; }
 		GBufferPass* GetGBufferPass() { return gBufferPass; }
+		RTShadowPass* GetRTShadowPass() { return rtShadowPass; }
 		DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
 	protected:
 	private:

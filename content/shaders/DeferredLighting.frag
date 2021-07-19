@@ -45,12 +45,10 @@ layout(set = 1, binding = 1) uniform texture2D normalsTex;
 layout(set = 1, binding = 2) uniform texture2D roghnessTex;
 layout(set = 1, binding = 3) uniform texture2D metallnessTex;
 layout(set = 1, binding = 4) uniform texture2D depthTex;
-
-// Pi =)
-//const float PI = 3.14159265359;
+layout(set = 1, binding = 5) uniform utexture2D visibilityTex;
 
 // light clustering data
-layout(set = 1, binding = 5) readonly buffer ClusterLightsData
+layout(set = 1, binding = 6) readonly buffer ClusterLightsData
 {
 	uvec2 clusters[32][32][64];
 	uint lightIndices[32][32][64][128];
@@ -64,24 +62,28 @@ struct LightInfo
 	vec4 color;
 	vec4 rai;
 };
-layout(set = 1, binding = 6) uniform LightsList
+layout(set = 1, binding = 7) uniform LightsList
 {
 	LightInfo lights[1024];
 } lightsList;
 
-layout(set = 1, binding = 7) uniform LightsIndices
+layout(set = 1, binding = 8) uniform LightsIndices
 {
 	uvec2 directionalPosition;
 	uvec2 spotPosition;
 	uvec2 pointPosition;
 } lightsIndices;
 
-layout(set = 1, binding = 8) uniform accelerationStructureEXT topLevelAS;
+layout(set = 1, binding = 9) uniform accelerationStructureEXT topLevelAS;
 
 //layout(location = 0) in vec3 normal;
 layout(location = 1) in vec2 uv;
-
 layout(location = 0) out vec4 outScreenColor;
+
+bool IsVisible(uint visibility, uint index)
+{
+	return (visibility & (0x1 << index)) > 0;
+}
 
 void main() {
 	uint clusterX = uint(clamp(uv.x * 32.0, 0, 31));
@@ -95,6 +97,8 @@ void main() {
 		outScreenColor = vec4(0.0, 0.0, 0.0, 1.0);
 		return;
 	}
+
+	uint visibility = texture(usampler2D( visibilityTex, borderBlackLinearSampler ), uv).r;
 
 	float linearDepth = near * far / (far + depth * (near - far));
 	float height = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
@@ -143,14 +147,13 @@ void main() {
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
-		bool isShadow = false;
-		if (surfaceCosine > 0.0f)
+		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
 		{
-			isShadow = RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
-		}
-
-		if (!isShadow)
-		{
+//			isShadow = RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
+//		}
+//
+//		if (!isShadow)
+//		{
 			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
 		}
 	}
@@ -161,23 +164,24 @@ void main() {
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
-		if (surfaceCosine > 0.0f)
+		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
 		{
-			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
-			{
-				continue;
-			}
+//			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+//			{
+//				continue;
+//			}
+//		}
+
+			float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
+			float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
+			float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
+			float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+			float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
+
+			vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * angleFactor * distanceFactor;
+
+			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 		}
-
-		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
-		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
-		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
-
-		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * angleFactor * distanceFactor;
-
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
@@ -186,20 +190,21 @@ void main() {
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
-		if (surfaceCosine > 0.0f)
+		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
 		{
-			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
-			{
-				continue;
-			}
+//			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
+//			{
+//				continue;
+//			}
+//		}
+
+			float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
+			float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+			float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
+
+			vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
+			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 		}
-
-		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
-
-		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 
 	outScreenColor = vec4(ambient + Lo, 1.0);//vec4(normal, 1.0);//

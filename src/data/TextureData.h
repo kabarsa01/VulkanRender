@@ -15,6 +15,7 @@ namespace CGE
 		virtual bool Create() override;
 	
 		void CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup = false);
+		void CreateFromExternal(std::shared_ptr<TextureData> texture, bool inCleanup = false);
 	
 		inline VulkanImage& GetImage() { return image; }
 		ImageView& GetImageView();
