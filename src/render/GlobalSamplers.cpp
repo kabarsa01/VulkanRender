@@ -103,7 +103,7 @@ namespace CGE
 			binding.setBinding(index);
 			binding.setDescriptorType(DescriptorType::eSampler);
 			binding.setDescriptorCount(1);
-			binding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
+			binding.setStageFlags(ShaderStageFlagBits::eAll);
 			binding.setPImmutableSamplers(samplers[index]);
 	
 			bindings.push_back(binding);

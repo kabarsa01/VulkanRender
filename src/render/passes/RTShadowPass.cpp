@@ -33,8 +33,44 @@ namespace CGE
 	{
 		RtScene* rtScene = Singleton<RtScene>::GetInstance();
 
+		if (!m_rtPipeline)
+		{
+			return;
+		}
+
+		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
+		VulkanBuffer& buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+
+		// barriers ----------------------------------------------
+		BufferMemoryBarrier clusterDataBarrier = buffer.CreateMemoryBarrier(
+			0, 0,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead);
+		ImageMemoryBarrier attachmentBarrier = m_visibilityTex1->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eGeneral,
+			vk::AccessFlagBits::eShaderRead,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		ImageMemoryBarrier depthTextureBarrier = m_depthTex->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
+			0, 1, 0, 1);
+		std::array<ImageMemoryBarrier, 2> barriers{ attachmentBarrier, depthTextureBarrier };
+		inCommandBuffer->pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
+			vk::DependencyFlags(),
+			0, nullptr,
+			1, &clusterDataBarrier,
+			static_cast<uint32_t>(barriers.size()), barriers.data());
+
 		inCommandBuffer->bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, m_rtPipeline);
-		inCommandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eRayTracingKHR, m_rtPipelineLayout, 0, m_sets.size(), m_sets.data(), 0, nullptr);
+		inCommandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eRayTracingKHR, m_rtPipelineLayout, 0, m_nativeSets.size(), m_nativeSets.data(), 0, nullptr);
 
 		vk::StridedDeviceAddressRegionKHR rayGenRegion;
 		rayGenRegion.setDeviceAddress(m_sbtBuffer.GetDeviceAddress());
@@ -64,14 +100,19 @@ namespace CGE
 
 	Pipeline RTShadowPass::CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass)
 	{
+		RtScene* rtScene = Singleton<RtScene>::GetInstance();
+		if (rtScene->GetShaderGroups().size() == 0)
+		{
+			return nullptr;
+		}
+
 		VulkanDevice* device = GetVulkanDevice();
 		vk::Device& nativeDevice = device->GetDevice();
 
-		RtScene* rtScene = Singleton<RtScene>::GetInstance();
 		PerFrameData* frameData = Engine::GetRendererInstance()->GetPerFrameData();
 
-		vk::PipelineCacheCreateInfo pipelineCacheInfo;
-		vk::PipelineCache pipelineCache = nativeDevice.createPipelineCache(pipelineCacheInfo);
+		//vk::PipelineCacheCreateInfo pipelineCacheInfo;
+		//vk::PipelineCache pipelineCache = nativeDevice.createPipelineCache(pipelineCacheInfo);
 
 		vk::DeferredOperationKHR deferredOperation;
 
@@ -81,14 +122,15 @@ namespace CGE
 		//------------------------------------------------------------------
 		// get descriptor sets from shaders
 		m_sets.clear();
-		std::vector<VulkanDescriptorSet>& sets = m_shaderResourceMapper.GetDescriptorSets();
+		m_nativeSets.clear();
+		m_sets = m_shaderResourceMapper.GetDescriptorSets();
+		m_nativeSets.resize(m_sets.size());
 		std::vector<vk::DescriptorSetLayout> descLayouts;
-		descLayouts.resize(sets.size());
-		m_sets.resize(sets.size());
+		descLayouts.resize(m_sets.size());
 		for (uint32_t idx = 0; idx < descLayouts.size(); idx++)
 		{
-			descLayouts[idx] = sets[idx].GetLayout();
-			m_sets[idx] = idx == 0 ? frameData->GetSet() : sets[idx].GetSet();
+			descLayouts[idx] = m_sets[idx].GetLayout();
+			m_nativeSets[idx] = idx == 0 ? frameData->GetSet() : m_sets[idx].GetSet();
 		}
 		//------------------------------------------------------------------
 		// pipeline layout info
@@ -106,10 +148,10 @@ namespace CGE
 		pipelineInfo.setFlags({});
 		pipelineInfo.setLayout(m_rtPipelineLayout);
 
-		auto pipelineResult = nativeDevice.createRayTracingPipelineKHR(deferredOperation, pipelineCache, pipelineInfo);
+		auto pipelineResult = nativeDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInfo);
 		if (pipelineResult.result != vk::Result::eSuccess)
 		{
-			return Pipeline();
+			return nullptr;
 		}
 		m_rtPipeline = pipelineResult.value;
 
@@ -117,10 +159,10 @@ namespace CGE
 			device->GetPhysicalDevice().GetDevice().getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
 		m_rtProps = structChain.get<vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
 		uint32_t handleSize = m_rtProps.shaderGroupHandleSize;
-		uint32_t baseAlignment = m_rtProps.shaderGroupBaseAlignment;
+		uint32_t alignment = m_rtProps.shaderGroupBaseAlignment;
 		// nvidia recommended to use base alignment
 		// we avoid using power of two version formula just in case. who knows
-		m_handleSizeAligned = baseAlignment * ((handleSize + baseAlignment - 1) / baseAlignment);
+		m_handleSizeAligned = alignment * ((handleSize + alignment - 1) / alignment);
 		uint32_t groupCount = static_cast<uint32_t>( rtScene->GetShaderGroups().size() );
 		uint64_t sbtSize = groupCount * m_handleSizeAligned;
 		std::vector<char> shadersHandles(sbtSize);
@@ -134,13 +176,20 @@ namespace CGE
 		m_sbtBuffer = ResourceUtils::CreateBuffer(
 			device, 
 			sbtSize,
-			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR,
+			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR | vk::BufferUsageFlagBits::eTransferDst,
 			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			true
 		);
 		if (sbtSize > 0)
 		{
-			m_sbtBuffer.CopyTo(sbtSize, shadersHandles.data(), true);
+			std::vector<char> alignedShadersHandles(sbtSize);
+			char* addr = alignedShadersHandles.data();
+			for (uint32_t idx = 0; idx < groupCount; idx++)
+			{
+				memcpy(addr, shadersHandles.data() + handleSize * idx, handleSize);
+				addr += m_handleSizeAligned;
+			}
+			m_sbtBuffer.CopyTo(sbtSize, alignedShadersHandles.data(), true);
 		}
 
 		return m_rtPipeline;
@@ -202,7 +251,11 @@ namespace CGE
 
 	void RTShadowPass::OnDestroy()
 	{
+		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 		// TODO cleanup
+		m_sbtBuffer.Destroy();
+		device.destroyPipeline(m_rtPipeline);
+		device.destroyPipelineLayout(m_rtPipelineLayout);
 	}
 
 	void RTShadowPass::HandlePreUpdate(std::shared_ptr<GlobalPreUpdateMessage> msg)

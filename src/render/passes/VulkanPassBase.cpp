@@ -117,7 +117,7 @@ namespace CGE
 		PushConstantRange pushConstRange;
 		pushConstRange.setOffset(0);
 		pushConstRange.setSize(sizeof(uint32_t));
-		pushConstRange.setStageFlags(ShaderStageFlagBits::eAllGraphics);
+		pushConstRange.setStageFlags(ShaderStageFlagBits::eAll);
 	
 		pipelineLayoutInfo.setPushConstantRangeCount(1);
 		pipelineLayoutInfo.setPPushConstantRanges(&pushConstRange);

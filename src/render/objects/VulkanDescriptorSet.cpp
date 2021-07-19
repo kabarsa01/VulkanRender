@@ -150,6 +150,9 @@ namespace CGE
 		{
 			m_vulkanDevice->GetDevice().destroyDescriptorSetLayout(m_layout);
 			m_layout = nullptr;
+		}
+		if (m_set)
+		{
 			m_vulkanDevice->GetDevice().freeDescriptorSets(m_pool, { m_set });
 			m_set = nullptr;
 		}

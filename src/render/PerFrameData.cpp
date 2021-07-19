@@ -77,17 +77,19 @@ namespace CGE
 	std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
 	{
 		std::vector<DescriptorSetLayoutBinding> bindings = GlobalSamplers::GetInstance()->GetBindings(0);
+
+		vk::ShaderStageFlags stageFlags = vk::ShaderStageFlagBits::eAll;
 	
 		shaderDataBinding.setBinding(static_cast<uint32_t>( bindings.size() ));
 		shaderDataBinding.setDescriptorCount(1);
 		shaderDataBinding.setDescriptorType(DescriptorType::eUniformBuffer);
-		shaderDataBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
+		shaderDataBinding.setStageFlags(stageFlags);
 		bindings.push_back(shaderDataBinding);
 	
 		transformDataBinding.setBinding(static_cast<uint32_t>( bindings.size()) );
 		transformDataBinding.setDescriptorCount(1);
 		transformDataBinding.setDescriptorType(DescriptorType::eStorageBuffer);
-		transformDataBinding.setStageFlags(ShaderStageFlagBits::eAllGraphics | ShaderStageFlagBits::eCompute);
+		transformDataBinding.setStageFlags(stageFlags);
 		bindings.push_back(transformDataBinding);
 	
 		return bindings;

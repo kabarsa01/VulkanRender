@@ -134,7 +134,7 @@ namespace CGE
 			groupInfo.setGeneralShader(VK_SHADER_UNUSED_KHR);
 			groupInfo.setIntersectionShader(intersect ? m_shaderIndices[intersect->GetResourceId()] : VK_SHADER_UNUSED_KHR);
 			groupInfo.setAnyHitShader(anyHit ? m_shaderIndices[anyHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
-			groupInfo.setIntersectionShader(closestHit ? m_shaderIndices[closestHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
+			groupInfo.setClosestHitShader(closestHit ? m_shaderIndices[closestHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
 
 			m_materialGroupIndices[mat->GetResourceId()] = static_cast<uint32_t>(m_groups.size());
 			m_groups.push_back(groupInfo);
@@ -389,7 +389,7 @@ namespace CGE
 			groupInfo.setGeneralShader(m_shaderIndices[shader->GetResourceId()]);
 			groupInfo.setIntersectionShader(VK_SHADER_UNUSED_KHR);
 			groupInfo.setAnyHitShader(VK_SHADER_UNUSED_KHR);
-			groupInfo.setIntersectionShader(VK_SHADER_UNUSED_KHR);
+			groupInfo.setClosestHitShader(VK_SHADER_UNUSED_KHR);
 
 			groups.push_back(groupInfo);
 		}

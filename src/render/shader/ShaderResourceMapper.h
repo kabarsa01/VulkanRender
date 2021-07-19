@@ -16,7 +16,13 @@ namespace CGE
 	{
 	public:
 		ShaderResourceMapper() {}
-		~ShaderResourceMapper() {}
+		~ShaderResourceMapper()
+		{
+			for (VulkanDescriptorSet& set : m_sets)
+			{
+				set.Destroy();
+			}
+		}
 
 		std::vector<VulkanDescriptorSet>& GetDescriptorSets() { return m_sets; }
 
