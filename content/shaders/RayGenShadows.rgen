@@ -37,6 +37,7 @@ layout(set = 1, binding = 4) uniform LightsIndices
 
 layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
 layout(set = 1, binding = 6, r32ui) uniform uimage2D visibilityTex;
+layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTexes[];
 
 uint WriteVisibility(uint vis, uint index, bool visible)
 {

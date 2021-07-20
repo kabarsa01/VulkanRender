@@ -141,70 +141,58 @@ void main() {
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
+		if (!IsVisible(visibility, index))
+		{
+			continue;
+		}
+
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
-		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
-		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
-		{
-//			isShadow = RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, 150.f);
-//		}
-//
-//		if (!isShadow)
-//		{
-			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
-		}
+		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
+		if (!IsVisible(visibility, index))
+		{
+			continue;
+		}
+
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
-		float surfaceCosine = dot(normalize(pixelToLightDir), N);
-		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
-		{
-//			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
-//			{
-//				continue;
-//			}
-//		}
 
-			float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
-			float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
-			float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-			float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-			float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
+		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
+		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
+		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
+		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
 
-			vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * angleFactor * distanceFactor;
+		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * angleFactor * distanceFactor;
 
-			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
-		}
+		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
+		if (!IsVisible(visibility, index))
+		{
+			continue;
+		}
+
 		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
 		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
 
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
-		float surfaceCosine = dot(normalize(pixelToLightDir), N);
-		if (/*surfaceCosine > 0.0f &&*/ IsVisible(visibility, index))
-		{
-//			if (RayQueryIsShadow(topLevelAS, rayStart, normalize(pixelToLightDir.xyz), 0.1f, sqrt(dot(pixelToLightDir, pixelToLightDir))))
-//			{
-//				continue;
-//			}
-//		}
+		
+		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
+		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
+		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
 
-			float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-			float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-			float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
-
-			vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
-			Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
-		}
+		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
+		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 
 	outScreenColor = vec4(ambient + Lo, 1.0);//vec4(normal, 1.0);//

@@ -61,8 +61,6 @@ namespace CGE
 		std::unordered_map<HashString, uint32_t> m_materialGroupIndices;
 		uint32_t m_missGroupsOffset;
 		uint32_t m_hitGroupsOffset;
-		// SBT data
-		//VulkanBuffer m_sbtBuffer;
 
 		std::vector<vk::AccelerationStructureInstanceKHR> m_instances;
 		VulkanBuffer m_instancesBuffer;
