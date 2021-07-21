@@ -20,52 +20,62 @@ namespace CGE
 
 	void ShaderResourceMapper::AddSampledImage(HashString name, TextureDataPtr texture)
 	{
-		AddResource(vk::DescriptorType::eSampledImage, name, texture);
+		AddResource<TextureDataPtr>(vk::DescriptorType::eSampledImage, name, { texture });
 	}
 
 	void ShaderResourceMapper::AddSampledImage(uint32_t set, uint32_t binding, TextureDataPtr texture)
 	{
-		AddResource(vk::DescriptorType::eSampledImage, set, binding, texture);
+		AddResource<TextureDataPtr>(vk::DescriptorType::eSampledImage, set, binding, { texture });
+	}
+
+	void ShaderResourceMapper::AddSampledImageArray(HashString name, const std::vector<TextureDataPtr>& textures)
+	{
+		AddResource<TextureDataPtr>(vk::DescriptorType::eSampledImage, name, textures);
 	}
 
 	void ShaderResourceMapper::AddStorageImage(HashString name, TextureDataPtr texture)
 	{
-		AddResource(vk::DescriptorType::eStorageImage, name, texture);
+		AddResource<TextureDataPtr>(vk::DescriptorType::eStorageImage, name, { texture });
 	}
 
 	void ShaderResourceMapper::AddStorageImage(uint32_t set, uint32_t binding, TextureDataPtr texture)
 	{
-		AddResource(vk::DescriptorType::eStorageImage, set, binding, texture);
+		AddResource<TextureDataPtr>(vk::DescriptorType::eStorageImage, set, binding, { texture });
+	}
+
+	void ShaderResourceMapper::AddStorageImageArray(HashString name, const std::vector<TextureDataPtr>& textures)
+	{
+		AddResource<TextureDataPtr>(vk::DescriptorType::eStorageImage, name, textures);
 	}
 
 	void ShaderResourceMapper::AddUniformBuffer(HashString name, VulkanBuffer buffer)
 	{
-		AddResource(vk::DescriptorType::eUniformBuffer, name, buffer);
+		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, name, { buffer });
 	}
 
 	void ShaderResourceMapper::AddUniformBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer)
 	{
-		AddResource(vk::DescriptorType::eUniformBuffer, set, binding, buffer);
+		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, set, binding, { buffer });
 	}
 
 	void ShaderResourceMapper::AddStorageBuffer(HashString name, VulkanBuffer buffer)
 	{
-		AddResource(vk::DescriptorType::eStorageBuffer, name, buffer);
+		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, name, { buffer });
 	}
 
 	void ShaderResourceMapper::AddStorageBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer)
 	{
-		AddResource(vk::DescriptorType::eStorageBuffer, set, binding, buffer);
+		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, set, binding, { buffer });
 	}
 
 	void ShaderResourceMapper::AddAccelerationStructure(HashString name, vk::AccelerationStructureKHR accelerationStructure)
 	{
-		AddResource(vk::DescriptorType::eAccelerationStructureKHR, name, accelerationStructure);
+		AddResource<vk::AccelerationStructureKHR>(vk::DescriptorType::eAccelerationStructureKHR, name, { accelerationStructure });
 	}
 
 	void ShaderResourceMapper::AddAccelerationStructure(uint32_t set, uint32_t binding, vk::AccelerationStructureKHR accelerationStructure)
 	{
-		AddResource(vk::DescriptorType::eAccelerationStructureKHR, set, binding, accelerationStructure);
+		AddResource<vk::AccelerationStructureKHR>(vk::DescriptorType::eAccelerationStructureKHR, set, binding, { accelerationStructure });
 	}
 
 	void ShaderResourceMapper::Update()
@@ -107,11 +117,11 @@ namespace CGE
 				switch (pair.first)
 				{
 				case vk::DescriptorType::eSampledImage:
-					vk::DescriptorImageInfo* sampledImageInfo;
-					sampledImageInfo = new vk::DescriptorImageInfo();
+					std::vector<vk::DescriptorImageInfo>* sampledImageInfo;
+					sampledImageInfo = new std::vector<vk::DescriptorImageInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(sampledImageInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<TextureDataPtr>(rec.resource),
+						std::any_cast<std::vector<TextureDataPtr>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -119,11 +129,11 @@ namespace CGE
 					);
 					break;
 				case vk::DescriptorType::eStorageImage:
-					vk::DescriptorImageInfo* storageImageInfo;
-					storageImageInfo = new vk::DescriptorImageInfo();
+					std::vector<vk::DescriptorImageInfo>* storageImageInfo;
+					storageImageInfo = new std::vector<vk::DescriptorImageInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(storageImageInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<TextureDataPtr>(rec.resource),
+						std::any_cast<std::vector<TextureDataPtr>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						vk::ImageLayout::eGeneral,
@@ -131,22 +141,22 @@ namespace CGE
 					);
 					break;
 				case vk::DescriptorType::eUniformBuffer:
-					vk::DescriptorBufferInfo* uniformBuffInfo;
-					uniformBuffInfo = new vk::DescriptorBufferInfo();
+					std::vector<vk::DescriptorBufferInfo>* uniformBuffInfo;
+					uniformBuffInfo = new std::vector<vk::DescriptorBufferInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(uniformBuffInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<VulkanBuffer>(rec.resource),
+						std::any_cast<std::vector<VulkanBuffer>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						*uniformBuffInfo
 					);
 					break;
 				case vk::DescriptorType::eStorageBuffer:
-					vk::DescriptorBufferInfo* storageBuffInfo;
-					storageBuffInfo = new vk::DescriptorBufferInfo();
+					std::vector<vk::DescriptorBufferInfo>* storageBuffInfo;
+					storageBuffInfo = new std::vector<vk::DescriptorBufferInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(storageBuffInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<VulkanBuffer>(rec.resource),
+						std::any_cast<std::vector<VulkanBuffer>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						*storageBuffInfo
@@ -157,7 +167,7 @@ namespace CGE
 					accelStructWrite = new vk::WriteDescriptorSetAccelerationStructureKHR();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(accelStructWrite));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<vk::AccelerationStructureKHR>(rec.resource),
+						std::any_cast<std::vector<vk::AccelerationStructureKHR>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						*accelStructWrite
@@ -179,14 +189,14 @@ namespace CGE
 				{
 				case vk::DescriptorType::eSampledImage:
 				case vk::DescriptorType::eStorageImage:
-					vk::DescriptorImageInfo* sampledImageInfo;
-					sampledImageInfo = reinterpret_cast<vk::DescriptorImageInfo*>(info);
+					std::vector<vk::DescriptorImageInfo>* sampledImageInfo;
+					sampledImageInfo = reinterpret_cast<std::vector<vk::DescriptorImageInfo>*>(info);
 					delete sampledImageInfo;
 					break;
 				case vk::DescriptorType::eUniformBuffer:
 				case vk::DescriptorType::eStorageBuffer:
-					vk::DescriptorBufferInfo* bufferInfo;
-					bufferInfo = reinterpret_cast<vk::DescriptorBufferInfo*>(info);
+					std::vector<vk::DescriptorBufferInfo>* bufferInfo;
+					bufferInfo = reinterpret_cast<std::vector<vk::DescriptorBufferInfo>*>(info);
 					delete bufferInfo;
 					break;
 				case vk::DescriptorType::eAccelerationStructureKHR:

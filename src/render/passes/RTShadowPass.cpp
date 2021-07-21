@@ -60,7 +60,18 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		std::array<ImageMemoryBarrier, 2> barriers{ attachmentBarrier, depthTextureBarrier };
+		std::vector<ImageMemoryBarrier> barriers{ attachmentBarrier, depthTextureBarrier };
+		for (uint32_t idx = 0; idx < 16; idx++)
+		{
+			ImageMemoryBarrier visibilityBarrier = m_visibilityTextures[idx]->GetImage().CreateLayoutBarrier(
+				ImageLayout::eUndefined,
+				ImageLayout::eGeneral,
+				vk::AccessFlagBits::eShaderRead,
+				vk::AccessFlagBits::eShaderWrite,
+				vk::ImageAspectFlagBits::eColor,
+				0, 1, 0, 1);
+			barriers.push_back(visibilityBarrier);
+		}
 		inCommandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,
 			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
@@ -70,7 +81,12 @@ namespace CGE
 			static_cast<uint32_t>(barriers.size()), barriers.data());
 
 		inCommandBuffer->bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, m_rtPipeline);
-		inCommandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eRayTracingKHR, m_rtPipelineLayout, 0, m_nativeSets.size(), m_nativeSets.data(), 0, nullptr);
+		inCommandBuffer->bindDescriptorSets(
+			vk::PipelineBindPoint::eRayTracingKHR, 
+			m_rtPipelineLayout, 0, 
+			static_cast<uint32_t>(m_nativeSets.size()), 
+			m_nativeSets.data(), 
+			0, nullptr);
 
 		vk::StridedDeviceAddressRegionKHR rayGenRegion;
 		rayGenRegion.setDeviceAddress(m_sbtBuffer.GetDeviceAddress());
@@ -128,6 +144,23 @@ namespace CGE
 		m_visibilityTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsVisibilityTexture");
 		m_visibilityTex->CreateFromExternal(m_visibilityBuffer, m_visibilityView, true);
 
+		for (uint32_t idx = 0; idx < 16; idx++)
+		{
+			VulkanImage visImage = ResourceUtils::CreateImage2D(
+				&device,
+				GetWidth() / 2,
+				GetHeight() / 2,
+				vk::Format::eR8G8B8A8Unorm, 
+				vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled);
+			vk::ImageView visView = visImage.CreateView(ResourceUtils::CreateColorSubresRange(), ImageViewType::e2D);
+
+			std::string name("RtShadowsVisibilityTexture");
+			name.append(std::to_string(idx));
+			Texture2DPtr visibilityTex = ObjectBase::NewObject<Texture2D, const HashString&>(name);
+			visibilityTex->CreateFromExternal(visImage, visView, true);
+			m_visibilityTextures.push_back(visibilityTex);
+		}
+
 		ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
 		GBufferPass* gBufferPass = GetRenderer()->GetGBufferPass();
 		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
@@ -151,6 +184,7 @@ namespace CGE
 		m_shaderResourceMapper.AddUniformBuffer("lightsIndices", m_lightsIndices);
 		// visibility image
 		m_shaderResourceMapper.AddStorageImage("visibilityTex", m_visibilityTex);
+		m_shaderResourceMapper.AddStorageImageArray("visibilityTextures", m_visibilityTextures);
 		m_shaderResourceMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
 
 		m_rayGenShader = DataManager::RequestResourceType<RtShader>("content/shaders/RayGenShadows.spv", ERtShaderType::RST_RAY_GEN);
@@ -220,7 +254,7 @@ namespace CGE
 		//------------------------------------------------------------------
 		// pipeline layout info
 		vk::PipelineLayoutCreateInfo layoutInfo;
-		layoutInfo.setSetLayoutCount(descLayouts.size());
+		layoutInfo.setSetLayoutCount(static_cast<uint32_t>(descLayouts.size()));
 		layoutInfo.setPSetLayouts(descLayouts.data());
 		m_rtPipelineLayout = nativeDevice.createPipelineLayout(layoutInfo);
 		//------------------------------------------------------------------

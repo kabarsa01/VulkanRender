@@ -33,8 +33,10 @@ namespace CGE
 
 		void AddSampledImage(HashString name, TextureDataPtr texture);
 		void AddSampledImage(uint32_t set, uint32_t binding, TextureDataPtr texture);
+		void AddSampledImageArray(HashString name, const std::vector<TextureDataPtr>& textures);
 		void AddStorageImage(HashString name, TextureDataPtr texture);
 		void AddStorageImage(uint32_t set, uint32_t binding, TextureDataPtr texture);
+		void AddStorageImageArray(HashString name, const std::vector<TextureDataPtr>& textures);
 		void AddUniformBuffer(HashString name, VulkanBuffer buffer);
 		void AddUniformBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer);
 		void AddStorageBuffer(HashString name, VulkanBuffer buffer);
@@ -46,7 +48,7 @@ namespace CGE
 	private:
 		struct ResourceBindingRecord
 		{
-			std::any resource;
+			std::any resources;
 			int32_t set;
 			int32_t binding;
 		};
@@ -61,14 +63,14 @@ namespace CGE
 		std::unordered_map<HashString, BindingInfo> m_bindingsNames;
 
 		template<typename T>
-		void AddResource(vk::DescriptorType type, HashString name, T resource)
+		void AddResource(vk::DescriptorType type, HashString name, std::vector<T> resources)
 		{
-			m_resourcesNames[name] = resource;
+			m_resourcesNames[name] = resources;
 		}
 		template<typename T>
-		void AddResource(vk::DescriptorType type, uint32_t set, uint32_t binding, T resource)
+		void AddResource(vk::DescriptorType type, uint32_t set, uint32_t binding, std::vector<T> resources)
 		{
-			m_resourcesTable[type].push_back({ resource, static_cast<int32_t>( set ), static_cast<int32_t>( binding ) });
+			m_resourcesTable[type].push_back({ resources, static_cast<int32_t>( set ), static_cast<int32_t>( binding ) });
 		}
 		template<typename T>
 		T GetResource(HashString name)

@@ -45,7 +45,7 @@ namespace CGE
 
 		uint32_t GetRayGenGroupsSize() { return m_missGroupsOffset; }
 		uint32_t GetMissGroupsSize() { return m_hitGroupsOffset - m_missGroupsOffset; }
-		uint32_t GetHitGroupsSize() { return m_groups.size() - m_hitGroupsOffset; }
+		uint32_t GetHitGroupsSize() { return static_cast<uint32_t>(m_groups.size()) - m_hitGroupsOffset; }
 	private:
 		MessageSubscriber m_messageSubscriber;
 		std::unordered_map<HashString, AccelStructure> m_blasTable;

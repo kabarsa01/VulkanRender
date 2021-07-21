@@ -151,6 +151,28 @@ namespace CGE
 		return write;
 	}
 
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<VulkanBuffer>& buffers, const BindingInfo& info, std::vector<vk::DescriptorBufferInfo>& outDescInfo)
+	{
+		return CreateWriteDescriptor(buffers, info.descriptorType, info.binding, outDescInfo);
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<VulkanBuffer>& buffers, vk::DescriptorType type, uint32_t binding, std::vector<vk::DescriptorBufferInfo>& outDescInfo)
+	{
+		vk::WriteDescriptorSet write;
+
+		for (auto& buffer : buffers)
+		{
+			outDescInfo.push_back(buffer.GetDescriptorInfo());
+		}
+
+		write.setPBufferInfo(outDescInfo.data());
+		write.setDescriptorCount(static_cast<uint32_t>(buffers.size()));
+		write.setDescriptorType(type);
+		write.setDstBinding(binding);
+
+		return write;
+	}
+
 	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(TextureDataPtr texture, const BindingInfo& info, vk::ImageLayout layout, vk::DescriptorImageInfo& outDescInfo)
 	{
 		return CreateWriteDescriptor(texture, info.descriptorType, info.binding, layout, outDescInfo);
@@ -164,6 +186,28 @@ namespace CGE
 
 		write.setPImageInfo(&outDescInfo);
 		write.setDescriptorCount(1);
+		write.setDescriptorType(type);
+		write.setDstBinding(binding);
+
+		return write;
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<TextureDataPtr>& textures, const BindingInfo& info, vk::ImageLayout layout, std::vector<vk::DescriptorImageInfo>& outDescInfo)
+	{
+		return CreateWriteDescriptor(textures, info.descriptorType, info.binding, layout, outDescInfo);
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<TextureDataPtr>& textures, vk::DescriptorType type, uint32_t binding, vk::ImageLayout layout, std::vector<vk::DescriptorImageInfo>& outDescInfo)
+	{
+		vk::WriteDescriptorSet write;
+
+		for (auto texture : textures)
+		{
+			outDescInfo.push_back(texture->GetDescriptorInfo(layout));
+		}
+
+		write.setPImageInfo(outDescInfo.data());
+		write.setDescriptorCount(static_cast<uint32_t>(textures.size()));
 		write.setDescriptorType(type);
 		write.setDstBinding(binding);
 
@@ -204,6 +248,34 @@ namespace CGE
 		outDescInfo.setPAccelerationStructures(&accelStruct);
 
 		write.setDescriptorCount(1);
+		write.setDescriptorType(type);
+		write.setDstBinding(binding);
+		write.setPNext(&outDescInfo);
+
+		return write;
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(
+		const std::vector<vk::AccelerationStructureKHR>& accelStructs, 
+		const BindingInfo& info, 
+		vk::WriteDescriptorSetAccelerationStructureKHR& outDescInfo)
+	{
+		return CreateWriteDescriptor(accelStructs, info.descriptorType, info.binding, outDescInfo);
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(
+		const std::vector<vk::AccelerationStructureKHR>& accelStructs, 
+		vk::DescriptorType type, 
+		uint32_t binding, 
+		vk::WriteDescriptorSetAccelerationStructureKHR& outDescInfo)
+	{
+		vk::WriteDescriptorSet write;
+
+		outDescInfo = vk::WriteDescriptorSetAccelerationStructureKHR();
+		outDescInfo.setAccelerationStructureCount(static_cast<uint32_t>(accelStructs.size()));
+		outDescInfo.setPAccelerationStructures(accelStructs.data());
+
+		write.setDescriptorCount(static_cast<uint32_t>(accelStructs.size()));
 		write.setDescriptorType(type);
 		write.setDstBinding(binding);
 		write.setPNext(&outDescInfo);

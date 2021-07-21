@@ -23,6 +23,7 @@ namespace CGE
 		void RecordCommands(CommandBuffer* inCommandBuffer) override;
 
 		Texture2DPtr GetVisibilityTexture() { return m_visibilityTex; }
+		std::vector<TextureDataPtr>& GetVisibilityTextures() { return m_visibilityTextures; }
 	protected:
 		void CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight) override;
 		void CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight) override;
@@ -39,6 +40,7 @@ namespace CGE
 		VulkanImage m_visibilityBuffer;
 		ImageView m_visibilityView;
 		Texture2DPtr m_visibilityTex;
+		std::vector<TextureDataPtr> m_visibilityTextures;
 
 		Texture2DPtr m_normalsTex;
 		Texture2DPtr m_depthTex;
