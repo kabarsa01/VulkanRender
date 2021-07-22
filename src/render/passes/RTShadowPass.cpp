@@ -103,7 +103,7 @@ namespace CGE
 		rayHitRegion.setSize(m_handleSizeAligned * rtScene->GetHitGroupsSize());
 		rayHitRegion.setStride(m_handleSizeAligned);
 
-		inCommandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, {0,0,0}, GetWidth() / 2, GetHeight() / 2, 1);
+		inCommandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, {0,0,0}, GetWidth()/* / 2*/, GetHeight()/* / 2*/, 1);
 	}
 
 	void RTShadowPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
@@ -135,8 +135,8 @@ namespace CGE
 
 		m_visibilityBuffer = ResourceUtils::CreateImage2D(
 			&device,
-			GetWidth() / 2,
-			GetHeight() / 2,
+			GetWidth()/* / 2*/,
+			GetHeight()/* / 2*/,
 			vk::Format::eR32Uint,//R8G8B8A8Unorm, 
 			vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled);
 		m_visibilityView = m_visibilityBuffer.CreateView(ResourceUtils::CreateColorSubresRange(), ImageViewType::e2D);
@@ -148,8 +148,8 @@ namespace CGE
 		{
 			VulkanImage visImage = ResourceUtils::CreateImage2D(
 				&device,
-				GetWidth() / 2,
-				GetHeight() / 2,
+				GetWidth()/* / 2*/,
+				GetHeight()/* / 2*/,
 				vk::Format::eR8G8B8A8Unorm, 
 				vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled);
 			vk::ImageView visView = visImage.CreateView(ResourceUtils::CreateColorSubresRange(), ImageViewType::e2D);

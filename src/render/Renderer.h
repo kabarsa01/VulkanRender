@@ -84,8 +84,8 @@ namespace CGE
 		VulkanBuffer uniformBuffer;
 		//======================= VARS ===============================
 		uint32_t version;
-		int width = 1600;
-		int height = 900;
+		int width = 1920;
+		int height = 1080;
 		bool framebufferResized = false;
 	
 		const std::vector<const char*> validationLayers = {

@@ -175,7 +175,7 @@ namespace CGE
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 		lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 0.6f;
+		lightObj->GetLightComponent()->intensity = 1.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();

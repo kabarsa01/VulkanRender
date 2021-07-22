@@ -44,8 +44,8 @@ namespace CGE
 		uint64_t m_frameCount = 0;
 	
 		GLFWwindow* m_window;
-		int m_windowWidth = 1600;
-		int m_windowHeight = 900;
+		int m_windowWidth = 1920;
+		int m_windowHeight = 1080;
 	
 		Engine();
 		Engine(const Engine& inOther) {}
