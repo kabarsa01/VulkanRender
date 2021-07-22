@@ -378,7 +378,7 @@ namespace CGE
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
-			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 65.0f * glm::sin(time / 5.0f), 0.0f});
+			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 65.0f * glm::sin(time / 15.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();
