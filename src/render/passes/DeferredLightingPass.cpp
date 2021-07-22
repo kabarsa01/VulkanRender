@@ -9,6 +9,7 @@
 #include "../RtScene.h"
 #include "utils/Singleton.h"
 #include "RTShadowPass.h"
+#include "core/Engine.h"
 
 namespace CGE
 {
@@ -24,6 +25,8 @@ namespace CGE
 	{
 		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
 		VulkanBuffer& buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+
+		RTShadowPass* rtPass = Engine::GetRendererInstance()->GetRTShadowPass();
 	
 		// barriers ----------------------------------------------
 		BufferMemoryBarrier clusterDataBarrier = buffer.CreateMemoryBarrier(
@@ -51,7 +54,20 @@ namespace CGE
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
-		std::array<ImageMemoryBarrier, 3> barriers{ attachmentBarrier, depthTextureBarrier, visibilityTextureBarrier };
+		std::vector<ImageMemoryBarrier> barriers{ attachmentBarrier, depthTextureBarrier, visibilityTextureBarrier };
+		for (auto tex : rtPass->GetVisibilityTextures())
+		{
+			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
+				ImageLayout::eUndefined,
+				ImageLayout::eShaderReadOnlyOptimal,
+				AccessFlagBits::eShaderWrite,
+				AccessFlagBits::eShaderRead,
+				ImageAspectFlagBits::eColor,
+				0, 1, 0, 1);
+
+			barriers.push_back(visibilityBarrier);
+		}
+
 		inCommandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eVertexShader | PipelineStageFlagBits::eComputeShader | PipelineStageFlagBits::eRayTracingShaderKHR,
 			PipelineStageFlagBits::eFragmentShader,
@@ -112,6 +128,7 @@ namespace CGE
 		lightingMaterial->SetTexture("normalsTex", normalTexture);
 		lightingMaterial->SetTexture("depthTex", depthTexture);
 		lightingMaterial->SetTexture("visibilityTex", visibilityTexture);
+		lightingMaterial->SetTextureArray("visibilityTextures", rtShadowPass->GetVisibilityTextures());
 		lightingMaterial->SetAccelerationStructure("topLevelAS", Singleton<RtScene>::GetInstance()->GetTlas().accelerationStructure);
 
 		lightingMaterial->LoadResources();

@@ -48,6 +48,10 @@ namespace CGE
 		{
 			m_resourceMapper.AddSampledImage(pair.first, pair.second);
 		}
+		for (auto& pair : sampledImage2DArrays)
+		{
+			m_resourceMapper.AddSampledImageArray(pair.first, pair.second);
+		}
 		for (auto& pair : storageImages2D)
 		{
 			m_resourceMapper.AddStorageImage(pair.first, pair.second);
@@ -157,6 +161,11 @@ namespace CGE
 	void Material::SetTexture(const std::string& inName, Texture2DPtr inTexture2D)
 	{
 		sampledImages2D[inName] = inTexture2D;
+	}
+
+	void Material::SetTextureArray(const std::string& inName, const std::vector<TextureDataPtr>& inTexture2D)
+	{
+		sampledImage2DArrays[inName] = inTexture2D;
 	}
 	
 	void Material::SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D)

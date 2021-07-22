@@ -197,6 +197,6 @@ void main()
 			if (idx == 2) comp.b = value;
 			if (idx == 3) comp.a = value;
 		}
-		imageStore(visibilityTextures[imageIdx], ivec2(gl_LaunchIDEXT.xy * 0.5f), comp);
+		imageStore(visibilityTextures[imageIdx], ivec2(gl_LaunchIDEXT.xy), comp);
 	}
 }

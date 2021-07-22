@@ -47,6 +47,8 @@ layout(set = 1, binding = 3) uniform texture2D metallnessTex;
 layout(set = 1, binding = 4) uniform texture2D depthTex;
 layout(set = 1, binding = 5) uniform utexture2D visibilityTex;
 
+layout(set = 2, binding = 3) uniform texture2D visibilityTextures[16];
+
 // light clustering data
 layout(set = 1, binding = 6) readonly buffer ClusterLightsData
 {
@@ -83,6 +85,17 @@ layout(location = 0) out vec4 outScreenColor;
 bool IsVisible(uint visibility, uint index)
 {
 	return (visibility & (0x1 << index)) > 0;
+}
+
+float GetPixelVisibility(uint index)
+{
+	vec4 visibilityInfo = texture(sampler2D( visibilityTextures[index / 4], repeatLinearSampler ), uv);
+	uint comp = index % 4;
+	if (comp == 0) return visibilityInfo.r;
+	if (comp == 1) return visibilityInfo.g;
+	if (comp == 2) return visibilityInfo.b;
+	if (comp == 3) return visibilityInfo.a;
+	return 1.0f;
 }
 
 void main() {
@@ -141,7 +154,8 @@ void main() {
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
-		if (!IsVisible(visibility, index))
+		float visibilityFactor = GetPixelVisibility(index);
+		if (visibilityFactor <= 0.0f)
 		{
 			continue;
 		}
@@ -151,11 +165,12 @@ void main() {
 
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
 
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
+		Lo += visibilityFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightInfo.color.xyz * lightInfo.rai.z, kD, roughness);
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
-		if (!IsVisible(visibility, index))
+		float visibilityFactor = GetPixelVisibility(index);
+		if (visibilityFactor <= 0.0f)
 		{
 			continue;
 		}
@@ -173,11 +188,12 @@ void main() {
 
 		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * angleFactor * distanceFactor;
 
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
+		Lo += visibilityFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
-		if (!IsVisible(visibility, index))
+		float visibilityFactor = GetPixelVisibility(index);
+		if (visibilityFactor <= 0.0f)
 		{
 			continue;
 		}
@@ -192,7 +208,7 @@ void main() {
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001f);
 
 		vec3 lightColor = lightInfo.color.xyz * lightInfo.rai.z * distanceFactor;
-		Lo += CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
+		Lo += visibilityFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 
 	outScreenColor = vec4(ambient + Lo, 1.0);//vec4(normal, 1.0);//

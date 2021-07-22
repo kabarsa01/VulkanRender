@@ -42,6 +42,7 @@ namespace CGE
 		void SetComputeShaderPath(const std::string& inComputeShaderPath);
 	
 		void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
+		void SetTextureArray(const std::string& inName, const std::vector<TextureDataPtr>& inTexture2D);
 		void SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D);
 		template<typename T>
 		void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
@@ -81,6 +82,7 @@ namespace CGE
 		ShaderPtr fragmentShader;
 		ShaderPtr computeShader;
 		std::map<HashString, Texture2DPtr> sampledImages2D;
+		std::map<HashString, std::vector<TextureDataPtr>> sampledImage2DArrays;
 		std::map<HashString, Texture2DPtr> storageImages2D;
 		std::map<HashString, VulkanBuffer> buffers;
 		std::map<HashString, VulkanBuffer> storageBuffers;
