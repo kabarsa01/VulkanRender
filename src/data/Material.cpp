@@ -36,21 +36,35 @@ namespace CGE
 	
 	void Material::LoadResources()
 	{
-		// TODO: process all the material resources
-		descriptorBindings.clear();
-		descriptorWrites.clear();
-	
-		vertexShader = InitShader(vertexShaderPath);
-		fragmentShader = InitShader(fragmentShaderPath);
-		computeShader = InitShader(computeShaderPath);
-	
-		PrepareDescriptorInfos();
-	
-		PrepareDescriptorWrites(vertexShader);
-		PrepareDescriptorWrites(fragmentShader);
-		PrepareDescriptorWrites(computeShader);
+		// process all the material resources	
+		vertexShader = DataManager::RequestResourceType<Shader>(vertexShaderPath);
+		fragmentShader = DataManager::RequestResourceType<Shader>(fragmentShaderPath);
+		computeShader = DataManager::RequestResourceType<Shader>(computeShaderPath);
 	
 		shaderHash = HashString(vertexShaderPath + fragmentShaderPath + computeShaderPath);
+
+		m_resourceMapper.SetShaders({ vertexShader, fragmentShader, computeShader });
+		for (auto& pair : sampledImages2D)
+		{
+			m_resourceMapper.AddSampledImage(pair.first, pair.second);
+		}
+		for (auto& pair : storageImages2D)
+		{
+			m_resourceMapper.AddStorageImage(pair.first, pair.second);
+		}
+		for (auto& pair : buffers)
+		{
+			m_resourceMapper.AddUniformBuffer(pair.first, pair.second);
+		}
+		for (auto& pair : storageBuffers)
+		{
+			m_resourceMapper.AddStorageBuffer(pair.first, pair.second);
+		}
+		for (auto& pair : accelerationStructures)
+		{
+			m_resourceMapper.AddAccelerationStructure(pair.first, pair.second);
+		}
+		m_resourceMapper.Update();
 	}
 	
 	HashString Material::GetShaderHash()
@@ -58,32 +72,24 @@ namespace CGE
 		return shaderHash;
 	}
 	
-	void Material::CreateDescriptorSet(VulkanDevice* inDevice)
-	{
-		if (vulkanDescriptorSet)
-		{
-			return;
-		}
-	
-		vulkanDevice = inDevice;
-		vulkanDescriptorSet.SetBindings(GetBindings());
-		vulkanDescriptorSet.Create(vulkanDevice);
-		UpdateDescriptorSet(vulkanDescriptorSet.GetSet(), vulkanDevice);
-	}
-	
-	DescriptorSet Material::GetDescriptorSet()
-	{
-		return vulkanDescriptorSet.GetSet();
-	}
-	
 	std::vector<DescriptorSet> Material::GetDescriptorSets()
 	{
-		return { vulkanDescriptorSet.GetSet() };
+		std::vector<vk::DescriptorSet> sets;
+		for (VulkanDescriptorSet& set : m_resourceMapper.GetDescriptorSets())
+		{
+			sets.push_back(set.GetSet());
+		}
+		return sets;
 	}
-	
-	DescriptorSetLayout Material::GetDescriptorSetLayout()
+
+	std::vector<vk::DescriptorSetLayout> Material::GetDescriptorSetLayouts()
 	{
-		return vulkanDescriptorSet.GetLayout();
+		std::vector<vk::DescriptorSetLayout> layouts;
+		for (VulkanDescriptorSet& set : m_resourceMapper.GetDescriptorSets())
+		{
+			layouts.push_back(set.GetLayout());
+		}
+		return layouts;
 	}
 	
 	PipelineShaderStageCreateInfo Material::GetVertexStageInfo()
@@ -223,16 +229,6 @@ namespace CGE
 		TransferList::GetInstance()->PushBuffer(&storageBuffers[inName]);
 	}
 	
-	void Material::UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice)
-	{
-		std::vector<WriteDescriptorSet>& writes = GetDescriptorWrites();
-		for (WriteDescriptorSet& write : writes)
-		{
-			write.setDstSet(inSet);
-		}
-		inDevice->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
-	}
-	
 	VulkanBuffer& Material::GetUniformBuffer(const std::string& inName)
 	{
 		return buffers[inName];
@@ -261,90 +257,6 @@ namespace CGE
 		}
 		vulkanDescriptorSet.Destroy();
 		return true;
-	}
-	
-	std::vector<DescriptorSetLayoutBinding>& Material::GetBindings()
-	{
-		return descriptorBindings;
-	}
-	
-	std::vector<WriteDescriptorSet>& Material::GetDescriptorWrites()
-	{
-		return descriptorWrites;
-	}
-	
-	void Material::PrepareDescriptorInfos()
-	{
-		for (auto& pair : sampledImages2D)
-		{
-			DescriptorImageInfo imageInfo;
-			imageInfo.setImageView(pair.second->GetImageView());
-			imageInfo.setImageLayout(ImageLayout::eShaderReadOnlyOptimal);
-	
-			imageDescInfos[pair.first] = imageInfo;
-		}
-		for (auto& pair : storageImages2D)
-		{
-			DescriptorImageInfo imageInfo;
-			imageInfo.setImageView(pair.second->GetImageView());
-			imageInfo.setImageLayout(ImageLayout::eGeneral);
-	
-			imageDescInfos[pair.first] = imageInfo;
-		}
-	
-	
-		for (auto& pair : buffers)
-		{
-			bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
-		}
-		for (auto& pair : storageBuffers)
-		{
-			bufferDescInfos[pair.first] = pair.second.GetDescriptorInfo();
-		}
-
-		for (auto& pair : accelerationStructures)
-		{
-			vk::WriteDescriptorSetAccelerationStructureKHR accelStructDescWrite;
-			accelStructDescWrite.setAccelerationStructureCount(1);
-			accelStructDescWrite.setPAccelerationStructures(&pair.second);
-			accelStructDescInfos[pair.first] = accelStructDescWrite;
-		}
-	}
-	
-	ShaderPtr Material::InitShader(const std::string& inResourcePath)
-	{
-		if (!inResourcePath.empty())
-		{
-			ShaderPtr shader = DataManager::RequestResourceType<Shader>(inResourcePath);
-			ProcessDescriptorType<Texture2DPtr>(DescriptorType::eSampledImage, shader, sampledImages2D, descriptorBindings);
-			ProcessDescriptorType<Texture2DPtr>(DescriptorType::eStorageImage, shader, storageImages2D, descriptorBindings);
-			ProcessDescriptorType<VulkanBuffer>(DescriptorType::eUniformBuffer, shader, buffers, descriptorBindings);
-			ProcessDescriptorType<VulkanBuffer>(DescriptorType::eStorageBuffer, shader, storageBuffers, descriptorBindings);
-			ProcessDescriptorType<vk::AccelerationStructureKHR>(
-				DescriptorType::eAccelerationStructureKHR, 
-				shader, 
-				accelerationStructures, 
-				descriptorBindings);
-
-			return shader;
-		}
-		return ShaderPtr();
-	}
-	
-	void Material::PrepareDescriptorWrites(ShaderPtr inShader)
-	{
-		if (inShader)
-		{
-			PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eSampledImage, inShader, imageDescInfos, descriptorWrites);
-			PrepareDescriptorWrites<DescriptorImageInfo>(DescriptorType::eStorageImage, inShader, imageDescInfos, descriptorWrites);
-			PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eUniformBuffer, inShader, bufferDescInfos, descriptorWrites);
-			PrepareDescriptorWrites<DescriptorBufferInfo>(DescriptorType::eStorageBuffer, inShader, bufferDescInfos, descriptorWrites);
-			PrepareDescriptorWrites<vk::WriteDescriptorSetAccelerationStructureKHR>(
-				DescriptorType::eAccelerationStructureKHR, 
-				inShader, 
-				accelStructDescInfos, 
-				descriptorWrites);
-		}
 	}
 	
 }

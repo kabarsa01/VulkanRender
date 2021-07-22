@@ -91,6 +91,10 @@ namespace CGE
 		m_bindingsNames.clear();
 		for (ShaderPtr shader : m_shaders)
 		{
+			if (!shader)
+			{
+				continue;
+			}
 			for (BindingInfo& bindingInfo : shader->GetAllBindings())
 			{
 				m_bindingsNames[bindingInfo.name] = bindingInfo;

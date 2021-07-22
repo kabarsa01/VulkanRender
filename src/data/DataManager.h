@@ -107,6 +107,11 @@ namespace CGE
 	template<class T, typename ...ArgTypes>
 	inline std::shared_ptr<T> DataManager::RequestResourceByType(HashString inKey, ArgTypes&& ...args)
 	{
+		if (inKey.GetString().empty())
+		{
+			return nullptr;
+		}
+
 		HashString className = Class::Get<T>().GetName();
 		{
 			std::shared_ptr<T> resource = std::dynamic_pointer_cast<T>(GetResource(inKey, m_resourcesMap[className]));

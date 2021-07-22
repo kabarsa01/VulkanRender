@@ -135,28 +135,19 @@ namespace CGE
 		{
 			PipelineData pipelineData;
 	
-			inMaterial->CreateDescriptorSet(vulkanDevice);
-			pipelineData.descriptorSets = { renderer->GetPerFrameData()->GetSet(), inMaterial->GetDescriptorSet() };
+			std::vector<vk::DescriptorSet> sets = inMaterial->GetDescriptorSets();
+			sets[0] = renderer->GetPerFrameData()->GetSet();
+			pipelineData.descriptorSets = sets;
 	
-			std::vector<DescriptorSetLayout> setLayouts = { renderer->GetPerFrameData()->GetLayout(), inMaterial->GetDescriptorSetLayout() };
-			pipelineData.pipelineLayout = CreatePipelineLayout(setLayouts);
+			std::vector<vk::DescriptorSetLayout> layouts = inMaterial->GetDescriptorSetLayouts();
+			layouts[0] = renderer->GetPerFrameData()->GetLayout();
+			pipelineData.pipelineLayout = CreatePipelineLayout(layouts);
 			pipelineData.pipeline = CreatePipeline(inMaterial, pipelineData.pipelineLayout, GetRenderPass());
 	
 			pipelineRegistry.StorePipeline(name, inMaterial->GetShaderHash(), pipelineData);
 		}
 	
 		return pipelineRegistry.GetPipeline(name, inMaterial->GetShaderHash());
-	}
-	
-	DescriptorSetLayout VulkanPassBase::CreateDescriptorSetLayout(MaterialPtr inMaterial)
-	{
-		DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-		descriptorSetLayoutInfo.setBindingCount(static_cast<uint32_t>(inMaterial->GetBindings().size()));
-		descriptorSetLayoutInfo.setPBindings(inMaterial->GetBindings().data());
-	
-		return vulkanDevice->GetDevice().createDescriptorSetLayout(descriptorSetLayoutInfo);
-	}
-	
-	
+	}	
 	
 }

@@ -6,6 +6,7 @@
 #include "data/Texture2D.h"
 #include "render/shader/Shader.h"
 #include "render/objects/VulkanDescriptorSet.h"
+#include "render/shader/ShaderResourceMapper.h"
 
 namespace CGE
 {
@@ -26,10 +27,8 @@ namespace CGE
 		void LoadResources();
 		HashString GetShaderHash();
 	
-		void CreateDescriptorSet(VulkanDevice* inDevice);
-		DescriptorSet GetDescriptorSet();
 		std::vector<DescriptorSet> GetDescriptorSets();
-		DescriptorSetLayout GetDescriptorSetLayout();
+		std::vector<vk::DescriptorSetLayout> GetDescriptorSetLayouts();
 	
 		PipelineShaderStageCreateInfo GetVertexStageInfo();
 		PipelineShaderStageCreateInfo GetFragmentStageInfo();
@@ -57,7 +56,6 @@ namespace CGE
 		void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 		void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
-		void UpdateDescriptorSet(DescriptorSet inSet, VulkanDevice* inDevice);
 	
 		VulkanBuffer& GetUniformBuffer(const std::string& inName);
 		VulkanBuffer& GetStorageBuffer(const std::string& inName);
@@ -70,9 +68,6 @@ namespace CGE
 		inline const std::string& GetComputeEntrypoint() const { return computeEntrypoint; };
 	
 		bool Create() override;
-	
-		std::vector<DescriptorSetLayoutBinding>& GetBindings();
-		std::vector<WriteDescriptorSet>& GetDescriptorWrites();
 	protected:
 		std::string vertexShaderPath;
 		std::string fragmentShaderPath;
@@ -91,25 +86,11 @@ namespace CGE
 		std::map<HashString, VulkanBuffer> storageBuffers;
 		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
 	
-		std::vector<DescriptorSetLayoutBinding> descriptorBindings;
-		std::map<HashString, DescriptorImageInfo> imageDescInfos;
-		std::map<HashString, DescriptorBufferInfo> bufferDescInfos;
-		std::map<HashString, vk::WriteDescriptorSetAccelerationStructureKHR> accelStructDescInfos;
-		std::vector<WriteDescriptorSet> descriptorWrites;
-	
 		VulkanDevice* vulkanDevice;
 		VulkanDescriptorSet vulkanDescriptorSet;
-	
-		void PrepareDescriptorInfos();
-	
-		ShaderPtr InitShader(const std::string& inResourcePath);
-		void PrepareDescriptorWrites(ShaderPtr inShader);
-	
-		template<class T>
-		void ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inResources, std::vector<DescriptorSetLayoutBinding>& inOutBindings);
-		template<class T>
-		void PrepareDescriptorWrites(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inDescInfos, std::vector<WriteDescriptorSet>& inOutDescriptorWrites);
 
+		ShaderResourceMapper m_resourceMapper;
+	
 		bool Destroy() override;
 	};
 	
@@ -135,61 +116,6 @@ namespace CGE
 	void Material::UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer)
 	{
 		UpdateUniformBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inUniformBuffer));
-	}
-	
-	template<class T>
-	void Material::ProcessDescriptorType(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inResources, std::vector<DescriptorSetLayoutBinding>& inOutBindings)
-	{
-		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindingsTypes(inType);
-		for (BindingInfo& info : bindingInfoVector)
-		{
-			if (inResources.find(info.name) != inResources.end())
-			{
-				inOutBindings.push_back(info.ToLayoutBinding());
-			}
-		}
-	}
-	
-	template<class T>
-	void Material::PrepareDescriptorWrites(DescriptorType inType, ShaderPtr inShader, std::map<HashString, T>& inDescInfos, std::vector<WriteDescriptorSet>& inOutDescriptorWrites)
-	{
-		std::vector<BindingInfo>& bindingInfoVector = inShader->GetBindingsTypes(inType);
-		for (BindingInfo& info : bindingInfoVector)
-		{
-			if (inDescInfos.find(info.name) == inDescInfos.end())
-			{
-				continue;
-			}
-	
-			WriteDescriptorSet writeDescriptorSet;
-			// we do not know the set at the moment
-			//writeDescriptorSet.setDstSet(descriptorSet);
-			writeDescriptorSet.setDstBinding(info.binding);
-			writeDescriptorSet.setDstArrayElement(0);
-			writeDescriptorSet.setDescriptorCount(1);
-			writeDescriptorSet.setDescriptorType(info.descriptorType);
-	
-			switch (info.descriptorType)
-			{
-			case DescriptorType::eSampledImage:
-				writeDescriptorSet.setPImageInfo(& imageDescInfos[info.name]);
-				break;
-			case DescriptorType::eStorageImage:
-				writeDescriptorSet.setPImageInfo(&imageDescInfos[info.name]);
-				break;
-			case DescriptorType::eUniformBuffer:
-				writeDescriptorSet.setPBufferInfo(& bufferDescInfos[info.name]);
-				break;
-			case DescriptorType::eStorageBuffer:
-				writeDescriptorSet.setPBufferInfo(&bufferDescInfos[info.name]);
-				break;
-			case DescriptorType::eAccelerationStructureKHR:
-				writeDescriptorSet.setPNext(&accelStructDescInfos[info.name]);
-				break;
-			}
-	
-			inOutDescriptorWrites.push_back(writeDescriptorSet);
-		}
 	}
 	
 }

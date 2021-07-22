@@ -59,6 +59,10 @@ namespace CGE
 		std::unordered_map<uint32_t, std::unordered_map<uint32_t, BindingInfo>> sets;
 		for (ShaderPtr shader : inShaders)
 		{
+			if (!shader)
+			{
+				continue;
+			}
 			for (auto& pair : shader->GetBindingsTypes())
 			{
 				for (BindingInfo& info : pair.second)
@@ -95,6 +99,10 @@ namespace CGE
 
 		for (ShaderPtr shader : inShaders)
 		{
+			if (!shader)
+			{
+				continue;
+			}
 			for (auto& pair : shader->GetBindingsTypes())
 			{
 				for (BindingInfo& info : pair.second)

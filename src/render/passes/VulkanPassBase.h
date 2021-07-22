@@ -74,7 +74,6 @@ namespace CGE
 			uint32_t inHeight);
 		PipelineData& FindPipeline(MaterialPtr inMaterial);
 		PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& inDescriptorSetLayouts);
-		DescriptorSetLayout CreateDescriptorSetLayout(MaterialPtr inMaterial);
 	private:
 		HashString name;
 		VulkanDevice* vulkanDevice;

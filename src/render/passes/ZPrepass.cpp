@@ -55,8 +55,13 @@ namespace CGE
 			{
 				HashString materialId = material->GetResourceId();
 	
-				material->CreateDescriptorSet(GetVulkanDevice());
-				inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, material->GetDescriptorSets(), {});
+				inCommandBuffer->bindDescriptorSets(
+					PipelineBindPoint::eGraphics, 
+					pipelineData.pipelineLayout, 
+					1, 
+					material->GetDescriptorSets().size()-1, 
+					material->GetDescriptorSets().data()+1,
+					0, nullptr);
 	
 				for (MeshDataPtr meshData : scene->GetMaterialToMeshData()[material->GetResourceId()])
 				{
