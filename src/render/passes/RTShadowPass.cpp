@@ -26,7 +26,6 @@ namespace CGE
 
 	RTShadowPass::~RTShadowPass()
 	{
-
 	}
 
 	void RTShadowPass::RecordCommands(CommandBuffer* inCommandBuffer)

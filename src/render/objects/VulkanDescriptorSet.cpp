@@ -187,8 +187,14 @@ namespace CGE
 		{
 			m_bindings = ProduceCustomBindings();
 		}
+
+		vk::StructureChain<vk::DescriptorSetLayoutCreateInfo, vk::DescriptorSetLayoutBindingFlagsCreateInfo> chain;
+		auto& flagsStruct = chain.get<vk::DescriptorSetLayoutBindingFlagsCreateInfo>();
+
+		std::vector<vk::DescriptorBindingFlags> flags(m_bindings.size(), vk::DescriptorBindingFlagBits::ePartiallyBound);
+		flagsStruct.setBindingFlags(flags);
 	
-		DescriptorSetLayoutCreateInfo layoutInfo;
+		vk::DescriptorSetLayoutCreateInfo& layoutInfo = chain.get<vk::DescriptorSetLayoutCreateInfo>();
 		layoutInfo.setBindingCount(static_cast<uint32_t>(m_bindings.size()));
 		layoutInfo.setPBindings(m_bindings.data());
 	

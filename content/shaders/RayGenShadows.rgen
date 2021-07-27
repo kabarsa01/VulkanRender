@@ -38,7 +38,7 @@ layout(set = 1, binding = 4) uniform LightsIndices
 
 layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
 layout(set = 1, binding = 6, r32ui) uniform uimage2D visibilityTex;
-layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[16];
+layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[16000];
 
 uint WriteVisibility(uint vis, uint index, bool visible)
 {
@@ -47,7 +47,7 @@ uint WriteVisibility(uint vis, uint index, bool visible)
 
 void main() 
 {
-	float tMin = 0.001f;
+	float tMin = 0.1f;
 	float tMax = 1000.f;
     uint  rayFlags = gl_RayFlagsOpaqueEXT;
 
