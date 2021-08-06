@@ -9,6 +9,8 @@
 #include "scene/Transform.h"
 #include "scene/SceneObjectBase.h"
 #include "glm/ext/matrix_float4x4.hpp"
+#include "ClusteringManager.h"
+#include "utils/Singleton.h"
 
 namespace CGE
 {
@@ -132,6 +134,12 @@ namespace CGE
 		globalShaderData->viewToProj = camComp->CalculateProjectionMatrix();
 		globalShaderData->cameraPos = camComp->GetParent()->transform.GetLocation();
 		globalShaderData->viewVector = camComp->GetParent()->transform.GetForwardVector();
+
+		globalShaderData->numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
+		globalShaderData->clusterSize = Singleton<ClusteringManager>::GetInstance()->GetClusterSize();
+		globalShaderData->halfScreenOffset = Singleton<ClusteringManager>::GetInstance()->GetHalfScreenOffset();
+		globalShaderData->clusterScreenOverflow = Singleton<ClusteringManager>::GetInstance()->GetClusterScreenOverflow();
+
 		globalShaderData->cameraNear = camComp->GetNearPlane();
 		globalShaderData->cameraFar = camComp->GetFarPlane();
 		globalShaderData->cameraFov = camComp->GetFov();

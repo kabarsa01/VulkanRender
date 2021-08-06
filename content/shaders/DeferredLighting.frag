@@ -12,34 +12,6 @@
 
 layout(early_fragment_tests) in;
 
-//layout(push_constant) uniform PushConst
-//{
-//	uint transformIndexOffset;
-//} pushConst;
-//
-//layout(set = 0, binding = 0) uniform sampler repeatLinearSampler;
-//layout(set = 0, binding = 1) uniform sampler repeatMirrorLinearSampler;
-//layout(set = 0, binding = 2) uniform sampler borderBlackLinearSampler;
-//layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
-//layout(set = 0, binding = 4) uniform ShaderGlobalData
-//{
-//	mat4 worldToView;
-//	mat4 viewToProj;
-//	vec3 cameraPos;
-//	vec3 viewVector;
-//	float time;
-//	float deltaTime;
-//	float cameraNear;
-//	float cameraFar;
-//	float cameraFov;
-//	float cameraAspect;
-//} globalData;
-//
-//layout(set = 0, binding = 5) readonly buffer GlobalTransformData
-//{
-//	mat4 modelToWorld[];
-//} globalTransformData;
-
 layout(set = 1, binding = 0) uniform texture2D albedoTex;
 layout(set = 1, binding = 1) uniform texture2D normalsTex;
 layout(set = 1, binding = 2) uniform texture2D roghnessTex;
@@ -47,7 +19,7 @@ layout(set = 1, binding = 3) uniform texture2D metallnessTex;
 layout(set = 1, binding = 4) uniform texture2D depthTex;
 layout(set = 1, binding = 5) uniform utexture2D visibilityTex;
 
-layout(set = 2, binding = 3) uniform texture2D visibilityTextures[16];
+layout(set = 2, binding = 3) uniform texture2D visibilityTextures[32];
 
 // light clustering data
 layout(set = 1, binding = 6) readonly buffer ClusterLightsData
@@ -87,9 +59,9 @@ bool IsVisible(uint visibility, uint index)
 	return (visibility & (0x1 << index)) > 0;
 }
 
-float GetPixelVisibility(uint index)
+float GetPixelVisibility(uint index, vec2 uvCoord)
 {
-	vec4 visibilityInfo = texture(sampler2D( visibilityTextures[index / 4], repeatLinearSampler ), uv);
+	vec4 visibilityInfo = texture(sampler2D( visibilityTextures[index / 4], repeatLinearSampler ), uvCoord);
 	uint comp = index % 4;
 	if (comp == 0) return visibilityInfo.r;
 	if (comp == 1) return visibilityInfo.g;
@@ -98,9 +70,25 @@ float GetPixelVisibility(uint index)
 	return 1.0f;
 }
 
+float GetPixelVisibilityFiltered(uint index)
+{
+	float value = 0.0f;
+	vec2 uvDelta = vec2(0.001f,0.002f);
+
+	for (int x = -1; x < 2; x++)
+	{
+		for (int y = -1; y < 2; y++)
+		{
+			value += GetPixelVisibility(index, uv + uvDelta * vec2(x,y));
+		}
+	}
+
+	return value / 9.0f;
+}
+
 void main() {
-	uint clusterX = uint(clamp(uv.x * 32.0, 0, 31));
-	uint clusterY = uint(clamp(uv.y * 32.0, 0, 31));
+	uint clusterX = uint(gl_FragCoord.x + globalData.halfScreenOffset.x) / globalData.clusterSize.x;
+	uint clusterY = uint(gl_FragCoord.y + globalData.halfScreenOffset.y) / globalData.clusterSize.y;
 
 	float near = globalData.cameraNear;
 	float far = globalData.cameraFar;
@@ -154,7 +142,7 @@ void main() {
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index);
+		float visibilityFactor = GetPixelVisibilityFiltered(index);
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;
@@ -169,7 +157,8 @@ void main() {
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index);
+		float visibilityFactor = GetPixelVisibilityFiltered(index);
+//		visibilityFactor = 1.0f;
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;
@@ -192,7 +181,8 @@ void main() {
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index);
+		float visibilityFactor = GetPixelVisibilityFiltered(index);
+//		visibilityFactor = 1.0f;
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;

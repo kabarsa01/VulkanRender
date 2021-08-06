@@ -38,11 +38,12 @@ layout(set = 1, binding = 4) uniform LightsIndices
 
 layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
 layout(set = 1, binding = 6, r32ui) uniform uimage2D visibilityTex;
-layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[16000];
+layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[32];
 
 uint WriteVisibility(uint vis, uint index, bool visible)
 {
-	return visible ? vis | (0x1 << index) : vis & ~(0x1 << index);
+	uint base = 1;
+	return visible ? vis | (base << index) : vis & ~(base << index);
 }
 
 void main() 
@@ -56,8 +57,9 @@ void main()
 	const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
     const vec2 uv = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
 
-    uint clusterX = uint(clamp(uv.x * 32.0, 0, 31));
-	uint clusterY = uint(clamp(uv.y * 32.0, 0, 31));
+	vec2 clusteredUV = (uv + 0.5f * (globalData.clusterScreenOverflow - vec2(1.0f))) / globalData.clusterScreenOverflow;
+    uint clusterX = uint(clamp(clusteredUV.x * globalData.numClusters.x, 0, globalData.numClusters.x - 1));
+	uint clusterY = uint(clamp(clusteredUV.y * globalData.numClusters.y, 0, globalData.numClusters.y - 1));
 
 	float near = globalData.cameraNear;
 	float far = globalData.cameraFar;
@@ -86,11 +88,12 @@ void main()
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec3 N = texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz;
-	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.1f);
+	vec3 rayStart = pixelCoordWorld.xyz;// + (N * 0.1f);
 
+	uint lightIndex = 0;
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
-		if (index > 31)
+		if (lightIndex > 31)
 		{
 			return;
 		}
@@ -101,7 +104,7 @@ void main()
 		vec3 pixelToLightDir = -lightInfo.direction.xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
-		if (surfaceCosine > 0.0f)
+		if (surfaceCosine >= 0.0f)
 		{
 			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
@@ -121,7 +124,7 @@ void main()
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
-		if (index > 31)
+		if (lightIndex > 31)
 		{
 			return;
 		}
@@ -132,7 +135,7 @@ void main()
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
-		if (surfaceCosine > 0.0f)
+		if (surfaceCosine >= 0.0f)
 		{
 			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
@@ -144,7 +147,7 @@ void main()
 				  rayStart,							// ray origin
 				  tMin,						      // ray min range
 				  normalize(pixelToLightDir.xyz),  // ray direction
-				  sqrt(dot(pixelToLightDir, pixelToLightDir)),                     // ray max range
+				  length(pixelToLightDir),                     // ray max range
 				  0                         // payload (location = 0)
 			);
 			visibility = WriteVisibility(visibility, index, isVisible);
@@ -152,7 +155,7 @@ void main()
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
-		if (index > 31)
+		if (lightIndex > 31)
 		{
 			return;
 		}
@@ -163,7 +166,7 @@ void main()
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 		float surfaceCosine = dot(normalize(pixelToLightDir), N);
 
-		if (surfaceCosine > 0.0f)
+		if (surfaceCosine >= 0.0f)
 		{
 			isVisible = false;
 		    traceRayEXT(tlas,               // acceleration structure
@@ -175,7 +178,7 @@ void main()
 				  rayStart,							// ray origin
 				  tMin,						      // ray min range
 				  normalize(pixelToLightDir.xyz),  // ray direction
-				  sqrt(dot(pixelToLightDir, pixelToLightDir)),                     // ray max range
+				  length(pixelToLightDir),                     // ray max range
 				  0                         // payload (location = 0)
 			);
 			visibility = WriteVisibility(visibility, index, isVisible);

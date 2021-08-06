@@ -17,6 +17,10 @@ namespace CGE
 		alignas(16) glm::mat4 viewToProj;
 		alignas(16) glm::vec3 cameraPos;
 		alignas(16) glm::vec3 viewVector;
+		alignas(8) glm::uvec2 numClusters;
+		alignas(8) glm::uvec2 clusterSize;
+		alignas(8) glm::uvec2 halfScreenOffset;
+		alignas(8) glm::vec2 clusterScreenOverflow;
 		alignas(4) float time;
 		alignas(4) float deltaTime;
 		alignas(4) float cameraNear;

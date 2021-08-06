@@ -175,7 +175,7 @@ namespace CGE
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 		lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 1.6f;
+		lightObj->GetLightComponent()->intensity = 0.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
@@ -200,7 +200,7 @@ namespace CGE
 				bool isSpot = false;// counter % 2;
 	
 				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				lightObj02->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 0.5f), isSpot ? 20.0f : -10.0f, -1.0 * indexY * depth / float(countY - 1) });
+				lightObj02->transform.SetLocation({ -width * 0.5f + (indexX + 0.5f) * width / float(countX - 1), -15.0f, -1.0 * indexY * depth / float(countY - 1) });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;

@@ -285,6 +285,9 @@
     <ClCompile Include="src\render\shader\ShaderResourceMapper.cpp">
       <Filter>Source Files\render\shader</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\ClusteringManager.cpp">
+      <Filter>Source Files\render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -497,6 +500,9 @@
     <ClInclude Include="src\render\shader\ShaderResourceMapper.h">
       <Filter>Source Files\render\shader</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\ClusteringManager.h">
+      <Filter>Source Files\render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="content\shaders\DeferredLighting.frag">
@@ -533,6 +539,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="content\shaders\CommonLight.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\CommonClustering.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

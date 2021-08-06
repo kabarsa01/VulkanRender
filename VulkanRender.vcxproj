@@ -260,6 +260,7 @@ exit /b</Command>
     <ClCompile Include="src\messages\MessageHandler.cpp" />
     <ClCompile Include="src\messages\Messages.cpp" />
     <ClCompile Include="src\messages\MessageSubscriber.cpp" />
+    <ClCompile Include="src\render\ClusteringManager.cpp" />
     <ClCompile Include="src\render\DataStructures.cpp" />
     <ClCompile Include="src\render\GlobalSamplers.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
@@ -332,6 +333,7 @@ exit /b</Command>
     <ClInclude Include="src\messages\MessageHandler.h" />
     <ClInclude Include="src\messages\Messages.h" />
     <ClInclude Include="src\messages\MessageSubscriber.h" />
+    <ClInclude Include="src\render\ClusteringManager.h" />
     <ClInclude Include="src\render\DataStructures.h" />
     <ClInclude Include="src\render\GlobalSamplers.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
@@ -382,6 +384,7 @@ exit /b</Command>
     <ClInclude Include="src\utils\Singleton.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="content\shaders\CommonClustering.glsl" />
     <None Include="content\shaders\CommonFrameData.glsl" />
     <None Include="content\shaders\CommonLight.glsl" />
     <None Include="content\shaders\CommonRay.glsl" />

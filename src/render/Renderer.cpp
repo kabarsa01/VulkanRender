@@ -32,6 +32,7 @@
 #include "utils/Singleton.h"
 #include "RtScene.h"
 #include "passes/RTShadowPass.h"
+#include "ClusteringManager.h"
 
 namespace CGE
 {
@@ -89,6 +90,8 @@ namespace CGE
 		perFrameData = new PerFrameData();
 		perFrameData->Create(&device);
 
+		Singleton<ClusteringManager>::GetInstance()->SetSupportedImageScaling(4);
+		Singleton<ClusteringManager>::GetInstance()->SetMaxNumClusters({32,32});
 		Singleton<RtScene>::GetInstance()->Init();
 	
 		zPrepass = new ZPrepass(HashString("ZPrepass"));

@@ -13,6 +13,10 @@ layout(set = 0, binding = 4) uniform ShaderGlobalData
 	mat4 viewToProj;
 	vec3 cameraPos;
 	vec3 viewVector;
+	ivec2 numClusters;
+	ivec2 clusterSize;
+	ivec2 halfScreenOffset;
+	vec2 clusterScreenOverflow;
 	float time;
 	float deltaTime;
 	float cameraNear;

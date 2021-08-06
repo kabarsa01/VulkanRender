@@ -8,6 +8,8 @@
 #include "scene/SceneObjectComponent.h"
 #include "scene/SceneObjectBase.h"
 #include "scene/Transform.h"
+#include "../ClusteringManager.h"
+#include "utils/Singleton.h"
 
 namespace CGE
 {
@@ -87,7 +89,9 @@ namespace CGE
 		DeviceSize offset = 0;
 		inCommandBuffer->bindPipeline(PipelineBindPoint::eCompute, pipelineData.pipeline);
 		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
-		inCommandBuffer->dispatch(32, 32, 1);
+
+		glm::uvec2 numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
+		inCommandBuffer->dispatch(numClusters.x, numClusters.y, 1);
 	}
 	
 	void LightClusteringPass::OnCreate()

@@ -191,6 +191,7 @@ namespace CGE
 		vk::StructureChain<vk::DescriptorSetLayoutCreateInfo, vk::DescriptorSetLayoutBindingFlagsCreateInfo> chain;
 		auto& flagsStruct = chain.get<vk::DescriptorSetLayoutBindingFlagsCreateInfo>();
 
+		// maybe use vk::DescriptorBindingFlagBits::eVariableDescriptorCount in the future
 		std::vector<vk::DescriptorBindingFlags> flags(m_bindings.size(), vk::DescriptorBindingFlagBits::ePartiallyBound);
 		flagsStruct.setBindingFlags(flags);
 	
