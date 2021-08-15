@@ -89,8 +89,6 @@ namespace CGE
 		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
 	
 		VulkanDevice* vulkanDevice;
-		VulkanDescriptorSet vulkanDescriptorSet;
-
 		ShaderResourceMapper m_resourceMapper;
 	
 		bool Destroy() override;

@@ -49,7 +49,6 @@ namespace CGE
 		VulkanBuffer m_lightsIndices;
 
 		ShaderResourceMapper m_shaderResourceMapper;
-		std::vector<VulkanDescriptorSet> m_descriptorSets;
 
 		vk::Pipeline m_rtPipeline;
 		vk::PipelineLayout m_rtPipelineLayout;

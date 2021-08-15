@@ -192,6 +192,8 @@ namespace CGE
 
 	void RTShadowPass::OnDestroy()
 	{
+		m_subscriber.UnregisterHandlers();
+
 		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 		// TODO cleanup
 		m_sbtBuffer.Destroy();

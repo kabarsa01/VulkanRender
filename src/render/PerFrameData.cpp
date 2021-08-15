@@ -51,10 +51,10 @@ namespace CGE
 		transformDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
 		transformDataBuffer.CreateStagingBuffer();
 	
-		set.SetBindings(ProduceBindings());
-		set.Create(device);
+		m_set.SetBindings(ProduceBindings());
+		m_set.Create(device);
 	
-		descriptorWrites = ProduceWrites(set);
+		descriptorWrites = ProduceWrites(m_set);
 		device->GetDevice().updateDescriptorSets(static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 	
@@ -65,7 +65,7 @@ namespace CGE
 	
 		shaderDataBuffer.Destroy();
 		transformDataBuffer.Destroy();
-		set.Destroy();
+		m_set.Destroy();
 		GlobalSamplers::GetInstance()->Destroy();
 	}
 	

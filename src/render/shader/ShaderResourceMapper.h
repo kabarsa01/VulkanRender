@@ -18,10 +18,7 @@ namespace CGE
 		ShaderResourceMapper() {}
 		~ShaderResourceMapper()
 		{
-			for (VulkanDescriptorSet& set : m_sets)
-			{
-				set.Destroy();
-			}
+			Destroy();
 		}
 
 		std::vector<VulkanDescriptorSet>& GetDescriptorSets() { return m_sets; }
@@ -45,6 +42,7 @@ namespace CGE
 		void AddAccelerationStructure(uint32_t set, uint32_t binding, vk::AccelerationStructureKHR accelerationStructure);
 
 		void Update();
+		void Destroy();
 	private:
 		struct ResourceBindingRecord
 		{

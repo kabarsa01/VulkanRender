@@ -75,15 +75,15 @@ float GetPixelVisibilityFiltered(uint index)
 	float value = 0.0f;
 	vec2 uvDelta = vec2(0.001f,0.002f);
 
-	for (int x = -1; x < 2; x++)
+	for (int x = 0; x < 1; x++)
 	{
-		for (int y = -1; y < 2; y++)
+		for (int y = 0; y < 1; y++)
 		{
 			value += GetPixelVisibility(index, uv + uvDelta * vec2(x,y));
 		}
 	}
 
-	return value / 9.0f;
+	return value / 1.0f;
 }
 
 void main() {
@@ -158,7 +158,6 @@ void main() {
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
 		float visibilityFactor = GetPixelVisibilityFiltered(index);
-//		visibilityFactor = 1.0f;
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;
@@ -182,7 +181,6 @@ void main() {
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
 		float visibilityFactor = GetPixelVisibilityFiltered(index);
-//		visibilityFactor = 1.0f;
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;

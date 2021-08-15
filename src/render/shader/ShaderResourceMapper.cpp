@@ -86,6 +86,7 @@ namespace CGE
 		{
 			set.Destroy();
 		}
+		m_sets.clear();
 		// collect all data
 		m_sets = VulkanDescriptorSet::Create(device, m_shaders);
 		m_bindingsNames.clear();
@@ -211,6 +212,15 @@ namespace CGE
 			}
 		}
 		m_writeInfos.clear();
+	}
+
+	void ShaderResourceMapper::Destroy()
+	{
+		for (auto& set : m_sets)
+		{
+			set.Destroy();
+		}
+		m_sets.clear();
 	}
 
 }

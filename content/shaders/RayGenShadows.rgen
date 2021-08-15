@@ -54,7 +54,7 @@ void main()
 
 	uint visibility = 0;
 
-	const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+	const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5, 0.5);
     const vec2 uv = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
 
 	vec2 clusteredUV = (uv + 0.5f * (globalData.clusterScreenOverflow - vec2(1.0f))) / globalData.clusterScreenOverflow;
@@ -88,7 +88,7 @@ void main()
 	uint pointOffset = lightsPositions.y & 0x000000ff;
 
 	vec3 N = texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz;
-	vec3 rayStart = pixelCoordWorld.xyz;// + (N * 0.1f);
+	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
 
 	uint lightIndex = 0;
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)

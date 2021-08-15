@@ -11,16 +11,16 @@ namespace CGE
 		: m_set(nullptr)
 		, m_layout(nullptr)
 	{
-	
 	}
 	
 	VulkanDescriptorSet::~VulkanDescriptorSet()
 	{
-	
 	}
 	
 	void VulkanDescriptorSet::Create(VulkanDevice* inVulkanDevice)
 	{
+		assert(!m_set && !m_layout);
+
 		m_vulkanDevice = inVulkanDevice;
 		CreateLayout();
 	
@@ -188,6 +188,11 @@ namespace CGE
 			m_bindings = ProduceCustomBindings();
 		}
 
+		if (m_layout)
+		{
+			return m_layout;
+		}
+
 		vk::StructureChain<vk::DescriptorSetLayoutCreateInfo, vk::DescriptorSetLayoutBindingFlagsCreateInfo> chain;
 		auto& flagsStruct = chain.get<vk::DescriptorSetLayoutBindingFlagsCreateInfo>();
 
@@ -198,7 +203,6 @@ namespace CGE
 		vk::DescriptorSetLayoutCreateInfo& layoutInfo = chain.get<vk::DescriptorSetLayoutCreateInfo>();
 		layoutInfo.setBindingCount(static_cast<uint32_t>(m_bindings.size()));
 		layoutInfo.setPBindings(m_bindings.data());
-	
 		m_layout = m_vulkanDevice->GetDevice().createDescriptorSetLayout(layoutInfo);
 	
 		return m_layout;

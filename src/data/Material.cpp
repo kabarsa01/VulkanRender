@@ -31,7 +31,6 @@ namespace CGE
 	
 	Material::~Material()
 	{
-	
 	}
 	
 	void Material::LoadResources()
@@ -264,7 +263,7 @@ namespace CGE
 		{
 			pair.second.Destroy();
 		}
-		vulkanDescriptorSet.Destroy();
+		m_resourceMapper.Destroy();
 		return true;
 	}
 	

@@ -18,9 +18,9 @@ namespace CGE
 		void Create(VulkanDevice* inDevice);
 		void Destroy();
 		void UpdateBufferData();
-		VulkanDescriptorSet& GetVulkanDescriptorSet() { return set; }
-		DescriptorSet& GetSet() { return set.GetSet(); }
-		DescriptorSetLayout& GetLayout() { return set.GetLayout(); }
+		VulkanDescriptorSet& GetVulkanDescriptorSet() { return m_set; }
+		DescriptorSet& GetSet() { return m_set.GetSet(); }
+		DescriptorSetLayout& GetLayout() { return m_set.GetLayout(); }
 	private:
 		VulkanDevice* device;
 	
@@ -29,7 +29,7 @@ namespace CGE
 		DescriptorSetLayoutBinding shaderDataBinding;
 		DescriptorSetLayoutBinding transformDataBinding;
 	
-		VulkanDescriptorSet set;
+		VulkanDescriptorSet m_set;
 		std::vector<WriteDescriptorSet> descriptorWrites;
 	
 		GlobalShaderData* globalShaderData;
