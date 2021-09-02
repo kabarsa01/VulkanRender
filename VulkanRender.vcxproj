@@ -275,6 +275,8 @@ exit /b</Command>
     <ClCompile Include="src\render\passes\GBufferPass.cpp" />
     <ClCompile Include="src\render\passes\LightClusteringPass.cpp" />
     <ClCompile Include="src\render\passes\PostProcessPass.cpp" />
+    <ClCompile Include="src\render\passes\RenderPassResourceTable.cpp" />
+    <ClCompile Include="src\render\passes\RTGIPass.cpp" />
     <ClCompile Include="src\render\passes\RTShadowPass.cpp" />
     <ClCompile Include="src\render\passes\VulkanPassBase.cpp" />
     <ClCompile Include="src\render\passes\ZPrepass.cpp" />
@@ -348,6 +350,8 @@ exit /b</Command>
     <ClInclude Include="src\render\passes\GBufferPass.h" />
     <ClInclude Include="src\render\passes\LightClusteringPass.h" />
     <ClInclude Include="src\render\passes\PostProcessPass.h" />
+    <ClInclude Include="src\render\passes\RenderPassResourceTable.h" />
+    <ClInclude Include="src\render\passes\RTGIPass.h" />
     <ClInclude Include="src\render\passes\RTShadowPass.h" />
     <ClInclude Include="src\render\passes\VulkanPassBase.h" />
     <ClInclude Include="src\render\passes\ZPrepass.h" />
@@ -385,6 +389,7 @@ exit /b</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="content\shaders\CommonClustering.glsl" />
+    <None Include="content\shaders\CommonDepth.glsl" />
     <None Include="content\shaders\CommonFrameData.glsl" />
     <None Include="content\shaders\CommonLight.glsl" />
     <None Include="content\shaders\CommonRay.glsl" />

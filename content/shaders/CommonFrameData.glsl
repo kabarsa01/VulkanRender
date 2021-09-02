@@ -1,3 +1,6 @@
+#ifndef _COMMON_FRAME_DATA_GLSL_
+#define _COMMON_FRAME_DATA_GLSL_
+
 layout(push_constant) uniform PushConst
 {
 	uint transformIndexOffset;
@@ -30,3 +33,4 @@ layout(set = 0, binding = 5) readonly buffer GlobalTransformData
 	mat4 modelToWorld[];
 } globalTransformData;
 
+#endif

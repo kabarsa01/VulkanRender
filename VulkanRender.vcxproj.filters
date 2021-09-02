@@ -288,6 +288,12 @@
     <ClCompile Include="src\render\ClusteringManager.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\passes\RTGIPass.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\passes\RenderPassResourceTable.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -503,6 +509,12 @@
     <ClInclude Include="src\render\ClusteringManager.h">
       <Filter>Source Files\render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\passes\RTGIPass.h">
+      <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\passes\RenderPassResourceTable.h">
+      <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="content\shaders\DeferredLighting.frag">
@@ -542,6 +554,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="content\shaders\CommonClustering.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\CommonDepth.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

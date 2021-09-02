@@ -1,3 +1,6 @@
+#ifndef _COMMON_RAY_GLSL_
+#define _COMMON_RAY_GLSL_
+
 //#version 460
 //#extension GL_ARB_separate_shader_objects : enable
 #extension GL_EXT_ray_tracing : require
@@ -34,3 +37,5 @@ bool RayQueryIsShadow(accelerationStructureEXT tlas, vec3 pos, vec3 dir, float s
 		return true;
 	}
 }
+
+#endif

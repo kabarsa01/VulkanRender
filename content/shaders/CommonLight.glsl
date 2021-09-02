@@ -1,3 +1,6 @@
+#ifndef _COMMON_LIGHT_GLSL_
+#define _COMMON_LIGHT_GLSL_
+
 #define PI 3.1415926535897932384626433832795
 
 uint UnpackLightIndex(uint packedIndices, uint indexPosition)
@@ -76,4 +79,6 @@ vec3 CalculateLightInfluence(vec3 albedo, vec3 N, vec3 V, vec3 F, vec3 inPixelTo
         float NdotL = max(dot(N, L), 0.0);        
         return (kD * albedo / PI + specular) * radiance * NdotL;
 }
+
+#endif
 

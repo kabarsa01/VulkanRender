@@ -6,6 +6,7 @@
 #include "CommonFrameData.glsl"
 #include "CommonRay.glsl"
 #include "CommonLight.glsl"
+#include "CommonDepth.glsl"
 
 layout(location = 0) rayPayloadEXT bool isVisible;
 
