@@ -17,12 +17,12 @@ namespace CGE
 		m_isValidFlag = inValid;
 	}
 	
-	Resource::Resource()
-		: ObjectBase{}
-		, m_id{HashString::NONE}
-	{
-	
-	}
+	//Resource::Resource()
+	//	: ObjectBase{}
+	//	, m_id{HashString::NONE}
+	//{
+	//
+	//}
 	
 	Resource::~Resource()
 	{

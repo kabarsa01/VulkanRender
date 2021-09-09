@@ -29,7 +29,7 @@ namespace CGE
 	private:
 		bool m_isValidFlag = false;
 	
-		Resource();
+		Resource() = delete;
 	};
 	
 	typedef std::shared_ptr<Resource> ResourcePtr;

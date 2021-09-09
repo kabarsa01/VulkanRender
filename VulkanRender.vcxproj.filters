@@ -294,6 +294,9 @@
     <ClCompile Include="src\render\passes\RenderPassResourceTable.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\data\BufferData.cpp">
+      <Filter>Source Files\data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -514,6 +517,9 @@
     </ClInclude>
     <ClInclude Include="src\render\passes\RenderPassResourceTable.h">
       <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\BufferData.h">
+      <Filter>Source Files\data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

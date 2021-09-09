@@ -107,6 +107,7 @@ namespace CGE
 
 			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
 			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalFlipMessage>(m_frameCount));
+
 			// just not to forget let it increment in a separate statement
 			++m_frameCount;
 		}

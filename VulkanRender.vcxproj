@@ -245,6 +245,7 @@ exit /b</Command>
     <ClCompile Include="src\core\ObjectBase.cpp" />
     <ClCompile Include="src\core\ObjectPool.cpp" />
     <ClCompile Include="src\core\TimeManager.cpp" />
+    <ClCompile Include="src\data\BufferData.cpp" />
     <ClCompile Include="src\data\DataManager.cpp" />
     <ClCompile Include="src\data\Material.cpp" />
     <ClCompile Include="src\data\MeshData.cpp" />
@@ -321,6 +322,7 @@ exit /b</Command>
     <ClInclude Include="src\core\ObjectBase.h" />
     <ClInclude Include="src\core\ObjectPool.h" />
     <ClInclude Include="src\core\TimeManager.h" />
+    <ClInclude Include="src\data\BufferData.h" />
     <ClInclude Include="src\data\DataManager.h" />
     <ClInclude Include="src\data\Material.h" />
     <ClInclude Include="src\data\MeshData.h" />

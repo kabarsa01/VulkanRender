@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "render/passes/VulkanPassBase.h"
+#include "messages/MessageSubscriber.h"
 
 namespace CGE
 {
