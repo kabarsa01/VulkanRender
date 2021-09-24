@@ -28,8 +28,8 @@ namespace CGE
 		static MessageBus* m_instance;
 
 		uint32_t m_threadCount;
-		std::map<IMessage::MessageId, std::vector<IMessageHandler*>> m_messageIdHandlers;
-		std::map<IMessageHandler*, std::vector<IMessage::MessageId>> m_handlerMessageIds;
+		std::map<IIdentifiable::Id, std::vector<IMessageHandler*>> m_messageIdHandlers;
+		std::map<IMessageHandler*, std::vector<IIdentifiable::Id>> m_handlerMessageIds;
 
 		MessageBus(uint32_t threadCount);
 		MessageBus(const MessageBus&) = delete;
@@ -38,7 +38,7 @@ namespace CGE
 		MessageBus& operator=(MessageBus&&) = delete;
 		~MessageBus();
 
-		void NotifyHandlers(std::shared_ptr<IMessage> message);
+		void NotifyHandlers(std::shared_ptr<IIdentifiable> message);
 	};
 
 	template<typename ...MessagesTypes>

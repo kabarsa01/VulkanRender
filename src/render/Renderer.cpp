@@ -33,6 +33,7 @@
 #include "RtScene.h"
 #include "passes/RTShadowPass.h"
 #include "ClusteringManager.h"
+#include "passes/RenderPassBase.h"
 
 namespace CGE
 {
@@ -93,6 +94,13 @@ namespace CGE
 		Singleton<ClusteringManager>::GetInstance()->SetSupportedImageScaling(4);
 		Singleton<ClusteringManager>::GetInstance()->SetMaxNumClusters({32,32});
 		Singleton<RtScene>::GetInstance()->Init();
+
+		/// ////////////////////////////////////////////////////
+		// test
+		RenderPassDataTable table;
+		RenderPassBase rr("ok");
+		rr.Init(table);
+		/// /////////////////////////////////////////////
 	
 		zPrepass = new ZPrepass(HashString("ZPrepass"));
 		zPrepass->SetResolution(width, height);

@@ -45,7 +45,7 @@ namespace CGE
 	{
 		if (m_handlerMessageIds.find(handler) != m_handlerMessageIds.end())
 		{
-			for (IMessage::MessageId msgId : m_handlerMessageIds[handler])
+			for (IIdentifiable::Id msgId : m_handlerMessageIds[handler])
 			{
 				auto& handlersVec = m_messageIdHandlers[msgId];
 				auto it = std::find(handlersVec.cbegin(), handlersVec.cend(), handler);
@@ -58,7 +58,7 @@ namespace CGE
 		}
 	}
 
-	void MessageBus::NotifyHandlers(std::shared_ptr<IMessage> message)
+	void MessageBus::NotifyHandlers(std::shared_ptr<IIdentifiable> message)
 	{
 		for (IMessageHandler* handler : m_messageIdHandlers[message->GetId()])
 		{

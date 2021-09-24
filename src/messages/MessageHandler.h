@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "messages/Messages.h"
-#include "messages/Message.h"
+#include "utils/Identifiable.h"
 
 namespace CGE
 {
@@ -17,7 +17,7 @@ namespace CGE
 		bool isEnabled = true;
 
 		virtual ~IMessageHandler() {}
-		virtual void Handle(std::shared_ptr<IMessage> message) = 0;
+		virtual void Handle(std::shared_ptr<IIdentifiable> message) = 0;
 	};
 
 //---------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ namespace CGE
 	class MessageHandler : public IMessageHandler
 	{
 	public:
-		void Handle(std::shared_ptr<IMessage> message) override
+		void Handle(std::shared_ptr<IIdentifiable> message) override
 		{
 			HandleMessage(std::dynamic_pointer_cast<T>(message));
 		}
@@ -49,7 +49,7 @@ namespace CGE
 			, m_func(func)
 		{}
 
-		void Handle(std::shared_ptr<IMessage> message) override
+		void Handle(std::shared_ptr<IIdentifiable> message) override
 		{
 			(m_handler->*m_func)(std::dynamic_pointer_cast<MessageType>(message));
 		}

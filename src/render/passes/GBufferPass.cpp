@@ -162,7 +162,7 @@ namespace CGE
 		outAttachments.push_back(albedoAttachmentImage);
 		outAttachmentViews.push_back( albedoAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D) );
 		// normal
-		VulkanImage normalAttachmentImage = ResourceUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight, true);
+		VulkanImage normalAttachmentImage = ResourceUtils::CreateColorAttachment(vulkanDevice, inWidth, inHeight, vk::Format::eR16G16B16A16Sfloat);
 		outAttachments.push_back(normalAttachmentImage);
 		outAttachmentViews.push_back(normalAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
 	}

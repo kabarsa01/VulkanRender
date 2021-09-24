@@ -240,9 +240,6 @@
     <ClCompile Include="src\messages\MessageSubscriber.cpp">
       <Filter>Source Files\messages</Filter>
     </ClCompile>
-    <ClCompile Include="src\messages\Message.cpp">
-      <Filter>Source Files\messages</Filter>
-    </ClCompile>
     <ClCompile Include="src\scene\Octree.cpp">
       <Filter>Source Files\scene</Filter>
     </ClCompile>
@@ -291,11 +288,17 @@
     <ClCompile Include="src\render\passes\RTGIPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\passes\RenderPassResourceTable.cpp">
+    <ClCompile Include="src\render\passes\RenderPassDataTable.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
     <ClCompile Include="src\data\BufferData.cpp">
       <Filter>Source Files\data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\passes\RenderPassBase.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\Identifiable.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -464,9 +467,6 @@
     <ClInclude Include="src\messages\MessageSubscriber.h">
       <Filter>Source Files\messages</Filter>
     </ClInclude>
-    <ClInclude Include="src\messages\Message.h">
-      <Filter>Source Files\messages</Filter>
-    </ClInclude>
     <ClInclude Include="src\scene\Octree.h">
       <Filter>Source Files\scene</Filter>
     </ClInclude>
@@ -515,11 +515,17 @@
     <ClInclude Include="src\render\passes\RTGIPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\passes\RenderPassResourceTable.h">
+    <ClInclude Include="src\render\passes\RenderPassDataTable.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
     <ClInclude Include="src\data\BufferData.h">
       <Filter>Source Files\data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\passes\RenderPassBase.h">
+      <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\Identifiable.h">
+      <Filter>Source Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -19,7 +19,7 @@ namespace CGE
 		static vk::ImageViewType ImageTypeToViewType(vk::ImageType imageType);
 
 		static VulkanImage CreateImage2D(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage);
-		static VulkanImage CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, bool in16BitFloat = false);
+		static VulkanImage CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
 		static VulkanImage CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
 
 		static vk::WriteDescriptorSet CreateWriteDescriptor(

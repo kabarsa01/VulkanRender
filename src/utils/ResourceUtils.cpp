@@ -90,11 +90,11 @@ namespace CGE
 		return image;
 	}
 
-	VulkanImage ResourceUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, bool in16BitFloat)
+	VulkanImage ResourceUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format)
 	{
 		VulkanImage colorAttachmentImage;
 		colorAttachmentImage.createInfo.setArrayLayers(1);
-		colorAttachmentImage.createInfo.setFormat(in16BitFloat ? Format::eR16G16B16A16Sfloat : Format::eR8G8B8A8Unorm);
+		colorAttachmentImage.createInfo.setFormat(format);
 		colorAttachmentImage.createInfo.setImageType(ImageType::e2D);
 		colorAttachmentImage.createInfo.setInitialLayout(ImageLayout::eUndefined);
 		colorAttachmentImage.createInfo.setSamples(SampleCountFlagBits::e1);

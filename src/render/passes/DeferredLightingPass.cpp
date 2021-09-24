@@ -176,7 +176,7 @@ namespace CGE
 	
 	void DeferredLightingPass::CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight)
 	{
-		VulkanImage colorAttachmentImage = ResourceUtils::CreateColorAttachment(GetVulkanDevice(), inWidth, inHeight, true); // do not forget 16 bit float
+		VulkanImage colorAttachmentImage = ResourceUtils::CreateColorAttachment(GetVulkanDevice(), inWidth, inHeight, vk::Format::eR16G16B16A16Sfloat); // do not forget 16 bit float
 		outAttachments.push_back(colorAttachmentImage);
 		outAttachmentViews.push_back(colorAttachmentImage.CreateView({ ImageAspectFlagBits::eColor, 0, 1, 0, 1 }, ImageViewType::e2D));
 	}
