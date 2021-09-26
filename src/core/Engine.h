@@ -48,8 +48,9 @@ namespace CGE
 		int m_windowHeight = 1080;
 	
 		Engine();
-		Engine(const Engine& inOther) {}
-		void operator=(const Engine& inOther) {}
+		Engine(const Engine& inOther) = delete;
+		void operator=(const Engine& inOther) = delete;
 		~Engine();
 	};
+
 }
