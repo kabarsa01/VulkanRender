@@ -99,7 +99,7 @@ namespace CGE
 		// test
 		RenderPassDataTable table;
 		RenderPassBase rr("ok");
-		rr.Init(table);
+		rr.Init();
 		/// /////////////////////////////////////////////
 	
 		zPrepass = new ZPrepass(HashString("ZPrepass"));

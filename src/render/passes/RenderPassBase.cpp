@@ -4,6 +4,7 @@
 #include "data/Texture2D.h"
 #include "core/Engine.h"
 #include "../Renderer.h"
+#include "../PerFrameData.h"
 
 namespace CGE
 {
@@ -154,6 +155,178 @@ namespace CGE
 	}
 
 	//-----------------------------------------------------------------------------------------------------------
+
+	vk::Pipeline RenderPassBase::CreateGraphicsPipeline(const PassInitContext& initContext, MaterialPtr material, vk::PipelineLayout layout)
+	{
+		std::vector<PipelineShaderStageCreateInfo> shaderStageInfoArray = { material->GetVertexStageInfo(), material->GetFragmentStageInfo() };
+
+		VertexInputBindingDescription bindingDesc = MeshData::GetBindingDescription(0);
+		std::array<VertexInputAttributeDescription, 5> attributeDesc = Vertex::GetAttributeDescriptions(0);
+		vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+		vertexInputInfo.setVertexBindingDescriptionCount(1);
+		vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);
+		vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>(attributeDesc.size()));
+		vertexInputInfo.setPVertexAttributeDescriptions(attributeDesc.data());
+
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+		inputAssemblyInfo.setTopology(vk::PrimitiveTopology::eTriangleList);
+		inputAssemblyInfo.setPrimitiveRestartEnable(VK_FALSE);
+
+		Viewport viewport;
+		viewport.setX(0.0f);
+		viewport.setY(0.0f);
+		viewport.setWidth(static_cast<float>(m_width));
+		viewport.setHeight(static_cast<float>(m_height));
+		viewport.setMinDepth(0.0f);
+		viewport.setMaxDepth(1.0f);
+
+		vk::Rect2D scissor;
+		scissor.setOffset(vk::Offset2D(0, 0));
+		scissor.setExtent(vk::Extent2D{ m_width, m_height });
+
+		vk::PipelineViewportStateCreateInfo viewportInfo;
+		viewportInfo.setViewportCount(1);
+		viewportInfo.setPViewports(&viewport);
+		viewportInfo.setScissorCount(1);
+		viewportInfo.setPScissors(&scissor);
+
+		vk::PipelineMultisampleStateCreateInfo multisampleInfo;
+
+		std::vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachmentStates;
+		colorBlendAttachmentStates.reserve(initContext.m_attachments.size());
+		for (auto attachPair : initContext.m_attachments)
+		{
+			vk::PipelineColorBlendAttachmentState& blendState = colorBlendAttachmentStates[attachPair.first];
+			blendState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+			blendState.setBlendEnable(VK_FALSE);
+			blendState.setSrcColorBlendFactor(vk::BlendFactor::eOne);
+			blendState.setDstColorBlendFactor(vk::BlendFactor::eZero);
+			blendState.setColorBlendOp(vk::BlendOp::eAdd);
+			blendState.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
+			blendState.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
+			blendState.setAlphaBlendOp(vk::BlendOp::eAdd);
+		}
+
+		vk::PipelineColorBlendStateCreateInfo colorBlendInfo;
+		colorBlendInfo.setLogicOpEnable(VK_FALSE);
+		colorBlendInfo.setLogicOp(vk::LogicOp::eCopy);
+		colorBlendInfo.setAttachments(colorBlendAttachmentStates);
+		colorBlendInfo.setBlendConstants({ 0.0f, 0.0f, 0.0f, 0.0f });
+
+		vk::GraphicsPipelineCreateInfo pipelineInfo;
+		pipelineInfo.setStageCount(static_cast<uint32_t>( shaderStageInfoArray.size() ));
+		pipelineInfo.setPStages(shaderStageInfoArray.data());
+		pipelineInfo.setPVertexInputState(&vertexInputInfo);
+		pipelineInfo.setPInputAssemblyState(&inputAssemblyInfo);
+		pipelineInfo.setPViewportState(&viewportInfo);
+		pipelineInfo.setPRasterizationState(&initContext.rasterizationInfo);
+		pipelineInfo.setPMultisampleState(&multisampleInfo);
+		pipelineInfo.setPDepthStencilState(initContext.m_depthAttachments.size() > 0 ? &initContext.depthInfo : nullptr);
+		pipelineInfo.setPColorBlendState(&colorBlendInfo);
+		pipelineInfo.setPDynamicState(nullptr);
+		pipelineInfo.setLayout(layout);
+		pipelineInfo.setRenderPass(m_renderPass);
+		pipelineInfo.setSubpass(0);
+		pipelineInfo.setBasePipelineHandle(vk::Pipeline());
+		pipelineInfo.setBasePipelineIndex(-1);
+
+		return m_device->GetDevice().createGraphicsPipeline(m_device->GetPipelineCache(), pipelineInfo).value;
+	}
+
+	vk::Pipeline RenderPassBase::CreateComputePipeline(const PassInitContext& initContext, MaterialPtr material, vk::PipelineLayout layout)
+	{
+		vk::ComputePipelineCreateInfo pipelineCreateInfo;
+		pipelineCreateInfo.setLayout(layout);
+		pipelineCreateInfo.setStage(material->GetComputeStageInfo());
+
+		return m_device->GetDevice().createComputePipeline(m_device->GetPipelineCache(), pipelineCreateInfo).value;
+	}
+
+	vk::PipelineLayout RenderPassBase::CreatePipelineLayout(std::vector<DescriptorSetLayout>& descriptorSetLayouts)
+	{
+		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+		pipelineLayoutInfo.setFlags(vk::PipelineLayoutCreateFlags());
+		pipelineLayoutInfo.setSetLayouts(descriptorSetLayouts);
+
+		vk::PushConstantRange pushConstRange;
+		pushConstRange.setOffset(0);
+		pushConstRange.setSize(sizeof(uint32_t));
+		pushConstRange.setStageFlags(vk::ShaderStageFlagBits::eAll);
+
+		pipelineLayoutInfo.setPushConstantRangeCount(1);
+		pipelineLayoutInfo.setPPushConstantRanges(&pushConstRange);
+
+		return m_device->GetDevice().createPipelineLayout(pipelineLayoutInfo);
+	}
+
+	PipelineData& RenderPassBase::CreateOrFindPipeline(const PassInitContext& initContext, MaterialPtr material)
+	{
+		Device& device = m_device->GetDevice();
+
+		PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
+		// check pipeline storage and create new pipeline in case it was not created before
+		if (!pipelineRegistry.HasPipeline(m_name, material->GetShaderHash()))
+		{
+			PipelineData pipelineData;
+
+			PerFrameData* frameData = Engine::GetRendererInstance()->GetPerFrameData();
+
+			std::vector<vk::DescriptorSet> sets = material->GetDescriptorSets();
+			sets[0] = frameData->GetSet();
+			pipelineData.descriptorSets = sets;
+
+			std::vector<vk::DescriptorSetLayout> layouts = material->GetDescriptorSetLayouts();
+			layouts[0] = frameData->GetLayout();
+			pipelineData.pipelineLayout = CreatePipelineLayout(layouts);
+			if (initContext.compute)
+			{
+				pipelineData.pipeline = CreateComputePipeline(initContext, material, pipelineData.pipelineLayout);
+			}
+			else
+			{
+				pipelineData.pipeline = CreateGraphicsPipeline(initContext, material, pipelineData.pipelineLayout);
+			}
+
+			pipelineRegistry.StorePipeline(m_name, material->GetShaderHash(), pipelineData);
+		}
+
+		return pipelineRegistry.GetPipeline(m_name, material->GetShaderHash());
+	}
+
+	//-----------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------
+
+	PassInitContext::PassInitContext()
+	{
+		rasterizationInfo.setDepthClampEnable(VK_FALSE);
+		rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
+		rasterizationInfo.setPolygonMode(vk::PolygonMode::eFill);
+		rasterizationInfo.setLineWidth(1.0f);
+		rasterizationInfo.setCullMode(vk::CullModeFlagBits::eBack);
+		rasterizationInfo.setFrontFace(vk::FrontFace::eClockwise);
+		rasterizationInfo.setDepthBiasEnable(VK_FALSE);
+
+		depthInfo.setDepthBoundsTestEnable(VK_FALSE);
+		depthInfo.setDepthCompareOp(vk::CompareOp::eEqual);
+		depthInfo.setDepthTestEnable(VK_TRUE);
+		depthInfo.setDepthWriteEnable(VK_TRUE);
+		depthInfo.setMaxDepthBounds(1.0f);
+		depthInfo.setMinDepthBounds(0.0f);
+		depthInfo.setStencilTestEnable(VK_FALSE);
+	}
+
+	void PassInitContext::SetAttachments(uint32_t index, const std::vector<Texture2DPtr>& attachmentArray)
+	{
+		m_attachments[index] = attachmentArray;
+	}
+
+	void PassInitContext::SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray)
+	{
+		m_depthAttachments = depthAttachmentArray;
+	}
+
+	//-----------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------
 
@@ -171,6 +344,10 @@ namespace CGE
 
 		return m_owner->m_framebuffers[frameIndex];
 	}
+
+	
+
+	
 
 }
 

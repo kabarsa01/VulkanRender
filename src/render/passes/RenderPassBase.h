@@ -9,6 +9,8 @@
 #include "RenderPassDataTable.h"
 #include "../shader/ShaderResourceMapper.h"
 #include "data/Texture2D.h"
+#include "data/Material.h"
+#include "../PipelineRegistry.h"
 
 namespace CGE
 {
@@ -48,6 +50,10 @@ namespace CGE
 
 		vk::RenderPass CreateRenderPass(const PassInitContext& initContext);
 		std::vector<vk::Framebuffer> CreateFramebuffers(const PassInitContext& initContext);
+		vk::Pipeline CreateGraphicsPipeline(const PassInitContext& initContext, MaterialPtr material, vk::PipelineLayout layout);
+		vk::Pipeline CreateComputePipeline(const PassInitContext& initContext, MaterialPtr material, vk::PipelineLayout layout);
+		vk::PipelineLayout CreatePipelineLayout(std::vector<DescriptorSetLayout>& descriptorSetLayouts);
+		PipelineData& CreateOrFindPipeline(const PassInitContext& initContext, MaterialPtr material);
 	};
 
 	//-----------------------------------------------------------------------------------------------------------
@@ -59,12 +65,17 @@ namespace CGE
 	class PassInitContext
 	{
 	public:
+		bool compute = false;
+		vk::PipelineDepthStencilStateCreateInfo depthInfo;
+		vk::PipelineRasterizationStateCreateInfo rasterizationInfo;
+
+		PassInitContext();
 		// set an array of attachments to a specified index, minimum 2 are needed
 		// for round robin usage for double buffering
-		void SetAttachments(uint32_t index, std::vector<Texture2DPtr> attachmentArray);
+		void SetAttachments(uint32_t index, const std::vector<Texture2DPtr>& attachmentArray);
 		// set an array of depth attachments, minimum 2 are needed
 		// for round robin usage for double buffering
-		void SetDepthAttachments(std::vector<Texture2DPtr> depthAttachmentArray);
+		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray);
 	private:
 		friend class RenderPassBase;
 
