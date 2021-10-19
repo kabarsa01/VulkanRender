@@ -35,6 +35,7 @@ namespace CGE
 		virtual void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) {}
 		virtual void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) {}
 	private:
+		friend class PassInitContext;
 		friend class PassExecuteContext;
 
 		HashString m_name;
@@ -76,8 +77,13 @@ namespace CGE
 		// set an array of depth attachments, minimum 2 are needed
 		// for round robin usage for double buffering
 		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray);
+
+		uint32_t GetWidth() { return m_owner->m_width; }
+		uint32_t GetHeight() { return m_owner->m_height; }
 	private:
 		friend class RenderPassBase;
+
+		RenderPassBase* m_owner;
 
 		std::unordered_map<uint32_t, std::vector<Texture2DPtr>> m_attachments;
 		std::vector<Texture2DPtr> m_depthAttachments;

@@ -132,6 +132,44 @@ namespace CGE
 		return depthAttachmentImage;
 	}
 	
+	Texture2DPtr ResourceUtils::CreateColorAttachmentTexture(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/)
+	{
+		VulkanImage image = ResourceUtils::CreateColorAttachment(inDevice, inWidth, inHeight, format);
+		Texture2DPtr texture;
+		texture->CreateFromExternal(image, image.CreateView(CreateColorSubresRange(), vk::ImageViewType::e2D), true);
+		return texture;
+	}
+
+	Texture2DPtr ResourceUtils::CreateDepthAttachmentTexture(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	{
+		VulkanImage image = ResourceUtils::CreateDepthAttachment(inDevice, inWidth, inHeight);
+		Texture2DPtr texture;
+		texture->CreateFromExternal(image, image.CreateView(CreateDepthSubresRange(), vk::ImageViewType::e2D), true);
+		return texture;
+	}
+
+	std::vector<Texture2DPtr> ResourceUtils::CreateColorAttachmentTextures(uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/)
+	{
+		std::vector<Texture2DPtr> textures;
+		textures.resize(count);
+		for (uint32_t index = 0; index < count; ++index)
+		{
+			textures[index] = CreateColorAttachmentTexture(inDevice, inWidth, inHeight, format);
+		}
+		return textures;
+	}
+
+	std::vector<Texture2DPtr> ResourceUtils::CreateDepthAttachmentTextures(uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	{
+		std::vector<Texture2DPtr> textures;
+		textures.resize(count);
+		for (uint32_t index = 0; index < count; ++index)
+		{
+			textures[index] = CreateDepthAttachmentTexture(inDevice, inWidth, inHeight);
+		}
+		return textures;
+	}
+
 	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const VulkanBuffer& buffer, const BindingInfo& info, vk::DescriptorBufferInfo& outDescInfo)
 	{
 		return CreateWriteDescriptor(buffer, info.descriptorType, info.binding, outDescInfo);
