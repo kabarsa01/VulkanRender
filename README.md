@@ -15,8 +15,9 @@ Clustered deferred rendering path is used. For now 5 passes are used.
   1. Z-prepass
   2. Compute clustering
   3. GBuffer pass
-  4. Deferred lighting
-  5. Post processing
+  4. LightVisibility/Shadow pass (hardware raytracing only supported)
+  5. Deferred lighting
+  6. Post processing
 
 Material system uses spirv-cross for shader reflection and performs shader parameters matching by name.
 Mips are generated at runtime. Assimp and stb_image are used to load resources. IBL for PBR
