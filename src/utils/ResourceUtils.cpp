@@ -135,7 +135,7 @@ namespace CGE
 	Texture2DPtr ResourceUtils::CreateColorAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/)
 	{
 		VulkanImage image = ResourceUtils::CreateColorAttachment(inDevice, inWidth, inHeight, format);
-		Texture2DPtr texture = std::make_shared<Texture2D>(name);
+		Texture2DPtr texture = ObjectBase::NewObject<Texture2D, const HashString&>(name);
 		texture->CreateFromExternal(image, image.CreateView(CreateColorSubresRange(), vk::ImageViewType::e2D), true);
 		return texture;
 	}
@@ -143,7 +143,7 @@ namespace CGE
 	Texture2DPtr ResourceUtils::CreateDepthAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
 	{
 		VulkanImage image = ResourceUtils::CreateDepthAttachment(inDevice, inWidth, inHeight);
-		Texture2DPtr texture = std::make_shared<Texture2D>(name);
+		Texture2DPtr texture = ObjectBase::NewObject<Texture2D, const HashString&>(name);
 		texture->CreateFromExternal(image, image.CreateView(CreateDepthSubresRange(), vk::ImageViewType::e2D), true);
 		return texture;
 	}

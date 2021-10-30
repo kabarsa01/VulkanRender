@@ -63,6 +63,10 @@ namespace CGE
 	{
 		VulkanDevice& device = Engine::GetRendererInstance()->GetVulkanDevice();
 
+		initContext.depthInfo.depthWriteEnable = VK_TRUE;
+		initContext.depthInfo.depthTestEnable = VK_TRUE;
+		initContext.depthInfo.depthCompareOp = vk::CompareOp::eLessOrEqual;
+
 		auto passData = std::make_shared<DepthPrepassData>();
 		dataTable.AddPassData<DepthPrepassData>(passData);
 

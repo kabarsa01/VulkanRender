@@ -40,6 +40,9 @@ namespace CGE
 
 	void RenderPassBase::Init()
 	{
+		m_width = Engine::GetRendererInstance()->GetWidth();
+		m_height = Engine::GetRendererInstance()->GetHeight();
+
 		InitPass(*Singleton<RenderPassDataTable>::GetInstance(), *m_initContext);
 
 		m_device = &Engine::GetRendererInstance()->GetVulkanDevice();
@@ -134,9 +137,9 @@ namespace CGE
 			vk::AttachmentDescription depthAttachDesc;
 			depthAttachDesc.setFormat(info.format);
 			depthAttachDesc.setSamples(info.samples);
-			depthAttachDesc.setLoadOp(vk::AttachmentLoadOp::eLoad);
+			depthAttachDesc.setLoadOp(vk::AttachmentLoadOp::eClear);
 			depthAttachDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
-			depthAttachDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
+			depthAttachDesc.setStencilLoadOp(vk::AttachmentLoadOp::eClear);
 			depthAttachDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
 			depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 			depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
@@ -152,10 +155,10 @@ namespace CGE
 		vk::SubpassDependency subpassDependency;
 		subpassDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
 		subpassDependency.setDstSubpass(0);
-		subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-		subpassDependency.setSrcAccessMask(vk::AccessFlags());
-		subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-		subpassDependency.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+		subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eAllCommands);
+		subpassDependency.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
+		subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eAllCommands);
+		subpassDependency.setDstAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
 
 		vk::RenderPassCreateInfo passCreateInfo;
 		passCreateInfo.setAttachments(attachDescArray);
@@ -366,7 +369,7 @@ namespace CGE
 		rasterizationInfo.setDepthBiasEnable(VK_FALSE);
 
 		depthInfo.setDepthBoundsTestEnable(VK_FALSE);
-		depthInfo.setDepthCompareOp(vk::CompareOp::eEqual);
+		depthInfo.setDepthCompareOp(vk::CompareOp::eLessOrEqual);
 		depthInfo.setDepthTestEnable(VK_TRUE);
 		depthInfo.setDepthWriteEnable(VK_TRUE);
 		depthInfo.setMaxDepthBounds(1.0f);
@@ -428,6 +431,11 @@ namespace CGE
 
 		for (auto& pair : m_attachments)
 		{
+			if (pair.second.empty())
+			{
+				continue;
+			}
+
 			uint32_t correctedFrameIndex = frameIndex;
 			if (frameIndex == UINT32_MAX)
 			{
