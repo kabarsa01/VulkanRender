@@ -34,6 +34,7 @@
 #include "passes/RTShadowPass.h"
 #include "ClusteringManager.h"
 #include "passes/RenderPassBase.h"
+#include "passes/DepthPrepass.h"
 
 namespace CGE
 {
@@ -97,9 +98,8 @@ namespace CGE
 
 		/// ////////////////////////////////////////////////////
 		// test
-		RenderPassDataTable table;
-		RenderPassBase rr("ok");
-		rr.Init();
+		m_depthPrepass = new DepthPrepass();
+		m_depthPrepass->Init();
 		/// /////////////////////////////////////////////
 	
 		zPrepass = new ZPrepass(HashString("ZPrepass"));
@@ -162,6 +162,8 @@ namespace CGE
 		Singleton<RtScene>::GetInstance()->BuildSceneTlas(&cmdBuffer);
 
 		// render passes
+		// 
+		m_depthPrepass->Execute(&cmdBuffer);
 		// z prepass
 		zPrepass->RecordCommands(&cmdBuffer);
 		//----------------------------------------------------------
@@ -250,6 +252,8 @@ namespace CGE
 	void Renderer::Cleanup()
 	{
 		WaitForDevice();
+
+		delete m_depthPrepass;
 	
 		postProcessPass->Destroy();
 		delete postProcessPass;

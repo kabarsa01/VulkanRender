@@ -26,14 +26,14 @@ namespace CGE
 	{
 	public:
 		RenderPassBase() = delete;
-		RenderPassBase(HashString name) : m_name(name) {}
-		~RenderPassBase() {}
+		RenderPassBase(HashString name);
+		~RenderPassBase();
 
 		void Init();
 		void Execute(vk::CommandBuffer* commandBuffer);
 	protected:
-		virtual void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) {}
-		virtual void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) {}
+		virtual void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) = 0;
+		virtual void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) = 0;
 	private:
 		friend class PassInitContext;
 		friend class PassExecuteContext;
@@ -45,6 +45,9 @@ namespace CGE
 
 		vk::RenderPass m_renderPass;
 		std::vector<vk::Framebuffer> m_framebuffers;
+
+		PassInitContext* m_initContext;
+		PassExecuteContext* m_executeContext;
 
 		uint32_t m_width = 1280;
 		uint32_t m_height = 720;
@@ -70,10 +73,11 @@ namespace CGE
 		vk::PipelineDepthStencilStateCreateInfo depthInfo;
 		vk::PipelineRasterizationStateCreateInfo rasterizationInfo;
 
-		PassInitContext();
+		PassInitContext() = delete;
+		PassInitContext(RenderPassBase* owner);
 		// set an array of attachments to a specified index, minimum 2 are needed
 		// for round robin usage for double buffering
-		void SetAttachments(uint32_t index, const std::vector<Texture2DPtr>& attachmentArray);
+		void SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray);
 		// set an array of depth attachments, minimum 2 are needed
 		// for round robin usage for double buffering
 		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray);
@@ -101,10 +105,22 @@ namespace CGE
 
 		vk::RenderPass GetRenderPass();
 		vk::Framebuffer GetFramebuffer(uint32_t frameIndex = UINT32_MAX);
+		const std::vector<Texture2DPtr>& GetFrameAttachments(uint32_t frameIndex = UINT32_MAX);
+		const std::unordered_map<uint32_t, std::vector<Texture2DPtr>>& GetAllAttachments();
+		Texture2DPtr GetDepthAttachment(uint32_t frameIndex = UINT32_MAX);
+		const std::vector<Texture2DPtr>& GetDepthAttachments();
+
+		uint32_t GetWidth() { return m_owner->m_width; }
+		uint32_t GetHeight() { return m_owner->m_height; }
+
+		PipelineData& FindPipeline(MaterialPtr material);
 	private:
 		friend class RenderPassBase;
 
 		RenderPassBase* m_owner;
+
+		std::unordered_map<uint32_t, std::vector<Texture2DPtr>> m_attachments;
+		std::vector<Texture2DPtr> m_depthAttachments;
 	};
 
 }

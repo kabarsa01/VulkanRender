@@ -46,6 +46,8 @@ namespace CGE
 	class RTShadowPass;
 	class DeferredLightingPass;
 	class PostProcessPass;
+
+	class DepthPrepass;
 	
 	//=======================================================================================================
 	//=======================================================================================================
@@ -106,6 +108,11 @@ namespace CGE
 	
 		PerFrameData* perFrameData;
 	
+		//////////////////////////////////////////////////////////////////////
+		/// testing
+		DepthPrepass* m_depthPrepass;
+		//////////////////////////////////////////////////////////////////////
+
 		ZPrepass* zPrepass;
 		LightClusteringPass* lightClusteringPass;
 		GBufferPass* gBufferPass;

@@ -14,7 +14,7 @@ namespace CGE
 	
 		virtual bool Create() override;
 	
-		void CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup = false);
+		void CreateFromExternal(const VulkanImage& inImage, ImageView inImageView, bool inCleanup = false);
 		void CreateFromExternal(std::shared_ptr<TextureData> texture, bool inCleanup = false);
 	
 		inline VulkanImage& GetImage() { return image; }
@@ -43,7 +43,7 @@ namespace CGE
 
 		virtual bool Destroy() override;
 	private:
-		TextureData();
+		TextureData() = delete;
 	};
 
 	typedef std::shared_ptr<TextureData> TextureDataPtr;

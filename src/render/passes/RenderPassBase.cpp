@@ -13,23 +13,80 @@ namespace CGE
 	//-----------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------
 
+	RenderPassBase::RenderPassBase(HashString name)
+		: m_name(name)
+	{
+		m_initContext = new PassInitContext(this);
+		m_executeContext = new PassExecuteContext(this);
+	}
+
+	//-----------------------------------------------------------------------------------------------------------
+
+	RenderPassBase::~RenderPassBase()
+	{
+		delete m_initContext;
+		delete m_executeContext;
+
+		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
+
+		for (vk::Framebuffer fb : m_framebuffers)
+		{
+			device.destroyFramebuffer(fb);
+		}
+		device.destroyRenderPass(m_renderPass);
+	}
+
+	//-----------------------------------------------------------------------------------------------------------
+
 	void RenderPassBase::Init()
 	{
-		PassInitContext initContext;
-		InitPass(*Singleton<RenderPassDataTable>::GetInstance(), initContext);
+		InitPass(*Singleton<RenderPassDataTable>::GetInstance(), *m_initContext);
 
 		m_device = &Engine::GetRendererInstance()->GetVulkanDevice();
 
-		m_renderPass = CreateRenderPass(initContext);
-		m_framebuffers = CreateFramebuffers(initContext);
+		m_renderPass = CreateRenderPass(*m_initContext);
+		m_framebuffers = CreateFramebuffers(*m_initContext);
+
+		m_executeContext->m_attachments = m_initContext->m_attachments;
+		m_executeContext->m_depthAttachments = m_initContext->m_depthAttachments;
 	}
 
 	//-----------------------------------------------------------------------------------------------------------
 
 	void RenderPassBase::Execute(vk::CommandBuffer* commandBuffer)
 	{
-		PassExecuteContext executeContext(this);
-		ExecutePass(commandBuffer, executeContext, *Singleton<RenderPassDataTable>::GetInstance());
+		// barriers ----------------------------------------------
+		std::vector<ImageMemoryBarrier> barriers;
+		if (!m_executeContext->m_depthAttachments.empty())
+		{
+			ImageMemoryBarrier depthTextureBarrier = m_executeContext->GetDepthAttachment()->GetImage().CreateLayoutBarrier(
+				vk::ImageLayout::eUndefined,
+				vk::ImageLayout::eDepthStencilAttachmentOptimal,
+				vk::AccessFlagBits::eShaderRead,
+				vk::AccessFlagBits::eShaderWrite,
+				vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
+				0, 1, 0, 1);
+			barriers.emplace_back(depthTextureBarrier);
+		}
+		for (const Texture2DPtr& texture : m_executeContext->GetFrameAttachments())
+		{
+			ImageMemoryBarrier textureBarrier = texture->GetImage().CreateLayoutBarrier(
+				vk::ImageLayout::eUndefined,
+				vk::ImageLayout::eColorAttachmentOptimal,
+				vk::AccessFlagBits::eShaderRead,
+				vk::AccessFlagBits::eShaderWrite,
+				vk::ImageAspectFlagBits::eColor,
+				0, 1, 0, 1);
+			barriers.emplace_back(textureBarrier);
+		}
+		commandBuffer->pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllCommands,
+			vk::PipelineStageFlagBits::eAllCommands,
+			vk::DependencyFlags(),
+			0, nullptr, 0, nullptr,
+			static_cast<uint32_t>(barriers.size()), barriers.data());
+
+		ExecutePass(commandBuffer, *m_executeContext, *Singleton<RenderPassDataTable>::GetInstance());
 	}
 
 	//-----------------------------------------------------------------------------------------------------------
@@ -84,7 +141,7 @@ namespace CGE
 			depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 			depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 
-			depthAttachRef.setAttachment(attachDescArray.size());
+			depthAttachRef.setAttachment(static_cast<uint32_t>( attachDescArray.size() ));
 			depthAttachRef.setLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 
 			attachDescArray.emplace_back(depthAttachDesc);
@@ -116,12 +173,12 @@ namespace CGE
 	{
 		std::vector<vk::Framebuffer> framebuffers;
 
-		uint32_t framebufferCount = 0;
+		uint32_t framebufferCount = static_cast<uint32_t>(initContext.m_depthAttachments.size());
 		for (auto& pair : initContext.m_attachments)
 		{
 			if (pair.second.size() > framebufferCount)
 			{
-				framebufferCount = pair.second.size();
+				framebufferCount = static_cast<uint32_t>(pair.second.size());
 			}
 		}
 
@@ -297,7 +354,8 @@ namespace CGE
 	//-----------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------
 
-	PassInitContext::PassInitContext()
+	PassInitContext::PassInitContext(RenderPassBase* owner)
+		: m_owner(owner)
 	{
 		rasterizationInfo.setDepthClampEnable(VK_FALSE);
 		rasterizationInfo.setRasterizerDiscardEnable(VK_FALSE);
@@ -316,9 +374,9 @@ namespace CGE
 		depthInfo.setStencilTestEnable(VK_FALSE);
 	}
 
-	void PassInitContext::SetAttachments(uint32_t index, const std::vector<Texture2DPtr>& attachmentArray)
+	void PassInitContext::SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray)
 	{
-		m_attachments[index] = attachmentArray;
+		m_attachments[attachmentIndex] = attachmentArray;
 	}
 
 	void PassInitContext::SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray)
@@ -337,17 +395,79 @@ namespace CGE
 
 	vk::Framebuffer PassExecuteContext::GetFramebuffer(uint32_t frameIndex /*= UINT32_MAX*/)
 	{
+		if (m_owner->m_framebuffers.empty())
+		{
+			return {};
+		}
+
 		if (frameIndex == UINT32_MAX)
 		{
-			frameIndex = Engine::Get()->GetFrameCount() % m_owner->m_framebuffers.size();
+			frameIndex = static_cast<uint32_t>( Engine::Get()->GetFrameCount() % m_owner->m_framebuffers.size() );
 		}
 
 		return m_owner->m_framebuffers[frameIndex];
 	}
 
-	
+	const std::vector<Texture2DPtr>& PassExecuteContext::GetFrameAttachments(uint32_t frameIndex /*= UINT32_MAX*/)
+	{
+		if (m_attachments.empty())
+		{
+			return m_attachments[0];
+		}
 
-	
+		uint32_t maxAttachmentIndex = 0;
+		for (auto& pair : m_attachments)
+		{
+			if (maxAttachmentIndex < pair.first)
+			{
+				maxAttachmentIndex = pair.first;
+			}
+		}
+
+		std::vector<Texture2DPtr> frameAttachments(maxAttachmentIndex + 1);
+
+		for (auto& pair : m_attachments)
+		{
+			uint32_t correctedFrameIndex = frameIndex;
+			if (frameIndex == UINT32_MAX)
+			{
+				correctedFrameIndex = static_cast<uint32_t>(Engine::Get()->GetFrameCount() % pair.second.size());
+			}
+			frameAttachments[pair.first] = pair.second[correctedFrameIndex];
+		}
+
+		return frameAttachments;
+	}
+
+	const std::unordered_map<uint32_t, std::vector<Texture2DPtr>>& PassExecuteContext::GetAllAttachments()
+	{
+		return m_attachments;
+	}
+
+	Texture2DPtr PassExecuteContext::GetDepthAttachment(uint32_t frameIndex /*= UINT32_MAX*/)
+	{
+		if (m_depthAttachments.empty())
+		{
+			return nullptr;
+		}
+
+		if (frameIndex == UINT32_MAX)
+		{
+			frameIndex = static_cast<uint32_t>( Engine::Get()->GetFrameCount() % m_depthAttachments.size() );
+		}
+
+		return m_depthAttachments[frameIndex];
+	}
+
+	const std::vector<Texture2DPtr>& PassExecuteContext::GetDepthAttachments()
+	{
+		return m_depthAttachments;
+	}
+
+	PipelineData& PassExecuteContext::FindPipeline(MaterialPtr material)
+	{
+		return m_owner->CreateOrFindPipeline(*m_owner->m_initContext, material);
+	}
 
 }
 

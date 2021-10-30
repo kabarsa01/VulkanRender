@@ -14,6 +14,7 @@ namespace CGE
 	
 	TextureData::TextureData(const HashString& inPath, bool inUsesAlpha /*= false*/, bool inFlipVertical /*= true*/, bool inLinear /*= true*/, bool inGenMips /*= true*/)
 		: Resource(inPath)
+		, image()
 		, imageView(nullptr)
 		, genMips(inGenMips)
 		, cleanup(true)
@@ -24,11 +25,11 @@ namespace CGE
 		linear = inLinear;
 	}
 	
-	TextureData::TextureData()
-		: Resource(HashString::NONE)
-	{
-	
-	}
+	//TextureData::TextureData()
+	//	: Resource(HashString::NONE)
+	//{
+	//
+	//}
 	
 	TextureData::~TextureData()
 	{
@@ -78,7 +79,7 @@ namespace CGE
 		return false;
 	}
 	
-	void TextureData::CreateFromExternal(const VulkanImage& inImage, const ImageView& inImageView, bool inCleanup/* = false*/)
+	void TextureData::CreateFromExternal(const VulkanImage& inImage, ImageView inImageView, bool inCleanup/* = false*/)
 	{
 		image = inImage;
 		imageView = inImageView;

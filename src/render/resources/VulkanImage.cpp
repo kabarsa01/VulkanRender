@@ -13,13 +13,42 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::DependencyFlags;
 	using VULKAN_HPP_NAMESPACE::BufferUsageFlagBits;
 
+	VulkanImage::VulkanImage()
+		: vulkanDevice(nullptr)
+		, scoped(false)
+		, image(nullptr)
+	{
+
+	}
+
 	VulkanImage::VulkanImage(bool inScoped)
-		: scoped(inScoped)
+		: vulkanDevice(nullptr)
+		, scoped(inScoped)
 		, image(nullptr)
 	{
 	
 	}
 	
+	VulkanImage& VulkanImage::operator=(const VulkanImage& otherImage)
+	{
+		vulkanDevice = otherImage.vulkanDevice;
+		image = otherImage.image;
+		memoryRecord = otherImage.memoryRecord;
+		memoryRequirements = otherImage.memoryRequirements;
+		stagingBuffer = otherImage.stagingBuffer;
+		data = otherImage.data;
+
+		createInfo = otherImage.createInfo;
+
+		scoped = otherImage.scoped;
+		width = otherImage.width;
+		height = otherImage.height;
+		depth = otherImage.depth;
+		mips = otherImage.mips;
+
+		return *this;
+	}
+
 	VulkanImage::~VulkanImage()
 	{
 		if (scoped)

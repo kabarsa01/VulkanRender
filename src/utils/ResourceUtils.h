@@ -24,10 +24,10 @@ namespace CGE
 		static VulkanImage CreateImage2D(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage);
 		static VulkanImage CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
 		static VulkanImage CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
-		static Texture2DPtr CreateColorAttachmentTexture(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
-		static Texture2DPtr CreateDepthAttachmentTexture(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
-		static std::vector<Texture2DPtr> CreateColorAttachmentTextures(uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
-		static std::vector<Texture2DPtr> CreateDepthAttachmentTextures(uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
+		static Texture2DPtr CreateColorAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
+		static Texture2DPtr CreateDepthAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
+		static std::vector<Texture2DPtr> CreateColorAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
+		static std::vector<Texture2DPtr> CreateDepthAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
 
 		static VulkanBuffer CreateBuffer(VulkanDevice* inDevice, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, vk::MemoryPropertyFlags inMemProps, bool inWithStaging = false);
 

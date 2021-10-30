@@ -30,7 +30,9 @@ namespace CGE
 	public:
 		ImageCreateInfo createInfo;
 	
-		VulkanImage(bool inScoped = false);
+		VulkanImage();
+		VulkanImage(bool inScoped);
+		VulkanImage& operator=(const VulkanImage& otherImage);
 		virtual ~VulkanImage();
 	
 		void Create(VulkanDevice* inDevice);
