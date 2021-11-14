@@ -14,44 +14,44 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::BufferUsageFlagBits;
 
 	VulkanImage::VulkanImage()
-		: vulkanDevice(nullptr)
-		, scoped(false)
-		, image(nullptr)
+		: m_vulkanDevice(nullptr)
+		, m_scoped(false)
+		, m_image(nullptr)
 	{
 
 	}
 
 	VulkanImage::VulkanImage(bool inScoped)
-		: vulkanDevice(nullptr)
-		, scoped(inScoped)
-		, image(nullptr)
+		: m_vulkanDevice(nullptr)
+		, m_scoped(inScoped)
+		, m_image(nullptr)
 	{
 	
 	}
 	
 	VulkanImage& VulkanImage::operator=(const VulkanImage& otherImage)
 	{
-		vulkanDevice = otherImage.vulkanDevice;
-		image = otherImage.image;
-		memoryRecord = otherImage.memoryRecord;
-		memoryRequirements = otherImage.memoryRequirements;
-		stagingBuffer = otherImage.stagingBuffer;
-		data = otherImage.data;
+		m_vulkanDevice = otherImage.m_vulkanDevice;
+		m_image = otherImage.m_image;
+		m_memoryRecord = otherImage.m_memoryRecord;
+		m_requirements = otherImage.m_requirements;
+		m_stagingBuffer = otherImage.m_stagingBuffer;
+		m_data = otherImage.m_data;
 
 		createInfo = otherImage.createInfo;
 
-		scoped = otherImage.scoped;
-		width = otherImage.width;
-		height = otherImage.height;
-		depth = otherImage.depth;
-		mips = otherImage.mips;
+		m_scoped = otherImage.m_scoped;
+		m_width = otherImage.m_width;
+		m_height = otherImage.m_height;
+		m_depth = otherImage.m_depth;
+		m_mips = otherImage.m_mips;
 
 		return *this;
 	}
 
 	VulkanImage::~VulkanImage()
 	{
-		if (scoped)
+		if (m_scoped)
 		{
 			Destroy();
 		}
@@ -59,20 +59,20 @@ namespace CGE
 	
 	void VulkanImage::Create(VulkanDevice* inDevice)
 	{
-		if (image || !inDevice)
+		if (m_image || !inDevice)
 		{
 			return;
 		}
-		vulkanDevice = inDevice;
+		m_vulkanDevice = inDevice;
 	
-		width = createInfo.extent.width;
-		height = createInfo.extent.height;
-		depth = createInfo.extent.depth;
-		mips = std::min(createInfo.mipLevels, uint32_t(floor(log2(std::max(std::max(width, height), depth))) + 1));
-		createInfo.mipLevels = mips;
+		m_width = createInfo.extent.width;
+		m_height = createInfo.extent.height;
+		m_depth = createInfo.extent.depth;
+		m_mips = std::min(createInfo.mipLevels, uint32_t(floor(log2(std::max(std::max(m_width, m_height), m_depth))) + 1));
+		createInfo.mipLevels = m_mips;
 	
-		image = vulkanDevice->GetDevice().createImage(createInfo);
-		memoryRequirements = vulkanDevice->GetDevice().getImageMemoryRequirements(image);
+		m_image = m_vulkanDevice->GetDevice().createImage(createInfo);
+		m_requirements = m_vulkanDevice->GetDevice().getImageMemoryRequirements(m_image);
 	}
 	
 	ImageView VulkanImage::CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const
@@ -80,54 +80,54 @@ namespace CGE
 		ImageViewCreateInfo imageViewInfo;
 		imageViewInfo.setComponents(ComponentMapping());
 		imageViewInfo.setFormat(createInfo.format);
-		imageViewInfo.setImage(image);
+		imageViewInfo.setImage(m_image);
 		imageViewInfo.setSubresourceRange(inSubRange);
 		imageViewInfo.setViewType(inViewType);
 	
-		return vulkanDevice->GetDevice().createImageView(imageViewInfo);
+		return m_vulkanDevice->GetDevice().createImageView(imageViewInfo);
 	}
 
 	void VulkanImage::Destroy()
 	{
 		DestroyStagingBuffer();
-		if (image)
+		if (m_image)
 		{
-			vulkanDevice->GetDevice().destroyImage(image);
-			image = nullptr;
-			DeviceMemoryManager::GetInstance()->ReturnMemory(memoryRecord);
+			m_vulkanDevice->GetDevice().destroyImage(m_image);
+			m_image = nullptr;
+			DeviceMemoryManager::GetInstance()->ReturnMemory(m_memoryRecord);
 		}
 	}
 	
 	void VulkanImage::SetData(const std::vector<char>& inData)
 	{
-		data = inData;
+		m_data = inData;
 	}
 	
 	void VulkanImage::SetData(DeviceSize inSize, char* inData)
 	{
-		data.assign(inData, inData + inSize);
+		m_data.assign(inData, inData + inSize);
 	}
 	
 	void VulkanImage::BindMemory(MemoryPropertyFlags inMemoryPropertyFlags)
 	{
-		if (memoryRecord.pos.valid)
+		if (m_memoryRecord.pos.valid)
 		{
 			return;
 		}
 		DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
-		memoryRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemoryPropertyFlags);
-		vulkanDevice->GetDevice().bindImageMemory(image, memoryRecord.pos.memory, memoryRecord.pos.offset);
+		m_memoryRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemoryPropertyFlags);
+		m_vulkanDevice->GetDevice().bindImageMemory(m_image, m_memoryRecord.pos.memory, m_memoryRecord.pos.offset);
 	}
 	
 	void VulkanImage::Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex)
 	{
-		if (!stagingBuffer)
+		if (!m_stagingBuffer)
 		{
 			CreateStagingBuffer(SharingMode::eExclusive, inQueueFamilyIndex);
 		}
 	
 		std::array<BufferImageCopy, 1> copyArray = { CreateBufferImageCopy() };
-		inCmdBuffer->copyBufferToImage(stagingBuffer, image, ImageLayout::eTransferDstOptimal, 1, copyArray.data());
+		inCmdBuffer->copyBufferToImage(m_stagingBuffer, m_image, ImageLayout::eTransferDstOptimal, 1, copyArray.data());
 	}
 	
 	BufferImageCopy VulkanImage::CreateBufferImageCopy()
@@ -136,7 +136,7 @@ namespace CGE
 		imageCopy.setBufferOffset(0);
 		imageCopy.setBufferImageHeight(0);
 		imageCopy.setBufferRowLength(0);
-		imageCopy.setImageExtent(Extent3D(width, height, depth));
+		imageCopy.setImageExtent(Extent3D(m_width, m_height, m_depth));
 		imageCopy.setImageOffset(Offset3D(0, 0, 0));
 		imageCopy.imageSubresource.setAspectMask(ImageAspectFlagBits::eColor);
 		imageCopy.imageSubresource.setBaseArrayLayer(0);
@@ -174,7 +174,7 @@ namespace CGE
 		uint32_t inArrayLayerCount) const
 	{
 		ImageMemoryBarrier barrier;
-		barrier.setImage(image);
+		barrier.setImage(m_image);
 		barrier.setOldLayout(inOldLayout);
 		barrier.setNewLayout(inNewLayout);
 		barrier.setSrcQueueFamilyIndex(inSrcQueue);
@@ -200,7 +200,7 @@ namespace CGE
 		ImageSubresourceRange inSubresourceRange) const
 	{
 		ImageMemoryBarrier barrier;
-		barrier.setImage(image);
+		barrier.setImage(m_image);
 		barrier.setOldLayout(inOldLayout);
 		barrier.setNewLayout(inNewLayout);
 		barrier.setSrcQueueFamilyIndex(inSrcQueue);
@@ -240,17 +240,17 @@ namespace CGE
 	
 	Image& VulkanImage::GetImage()
 	{
-		return image;
+		return m_image;
 	}
 	
 	const Image& VulkanImage::GetImage() const
 	{
-		return image;
+		return m_image;
 	}
 	
 	MemoryRequirements VulkanImage::GetMemoryRequirements()
 	{
-		return memoryRequirements;
+		return m_requirements;
 	}
 	
 	VulkanBuffer* VulkanImage::CreateStagingBuffer(char* inData)
@@ -260,36 +260,36 @@ namespace CGE
 	
 	VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex)
 	{
-		return CreateStagingBuffer(inSharingMode, inQueueFamilyIndex, data.data());
+		return CreateStagingBuffer(inSharingMode, inQueueFamilyIndex, m_data.data());
 	}
 	
 	VulkanBuffer* VulkanImage::CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData)
 	{
-		if (stagingBuffer)
+		if (m_stagingBuffer)
 		{
-			return &stagingBuffer;
+			return &m_stagingBuffer;
 		}
 	
-		DeviceSize size = width * height * depth * 4;//memoryRequirements.size;//
+		DeviceSize size = m_width * m_height * m_depth * 4;//memoryRequirements.size;//
 	
-		stagingBuffer.createInfo.setSize(size);
-		stagingBuffer.createInfo.setSharingMode(inSharingMode);
-		stagingBuffer.createInfo.setUsage(BufferUsageFlagBits::eTransferSrc);
-		stagingBuffer.createInfo.setQueueFamilyIndexCount(1);
-		stagingBuffer.createInfo.setPQueueFamilyIndices(&inQueueFamilyIndex);
-		stagingBuffer.Create(vulkanDevice);
-		stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-		MemoryRecord& rec = stagingBuffer.GetMemoryRecord();
+		m_stagingBuffer.createInfo.setSize(size);
+		m_stagingBuffer.createInfo.setSharingMode(inSharingMode);
+		m_stagingBuffer.createInfo.setUsage(BufferUsageFlagBits::eTransferSrc);
+		m_stagingBuffer.createInfo.setQueueFamilyIndexCount(1);
+		m_stagingBuffer.createInfo.setPQueueFamilyIndices(&inQueueFamilyIndex);
+		m_stagingBuffer.Create(false);
+//		m_stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
+		MemoryRecord& rec = m_stagingBuffer.GetMemoryRecord();
 		rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, inData, 0, size);
 	
-		return &stagingBuffer;
+		return &m_stagingBuffer;
 	}
 	
 	void VulkanImage::DestroyStagingBuffer()
 	{
-		if (stagingBuffer)
+		if (m_stagingBuffer)
 		{
-			stagingBuffer.Destroy();
+			m_stagingBuffer.Destroy();
 		}
 	}
 	

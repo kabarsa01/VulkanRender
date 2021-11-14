@@ -368,7 +368,7 @@ namespace CGE
 		std::vector<BufferMemoryBarrier> buffersTransferBarriers;
 		for (VulkanBuffer* buffer : buffers)
 		{
-			inCmdBuffer.copyBuffer(*buffer->CreateStagingBuffer(), *buffer, 1, &buffer->CreateBufferCopy());
+			inCmdBuffer.copyBuffer(*buffer->GetStagingBuffer(), *buffer, 1, &buffer->GetStagingBuffer()->CreateBufferCopy());
 			buffersTransferBarriers.push_back(buffer->CreateMemoryBarrier(
 				VK_QUEUE_FAMILY_IGNORED, 
 				VK_QUEUE_FAMILY_IGNORED, 

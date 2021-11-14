@@ -21,7 +21,7 @@ namespace CGE
 	RTShadowPass::RTShadowPass(HashString name)
 		: VulkanPassBase(name)
 	{
-		m_subscriber.AddHandler<GlobalPreUpdateMessage>(this, &RTShadowPass::HandlePreUpdate);
+		m_subscriber.AddHandler<GlobalPreFrameMessage>(this, &RTShadowPass::HandlePreUpdate);
 	}
 
 	RTShadowPass::~RTShadowPass()
@@ -201,7 +201,7 @@ namespace CGE
 		device.destroyPipelineLayout(m_rtPipelineLayout);
 	}
 
-	void RTShadowPass::HandlePreUpdate(std::shared_ptr<GlobalPreUpdateMessage> msg)
+	void RTShadowPass::HandlePreUpdate(std::shared_ptr<GlobalPreFrameMessage> msg)
 	{
 		if (!m_rtPipeline)
 		{

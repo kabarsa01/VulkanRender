@@ -55,17 +55,33 @@ namespace CGE
 		{
 			m_resourceMapper.AddStorageImage(pair.first, pair.second);
 		}
+		for (auto& pair : storageImage2DArrays)
+		{
+			m_resourceMapper.AddStorageImageArray(pair.first, pair.second);
+		}
 		for (auto& pair : buffers)
 		{
 			m_resourceMapper.AddUniformBuffer(pair.first, pair.second);
+		}
+		for (auto& pair : bufferArrays)
+		{
+			m_resourceMapper.AddUniformBufferArray(pair.first, pair.second);
 		}
 		for (auto& pair : storageBuffers)
 		{
 			m_resourceMapper.AddStorageBuffer(pair.first, pair.second);
 		}
+		for (auto& pair : storageBufferArrays)
+		{
+			m_resourceMapper.AddStorageBufferArray(pair.first, pair.second);
+		}
 		for (auto& pair : accelerationStructures)
 		{
 			m_resourceMapper.AddAccelerationStructure(pair.first, pair.second);
+		}
+		for (auto& pair : accelerationStructureArrays)
+		{
+			m_resourceMapper.AddAccelerationStructureArray(pair.first, pair.second);
 		}
 		m_resourceMapper.Update();
 	}
@@ -167,11 +183,31 @@ namespace CGE
 		sampledImage2DArrays[inName] = inTexture2D;
 	}
 	
+	void Material::SetTextureArray(const std::string& inName, const std::vector<Texture2DPtr>& inTexture2D)
+	{
+		std::vector<TextureDataPtr>& textures = sampledImage2DArrays[inName];
+		textures.resize(inTexture2D.size());
+		for (uint32_t idx = 0; idx < inTexture2D.size(); ++idx)
+		{
+			textures[idx] = ObjectBase::Cast<TextureData>(inTexture2D[idx]);
+		}
+	}
+
 	void Material::SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D)
 	{
 		storageImages2D[inName] = inTexture2D;
 	}
 	
+	void Material::SetStorageTextureArray(const std::string& inName, const std::vector<Texture2DPtr>& inTexture2D)
+	{
+		std::vector<TextureDataPtr>& textures = storageImage2DArrays[inName];
+		textures.resize(inTexture2D.size());
+		for (uint32_t idx = 0; idx < inTexture2D.size(); ++idx)
+		{
+			textures[idx] = ObjectBase::Cast<TextureData>(inTexture2D[idx]);
+		}
+	}
+
 	void Material::SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 	{
 		VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
@@ -180,9 +216,9 @@ namespace CGE
 		buffer.createInfo.setSharingMode(SharingMode::eExclusive);
 		buffer.createInfo.setSize(inSize);
 		buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst);
-		buffer.Create(&vulkanDevice);
-		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		buffer.CreateStagingBuffer();
+		buffer.Create();
+//		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+//		buffer.CreateStagingBuffer();
 	
 		buffers[inName].Destroy();
 		buffers[inName] = buffer;
@@ -217,18 +253,33 @@ namespace CGE
 		buffer.createInfo.setSharingMode(SharingMode::eExclusive);
 		buffer.createInfo.setSize(inSize);
 		buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst);
-		buffer.Create(&vulkanDevice);
-		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		buffer.CreateStagingBuffer();
+		buffer.Create(true);
+//		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+//		buffer.CreateStagingBuffer();
 	
 		storageBuffers[inName].Destroy();
 		storageBuffers[inName] = buffer;
 	}
 	
+	void Material::SetUniformBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData)
+	{
+		bufferArrays[inName].resize(arraySize);
+
+		for (uint32_t idx = 0; idx < arraySize; ++idx)
+		{
+
+		}
+	}
+
+	void Material::SetStorageBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData)
+	{
+
+	}
+
 	void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 	{
-		buffers[inName].CopyTo(inSize, inData);
-		TransferList::GetInstance()->PushBuffer(&buffers[inName]);
+		buffers[inName].CopyTo(inSize, inData, true);
+//		TransferList::GetInstance()->PushBuffer(&buffers[inName]);
 	}
 	
 	void Material::UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)

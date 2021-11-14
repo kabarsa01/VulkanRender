@@ -28,9 +28,11 @@ namespace CGE
 		DeviceMemoryChunk(DeviceSize inSegmentSize, uint32_t inTreeDepth);
 		DeviceMemoryChunk(const DeviceMemoryChunk& inOther);
 		virtual ~DeviceMemoryChunk();
+
+		DeviceMemoryChunk& SetRequirements(const vk::MemoryRequirements& requirements) { m_memory.SetRequirements(requirements); return *this; }
+		DeviceMemoryChunk& SetPropertyFlags(const vk::MemoryPropertyFlags& flags) { m_memory.SetPropertyFlags(flags); return *this; }
 	
-		void Allocate(uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags);
-		void Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags);
+		void Allocate();
 		void Free();
 	
 		MemoryPosition AcquireSegment(DeviceSize inSize);
@@ -44,7 +46,7 @@ namespace CGE
 		uint32_t segmentCount;
 		// flattened binary tree for memory segment tracking
 		unsigned char* memoryTree;
-		VulkanDeviceMemory memory;
+		VulkanDeviceMemory m_memory;
 		DeviceSize segmentSize;
 	
 		uint32_t GetLayerStartIndex(uint32_t inLayer);

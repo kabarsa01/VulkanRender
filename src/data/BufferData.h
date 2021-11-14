@@ -20,14 +20,18 @@ namespace CGE
 	public:
 		BufferData(HashString id, vk::DeviceSize size, vk::BufferUsageFlags usage, bool deviceLocal = true);
 		BufferData(HashString id, vk::BufferCreateInfo createInfo, bool deviceLocal = true);
-		~BufferData() {}
+		BufferData(HashString id, const VulkanBuffer& buffer, bool cleanup = false);
+		~BufferData();
 
 		bool Create() override;
 		void CopyTo(/*vk::DeviceSize offset, */vk::DeviceSize size, const char* data);
+
+		VulkanBuffer& GetBuffer() { return m_buffer; }
 	protected:
 		bool Destroy() override;
 	private:
 		VulkanBuffer m_buffer;
+		bool m_cleanup;
 
 		vk::DeviceSize m_size;
 		vk::BufferUsageFlags m_usage;

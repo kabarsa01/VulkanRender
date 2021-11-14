@@ -39,10 +39,10 @@ namespace CGE
 		ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const;
 		void Destroy();
 	
-		inline uint32_t GetWidth() { return width; }
-		inline uint32_t GetHeight() { return height; }
-		inline uint32_t GetDepth() { return depth; }
-		inline uint32_t GetMips() { return mips; }
+		inline uint32_t GetWidth() { return m_width; }
+		inline uint32_t GetHeight() { return m_height; }
+		inline uint32_t GetDepth() { return m_depth; }
+		inline uint32_t GetMips() { return m_mips; }
 	
 		void SetData(const std::vector<char>& inData);
 		void SetData(DeviceSize inSize, char* inData);
@@ -94,21 +94,21 @@ namespace CGE
 		VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData);
 		void DestroyStagingBuffer();
 	
-		operator Image() const { return image; }
-		operator bool() const { return image; }
+		operator Image() const { return m_image; }
+		operator bool() const { return m_image; }
 	protected:
-		VulkanDevice* vulkanDevice;
-		Image image;
-		MemoryRecord memoryRecord;
-		MemoryRequirements memoryRequirements;
-		VulkanBuffer stagingBuffer;
-		std::vector<char> data;
+		VulkanDevice* m_vulkanDevice;
+		vk::Image m_image;
+		MemoryRecord m_memoryRecord;
+		MemoryRequirements m_requirements;
+		VulkanBuffer m_stagingBuffer;
+		std::vector<char> m_data;
 	
-		bool scoped;
-		uint32_t width = 2;
-		uint32_t height = 2;
-		uint32_t depth = 1;
-		uint32_t mips = 1;
+		bool m_scoped;
+		uint32_t m_width = 2;
+		uint32_t m_height = 2;
+		uint32_t m_depth = 1;
+		uint32_t m_mips = 1;
 	};
 	
 	

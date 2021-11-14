@@ -7,23 +7,16 @@ namespace CGE
 	namespace vk = VULKAN_HPP_NAMESPACE;
 
 	VulkanDeviceMemory::VulkanDeviceMemory(bool inScoped)
-		: scoped(inScoped)
-		, deviceMemory(nullptr)
-	{
-	
-	}
-	
-	VulkanDeviceMemory::VulkanDeviceMemory(const MemoryPropertyFlags& inMemPropertyFlags, bool inScoped)
-		: memPropertyFlags(inMemPropertyFlags)
-		, scoped(inScoped)
-		, deviceMemory(nullptr)
+		: m_scoped(inScoped)
+		, m_deviceMemory(nullptr)
+		, m_deviceLocal(true)
 	{
 	
 	}
 	
 	VulkanDeviceMemory::~VulkanDeviceMemory()
 	{
-		if (scoped)
+		if (m_scoped)
 		{
 			Free();
 		}
@@ -31,95 +24,74 @@ namespace CGE
 	
 	VulkanDeviceMemory& VulkanDeviceMemory::SetSize(DeviceSize inSize)
 	{
-		size = inSize;
+		m_size = inSize;
 		return *this;
 	}
 	
-	VulkanDeviceMemory& VulkanDeviceMemory::SetMemTypeBits(uint32_t inMemTypeBits)
+	VulkanDeviceMemory& VulkanDeviceMemory::SetRequirements(const vk::MemoryRequirements& memRequirements)
 	{
-		memTypeBits = inMemTypeBits;
+		m_requirements = memRequirements;
 		return *this;
 	}
 	
-	VulkanDeviceMemory& VulkanDeviceMemory::SetMemPropertyFlags(MemoryPropertyFlags inMemPropertyFlags)
+	VulkanDeviceMemory& VulkanDeviceMemory::SetPropertyFlags(MemoryPropertyFlags inMemPropertyFlags)
 	{
-		memPropertyFlags = inMemPropertyFlags;
+		m_propertyFlags = inMemPropertyFlags;
 		return *this;
-	}
-	
-	MemoryPropertyFlags VulkanDeviceMemory::GetMemPropertyFlags()
-	{
-		return memPropertyFlags;
-	}
-	
-	void VulkanDeviceMemory::Allocate(DeviceSize inSize, uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags)
-	{
-		device = Engine::GetRendererInstance()->GetVulkanDevice();
-
-		vk::MemoryAllocateFlagsInfo flagsInfo = {};
-		flagsInfo.setFlags(vk::MemoryAllocateFlagBits::eDeviceAddress);
-	
-		vk::MemoryAllocateInfo memoryInfo;
-		memoryInfo.setAllocationSize(inSize);
-		memoryInfo.setMemoryTypeIndex(FindMemoryTypeStatic(inMemTypeBits, inMemPropertyFlags));
-		memoryInfo.pNext = &flagsInfo;
-		deviceMemory = device.allocateMemory(memoryInfo);
-	
-		size = inSize;
-		memTypeBits = inMemTypeBits;
-		memPropertyFlags = inMemPropertyFlags;
-	}
-	
-	void VulkanDeviceMemory::Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
-	{
-		if (!deviceMemory)
-		{
-			Allocate(inMemRequirements.size, inMemRequirements.memoryTypeBits, inMemPropertyFlags);
-		}
 	}
 	
 	void VulkanDeviceMemory::Allocate()
 	{
-		if (!deviceMemory)
+		if (m_deviceMemory)
 		{
-			Allocate(size, memTypeBits, memPropertyFlags);
+			return;
 		}
+		m_nativeDevice = Engine::GetRendererInstance()->GetVulkanDevice();
+
+		vk::MemoryAllocateFlagsInfo flagsInfo = {};
+		flagsInfo.setFlags(vk::MemoryAllocateFlagBits::eDeviceAddress);
+
+		vk::MemoryAllocateInfo memoryInfo;
+		memoryInfo.setAllocationSize(m_size);
+		memoryInfo.setMemoryTypeIndex(FindMemoryTypeStatic(m_requirements.memoryTypeBits, m_propertyFlags));
+		memoryInfo.pNext = &flagsInfo;
+		m_deviceMemory = m_nativeDevice.allocateMemory(memoryInfo);
 	}
 	
 	void VulkanDeviceMemory::Free()
 	{
-		if (deviceMemory)
+		if (m_deviceMemory)
 		{
-			device.freeMemory(deviceMemory);
-			deviceMemory = nullptr;
+			m_nativeDevice.freeMemory(m_deviceMemory);
+			m_deviceMemory = nullptr;
 		}
 	}
 	
 	bool VulkanDeviceMemory::IsValid()
 	{
-		return deviceMemory;
+		return m_deviceMemory;
 	}
 	
 	void* VulkanDeviceMemory::MapMemory(MemoryMapFlags inMapFlags, DeviceSize inMappingOffset, DeviceSize inMappingSize)
 	{
-		mappedMem = device.mapMemory(deviceMemory, inMappingOffset, inMappingSize, inMapFlags);
-		return mappedMem;
+		m_mappedMem = m_nativeDevice.mapMemory(m_deviceMemory, inMappingOffset, inMappingSize, inMapFlags);
+		return m_mappedMem;
 	}
 	
 	void* VulkanDeviceMemory::GetMappedMem()
 	{
-		return mappedMem;
+		return m_mappedMem;
 	}
 	
 	void VulkanDeviceMemory::UnmapMemory()
 	{
-		device.unmapMemory(deviceMemory);
-		mappedMem = nullptr;
+		m_nativeDevice.unmapMemory(m_deviceMemory);
+		m_mappedMem = nullptr;
 	}
 	
 	void VulkanDeviceMemory::CopyToMappedMem(size_t inDstOffset, const void* inSrcData, size_t inSrcOffset, size_t inSize)
 	{
-		char* dst = reinterpret_cast<char*>(mappedMem);
+		char* dst = reinterpret_cast<char*>(m_mappedMem);
 		const char* srcData = reinterpret_cast<const char*>(inSrcData);
 		memcpy(dst + inDstOffset, srcData + inSrcOffset, inSize);
 	}
@@ -133,12 +105,12 @@ namespace CGE
 	
 	VulkanDeviceMemory::operator bool() const
 	{
-		return deviceMemory;
+		return m_deviceMemory;
 	}
 	
 	VulkanDeviceMemory::operator DeviceMemory() const
 	{
-		return deviceMemory;
+		return m_deviceMemory;
 	}
 	
 	uint32_t VulkanDeviceMemory::FindMemoryTypeStatic(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags)

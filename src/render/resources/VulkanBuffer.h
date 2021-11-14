@@ -27,47 +27,42 @@ namespace CGE
 		VulkanBuffer(bool inScoped = false, bool inCleanup = true);
 		virtual ~VulkanBuffer();
 	
-		void Create(VulkanDevice* inDevice);
-		void Create(VulkanDevice* inDevice, DeviceSize inSize, BufferUsageFlags inFlags);
+		void Create(bool deviceLocal = true);
 		void Destroy();
 	
-		void SetData(const std::vector<char>& inData);
-		void SetData(DeviceSize inSize, const char* inData);
-		void CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer = false);
-		void CopyToBuffer(DeviceSize inSize, const char* inData);
-		void CopyToStagingBuffer(DeviceSize inSize, const char* inData);
-		void BindMemory(MemoryPropertyFlags inMemPropertyFlags);
-		void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
+		void CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer = true);
 	
-		VulkanBuffer* CreateStagingBuffer();
-		VulkanBuffer* CreateStagingBuffer(DeviceSize inSize, char* inData);
 		BufferCopy CreateBufferCopy();
 		BufferMemoryBarrier CreateMemoryBarrier(uint32_t inSrcQueue, uint32_t inDstQueue, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask);
 		DescriptorBufferInfo& GetDescriptorInfo();
 		DescriptorBufferInfo GetDescriptorInfo() const;
 	
-		Buffer& GetBuffer();
-		Buffer GetBuffer() const;
+		VulkanBuffer* GetStagingBuffer() { return m_stagingBuffer; }
+		Buffer& GetNativeBuffer();
+		Buffer GetNativeBuffer() const;
 		MemoryRequirements GetMemoryRequirements();
 		MemoryRecord& GetMemoryRecord();
 		vk::DeviceAddress GetDeviceAddress();
 	
-		operator Buffer() const { return buffer; }
-		operator bool() const { return buffer; }
+		operator Buffer() const { return m_buffer; }
+		operator bool() const { return m_buffer; }
 	
-		void SetCleanup(bool inCleanup) { cleanup = inCleanup; }
-	
-		//static void SubmitCopyCommand(const VulkanBuffer& inSrc, const VulkanBuffer& inDst);
+		void SetCleanup(bool inCleanup) { m_cleanup = inCleanup; }
 	protected:
-		VulkanDevice* vulkanDevice;
-		Buffer buffer;
-		DescriptorBufferInfo descriptorInfo;
-		MemoryRecord memRecord;
-		std::vector<char> data;
+		VulkanDevice* m_vulkanDevice;
+		Buffer m_buffer;
+		DescriptorBufferInfo m_descriptorInfo;
+		MemoryRecord m_memRecord;
 	
-		bool scoped = false;
-		bool cleanup = true;
+		bool m_scoped = false;
+		bool m_cleanup = true;
+		bool m_deviceLocal = true;
 	
-		VulkanBuffer* stagingBuffer;
+		VulkanBuffer* m_stagingBuffer;
+
+		void BindMemory(MemoryPropertyFlags inMemPropertyFlags);
+		void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
+		VulkanBuffer* CreateStagingBuffer();
+		VulkanBuffer* CreateStagingBuffer(DeviceSize inSize, const char* inData);
 	};
 }

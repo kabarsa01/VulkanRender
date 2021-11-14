@@ -327,12 +327,12 @@ namespace CGE
 		buffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
 		buffer.createInfo.setSize(inSize);
 		buffer.createInfo.setUsage(inUsage);
-		buffer.Create(inDevice);
-		buffer.BindMemory(inMemProps);
-		if (inWithStaging)
-		{
-			buffer.CreateStagingBuffer();
-		}
+		buffer.Create(inWithStaging);
+		//buffer.BindMemory(inMemProps);
+		//if (inWithStaging)
+		//{
+		//	buffer.CreateStagingBuffer();
+		//}
 
 		return buffer;
 	}

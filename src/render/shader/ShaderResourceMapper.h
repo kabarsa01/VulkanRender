@@ -36,10 +36,13 @@ namespace CGE
 		void AddStorageImageArray(HashString name, const std::vector<TextureDataPtr>& textures);
 		void AddUniformBuffer(HashString name, VulkanBuffer buffer);
 		void AddUniformBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer);
+		void AddUniformBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers);
 		void AddStorageBuffer(HashString name, VulkanBuffer buffer);
 		void AddStorageBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer);
+		void AddStorageBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers);
 		void AddAccelerationStructure(HashString name, vk::AccelerationStructureKHR accelerationStructure);
 		void AddAccelerationStructure(uint32_t set, uint32_t binding, vk::AccelerationStructureKHR accelerationStructure);
+		void AddAccelerationStructureArray(HashString name, const std::vector<vk::AccelerationStructureKHR>& accelerationStructures);
 
 		void Update();
 		void Destroy();

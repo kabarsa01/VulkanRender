@@ -23,7 +23,7 @@ namespace CGE
 		m_blasTable.reserve(1024 * 8);
 		// message handlers
 		m_messageSubscriber.AddHandler<GlobalUpdateMessage>(this, &RtScene::HandleUpdate);
-		m_messageSubscriber.AddHandler<GlobalFlipMessage>(this, &RtScene::HandleFlip);
+		m_messageSubscriber.AddHandler<GlobalPostFrameMessage>(this, &RtScene::HandleFlip);
 	}
 
 	RtScene::~RtScene()
@@ -37,9 +37,9 @@ namespace CGE
 		m_instancesBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferDst);
 		m_instancesBuffer.createInfo.setSize(sizeof(vk::AccelerationStructureInstanceKHR) * 1024 * 16);
 		m_instancesBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
-		m_instancesBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
-		m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
-		m_instancesBuffer.CreateStagingBuffer();
+		m_instancesBuffer.Create(true);
+		//m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+		//m_instancesBuffer.CreateStagingBuffer();
 
 
 		// just an experiment, create very big acceleration structure and buffer and just rebuild it in place
@@ -260,8 +260,8 @@ namespace CGE
 				scratchBuffer.createInfo.setSize(accBuildInfos.buildSizes.back().buildScratchSize);
 				scratchBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eShaderDeviceAddress);
 				scratchBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
-				scratchBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
-				scratchBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+				scratchBuffer.Create(true);
+//				scratchBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 				// add scratch buffer
 				accBuildInfos.scratchBuffers.push_back(scratchBuffer);
 			}
@@ -271,8 +271,8 @@ namespace CGE
 				as.buffer.createInfo.setSize(accBuildInfos.buildSizes.back().accelerationStructureSize);
 				as.buffer.createInfo.setUsage(vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress);
 				as.buffer.createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
-				as.buffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
-				as.buffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+				as.buffer.Create(true);
+//				as.buffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 			}
 
 			{
@@ -400,7 +400,7 @@ namespace CGE
 
 	}
 
-	void RtScene::HandleFlip(std::shared_ptr<GlobalFlipMessage> msg)
+	void RtScene::HandleFlip(std::shared_ptr<GlobalPostFrameMessage> msg)
 	{
 		m_frameIndexTruncated = (m_frameIndexTruncated + 1) % m_buildInfosArray.size();
 		RTUtils::CleanupBuildInfos(m_buildInfosArray[m_frameIndexTruncated]);

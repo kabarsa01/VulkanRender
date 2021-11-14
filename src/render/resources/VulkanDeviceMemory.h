@@ -17,18 +17,15 @@ namespace CGE
 	{
 	public:
 		VulkanDeviceMemory(bool inScoped = false);
-		VulkanDeviceMemory(const MemoryPropertyFlags& inMemPropertyFlags, bool inScoped = false);
 		virtual ~VulkanDeviceMemory();
 	
 		VulkanDeviceMemory& SetSize(DeviceSize inSize);
-		DeviceSize GetSize() { return size; }
-		VulkanDeviceMemory& SetMemTypeBits(uint32_t inMemTypeBits);
-		uint32_t GetMemTypeBits() { return memTypeBits; }
-		VulkanDeviceMemory& SetMemPropertyFlags(MemoryPropertyFlags inMemPropertyFlags);
-		MemoryPropertyFlags GetMemPropertyFlags();
+		DeviceSize GetSize() { return m_size; }
+		VulkanDeviceMemory& SetRequirements(const vk::MemoryRequirements& memRequirements);
+		vk::MemoryRequirements GetRequirements() { return m_requirements; }
+		VulkanDeviceMemory& SetPropertyFlags(MemoryPropertyFlags inMemPropertyFlags);
+		vk::MemoryPropertyFlags GetPropertyFlags() { return m_propertyFlags; }
 	
-		void Allocate(DeviceSize inSize, uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags);
-		void Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags);
 		void Allocate();
 		void Free();
 		bool IsValid();
@@ -47,13 +44,14 @@ namespace CGE
 	
 		static uint32_t FindMemoryTypeStatic(uint32_t inTypeFilter, MemoryPropertyFlags inPropFlags);
 	protected:
-		bool scoped = false;
-		Device device;
-		DeviceMemory deviceMemory;
-		DeviceSize size;
-		uint32_t memTypeBits;
-		MemoryPropertyFlags memPropertyFlags;
-		void* mappedMem;
+		bool m_deviceLocal = true;
+		bool m_scoped = false;
+		Device m_nativeDevice;
+		DeviceMemory m_deviceMemory;
+		DeviceSize m_size;
+		vk::MemoryPropertyFlags m_propertyFlags;
+		vk::MemoryRequirements m_requirements;
+		void* m_mappedMem;
 	};
 	
 	

@@ -28,7 +28,7 @@ namespace CGE
 	DeviceMemoryChunk::DeviceMemoryChunk(const DeviceMemoryChunk& inOther)
 		: DeviceMemoryChunk(inOther.segmentSize, inOther.treeDepth)
 	{
-		memory = inOther.memory;
+		m_memory = inOther.m_memory;
 	}
 	
 	DeviceMemoryChunk::~DeviceMemoryChunk()
@@ -36,20 +36,16 @@ namespace CGE
 		delete [] memoryTree;
 	}
 	
-	void DeviceMemoryChunk::Allocate(uint32_t inMemTypeBits, MemoryPropertyFlags inMemPropertyFlags)
+	void DeviceMemoryChunk::Allocate()
 	{
 		DeviceSize chunkSize = segmentSize * segmentCount;
-		memory.Allocate(chunkSize, inMemTypeBits, inMemPropertyFlags);
-	}
-	
-	void DeviceMemoryChunk::Allocate(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
-	{
-		Allocate(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
+		m_memory.SetSize(chunkSize);
+		m_memory.Allocate();
 	}
 	
 	void DeviceMemoryChunk::Free()
 	{
-		memory.Free();
+		m_memory.Free();
 	}
 	
 	MemoryPosition DeviceMemoryChunk::AcquireSegment(DeviceSize inSize)
@@ -79,7 +75,7 @@ namespace CGE
 		pos.valid = true;
 		pos.index = targetIndex;
 		pos.layer = layer;
-		pos.memory = memory;
+		pos.memory = m_memory;
 		pos.offset = CalculateOffset(layer, targetIndex);
 	
 		return pos;
@@ -92,7 +88,7 @@ namespace CGE
 	
 	VulkanDeviceMemory& DeviceMemoryChunk::GetMemory()
 	{
-		return memory;
+		return m_memory;
 	}
 	
 	bool DeviceMemoryChunk::HasFreeSpace()

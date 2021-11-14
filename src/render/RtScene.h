@@ -70,7 +70,7 @@ namespace CGE
 		void FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups);
 
 		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> msg);
-		void HandleFlip(std::shared_ptr<GlobalFlipMessage> msg);
+		void HandleFlip(std::shared_ptr<GlobalPostFrameMessage> msg);
 	};
 
 	//-------------------------------------------------------------------------------------

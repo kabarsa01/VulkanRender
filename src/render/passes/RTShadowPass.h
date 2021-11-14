@@ -58,7 +58,7 @@ namespace CGE
 		VulkanBuffer m_sbtBuffer;
 		uint32_t m_handleSizeAligned;
 
-		void HandlePreUpdate(std::shared_ptr<GlobalPreUpdateMessage> msg);
+		void HandlePreUpdate(std::shared_ptr<GlobalPreFrameMessage> msg);
 		void UpdateShaderResources();
 		void UpdatePipeline();
 	};

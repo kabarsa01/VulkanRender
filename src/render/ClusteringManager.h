@@ -32,7 +32,7 @@ namespace CGE
 		glm::vec2 m_clusterScreenOverflow;
 
 		void Update();
-		void HandleUpdateMsg(std::shared_ptr<GlobalPreUpdateMessage> msg);
+		void HandleUpdateMsg(std::shared_ptr<GlobalPreFrameMessage> msg);
 	};
 
 }

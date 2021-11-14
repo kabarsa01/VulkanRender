@@ -97,11 +97,10 @@ namespace CGE
 		inBuffer.createInfo.setSize(size);
 		inBuffer.createInfo.setUsage(usage | BufferUsageFlagBits::eTransferDst | BufferUsageFlagBits::eShaderDeviceAddress);
 		inBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		inBuffer.Create(&Engine::GetRendererInstance()->GetVulkanDevice());
-		inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		inBuffer.SetData(size, reinterpret_cast<char*>( inDataVector.data() ));
-	
-	//	VulkanBuffer::SubmitCopyCommand(*inBuffer.CreateStagingBuffer(), inBuffer);
+		inBuffer.Create(true);
+		//inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		//inBuffer.CreateStagingBuffer();
+		inBuffer.CopyTo(size, reinterpret_cast<const char*>(inDataVector.data()));
 	}
 	
 	

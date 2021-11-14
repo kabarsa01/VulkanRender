@@ -92,7 +92,8 @@ namespace CGE
 	
 			TimeManager::GetInstance()->UpdateTime();
 
-			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPreUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPreFrameMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPreSceneMessage>(TimeManager::GetInstance()->GetDeltaTime()));
 	
 			auto sceneStartTime = std::chrono::high_resolution_clock::now();
 			m_sceneInstance->PerFrameUpdate();
@@ -100,13 +101,18 @@ namespace CGE
 			double sceneDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(sceneCurrentTime - sceneStartTime).count();
 			std::printf("scene update time is %f microseconds\n", sceneDeltaTime);
 			auto renderStartTime = std::chrono::high_resolution_clock::now();
+
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPostSceneMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPreRenderMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+
 			m_rendererInstance->RenderFrame();
 			auto renderCurrentTime = std::chrono::high_resolution_clock::now();
 			double renderDeltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(renderCurrentTime - renderStartTime).count();
 			std::printf("render update time is %f microseconds\n", renderDeltaTime);
 
-			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalUpdateMessage>(TimeManager::GetInstance()->GetDeltaTime()));
-			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalFlipMessage>(m_frameCount));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPostRenderMessage>(TimeManager::GetInstance()->GetDeltaTime()));
+			MessageBus::GetInstance()->PublishSync(std::make_shared<GlobalPostFrameMessage>(m_frameCount));
 
 			// just not to forget let it increment in a separate statement
 			++m_frameCount;

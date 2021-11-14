@@ -30,7 +30,7 @@ namespace CGE
 		m_resourcesTable.reserve(1024 * 128);
 		m_resourcesMap.reserve(128);
 
-		m_messageSubscriber.AddHandler<GlobalUpdateMessage>(this, &DataManager::HandleUpdate);
+		m_messageSubscriber.AddHandler<GlobalPostFrameMessage>(this, &DataManager::HandleUpdate);
 	}
 	
 	DataManager::~DataManager()
@@ -153,7 +153,7 @@ namespace CGE
 		return false;
 	}
 
-	void DataManager::HandleUpdate(std::shared_ptr<GlobalUpdateMessage> updateMsg)
+	void DataManager::HandleUpdate(std::shared_ptr<GlobalPostFrameMessage> updateMsg)
 	{
 		std::function func = [this]() { ScanForAbandonedResources(); };
 		std::shared_ptr<Job<void()>> job = std::make_shared<Job<void()>>(std::move(func));

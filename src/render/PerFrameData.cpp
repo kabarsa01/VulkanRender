@@ -40,16 +40,16 @@ namespace CGE
 		shaderDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 		shaderDataBuffer.createInfo.setSize(sizeof(GlobalShaderData));
 		shaderDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst);
-		shaderDataBuffer.Create(device);
-		shaderDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		shaderDataBuffer.CreateStagingBuffer();
+		shaderDataBuffer.Create(true);
+		//shaderDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		//shaderDataBuffer.CreateStagingBuffer();
 	
 		transformDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
 		transformDataBuffer.createInfo.setSize(sizeof(GlobalTransformData));
 		transformDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst);
-		transformDataBuffer.Create(device);
-		transformDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		transformDataBuffer.CreateStagingBuffer();
+		transformDataBuffer.Create(true);
+		//transformDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		//transformDataBuffer.CreateStagingBuffer();
 	
 		m_set.SetBindings(ProduceBindings());
 		m_set.Create(device);

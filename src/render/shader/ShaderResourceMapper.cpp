@@ -58,6 +58,11 @@ namespace CGE
 		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, set, binding, { buffer });
 	}
 
+	void ShaderResourceMapper::AddUniformBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers)
+	{
+		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, name, buffers);
+	}
+
 	void ShaderResourceMapper::AddStorageBuffer(HashString name, VulkanBuffer buffer)
 	{
 		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, name, { buffer });
@@ -68,6 +73,11 @@ namespace CGE
 		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, set, binding, { buffer });
 	}
 
+	void ShaderResourceMapper::AddStorageBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers)
+	{
+		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, name, buffers);
+	}
+
 	void ShaderResourceMapper::AddAccelerationStructure(HashString name, vk::AccelerationStructureKHR accelerationStructure)
 	{
 		AddResource<vk::AccelerationStructureKHR>(vk::DescriptorType::eAccelerationStructureKHR, name, { accelerationStructure });
@@ -76,6 +86,11 @@ namespace CGE
 	void ShaderResourceMapper::AddAccelerationStructure(uint32_t set, uint32_t binding, vk::AccelerationStructureKHR accelerationStructure)
 	{
 		AddResource<vk::AccelerationStructureKHR>(vk::DescriptorType::eAccelerationStructureKHR, set, binding, { accelerationStructure });
+	}
+
+	void ShaderResourceMapper::AddAccelerationStructureArray(HashString name, const std::vector<vk::AccelerationStructureKHR>& accelerationStructures)
+	{
+		AddResource<vk::AccelerationStructureKHR>(vk::DescriptorType::eAccelerationStructureKHR, name, accelerationStructures);
 	}
 
 	void ShaderResourceMapper::Update()

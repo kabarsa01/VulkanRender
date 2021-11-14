@@ -45,7 +45,7 @@ namespace CGE
 		return staticInstance;
 	}
 	
-	MemoryRecord DeviceMemoryManager::RequestMemory(const MemoryRequirements& inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
+	MemoryRecord DeviceMemoryManager::RequestMemory(MemoryRequirements inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
 	{
 		std::printf("allocation alignment requirement is %I64u \n", inMemRequirements.alignment);
 	
@@ -86,7 +86,8 @@ namespace CGE
 		startTime = std::chrono::high_resolution_clock::now();
 	
 		DeviceMemoryChunk* chunk = chunkArray.back();
-		chunk->Allocate(inMemRequirements, inMemPropertyFlags);
+		chunk->SetRequirements(inMemRequirements).SetPropertyFlags(inMemPropertyFlags);
+		chunk->Allocate();
 	
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();

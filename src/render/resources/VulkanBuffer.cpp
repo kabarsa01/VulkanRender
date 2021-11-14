@@ -1,69 +1,76 @@
 #include "VulkanBuffer.h"
 #include "core/Engine.h"
 #include "../TransferList.h"
+#include "../Renderer.h"
 
 namespace CGE
 {
 	namespace vk = VULKAN_HPP_NAMESPACE;
 
 	VulkanBuffer::VulkanBuffer(bool inScoped, bool inCleanup)
-		: scoped(inScoped)
-		, cleanup(inCleanup)
-		, stagingBuffer(nullptr)
+		: m_scoped(inScoped)
+		, m_cleanup(inCleanup)
+		, m_stagingBuffer(nullptr)
 	{
-	
 	}
 	
 	VulkanBuffer::~VulkanBuffer()
 	{
-		if (scoped)
+		if (m_scoped)
 		{
 			Destroy();
 		}
 	}
 	
-	void VulkanBuffer::Create(VulkanDevice* inDevice)
+	void VulkanBuffer::Create(bool deviceLocal/* = true*/)
 	{
-		if (buffer)
+		if (m_buffer)
 		{
 			return;
 		}
-		vulkanDevice = inDevice;
-		buffer = vulkanDevice->GetDevice().createBuffer(createInfo);
+		m_deviceLocal = deviceLocal;
+		m_vulkanDevice = &Engine::GetRendererInstance()->GetVulkanDevice();
+		m_buffer = m_vulkanDevice->GetDevice().createBuffer(createInfo);
 	
-		descriptorInfo.setBuffer(buffer);
-		descriptorInfo.setOffset(0);
-		descriptorInfo.setRange(createInfo.size);
-	}
-	
-	void VulkanBuffer::Create(VulkanDevice* inDevice, DeviceSize inSize, BufferUsageFlags inFlags)
-	{
-		if (buffer)
-		{
-			return;
-		}
-		createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
-		createInfo.setUsage(inFlags);
-		createInfo.setSize(inSize);
+		m_descriptorInfo.setBuffer(m_buffer);
+		m_descriptorInfo.setOffset(0);
+		m_descriptorInfo.setRange(createInfo.size);
 
-		Create(inDevice);
-	}
-
-	void VulkanBuffer::SetData(const std::vector<char>& inData)
-	{
-		data = inData;
+		BindMemory(deviceLocal ? vk::MemoryPropertyFlagBits::eDeviceLocal : vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible);
 	}
 	
-	void VulkanBuffer::SetData(DeviceSize inSize, const char* inData)
-	{
-		data.assign(inData, inData + inSize);
-	}
+	//void VulkanBuffer::Create(VulkanDevice* inDevice, DeviceSize inSize, BufferUsageFlags inFlags)
+	//{
+	//	if (m_buffer)
+	//	{
+	//		return;
+	//	}
+	//	createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
+	//	createInfo.setUsage(inFlags);
+	//	createInfo.setSize(inSize);
+
+	//	Create(inDevice);
+	//}
+
+	//void VulkanBuffer::SetData(const std::vector<char>& inData)
+	//{
+	//	data = inData;
+	//}
+	//
+	//void VulkanBuffer::SetData(DeviceSize inSize, const char* inData)
+	//{
+	//	data.assign(inData, inData + inSize);
+	//}
 	
 	void VulkanBuffer::CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer)
 	{
-		if (stagingBuffer)
+		if (m_deviceLocal)
 		{
-			CopyToStagingBuffer(inSize, inData);
+			CreateStagingBuffer(inSize, inData);
+		}
+		if (m_stagingBuffer)
+		{
+			m_stagingBuffer->CopyTo(inSize, inData, pushToTransfer);
 			if (pushToTransfer)
 			{
 				TransferList::GetInstance()->PushBuffer(this);
@@ -71,82 +78,70 @@ namespace CGE
 		}
 		else
 		{
-			CopyToBuffer(inSize, inData);
+			m_memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), m_memRecord.pos.offset, inSize, inData, 0, inSize);
 		}
-	}
-	
-	void VulkanBuffer::CopyToBuffer(DeviceSize inSize, const char* inData)
-	{
-		memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRecord.pos.offset, inSize, inData, 0, inSize);
-	}
-	
-	void VulkanBuffer::CopyToStagingBuffer(DeviceSize inSize, const char* inData)
-	{
-		MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
-		memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
 	}
 	
 	void VulkanBuffer::Destroy()
 	{
-		if (!cleanup)
+		if (!m_cleanup)
 		{
 			return;
 		}
-		if (stagingBuffer != nullptr)
+		if (m_stagingBuffer != nullptr)
 		{
-			stagingBuffer->Destroy();
-			delete stagingBuffer;
-			stagingBuffer = nullptr;
+			m_stagingBuffer->Destroy();
+			delete m_stagingBuffer;
+			m_stagingBuffer = nullptr;
 		}
-		if (buffer)
+		if (m_buffer)
 		{
-			vulkanDevice->GetDevice().destroyBuffer(buffer);
-			buffer = nullptr;
-			DeviceMemoryManager::GetInstance()->ReturnMemory(memRecord);
+			m_vulkanDevice->GetDevice().destroyBuffer(m_buffer);
+			m_buffer = nullptr;
+			DeviceMemoryManager::GetInstance()->ReturnMemory(m_memRecord);
 		}
 	}
 	
 	void VulkanBuffer::BindMemory(MemoryPropertyFlags inMemPropertyFlags)
 	{
-		if (memRecord.pos.valid)
+		if (m_memRecord.pos.valid)
 		{
 			return;
 		}
 		DeviceMemoryManager* dmm = DeviceMemoryManager::GetInstance();
-		memRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemPropertyFlags);
-		vulkanDevice->GetDevice().bindBufferMemory(buffer, memRecord.pos.memory, memRecord.pos.offset);
+		m_memRecord = dmm->RequestMemory(GetMemoryRequirements(), inMemPropertyFlags);
+		m_vulkanDevice->GetDevice().bindBufferMemory(m_buffer, m_memRecord.pos.memory, m_memRecord.pos.offset);
 	}
 	
 	void VulkanBuffer::BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset)
 	{
-		vulkanDevice->GetDevice().bindBufferMemory(buffer, inDeviceMemory, inMemOffset);
+		m_vulkanDevice->GetDevice().bindBufferMemory(m_buffer, inDeviceMemory, inMemOffset);
 	}
 	
 	VulkanBuffer* VulkanBuffer::CreateStagingBuffer()
 	{
-		return CreateStagingBuffer(createInfo.size, data.data());
+		return CreateStagingBuffer(createInfo.size, nullptr);
 	}
 	
-	VulkanBuffer* VulkanBuffer::CreateStagingBuffer(DeviceSize inSize, char* inData)
+	VulkanBuffer* VulkanBuffer::CreateStagingBuffer(DeviceSize inSize, const char* inData)
 	{
-		if (stagingBuffer)
+		if (m_stagingBuffer)
 		{
-			return stagingBuffer;
+			return m_stagingBuffer;
 		}
 	
-		stagingBuffer = new VulkanBuffer();
-		stagingBuffer->createInfo.setSize(inSize);
-		stagingBuffer->createInfo.setUsage(createInfo.usage | vk::BufferUsageFlagBits::eTransferSrc);
-		stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
-		stagingBuffer->Create(vulkanDevice);
-		stagingBuffer->BindMemory(MemoryPropertyFlagBits::eHostCoherent | MemoryPropertyFlagBits::eHostVisible);
+		m_stagingBuffer = new VulkanBuffer();
+		m_stagingBuffer->createInfo.setSize(inSize);
+		m_stagingBuffer->createInfo.setUsage(createInfo.usage | vk::BufferUsageFlagBits::eTransferSrc);
+		m_stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
+		m_stagingBuffer->Create(false);
 		if (inData)
 		{
-			MemoryRecord& memRec = stagingBuffer->GetMemoryRecord();
-			memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
+//			MemoryRecord& memRec = m_stagingBuffer->GetMemoryRecord();
+//			memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
 		}
 	
-		return stagingBuffer;
+		return m_stagingBuffer;
 	}
 	
 	BufferCopy VulkanBuffer::CreateBufferCopy()
@@ -163,7 +158,7 @@ namespace CGE
 	{
 		BufferMemoryBarrier barrier;
 	
-		barrier.setBuffer(buffer);
+		barrier.setBuffer(m_buffer);
 		barrier.setSize(createInfo.size);
 		barrier.setOffset(0);
 		barrier.setSrcQueueFamilyIndex(inSrcQueue);
@@ -176,40 +171,40 @@ namespace CGE
 	
 	DescriptorBufferInfo& VulkanBuffer::GetDescriptorInfo()
 	{
-		return descriptorInfo;
+		return m_descriptorInfo;
 	}
 	
 	DescriptorBufferInfo VulkanBuffer::GetDescriptorInfo() const
 	{
-		return descriptorInfo;
+		return m_descriptorInfo;
 	}
 
-	Buffer& VulkanBuffer::GetBuffer()
+	Buffer& VulkanBuffer::GetNativeBuffer()
 	{
-		return buffer;
+		return m_buffer;
 	}
 	
-	Buffer VulkanBuffer::GetBuffer() const
+	Buffer VulkanBuffer::GetNativeBuffer() const
 	{
-		return buffer;
+		return m_buffer;
 	}
 	
 	MemoryRequirements VulkanBuffer::GetMemoryRequirements()
 	{
-		return vulkanDevice->GetDevice().getBufferMemoryRequirements(buffer);
+		return m_vulkanDevice->GetDevice().getBufferMemoryRequirements(m_buffer);
 	}
 	
 	MemoryRecord& VulkanBuffer::GetMemoryRecord()
 	{
-		return memRecord;
+		return m_memRecord;
 	}
 	
 	
 	vk::DeviceAddress VulkanBuffer::GetDeviceAddress()
 	{
 		vk::BufferDeviceAddressInfo bufferInfo;
-		bufferInfo.setBuffer(buffer);
-		return vulkanDevice->GetDevice().getBufferAddress(bufferInfo);
+		bufferInfo.setBuffer(m_buffer);
+		return m_vulkanDevice->GetDevice().getBufferAddress(bufferInfo);
 	}
 
 }

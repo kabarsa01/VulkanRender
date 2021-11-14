@@ -7,7 +7,7 @@ namespace CGE
 
 	ClusteringManager::ClusteringManager()
 	{
-		m_subscriber.AddHandler<GlobalPreUpdateMessage>(this, &ClusteringManager::HandleUpdateMsg);
+		m_subscriber.AddHandler<GlobalPreFrameMessage>(this, &ClusteringManager::HandleUpdateMsg);
 	}
 
 	void ClusteringManager::Update()
@@ -28,7 +28,7 @@ namespace CGE
 		}
 	}
 
-	void ClusteringManager::HandleUpdateMsg(std::shared_ptr<GlobalPreUpdateMessage> msg)
+	void ClusteringManager::HandleUpdateMsg(std::shared_ptr<GlobalPreFrameMessage> msg)
 	{
 		Update();
 	}

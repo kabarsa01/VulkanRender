@@ -65,8 +65,8 @@ namespace CGE
 			ImageMemoryBarrier depthTextureBarrier = m_executeContext->GetDepthAttachment()->GetImage().CreateLayoutBarrier(
 				vk::ImageLayout::eUndefined,
 				vk::ImageLayout::eDepthStencilAttachmentOptimal,
-				vk::AccessFlagBits::eShaderRead,
-				vk::AccessFlagBits::eShaderWrite,
+				vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite,
+				vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite,
 				vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 				0, 1, 0, 1);
 			barriers.emplace_back(depthTextureBarrier);
@@ -76,8 +76,8 @@ namespace CGE
 			ImageMemoryBarrier textureBarrier = texture->GetImage().CreateLayoutBarrier(
 				vk::ImageLayout::eUndefined,
 				vk::ImageLayout::eColorAttachmentOptimal,
-				vk::AccessFlagBits::eShaderRead,
-				vk::AccessFlagBits::eShaderWrite,
+				vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite,
+				vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite,
 				vk::ImageAspectFlagBits::eColor,
 				0, 1, 0, 1);
 			barriers.emplace_back(textureBarrier);

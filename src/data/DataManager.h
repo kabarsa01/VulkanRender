@@ -60,7 +60,7 @@ namespace CGE
 		bool DeleteResource(ResourcePtr inValue);
 		bool DeleteResource(HashString key);
 
-		void HandleUpdate(std::shared_ptr<GlobalUpdateMessage> updateMsg);
+		void HandleUpdate(std::shared_ptr<GlobalPostFrameMessage> updateMsg);
 		void ScanForAbandonedResources();
 	};
 

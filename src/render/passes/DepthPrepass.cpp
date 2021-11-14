@@ -49,8 +49,8 @@ namespace CGE
 					HashString meshId = meshData->GetResourceId();
 
 					commandBuffer->pushConstants(pipelineData.pipelineLayout, vk::ShaderStageFlagBits::eAll, 0, sizeof(uint32_t), &scene->GetMeshDataToIndex(materialId)[meshId]);
-					commandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetBuffer(), &offset);
-					commandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetBuffer(), 0, vk::IndexType::eUint32);
+					commandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetNativeBuffer(), &offset);
+					commandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetNativeBuffer(), 0, vk::IndexType::eUint32);
 					commandBuffer->drawIndexed(meshData->GetIndexCount(), static_cast<uint32_t>(scene->GetMeshDataToTransform(materialId)[meshId].size()), 0, 0, 0);
 				}
 			}

@@ -271,6 +271,7 @@ exit /b</Command>
     <ClCompile Include="src\render\objects\VulkanDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\render\objects\VulkanSwapChain.cpp" />
+    <ClCompile Include="src\render\passes\ClusterComputePass.cpp" />
     <ClCompile Include="src\render\passes\DeferredLightingPass.cpp" />
     <ClCompile Include="src\render\passes\DepthPrepass.cpp" />
     <ClCompile Include="src\render\passes\GBufferPass.cpp" />
@@ -349,6 +350,7 @@ exit /b</Command>
     <ClInclude Include="src\render\objects\VulkanDevice.h" />
     <ClInclude Include="src\render\objects\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\render\objects\VulkanSwapChain.h" />
+    <ClInclude Include="src\render\passes\ClusterComputePass.h" />
     <ClInclude Include="src\render\passes\DeferredLightingPass.h" />
     <ClInclude Include="src\render\passes\DepthPrepass.h" />
     <ClInclude Include="src\render\passes\GBufferPass.h" />

@@ -43,13 +43,17 @@ namespace CGE
 	
 		void SetTexture(const std::string& inName, Texture2DPtr inTexture2D);
 		void SetTextureArray(const std::string& inName, const std::vector<TextureDataPtr>& inTexture2D);
+		void SetTextureArray(const std::string& inName, const std::vector<Texture2DPtr>& inTexture2D);
 		void SetStorageTexture(const std::string& inName, Texture2DPtr inTexture2D);
+		void SetStorageTextureArray(const std::string& inName, const std::vector<Texture2DPtr>& inTexture2D);
 		template<typename T>
 		void SetUniformBuffer(const std::string& inName, T& inUniformBuffer);
 		template<typename T>
 		void SetStorageBuffer(const std::string& inName, T& inStorageBuffer);
 		void SetUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
+		void SetUniformBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
+		void SetStorageBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
 		void SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
 		void SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
 		void SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct);
@@ -84,9 +88,13 @@ namespace CGE
 		std::map<HashString, Texture2DPtr> sampledImages2D;
 		std::map<HashString, std::vector<TextureDataPtr>> sampledImage2DArrays;
 		std::map<HashString, Texture2DPtr> storageImages2D;
+		std::map<HashString, std::vector<TextureDataPtr>> storageImage2DArrays;
 		std::map<HashString, VulkanBuffer> buffers;
+		std::map<HashString, std::vector<VulkanBuffer>> bufferArrays;
 		std::map<HashString, VulkanBuffer> storageBuffers;
+		std::map<HashString, std::vector<VulkanBuffer>> storageBufferArrays;
 		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
+		std::map<HashString, std::vector<vk::AccelerationStructureKHR>> accelerationStructureArrays;
 	
 		VulkanDevice* vulkanDevice;
 		ShaderResourceMapper m_resourceMapper;
