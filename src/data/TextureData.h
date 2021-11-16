@@ -26,6 +26,7 @@ namespace CGE
 		vk::DescriptorImageInfo GetDescriptorInfo(vk::ImageLayout layout) const;
 
 		BufferDataPtr GetStagingBuffer() { return m_staging; }
+		void DiscardStaging() { m_staging = nullptr; }
 	protected:
 		VulkanImage image;
 		ImageView imageView;

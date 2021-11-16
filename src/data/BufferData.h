@@ -30,6 +30,7 @@ namespace CGE
 		vk::Buffer GetNativeBuffer() { return m_buffer.GetNativeBuffer(); }
 		vk::DeviceAddress GetDeviceAddress() { return m_buffer.GetDeviceAddress(); }
 		std::shared_ptr<BufferData> GetStaging() { return m_staging; }
+		void DiscardStaging() { m_staging = nullptr; }
 	protected:
 		bool Destroy() override;
 	private:

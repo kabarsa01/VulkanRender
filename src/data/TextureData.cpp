@@ -25,12 +25,6 @@ namespace CGE
 		flipVertical = inFlipVertical;
 		linear = inLinear;
 	}
-
-	//TextureData::TextureData()
-	//	: Resource(HashString::NONE)
-	//{
-	//
-	//}
 	
 	TextureData::~TextureData()
 	{
@@ -52,8 +46,6 @@ namespace CGE
 		image.createInfo = GetImageInfo();
 		image.Create();
 		m_staging = CreateStagingBuffer(reinterpret_cast<char*>(data));
-//		image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-//		image.CreateStagingBuffer(reinterpret_cast<char*>(data));
 		imageView = CreateImageView(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, image.GetMips(), 0, 1));
 	
 		stbi_image_free(data);

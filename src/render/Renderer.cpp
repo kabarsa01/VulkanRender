@@ -417,6 +417,7 @@ namespace CGE
 				image->GetStagingBuffer()->GetNativeBuffer(),
 				image->GetImage(), ImageLayout::eTransferDstOptimal, 
 				1, &image->GetImage().CreateBufferImageCopy());
+			image->DiscardStaging();
 		}
 	
 		GenerateMips(inCmdBuffer, images);

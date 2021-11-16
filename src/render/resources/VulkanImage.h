@@ -43,13 +43,8 @@ namespace CGE
 		inline uint32_t GetHeight() { return m_height; }
 		inline uint32_t GetDepth() { return m_depth; }
 		inline uint32_t GetMips() { return m_mips; }
-	
-//		void SetData(const std::vector<char>& inData);
-//		void SetData(DeviceSize inSize, char* inData);
-	
-//		void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);
+
 		BufferImageCopy CreateBufferImageCopy();
-//		void LayoutTransition(CommandBuffer* inCmdBuffer, ImageLayout inOldLayout, ImageLayout inNewLayout);
 	
 		ImageMemoryBarrier CreateBarrier(
 			ImageLayout inOldLayout,
@@ -88,10 +83,6 @@ namespace CGE
 		Image& GetImage();
 		const Image& GetImage() const;
 		MemoryRequirements GetMemoryRequirements();
-		//VulkanBuffer* CreateStagingBuffer(char* inData);
-		//VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex);
-		//VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData);
-		//void DestroyStagingBuffer();
 	
 		operator Image() const { return m_image; }
 		operator bool() const { return m_image; }
@@ -100,8 +91,6 @@ namespace CGE
 		vk::Image m_image;
 		MemoryRecord m_memoryRecord;
 		MemoryRequirements m_requirements;
-		//VulkanBuffer m_stagingBuffer;
-		std::vector<char> m_data;
 	
 		bool m_scoped;
 		uint32_t m_width = 2;
