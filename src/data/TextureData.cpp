@@ -2,6 +2,7 @@
 #include "stb/stb_image.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -24,7 +25,7 @@ namespace CGE
 		flipVertical = inFlipVertical;
 		linear = inLinear;
 	}
-	
+
 	//TextureData::TextureData()
 	//	: Resource(HashString::NONE)
 	//{
@@ -49,9 +50,10 @@ namespace CGE
 	
 		VulkanDevice& device = Engine::GetRendererInstance()->GetVulkanDevice();
 		image.createInfo = GetImageInfo();
-		image.Create(&device);
-		image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		image.CreateStagingBuffer(reinterpret_cast<char*>(data));
+		image.Create();
+		m_staging = CreateStagingBuffer(reinterpret_cast<char*>(data));
+//		image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+//		image.CreateStagingBuffer(reinterpret_cast<char*>(data));
 		imageView = CreateImageView(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, image.GetMips(), 0, 1));
 	
 		stbi_image_free(data);
@@ -118,6 +120,20 @@ namespace CGE
 		descInfo.setImageView(GetImageView());
 
 		return descriptorInfo;
+	}
+
+	BufferDataPtr TextureData::CreateStagingBuffer(char* inData)
+	{
+		DeviceSize size = image.GetWidth() * image.GetHeight() * image.GetDepth() * 4;//memoryRequirements.size;//
+
+		BufferDataPtr buffer = ResourceUtils::CreateBufferData(
+			GetResourceId() + HashString("_staging"),
+			size,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			false
+		);
+		buffer->CopyTo(size, inData);
+		return buffer;
 	}
 
 }

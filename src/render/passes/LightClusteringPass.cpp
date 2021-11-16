@@ -106,8 +106,7 @@ namespace CGE
 		image.createInfo.setSharingMode(SharingMode::eExclusive);
 		image.createInfo.setTiling(ImageTiling::eOptimal);
 		image.createInfo.setUsage(ImageUsageFlagBits::eStorage | ImageUsageFlagBits::eSampled);
-		image.Create(GetVulkanDevice());
-		image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		image.Create();
 		imageView = image.CreateView(ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1), ImageViewType::e2D);
 	
 		texture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeTexture");

@@ -4,6 +4,7 @@
 #include "render/resources/VulkanImage.h"
 #include <string>
 #include <memory>
+#include "BufferData.h"
 
 namespace CGE
 {
@@ -23,10 +24,13 @@ namespace CGE
 		ImageView GetImageView() const;
 		vk::DescriptorImageInfo& GetDescriptorInfo(vk::ImageLayout layout);
 		vk::DescriptorImageInfo GetDescriptorInfo(vk::ImageLayout layout) const;
+
+		BufferDataPtr GetStagingBuffer() { return m_staging; }
 	protected:
 		VulkanImage image;
 		ImageView imageView;
 		vk::DescriptorImageInfo descriptorInfo;
+		BufferDataPtr m_staging;
 	
 		std::string path;
 		bool useAlpha;
@@ -45,6 +49,8 @@ namespace CGE
 		virtual bool Destroy() override;
 	private:
 		TextureData() = delete;
+
+		BufferDataPtr CreateStagingBuffer(char* inData);
 	};
 
 	typedef std::shared_ptr<TextureData> TextureDataPtr;

@@ -414,7 +414,7 @@ namespace CGE
 		{
 			// copy
 			inCmdBuffer.copyBufferToImage(
-				*image->GetImage().CreateStagingBuffer(SharingMode::eExclusive, inQueueFamilyIndex),
+				image->GetStagingBuffer()->GetNativeBuffer(),
 				image->GetImage(), ImageLayout::eTransferDstOptimal, 
 				1, &image->GetImage().CreateBufferImageCopy());
 		}

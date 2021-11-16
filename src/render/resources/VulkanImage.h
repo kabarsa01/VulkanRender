@@ -35,7 +35,7 @@ namespace CGE
 		VulkanImage& operator=(const VulkanImage& otherImage);
 		virtual ~VulkanImage();
 	
-		void Create(VulkanDevice* inDevice);
+		void Create();
 		ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const;
 		void Destroy();
 	
@@ -46,11 +46,10 @@ namespace CGE
 	
 //		void SetData(const std::vector<char>& inData);
 //		void SetData(DeviceSize inSize, char* inData);
-		void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
 	
-		void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);
+//		void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);
 		BufferImageCopy CreateBufferImageCopy();
-		void LayoutTransition(CommandBuffer* inCmdBuffer, ImageLayout inOldLayout, ImageLayout inNewLayout);
+//		void LayoutTransition(CommandBuffer* inCmdBuffer, ImageLayout inOldLayout, ImageLayout inNewLayout);
 	
 		ImageMemoryBarrier CreateBarrier(
 			ImageLayout inOldLayout,
@@ -89,10 +88,10 @@ namespace CGE
 		Image& GetImage();
 		const Image& GetImage() const;
 		MemoryRequirements GetMemoryRequirements();
-		VulkanBuffer* CreateStagingBuffer(char* inData);
-		VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex);
-		VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData);
-		void DestroyStagingBuffer();
+		//VulkanBuffer* CreateStagingBuffer(char* inData);
+		//VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex);
+		//VulkanBuffer* CreateStagingBuffer(SharingMode inSharingMode, uint32_t inQueueFamilyIndex, char* inData);
+		//void DestroyStagingBuffer();
 	
 		operator Image() const { return m_image; }
 		operator bool() const { return m_image; }
@@ -101,7 +100,7 @@ namespace CGE
 		vk::Image m_image;
 		MemoryRecord m_memoryRecord;
 		MemoryRequirements m_requirements;
-		VulkanBuffer m_stagingBuffer;
+		//VulkanBuffer m_stagingBuffer;
 		std::vector<char> m_data;
 	
 		bool m_scoped;
@@ -109,6 +108,8 @@ namespace CGE
 		uint32_t m_height = 2;
 		uint32_t m_depth = 1;
 		uint32_t m_mips = 1;
+
+		void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
 	};
 	
 	

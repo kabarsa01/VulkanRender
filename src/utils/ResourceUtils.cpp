@@ -84,8 +84,7 @@ namespace CGE
 		image.createInfo.setSharingMode(SharingMode::eExclusive);
 		image.createInfo.setTiling(ImageTiling::eOptimal);
 		image.createInfo.setUsage(inUsage);
-		image.Create(inDevice);
-		image.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		image.Create();
 
 		return image;
 	}
@@ -106,8 +105,7 @@ namespace CGE
 		colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
 		colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
-		colorAttachmentImage.Create(inDevice);
-		colorAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		colorAttachmentImage.Create();
 	
 		return colorAttachmentImage;
 	}
@@ -126,8 +124,7 @@ namespace CGE
 		depthAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		depthAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
 		depthAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
-		depthAttachmentImage.Create(inDevice);
-		depthAttachmentImage.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
+		depthAttachmentImage.Create();
 	
 		return depthAttachmentImage;
 	}
