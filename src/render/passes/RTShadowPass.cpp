@@ -38,10 +38,10 @@ namespace CGE
 		}
 
 		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
-		VulkanBuffer& buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferDataPtr buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
 
 		// barriers ----------------------------------------------
-		BufferMemoryBarrier clusterDataBarrier = buffer.CreateMemoryBarrier(
+		BufferMemoryBarrier clusterDataBarrier = buffer->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead);
@@ -88,17 +88,17 @@ namespace CGE
 			0, nullptr);
 
 		vk::StridedDeviceAddressRegionKHR rayGenRegion;
-		rayGenRegion.setDeviceAddress(m_sbtBuffer.GetDeviceAddress());
+		rayGenRegion.setDeviceAddress(m_sbtBuffer->GetDeviceAddress());
 		rayGenRegion.setSize(m_handleSizeAligned * rtScene->GetRayGenGroupsSize());
 		rayGenRegion.setStride(m_handleSizeAligned);
 
 		vk::StridedDeviceAddressRegionKHR rayMissRegion;
-		rayMissRegion.setDeviceAddress(m_sbtBuffer.GetDeviceAddress() + m_handleSizeAligned * rtScene->GetMissGroupsOffset());
+		rayMissRegion.setDeviceAddress(m_sbtBuffer->GetDeviceAddress() + m_handleSizeAligned * rtScene->GetMissGroupsOffset());
 		rayMissRegion.setSize(m_handleSizeAligned * rtScene->GetMissGroupsSize());
 		rayMissRegion.setStride(m_handleSizeAligned);
 
 		vk::StridedDeviceAddressRegionKHR rayHitRegion;
-		rayHitRegion.setDeviceAddress(m_sbtBuffer.GetDeviceAddress() + m_handleSizeAligned * rtScene->GetHitGroupsOffset());
+		rayHitRegion.setDeviceAddress(m_sbtBuffer->GetDeviceAddress() + m_handleSizeAligned * rtScene->GetHitGroupsOffset());
 		rayHitRegion.setSize(m_handleSizeAligned * rtScene->GetHitGroupsSize());
 		rayHitRegion.setStride(m_handleSizeAligned);
 
@@ -170,11 +170,11 @@ namespace CGE
 		m_depthTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsDepthTexture");
 		m_depthTex->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
 		m_clusterLightsData = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
-		m_clusterLightsData.SetCleanup(false);
+//		m_clusterLightsData = ObjectBase::NewObject<BufferData>();
 		m_lightsList = clusteringPass->computeMaterial->GetUniformBuffer("lightsList");
-		m_lightsList.SetCleanup(false);
+//		m_lightsList.SetCleanup(false);
 		m_lightsIndices = clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices");
-		m_lightsIndices.SetCleanup(false);
+//		m_lightsIndices.SetCleanup(false);
 
 		m_shaderResourceMapper.AddSampledImage("normalTex", m_normalsTex);
 		m_shaderResourceMapper.AddSampledImage("depthTex", m_depthTex);
@@ -196,7 +196,7 @@ namespace CGE
 
 		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 		// TODO cleanup
-		m_sbtBuffer.Destroy();
+//		m_sbtBuffer.Destroy();
 		device.destroyPipeline(m_rtPipeline);
 		device.destroyPipelineLayout(m_rtPipelineLayout);
 	}
@@ -292,12 +292,11 @@ namespace CGE
 		{
 			// TODO
 		}
-		m_sbtBuffer.Destroy();
-		m_sbtBuffer = ResourceUtils::CreateBuffer(
-			device,
+//		m_sbtBuffer.Destroy();
+		m_sbtBuffer = ResourceUtils::CreateBufferData(
+			"rt_scene_sbt_buffer",
 			sbtSize,
 			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR | vk::BufferUsageFlagBits::eTransferDst,
-			vk::MemoryPropertyFlagBits::eDeviceLocal,
 			true
 		);
 		if (sbtSize > 0)
@@ -309,7 +308,7 @@ namespace CGE
 				memcpy(addr, shadersHandles.data() + handleSize * idx, handleSize);
 				addr += m_handleSizeAligned;
 			}
-			m_sbtBuffer.CopyTo(sbtSize, alignedShadersHandles.data(), true);
+			m_sbtBuffer->CopyTo(sbtSize, alignedShadersHandles.data());
 		}
 	}
 

@@ -12,6 +12,7 @@
 #include "render/resources/VulkanDeviceMemory.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
+#include "BufferData.h"
 
 namespace CGE
 {
@@ -52,12 +53,12 @@ namespace CGE
 	
 		void CreateBuffer();
 		void DestroyBuffer();
-		void Draw();
+//		void Draw();
 	
-		VulkanBuffer& GetVertexBuffer();
+		BufferDataPtr GetVertexBuffer() { return m_vertexBuffer; }
 		uint32_t GetVertexBufferSizeBytes();
 		uint32_t GetVertexCount();
-		VulkanBuffer& GetIndexBuffer();
+		BufferDataPtr GetIndexBuffer() { return m_indexBuffer; }
 		uint32_t GetIndexBufferSizeBytes();
 		uint32_t GetIndexCount();
 	
@@ -69,13 +70,13 @@ namespace CGE
 	private:
 		static std::shared_ptr<MeshData> m_fullscreenQuad;
 
-		VulkanBuffer vertexBuffer;
-		VulkanBuffer indexBuffer;
+		BufferDataPtr m_vertexBuffer;
+		BufferDataPtr m_indexBuffer;
 	
 		MeshData() : Resource(HashString::NONE) {}
 	
 		template<class T>
-		void SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage);
+		BufferDataPtr SetupBuffer(HashString name, std::vector<T>& inDataVector, BufferUsageFlags usage);
 	};
 	
 	typedef std::shared_ptr<MeshData> MeshDataPtr;
@@ -85,22 +86,16 @@ namespace CGE
 	//--------------------------------------------------------------------------------------------------------------------------
 	
 	template<class T>
-	void MeshData::SetupBuffer(VulkanBuffer& inBuffer, std::vector<T>& inDataVector, BufferUsageFlags usage)
-	{
-		if (indexBuffer)
-		{
-			return;
-		}
-	
+	BufferDataPtr MeshData::SetupBuffer(HashString name, std::vector<T>& inDataVector, BufferUsageFlags usage)
+	{	
 		DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 	
-		inBuffer.createInfo.setSize(size);
-		inBuffer.createInfo.setUsage(usage | BufferUsageFlagBits::eTransferDst | BufferUsageFlagBits::eShaderDeviceAddress);
-		inBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		inBuffer.Create(true);
-		//inBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		//inBuffer.CreateStagingBuffer();
-		inBuffer.CopyTo(size, reinterpret_cast<const char*>(inDataVector.data()));
+		usage |= BufferUsageFlagBits::eTransferDst | BufferUsageFlagBits::eShaderDeviceAddress;
+		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(GetResourceId() + name, size, usage, true);
+		buffer->Create();
+		buffer->CopyTo(size, reinterpret_cast<const char*>(inDataVector.data()));
+
+		return buffer;
 	}
 	
 	

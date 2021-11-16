@@ -35,6 +35,7 @@
 #include "ClusteringManager.h"
 #include "passes/RenderPassBase.h"
 #include "passes/DepthPrepass.h"
+#include "data/TextureData.h"
 
 namespace CGE
 {
@@ -354,8 +355,8 @@ namespace CGE
 		TransferList* TL = TransferList::GetInstance();
 	
 		// get new resources to copy
-		std::vector<VulkanBuffer*> buffers = TL->GetBuffers();
-		std::vector<VulkanImage*> images = TL->GetImages();
+		std::vector<BufferDataPtr> buffers = TL->GetBuffers();
+		std::vector<TextureDataPtr> images = TL->GetImages();
 		TL->ClearBuffers();
 		TL->ClearImages();
 	
@@ -366,10 +367,10 @@ namespace CGE
 	
 		// buffers
 		std::vector<BufferMemoryBarrier> buffersTransferBarriers;
-		for (VulkanBuffer* buffer : buffers)
+		for (BufferDataPtr buffer : buffers)
 		{
-			inCmdBuffer.copyBuffer(*buffer->GetStagingBuffer(), *buffer, 1, &buffer->GetStagingBuffer()->CreateBufferCopy());
-			buffersTransferBarriers.push_back(buffer->CreateMemoryBarrier(
+			inCmdBuffer.copyBuffer(buffer->GetStaging()->GetNativeBuffer(), buffer->GetNativeBuffer(), 1, &buffer->GetStaging()->GetBuffer().CreateBufferCopy());
+			buffersTransferBarriers.push_back(buffer->GetBuffer().CreateMemoryBarrier(
 				VK_QUEUE_FAMILY_IGNORED, 
 				VK_QUEUE_FAMILY_IGNORED, 
 				AccessFlagBits::eTransferWrite, 
@@ -384,20 +385,20 @@ namespace CGE
 		afterTransferBarriers.resize(images.size());
 		for (uint32_t index = 0; index < images.size(); index++)
 		{
-			beforeTransferBarriers[index] = images[index]->CreateLayoutBarrier(
+			beforeTransferBarriers[index] = images[index]->GetImage().CreateLayoutBarrier(
 				ImageLayout::eUndefined,
 				ImageLayout::eTransferDstOptimal,
 				AccessFlagBits::eHostWrite,
 				AccessFlagBits::eTransferWrite | AccessFlagBits::eTransferRead,
 				ImageAspectFlagBits::eColor,
-				0, images[index]->GetMips(), 0, 1);
-			afterTransferBarriers[index] = images[index]->CreateLayoutBarrier(
+				0, images[index]->GetImage().GetMips(), 0, 1);
+			afterTransferBarriers[index] = images[index]->GetImage().CreateLayoutBarrier(
 				ImageLayout::eUndefined,
 				ImageLayout::eShaderReadOnlyOptimal,
 				AccessFlagBits::eTransferWrite,
 				AccessFlagBits::eShaderRead,
 				ImageAspectFlagBits::eColor,
-				0, images[index]->GetMips(), 0, 1);
+				0, images[index]->GetImage().GetMips(), 0, 1);
 		}
 	
 		inCmdBuffer.pipelineBarrier(
@@ -409,13 +410,13 @@ namespace CGE
 			beforeTransferBarriers.data());
 	
 		//submit copy
-		for (VulkanImage* image : images)
+		for (TextureDataPtr image : images)
 		{
 			// copy
 			inCmdBuffer.copyBufferToImage(
-				*image->CreateStagingBuffer(SharingMode::eExclusive, inQueueFamilyIndex), 
-				*image, ImageLayout::eTransferDstOptimal, 
-				1, &image->CreateBufferImageCopy());
+				*image->GetImage().CreateStagingBuffer(SharingMode::eExclusive, inQueueFamilyIndex),
+				image->GetImage(), ImageLayout::eTransferDstOptimal, 
+				1, &image->GetImage().CreateBufferImageCopy());
 		}
 	
 		GenerateMips(inCmdBuffer, images);
@@ -432,11 +433,11 @@ namespace CGE
 			afterTransferBarriers.data());
 	}
 	
-	void Renderer::GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*>& inImages)
+	void Renderer::GenerateMips(CommandBuffer& inCmdBuffer, std::vector<TextureDataPtr>& inImages)
 	{
 		for (uint32_t index = 0; index < inImages.size(); index++)
 		{
-			VulkanImage* image = inImages[index];
+			VulkanImage* image = &inImages[index]->GetImage();
 	
 			for (uint32_t mipIndex = 1; mipIndex < image->GetMips(); mipIndex++)
 			{

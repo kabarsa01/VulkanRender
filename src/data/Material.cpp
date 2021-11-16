@@ -3,6 +3,7 @@
 #include "core/Engine.h"
 #include "render/Renderer.h"
 #include "render/TransferList.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -212,32 +213,27 @@ namespace CGE
 	{
 		VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
 	
-		VulkanBuffer buffer;
-		buffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		buffer.createInfo.setSize(inSize);
-		buffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst);
-		buffer.Create();
-//		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-//		buffer.CreateStagingBuffer();
-	
-		buffers[inName].Destroy();
-		buffers[inName] = buffer;
+		buffers[inName] = nullptr;
+		buffers[inName] = ResourceUtils::CreateBufferData(
+			GetResourceId() + inName, 
+			inSize, 
+			BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst, 
+			true);
 	
 		UpdateUniformBuffer(inName, inSize, inData);
 	}
 	
-	void Material::SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer)
+	void Material::SetUniformBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer)
 	{
-		buffers[inName].Destroy();
+		buffers[inName] = nullptr;
 		buffers[inName] = inBuffer;
-		buffers[inName].SetCleanup(false);
+//		buffers[inName].SetCleanup(false);
 	}
 	
-	void Material::SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer)
+	void Material::SetStorageBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer)
 	{
-		storageBuffers[inName].Destroy();
 		storageBuffers[inName] = inBuffer;
-		storageBuffers[inName].SetCleanup(false);
+//		storageBuffers[inName].SetCleanup(false);
 	}
 	
 	void Material::SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct)
@@ -249,15 +245,13 @@ namespace CGE
 	{
 		VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
 	
-		VulkanBuffer buffer(false);
-		buffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		buffer.createInfo.setSize(inSize);
-		buffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst);
-		buffer.Create(true);
-//		buffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-//		buffer.CreateStagingBuffer();
-	
-		storageBuffers[inName].Destroy();
+		BufferDataPtr buffer = ResourceUtils::CreateBufferData(
+			GetResourceId() + inName,
+			inSize,
+			BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst,
+			true);
+		buffer->CopyTo(inSize, inData);
+
 		storageBuffers[inName] = buffer;
 	}
 	
@@ -278,22 +272,21 @@ namespace CGE
 
 	void Material::UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 	{
-		buffers[inName].CopyTo(inSize, inData, true);
-//		TransferList::GetInstance()->PushBuffer(&buffers[inName]);
+		buffers[inName]->CopyTo(inSize, inData);
 	}
 	
 	void Material::UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData)
 	{
-		storageBuffers[inName].CopyTo(inSize, inData);
-		TransferList::GetInstance()->PushBuffer(&storageBuffers[inName]);
+		storageBuffers[inName]->CopyTo(inSize, inData);
+//		TransferList::GetInstance()->PushBuffer(&storageBuffers[inName]);
 	}
 	
-	VulkanBuffer& Material::GetUniformBuffer(const std::string& inName)
+	BufferDataPtr Material::GetUniformBuffer(const std::string& inName)
 	{
 		return buffers[inName];
 	}
 	
-	VulkanBuffer& Material::GetStorageBuffer(const std::string& inName)
+	BufferDataPtr Material::GetStorageBuffer(const std::string& inName)
 	{
 		return storageBuffers[inName];
 	}
@@ -308,11 +301,11 @@ namespace CGE
 		// cleanup buffers. textures are resources themselves and will be cleaned by data manager
 		for (auto& pair : buffers)
 		{
-			pair.second.Destroy();
+//			pair.second.Destroy();
 		}
 		for (auto& pair : storageBuffers)
 		{
-			pair.second.Destroy();
+//			pair.second.Destroy();
 		}
 		m_resourceMapper.Destroy();
 		return true;

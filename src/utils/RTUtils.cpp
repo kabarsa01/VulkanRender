@@ -11,10 +11,10 @@ namespace CGE
 		vk::AccelerationStructureGeometryTrianglesDataKHR trisData;
 		trisData.setVertexFormat(vk::Format::eR32G32B32Sfloat);
 		trisData.setVertexStride(sizeof(Vertex));
-		trisData.setVertexData(meshData->GetVertexBuffer().GetDeviceAddress());
+		trisData.setVertexData(meshData->GetVertexBuffer()->GetDeviceAddress());
 		trisData.setMaxVertex(meshData->GetVertexCount());
 		trisData.setIndexType(vk::IndexType::eUint32);
-		trisData.setIndexData(meshData->GetIndexBuffer().GetDeviceAddress());
+		trisData.setIndexData(meshData->GetIndexBuffer()->GetDeviceAddress());
 		trisData.setTransformData({}); // identity
 
 		return trisData;
@@ -48,14 +48,14 @@ namespace CGE
 		{
 			Engine::GetRendererInstance()->GetDevice().destroyAccelerationStructureKHR(accelStructure.accelerationStructure);
 		}
-		accelStructure.buffer.Destroy();
+		accelStructure.buffer = nullptr;
 	}
 
 	void RTUtils::CleanupBuildInfo(AccelStructureBuildInfo& buildInfo)
 	{
 		delete[] buildInfo.rangeInfos;
 		buildInfo.geometries.clear();
-		buildInfo.scratchBuffer.Destroy();
+		buildInfo.scratchBuffer = nullptr;
 
 		buildInfo.buildSizes = vk::AccelerationStructureBuildSizesInfoKHR{};
 		buildInfo.geometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR{};
@@ -67,7 +67,7 @@ namespace CGE
 		{
 			delete[] buildInfos.geometries[idx];
 			delete[] buildInfos.rangeInfos[idx];
-			buildInfos.scratchBuffers[idx].Destroy();
+			buildInfos.scratchBuffers[idx] = nullptr;
 		}
 
 		buildInfos.buildSizes.clear();

@@ -54,16 +54,16 @@ namespace CGE
 		void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void SetUniformBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
 		void SetStorageBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
-		void SetUniformBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
-		void SetStorageBufferExternal(const std::string& inName, const VulkanBuffer& inBuffer);
+		void SetUniformBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer);
+		void SetStorageBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer);
 		void SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct);
 		template<typename T>
 		void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
 		void UpdateUniformBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void UpdateStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 	
-		VulkanBuffer& GetUniformBuffer(const std::string& inName);
-		VulkanBuffer& GetStorageBuffer(const std::string& inName);
+		BufferDataPtr GetUniformBuffer(const std::string& inName);
+		BufferDataPtr GetStorageBuffer(const std::string& inName);
 	
 		inline ShaderPtr GetVertexShader() { return vertexShader; }
 		inline ShaderPtr GetFragmentShader() { return fragmentShader; }
@@ -89,10 +89,10 @@ namespace CGE
 		std::map<HashString, std::vector<TextureDataPtr>> sampledImage2DArrays;
 		std::map<HashString, Texture2DPtr> storageImages2D;
 		std::map<HashString, std::vector<TextureDataPtr>> storageImage2DArrays;
-		std::map<HashString, VulkanBuffer> buffers;
-		std::map<HashString, std::vector<VulkanBuffer>> bufferArrays;
-		std::map<HashString, VulkanBuffer> storageBuffers;
-		std::map<HashString, std::vector<VulkanBuffer>> storageBufferArrays;
+		std::map<HashString, BufferDataPtr> buffers;
+		std::map<HashString, std::vector<BufferDataPtr>> bufferArrays;
+		std::map<HashString, BufferDataPtr> storageBuffers;
+		std::map<HashString, std::vector<BufferDataPtr>> storageBufferArrays;
 		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
 		std::map<HashString, std::vector<vk::AccelerationStructureKHR>> accelerationStructureArrays;
 	

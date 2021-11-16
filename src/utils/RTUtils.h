@@ -5,6 +5,7 @@
 
 #include "data/MeshData.h"
 #include "scene/mesh/MeshComponent.h"
+#include "data/BufferData.h"
 
 namespace CGE
 {
@@ -16,7 +17,7 @@ namespace CGE
 	struct AccelStructure
 	{
 		vk::AccelerationStructureKHR accelerationStructure;
-		VulkanBuffer buffer;
+		BufferDataPtr buffer;
 	};
 
 	//-------------------------------------------------------------------------------------
@@ -27,7 +28,7 @@ namespace CGE
 		std::vector<vk::AccelerationStructureGeometryKHR> geometries;
 		vk::AccelerationStructureBuildRangeInfoKHR* rangeInfos;
 		vk::AccelerationStructureBuildSizesInfoKHR buildSizes;
-		VulkanBuffer scratchBuffer;
+		BufferDataPtr scratchBuffer;
 	};
 
 	//-------------------------------------------------------------------------------------
@@ -38,7 +39,7 @@ namespace CGE
 		std::vector<vk::AccelerationStructureGeometryKHR*> geometries;
 		std::vector<vk::AccelerationStructureBuildRangeInfoKHR*> rangeInfos;
 		std::vector<vk::AccelerationStructureBuildSizesInfoKHR> buildSizes;
-		std::vector<VulkanBuffer> scratchBuffers;
+		std::vector<BufferDataPtr> scratchBuffers;
 	};
 
 	//-------------------------------------------------------------------------------------

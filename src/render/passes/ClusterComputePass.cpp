@@ -35,8 +35,8 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		VulkanBuffer& clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
-		BufferMemoryBarrier clusterDataBarrier = clusterBuffer.CreateMemoryBarrier(
+		BufferDataPtr clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferMemoryBarrier clusterDataBarrier = clusterBuffer->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			vk::AccessFlagBits::eShaderRead,
 			vk::AccessFlagBits::eShaderWrite);

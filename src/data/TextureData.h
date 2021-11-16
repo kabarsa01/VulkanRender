@@ -3,6 +3,7 @@
 #include "data/Resource.h"
 #include "render/resources/VulkanImage.h"
 #include <string>
+#include <memory>
 
 namespace CGE
 {

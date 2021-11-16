@@ -63,7 +63,7 @@ namespace CGE
 		uint32_t m_hitGroupsOffset;
 
 		std::vector<vk::AccelerationStructureInstanceKHR> m_instances;
-		VulkanBuffer m_instancesBuffer;
+		BufferDataPtr m_instancesBuffer;
 		uint32_t m_frameIndexTruncated;
 		std::array<AccelStructuresBuildInfos, 3> m_buildInfosArray; // TODO do something with multi buffering
 

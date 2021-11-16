@@ -3,6 +3,7 @@
 #include "resources/VulkanBuffer.h"
 #include "resources/VulkanImage.h"
 #include "data/MeshData.h"
+#include "data/TextureData.h"
 
 namespace CGE
 {
@@ -11,20 +12,20 @@ namespace CGE
 	public:
 		static TransferList* GetInstance();
 	
-		void PushBuffer(VulkanBuffer* inBuffer);
+		void PushBuffer(BufferDataPtr inBuffer);
 		void PushBuffers(MeshDataPtr inData);
-		void PushImage(VulkanImage* inImage);
+		void PushImage(TextureDataPtr inImage);
 	
-		const std::vector<VulkanBuffer*>& GetBuffers();
-		const std::vector<VulkanImage*>& GetImages();
+		const std::vector<BufferDataPtr>& GetBuffers() { return buffers; }
+		const std::vector<TextureDataPtr>& GetImages() { return images; }
 	
 		void ClearBuffers();
 		void ClearImages();
 	private:
 		static TransferList instance;
 	
-		std::vector<VulkanBuffer*> buffers;
-		std::vector<VulkanImage*> images;
+		std::vector<BufferDataPtr> buffers;
+		std::vector<TextureDataPtr> images;
 	
 		TransferList();
 		TransferList(const TransferList& inOther);

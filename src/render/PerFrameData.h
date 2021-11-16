@@ -4,6 +4,7 @@
 #include "objects/VulkanDescriptorSet.h"
 #include "resources/VulkanBuffer.h"
 #include "vulkan/vulkan.hpp"
+#include "data/BufferData.h"
 
 namespace CGE
 {
@@ -24,8 +25,8 @@ namespace CGE
 	private:
 		VulkanDevice* device;
 	
-		VulkanBuffer shaderDataBuffer;
-		VulkanBuffer transformDataBuffer;
+		BufferDataPtr shaderDataBuffer;
+		BufferDataPtr transformDataBuffer;
 		DescriptorSetLayoutBinding shaderDataBinding;
 		DescriptorSetLayoutBinding transformDataBinding;
 	

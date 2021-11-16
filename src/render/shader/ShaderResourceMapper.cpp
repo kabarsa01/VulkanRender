@@ -48,34 +48,34 @@ namespace CGE
 		AddResource<TextureDataPtr>(vk::DescriptorType::eStorageImage, name, textures);
 	}
 
-	void ShaderResourceMapper::AddUniformBuffer(HashString name, VulkanBuffer buffer)
+	void ShaderResourceMapper::AddUniformBuffer(HashString name, BufferDataPtr buffer)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, name, { buffer });
+		AddResource<BufferDataPtr>(vk::DescriptorType::eUniformBuffer, name, { buffer });
 	}
 
-	void ShaderResourceMapper::AddUniformBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer)
+	void ShaderResourceMapper::AddUniformBuffer(uint32_t set, uint32_t binding, BufferDataPtr buffer)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, set, binding, { buffer });
+		AddResource<BufferDataPtr>(vk::DescriptorType::eUniformBuffer, set, binding, { buffer });
 	}
 
-	void ShaderResourceMapper::AddUniformBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers)
+	void ShaderResourceMapper::AddUniformBufferArray(HashString name, const std::vector<BufferDataPtr>& buffers)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eUniformBuffer, name, buffers);
+		AddResource<BufferDataPtr>(vk::DescriptorType::eUniformBuffer, name, buffers);
 	}
 
-	void ShaderResourceMapper::AddStorageBuffer(HashString name, VulkanBuffer buffer)
+	void ShaderResourceMapper::AddStorageBuffer(HashString name, BufferDataPtr buffer)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, name, { buffer });
+		AddResource<BufferDataPtr>(vk::DescriptorType::eStorageBuffer, name, { buffer });
 	}
 
-	void ShaderResourceMapper::AddStorageBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer)
+	void ShaderResourceMapper::AddStorageBuffer(uint32_t set, uint32_t binding, BufferDataPtr buffer)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, set, binding, { buffer });
+		AddResource<BufferDataPtr>(vk::DescriptorType::eStorageBuffer, set, binding, { buffer });
 	}
 
-	void ShaderResourceMapper::AddStorageBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers)
+	void ShaderResourceMapper::AddStorageBufferArray(HashString name, const std::vector<BufferDataPtr>& buffers)
 	{
-		AddResource<VulkanBuffer>(vk::DescriptorType::eStorageBuffer, name, buffers);
+		AddResource<BufferDataPtr>(vk::DescriptorType::eStorageBuffer, name, buffers);
 	}
 
 	void ShaderResourceMapper::AddAccelerationStructure(HashString name, vk::AccelerationStructureKHR accelerationStructure)
@@ -165,7 +165,7 @@ namespace CGE
 					uniformBuffInfo = new std::vector<vk::DescriptorBufferInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(uniformBuffInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<std::vector<VulkanBuffer>&>(rec.resources),
+						std::any_cast<std::vector<BufferDataPtr>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						*uniformBuffInfo
@@ -176,7 +176,7 @@ namespace CGE
 					storageBuffInfo = new std::vector<vk::DescriptorBufferInfo>();
 					m_writeInfos[pair.first].push_back(reinterpret_cast<char*>(storageBuffInfo));
 					write = ResourceUtils::CreateWriteDescriptor(
-						std::any_cast<std::vector<VulkanBuffer>&>(rec.resources),
+						std::any_cast<std::vector<BufferDataPtr>&>(rec.resources),
 						pair.first,
 						rec.binding,
 						*storageBuffInfo

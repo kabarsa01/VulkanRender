@@ -9,31 +9,21 @@ namespace CGE
 		return &instance;
 	}
 	
-	void TransferList::PushBuffer(VulkanBuffer* inBuffer)
+	void TransferList::PushBuffer(BufferDataPtr inBuffer)
 	{
 		buffers.push_back(inBuffer);
 	}
 	
 	void TransferList::PushBuffers(MeshDataPtr inData)
 	{
-		buffers.push_back(&inData->GetVertexBuffer());
-		buffers.push_back(&inData->GetIndexBuffer());
+		buffers.push_back(inData->GetVertexBuffer());
+		buffers.push_back(inData->GetIndexBuffer());
 	}
 	
-	void TransferList::PushImage(VulkanImage* inImage)
+	void TransferList::PushImage(TextureDataPtr inImage)
 	{
 		images.push_back(inImage);
-	}
-	
-	const std::vector<VulkanBuffer*>& TransferList::GetBuffers()
-	{
-		return buffers;
-	}
-	
-	const std::vector<VulkanImage*>& TransferList::GetImages()
-	{
-		return images;
-	}
+	}	
 	
 	void TransferList::ClearBuffers()
 	{

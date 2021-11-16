@@ -6,6 +6,7 @@
 #include "render/shader/Shader.h"
 #include "data/TextureData.h"
 #include "data/Texture2D.h"
+#include "data/BufferData.h"
 
 namespace CGE
 {
@@ -29,7 +30,9 @@ namespace CGE
 		static std::vector<Texture2DPtr> CreateColorAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
 		static std::vector<Texture2DPtr> CreateDepthAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
 
-		static VulkanBuffer CreateBuffer(VulkanDevice* inDevice, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, vk::MemoryPropertyFlags inMemProps, bool inWithStaging = false);
+		static VulkanBuffer CreateBuffer(vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal = true);
+		static BufferDataPtr CreateBufferData(HashString name, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal = true);
+		static std::vector<BufferDataPtr> CreateBufferDataArray(HashString name, uint32_t count, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal = true);
 
 		static vk::WriteDescriptorSet CreateWriteDescriptor(
 			const VulkanBuffer& buffer, const BindingInfo& info, vk::DescriptorBufferInfo& outDescInfo);
@@ -43,6 +46,15 @@ namespace CGE
 			const std::vector<VulkanBuffer>& buffers, 
 			vk::DescriptorType type, 
 			uint32_t binding, 
+			std::vector<vk::DescriptorBufferInfo>& outDescInfo);
+		static vk::WriteDescriptorSet CreateWriteDescriptor(
+			const std::vector<BufferDataPtr>& buffers,
+			const BindingInfo& info,
+			std::vector<vk::DescriptorBufferInfo>& outDescInfo);
+		static vk::WriteDescriptorSet CreateWriteDescriptor(
+			const std::vector<BufferDataPtr>& buffers,
+			vk::DescriptorType type,
+			uint32_t binding,
 			std::vector<vk::DescriptorBufferInfo>& outDescInfo);
 		static vk::WriteDescriptorSet CreateWriteDescriptor(
 			TextureDataPtr texture, 

@@ -211,6 +211,28 @@ namespace CGE
 		return write;
 	}
 
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<BufferDataPtr>& buffers, const BindingInfo& info, std::vector<vk::DescriptorBufferInfo>& outDescInfo)
+	{
+		return CreateWriteDescriptor(buffers, info.descriptorType, info.binding, outDescInfo);
+	}
+
+	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(const std::vector<BufferDataPtr>& buffers, vk::DescriptorType type, uint32_t binding, std::vector<vk::DescriptorBufferInfo>& outDescInfo)
+	{
+		vk::WriteDescriptorSet write;
+
+		for (auto& buffer : buffers)
+		{
+			outDescInfo.push_back(buffer->GetBuffer().GetDescriptorInfo());
+		}
+
+		write.setPBufferInfo(outDescInfo.data());
+		write.setDescriptorCount(static_cast<uint32_t>(buffers.size()));
+		write.setDescriptorType(type);
+		write.setDstBinding(binding);
+
+		return write;
+	}
+
 	vk::WriteDescriptorSet ResourceUtils::CreateWriteDescriptor(TextureDataPtr texture, const BindingInfo& info, vk::ImageLayout layout, vk::DescriptorImageInfo& outDescInfo)
 	{
 		return CreateWriteDescriptor(texture, info.descriptorType, info.binding, layout, outDescInfo);
@@ -321,20 +343,32 @@ namespace CGE
 		return write;
 	}
 
-	VulkanBuffer ResourceUtils::CreateBuffer(VulkanDevice* inDevice, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, vk::MemoryPropertyFlags inMemProps, bool inWithStaging/* = false*/)
+	VulkanBuffer ResourceUtils::CreateBuffer(vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal/* = false*/)
 	{
 		VulkanBuffer buffer;
 		buffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
 		buffer.createInfo.setSize(inSize);
 		buffer.createInfo.setUsage(inUsage);
-		buffer.Create(inWithStaging);
-		//buffer.BindMemory(inMemProps);
-		//if (inWithStaging)
-		//{
-		//	buffer.CreateStagingBuffer();
-		//}
+		buffer.Create(deviceLocal);
 
 		return buffer;
+	}
+
+	BufferDataPtr ResourceUtils::CreateBufferData(HashString name, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal /*= true*/)
+	{
+		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(name, inSize, inUsage, deviceLocal);
+		buffer->Create();
+		return buffer;
+	}
+
+	std::vector<BufferDataPtr> ResourceUtils::CreateBufferDataArray(HashString name, uint32_t count, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal /*= true*/)
+	{
+		std::vector<BufferDataPtr> bufferArray;
+		for (uint32_t idx = 0; idx < count; ++idx)
+		{
+			bufferArray.push_back(CreateBufferData(name + std::to_string(idx), inSize, inUsage, deviceLocal));
+		}
+		return bufferArray;
 	}
 
 }

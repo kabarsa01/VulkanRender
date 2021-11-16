@@ -44,8 +44,8 @@ namespace CGE
 		inline uint32_t GetDepth() { return m_depth; }
 		inline uint32_t GetMips() { return m_mips; }
 	
-		void SetData(const std::vector<char>& inData);
-		void SetData(DeviceSize inSize, char* inData);
+//		void SetData(const std::vector<char>& inData);
+//		void SetData(DeviceSize inSize, char* inData);
 		void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
 	
 		void Transfer(CommandBuffer* inCmdBuffer, uint32_t inQueueFamilyIndex);

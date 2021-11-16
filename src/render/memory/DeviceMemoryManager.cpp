@@ -52,6 +52,7 @@ namespace CGE
 		auto startTime = std::chrono::high_resolution_clock::now();
 	
 		MemoryRecord memoryRecord;
+		memoryRecord.deviceLocal = (inMemPropertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal;
 	
 		uint64_t memTypeIndex = VulkanDeviceMemory::FindMemoryTypeStatic(inMemRequirements.memoryTypeBits, inMemPropertyFlags);
 		DeviceSize requiredSize = inMemRequirements.size;

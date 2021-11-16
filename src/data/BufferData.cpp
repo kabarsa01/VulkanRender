@@ -1,6 +1,7 @@
 #include "./BufferData.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
+#include "render/TransferList.h"
 
 namespace CGE
 {
@@ -30,7 +31,7 @@ namespace CGE
 		: Resource(id)
 		, m_size(buffer.createInfo.size)
 		, m_usage(buffer.createInfo.usage)
-		, m_deviceLocal(false)
+		, m_deviceLocal(buffer.GetMemoryRecord().deviceLocal)
 		, m_externalCreateInfo(true)
 		, m_cleanup(cleanup)
 	{
@@ -47,7 +48,10 @@ namespace CGE
 
 	bool BufferData::Create()
 	{
-		VulkanDevice& vulkanDevice = Engine::GetRendererInstance()->GetVulkanDevice();
+		if (m_buffer)
+		{
+			return false;
+		}
 
 		if (!m_externalCreateInfo)
 		{
@@ -57,24 +61,45 @@ namespace CGE
 		}
 
 		m_buffer.Create(m_deviceLocal);
-//		m_buffer.BindMemory(m_deviceLocal ? vk::MemoryPropertyFlagBits::eDeviceLocal : vk::MemoryPropertyFlagBits::eHostVisible);
 
 		return true;
 	}
 
 	void BufferData::CopyTo(/*vk::DeviceSize offset, */vk::DeviceSize size, const char* data)
 	{
-//		if (m_deviceLocal)
-//		{
-//			m_buffer.CreateStagingBuffer();
-//		}
-		m_buffer.CopyTo(size, data);
+		if (data == nullptr)
+		{
+			return;
+		}
+
+		if (m_buffer.IsDeviceLocal())
+		{
+			m_staging = CreateStaging(size);
+			m_staging->CopyTo(size, data);
+			TransferList::GetInstance()->PushBuffer(get_shared_from_this<BufferData>());
+		}
+		else
+		{
+			m_buffer.CopyTo(size, data);
+		}
 	}
 
 	bool BufferData::Destroy()
 	{
 		m_buffer.Destroy();
 		return true;
+	}
+
+	std::shared_ptr<BufferData> BufferData::CreateStaging(vk::DeviceSize size)
+	{
+		if (m_staging)
+		{
+			return m_staging;
+		}
+		vk::BufferUsageFlags usage = vk::BufferUsageFlagBits::eTransferSrc | m_buffer.createInfo.usage;
+		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(GetResourceId() + HashString("_staging"), size, usage, false);
+		buffer->Create();
+		return buffer;
 	}
 
 }

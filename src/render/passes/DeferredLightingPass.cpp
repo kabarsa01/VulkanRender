@@ -24,12 +24,12 @@ namespace CGE
 	void DeferredLightingPass::RecordCommands(CommandBuffer* inCommandBuffer)
 	{
 		LightClusteringPass* clusteringPass = GetRenderer()->GetLightClusteringPass();
-		VulkanBuffer& buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferDataPtr buffer = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
 
 		RTShadowPass* rtPass = Engine::GetRendererInstance()->GetRTShadowPass();
 	
 		// barriers ----------------------------------------------
-		BufferMemoryBarrier clusterDataBarrier = buffer.CreateMemoryBarrier(
+		BufferMemoryBarrier clusterDataBarrier = buffer->GetBuffer().CreateMemoryBarrier(
 			0, 0, 
 			AccessFlagBits::eShaderWrite, 
 			AccessFlagBits::eShaderRead);
@@ -94,8 +94,8 @@ namespace CGE
 		inCommandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
 		inCommandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 	
-		inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer().GetNativeBuffer(), &offset);
-		inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer().GetNativeBuffer(), 0, IndexType::eUint32);
+		inCommandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer()->GetNativeBuffer(), &offset);
+		inCommandBuffer->bindIndexBuffer(meshData->GetIndexBuffer()->GetNativeBuffer(), 0, IndexType::eUint32);
 		inCommandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 		inCommandBuffer->endRenderPass();
 	}

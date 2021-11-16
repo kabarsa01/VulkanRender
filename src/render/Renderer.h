@@ -14,6 +14,7 @@
 #include "memory/DeviceMemoryManager.h"
 #include "resources/VulkanImage.h"
 #include "objects/VulkanDescriptorPools.h"
+#include "data/TextureData.h"
 
 
 // pre-build batch to compile all our shaders
@@ -123,7 +124,7 @@ namespace CGE
 		//==================== METHODS ===============================
 	
 		void TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex);
-		void GenerateMips(CommandBuffer& inCmdBuffer, std::vector<VulkanImage*>& inImages);
+		void GenerateMips(CommandBuffer& inCmdBuffer, std::vector<TextureDataPtr>& inImages);
 		void OnResolutionChange();
 	};
 	

@@ -37,19 +37,10 @@ namespace CGE
 		globalShaderData = new GlobalShaderData();
 		globalTransformData = new GlobalTransformData();
 	
-		shaderDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		shaderDataBuffer.createInfo.setSize(sizeof(GlobalShaderData));
-		shaderDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst);
-		shaderDataBuffer.Create(true);
-		//shaderDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		//shaderDataBuffer.CreateStagingBuffer();
-	
-		transformDataBuffer.createInfo.setSharingMode(SharingMode::eExclusive);
-		transformDataBuffer.createInfo.setSize(sizeof(GlobalTransformData));
-		transformDataBuffer.createInfo.setUsage(BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst);
-		transformDataBuffer.Create(true);
-		//transformDataBuffer.BindMemory(MemoryPropertyFlagBits::eDeviceLocal);
-		//transformDataBuffer.CreateStagingBuffer();
+		shaderDataBuffer = ObjectBase::NewObject<BufferData>("PerFrameShaderData", sizeof(GlobalShaderData), BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst, true);
+		shaderDataBuffer->Create();
+		transformDataBuffer = ObjectBase::NewObject<BufferData>("PerFrameTransformData", sizeof(GlobalTransformData), BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst, true);
+		transformDataBuffer->Create();
 	
 		m_set.SetBindings(ProduceBindings());
 		m_set.Create(device);
@@ -63,8 +54,8 @@ namespace CGE
 		delete globalShaderData;
 		delete globalTransformData;
 	
-		shaderDataBuffer.Destroy();
-		transformDataBuffer.Destroy();
+		shaderDataBuffer = nullptr;
+		transformDataBuffer = nullptr;
 		m_set.Destroy();
 		GlobalSamplers::GetInstance()->Destroy();
 	}
@@ -72,8 +63,8 @@ namespace CGE
 	void PerFrameData::UpdateBufferData()
 	{
 		GatherData();
-		shaderDataBuffer.CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( globalShaderData ), true);
-		transformDataBuffer.CopyTo(sizeof(GlobalTransformData), reinterpret_cast<const char*>( globalTransformData ), true);
+		shaderDataBuffer->CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( globalShaderData ));
+		transformDataBuffer->CopyTo(sizeof(GlobalTransformData), reinterpret_cast<const char*>( globalTransformData ));
 	}
 	
 	std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings()
@@ -107,7 +98,7 @@ namespace CGE
 		shaderDataWrite.setDstArrayElement(0);
 		shaderDataWrite.setDstBinding(shaderDataBinding.binding);
 		shaderDataWrite.setDstSet(inSet.GetSet());
-		shaderDataWrite.setPBufferInfo(&shaderDataBuffer.GetDescriptorInfo());
+		shaderDataWrite.setPBufferInfo(&shaderDataBuffer->GetBuffer().GetDescriptorInfo());
 		writes.push_back(shaderDataWrite);
 	
 		WriteDescriptorSet transformDataWrite;
@@ -116,7 +107,7 @@ namespace CGE
 		transformDataWrite.setDstArrayElement(0);
 		transformDataWrite.setDstBinding(transformDataBinding.binding);
 		transformDataWrite.setDstSet(inSet.GetSet());
-		transformDataWrite.setPBufferInfo(&transformDataBuffer.GetDescriptorInfo());
+		transformDataWrite.setPBufferInfo(&transformDataBuffer->GetBuffer().GetDescriptorInfo());
 		writes.push_back(transformDataWrite);
 	
 		return writes;

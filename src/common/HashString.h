@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <unordered_map>
 
 namespace CGE
 {
@@ -40,7 +41,7 @@ namespace CGE
 		HashString operator+(const std::string& other) const noexcept;
 		const std::string& operator*() const;
 	private:
-		static std::map<size_t, std::string> stringsMap;
+		static std::unordered_map<size_t, std::string> stringsMap;
 	
 		size_t hashValue;
 		std::string* cachedString;

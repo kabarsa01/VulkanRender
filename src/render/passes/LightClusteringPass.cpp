@@ -70,8 +70,8 @@ namespace CGE
 			AccessFlagBits::eShaderWrite,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
-		VulkanBuffer& clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
-		BufferMemoryBarrier clusterDataBarrier = clusterBuffer.CreateMemoryBarrier(
+		BufferDataPtr clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferMemoryBarrier clusterDataBarrier = clusterBuffer->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			AccessFlagBits::eShaderRead,
 			AccessFlagBits::eShaderWrite);

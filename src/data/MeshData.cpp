@@ -106,21 +106,21 @@ namespace CGE
 	
 	void MeshData::CreateBuffer()
 	{
-		SetupBuffer<Vertex>(vertexBuffer, vertices, BufferUsageFlagBits::eVertexBuffer);
-		SetupBuffer<uint32_t>(indexBuffer, indices, BufferUsageFlagBits::eIndexBuffer);
+		m_vertexBuffer = SetupBuffer<Vertex>("_vertBuff", vertices, BufferUsageFlagBits::eVertexBuffer);
+		m_indexBuffer = SetupBuffer<uint32_t>("_idxBuff", indices, BufferUsageFlagBits::eIndexBuffer);
 	}
 	
 	void MeshData::DestroyBuffer()
 	{
 		// buffers
-		vertexBuffer.Destroy();
-		indexBuffer.Destroy();
+		m_vertexBuffer = nullptr;
+		m_indexBuffer = nullptr;
 	}
 	
-	void MeshData::Draw()
-	{
-		// bind VAO and draw
-	}
+	//void MeshData::Draw()
+	//{
+	//	// bind VAO and draw
+	//}
 	
 	VertexInputBindingDescription MeshData::GetBindingDescription(uint32_t inDesiredBinding)
 	{
@@ -133,11 +133,6 @@ namespace CGE
 		return bindingDescription;
 	}
 	
-	VulkanBuffer& MeshData::GetVertexBuffer()
-	{
-		return vertexBuffer;
-	}
-	
 	uint32_t MeshData::GetVertexBufferSizeBytes()
 	{
 		return static_cast<uint32_t>( sizeof(Vertex) * vertices.size() );
@@ -146,11 +141,6 @@ namespace CGE
 	uint32_t MeshData::GetVertexCount()
 	{
 		return static_cast<uint32_t>( vertices.size() );
-	}
-	
-	VulkanBuffer& MeshData::GetIndexBuffer()
-	{
-		return indexBuffer;
 	}
 	
 	uint32_t MeshData::GetIndexBufferSizeBytes()

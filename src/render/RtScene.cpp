@@ -34,30 +34,30 @@ namespace CGE
 	void RtScene::Init()
 	{
 		// make a buffer for 16K instances
-		m_instancesBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferDst);
-		m_instancesBuffer.createInfo.setSize(sizeof(vk::AccelerationStructureInstanceKHR) * 1024 * 16);
-		m_instancesBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
-		m_instancesBuffer.Create(true);
-		//m_instancesBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
-		//m_instancesBuffer.CreateStagingBuffer();
+		vk::BufferCreateInfo instanceBuffCreateInfo;
+		instanceBuffCreateInfo.setUsage(vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferDst);
+		instanceBuffCreateInfo.setSize(sizeof(vk::AccelerationStructureInstanceKHR) * 1024 * 16);
+		instanceBuffCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
+		m_instancesBuffer = ObjectBase::NewObject<BufferData>("TLAS_instances_buffer", instanceBuffCreateInfo, true);
+		m_instancesBuffer->Create();
 
 
 		// just an experiment, create very big acceleration structure and buffer and just rebuild it in place
-		m_tlas.buffer = ResourceUtils::CreateBuffer(
-			&Engine::GetRendererInstance()->GetVulkanDevice(),
+		m_tlas.buffer = ResourceUtils::CreateBufferData(
+			"RtScene_TLAS",
 			TLAS_SIZE_BYTES,
 			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
-			vk::MemoryPropertyFlagBits::eDeviceLocal
+			true
 		);
-		m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBuffer(
-			&Engine::GetRendererInstance()->GetVulkanDevice(),
+		m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBufferData(
+			"RtScene_TLAS_scratch",
 			TLAS_SCRATCH_SIZE_BYTES,
 			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
-			vk::MemoryPropertyFlagBits::eDeviceLocal
+			true
 		);
 
 		vk::AccelerationStructureCreateInfoKHR accelInfo;
-		accelInfo.setBuffer(m_tlas.buffer);
+		accelInfo.setBuffer(m_tlas.buffer->GetNativeBuffer());
 		accelInfo.setOffset(0);
 		accelInfo.setSize(TLAS_SIZE_BYTES);
 		accelInfo.setType(vk::AccelerationStructureTypeKHR::eTopLevel);
@@ -74,7 +74,7 @@ namespace CGE
 		}
 		RTUtils::CleanupAccelerationStructure(m_tlas);
 		RTUtils::CleanupBuildInfo(m_tlasBuildInfo);
-		m_instancesBuffer.Destroy();
+		m_instancesBuffer = nullptr;
 	}
 
 	void RtScene::UpdateShaders()
@@ -176,10 +176,9 @@ namespace CGE
 
 		if (m_instances.size() > 0)
 		{
-			m_instancesBuffer.CopyTo(
+			m_instancesBuffer->CopyTo(
 				sizeof(vk::AccelerationStructureInstanceKHR) * m_instances.size(),
-				reinterpret_cast<const char*>(m_instances.data()),
-				true);
+				reinterpret_cast<const char*>(m_instances.data()));
 			// TODO barrier
 		}
 	}
@@ -256,28 +255,30 @@ namespace CGE
 			}
 
 			{
-				VulkanBuffer scratchBuffer;
-				scratchBuffer.createInfo.setSize(accBuildInfos.buildSizes.back().buildScratchSize);
-				scratchBuffer.createInfo.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eShaderDeviceAddress);
-				scratchBuffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
-				scratchBuffer.Create(true);
-//				scratchBuffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+				vk::BufferCreateInfo createInfo;
+				createInfo.setSize(accBuildInfos.buildSizes.back().buildScratchSize);
+				createInfo.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eShaderDeviceAddress);
+				createInfo.setSharingMode(vk::SharingMode::eExclusive);
+				BufferDataPtr scratchBuffer = ObjectBase::NewObject<BufferData>(meshData->GetResourceId() + HashString("_BLAS_scratch"), createInfo, true);
+				scratchBuffer->Create();
 				// add scratch buffer
 				accBuildInfos.scratchBuffers.push_back(scratchBuffer);
 			}
 
 			{
 				// setup buffer now that we have a size
-				as.buffer.createInfo.setSize(accBuildInfos.buildSizes.back().accelerationStructureSize);
-				as.buffer.createInfo.setUsage(vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress);
-				as.buffer.createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
-				as.buffer.Create(true);
-//				as.buffer.BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
+				vk::BufferCreateInfo createInfo;
+				createInfo.setSize(accBuildInfos.buildSizes.back().accelerationStructureSize);
+				createInfo.setUsage(vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress);
+				createInfo.setSharingMode(VULKAN_HPP_NAMESPACE::SharingMode::eExclusive);
+
+				as.buffer = ObjectBase::NewObject<BufferData>(meshData->GetResourceId() + HashString("_BLAS"), createInfo, true);
+				as.buffer->Create();
 			}
 
 			{
 				vk::AccelerationStructureCreateInfoKHR accelStructInfo;
-				accelStructInfo.setBuffer(as.buffer);
+				accelStructInfo.setBuffer(as.buffer->GetNativeBuffer());
 				accelStructInfo.setType(vk::AccelerationStructureTypeKHR::eBottomLevel);
 				accelStructInfo.setCreateFlags({});
 				accelStructInfo.setOffset(0);
@@ -287,7 +288,7 @@ namespace CGE
 			}
 
 			// update geom info
-			accBuildInfos.geometryInfos.back().setScratchData(accBuildInfos.scratchBuffers.back().GetDeviceAddress());
+			accBuildInfos.geometryInfos.back().setScratchData(accBuildInfos.scratchBuffers.back()->GetBuffer().GetDeviceAddress());
 			accBuildInfos.geometryInfos.back().setDstAccelerationStructure(as.accelerationStructure);
 		}
 
@@ -330,7 +331,7 @@ namespace CGE
 
 		{
 			vk::DeviceOrHostAddressConstKHR instancesAddr;
-			instancesAddr.setDeviceAddress(m_instancesBuffer.GetDeviceAddress());
+			instancesAddr.setDeviceAddress(m_instancesBuffer->GetDeviceAddress());
 
 			vk::AccelerationStructureGeometryInstancesDataKHR instancesData;
 			instancesData.setArrayOfPointers(VK_FALSE);
@@ -350,7 +351,7 @@ namespace CGE
 		m_tlasBuildInfo.geometryInfo.setGeometryCount(static_cast<uint32_t>(m_tlasBuildInfo.geometries.size()));
 		m_tlasBuildInfo.geometryInfo.setPGeometries(m_tlasBuildInfo.geometries.data());
 		m_tlasBuildInfo.geometryInfo.setDstAccelerationStructure(m_tlas.accelerationStructure);
-		m_tlasBuildInfo.geometryInfo.setScratchData(m_tlasBuildInfo.scratchBuffer.GetDeviceAddress());
+		m_tlasBuildInfo.geometryInfo.setScratchData(m_tlasBuildInfo.scratchBuffer->GetDeviceAddress());
 
 		{
 			m_tlasBuildInfo.rangeInfos = new vk::AccelerationStructureBuildRangeInfoKHR[1];

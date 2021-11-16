@@ -96,8 +96,12 @@ namespace CGE
 		if (m_resourcesTable.find(key) == m_resourcesTable.end())
 		{
 			m_resourcesTable[key] = inValue;
-			m_resourcesMap[inValue->GetClass().GetName()].reserve(1024 * 16);
-			m_resourcesMap[inValue->GetClass().GetName()][key] = inValue;
+			HashString className = inValue->GetClass().GetName();
+			if (m_resourcesMap.find(className) == m_resourcesMap.end())
+			{
+				m_resourcesMap[className].reserve(1024 * 16);
+			}
+			m_resourcesMap[className][key] = inValue;
 
 			return true;
 		}

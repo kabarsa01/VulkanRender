@@ -8,6 +8,7 @@
 #include <memory>
 #include "../resources/VulkanBuffer.h"
 #include "../shader/ShaderResourceMapper.h"
+#include "data/BufferData.h"
 
 namespace CGE
 {
@@ -44,9 +45,9 @@ namespace CGE
 
 		Texture2DPtr m_normalsTex;
 		Texture2DPtr m_depthTex;
-		VulkanBuffer m_clusterLightsData;
-		VulkanBuffer m_lightsList;
-		VulkanBuffer m_lightsIndices;
+		BufferDataPtr m_clusterLightsData;
+		BufferDataPtr m_lightsList;
+		BufferDataPtr m_lightsIndices;
 
 		ShaderResourceMapper m_shaderResourceMapper;
 
@@ -55,7 +56,7 @@ namespace CGE
 		std::vector<VulkanDescriptorSet> m_sets;
 		std::vector<vk::DescriptorSet> m_nativeSets;
 		vk::PhysicalDeviceRayTracingPipelinePropertiesKHR m_rtProps;
-		VulkanBuffer m_sbtBuffer;
+		BufferDataPtr m_sbtBuffer;
 		uint32_t m_handleSizeAligned;
 
 		void HandlePreUpdate(std::shared_ptr<GlobalPreFrameMessage> msg);

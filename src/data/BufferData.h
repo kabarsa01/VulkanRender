@@ -27,6 +27,9 @@ namespace CGE
 		void CopyTo(/*vk::DeviceSize offset, */vk::DeviceSize size, const char* data);
 
 		VulkanBuffer& GetBuffer() { return m_buffer; }
+		vk::Buffer GetNativeBuffer() { return m_buffer.GetNativeBuffer(); }
+		vk::DeviceAddress GetDeviceAddress() { return m_buffer.GetDeviceAddress(); }
+		std::shared_ptr<BufferData> GetStaging() { return m_staging; }
 	protected:
 		bool Destroy() override;
 	private:
@@ -37,6 +40,10 @@ namespace CGE
 		vk::BufferUsageFlags m_usage;
 		bool m_deviceLocal;
 		bool m_externalCreateInfo;
+
+		std::shared_ptr<BufferData> m_staging;
+
+		std::shared_ptr<BufferData> CreateStaging(vk::DeviceSize size);
 	};
 
 	typedef std::shared_ptr<BufferData> BufferDataPtr;

@@ -13,6 +13,7 @@ namespace CGE
 		uint64_t regionHash;
 		uint64_t chunkIndex;
 		MemoryPosition pos;
+		bool deviceLocal;
 	};
 	
 	// 2 to 11th is 2048, so we will have a tree with 2048 segments at layer 0, it's tree's leaf nodes

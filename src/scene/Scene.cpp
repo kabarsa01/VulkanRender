@@ -149,8 +149,8 @@ namespace CGE
 		//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/uv_base.png", false, true, false);
 		Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
 		Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
-		tl->PushImage(&albedo->GetImage());
-		tl->PushImage(&normal->GetImage());
+		tl->PushImage(albedo);
+		tl->PushImage(normal);
 	
 		MaterialPtr mat = DataManager::RequestResourceType<Material>(
 			"default",

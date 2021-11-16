@@ -12,7 +12,7 @@ namespace CGE
 	// static stuff
 	//--------------------------------------------------------------------------------
 	HashString HashString::NONE = HashString();
-	std::map<size_t, std::string> HashString::stringsMap { /*{ ::NONEHash, ::NONEString }*/ };
+	std::unordered_map<size_t, std::string> HashString::stringsMap { /*{ ::NONEHash, ::NONEString }*/ };
 	//--------------------------------------------------------------------------------
 	
 	HashString::HashString()

@@ -8,6 +8,7 @@
 #include "data/TextureData.h"
 #include "../resources/VulkanBuffer.h"
 #include "RtShader.h"
+#include "data/BufferData.h"
 
 namespace CGE
 {
@@ -34,12 +35,12 @@ namespace CGE
 		void AddStorageImage(HashString name, TextureDataPtr texture);
 		void AddStorageImage(uint32_t set, uint32_t binding, TextureDataPtr texture);
 		void AddStorageImageArray(HashString name, const std::vector<TextureDataPtr>& textures);
-		void AddUniformBuffer(HashString name, VulkanBuffer buffer);
-		void AddUniformBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer);
-		void AddUniformBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers);
-		void AddStorageBuffer(HashString name, VulkanBuffer buffer);
-		void AddStorageBuffer(uint32_t set, uint32_t binding, VulkanBuffer buffer);
-		void AddStorageBufferArray(HashString name, const std::vector<VulkanBuffer>& buffers);
+		void AddUniformBuffer(HashString name, BufferDataPtr buffer);
+		void AddUniformBuffer(uint32_t set, uint32_t binding, BufferDataPtr buffer);
+		void AddUniformBufferArray(HashString name, const std::vector<BufferDataPtr>& buffers);
+		void AddStorageBuffer(HashString name, BufferDataPtr buffer);
+		void AddStorageBuffer(uint32_t set, uint32_t binding, BufferDataPtr buffer);
+		void AddStorageBufferArray(HashString name, const std::vector<BufferDataPtr>& buffers);
 		void AddAccelerationStructure(HashString name, vk::AccelerationStructureKHR accelerationStructure);
 		void AddAccelerationStructure(uint32_t set, uint32_t binding, vk::AccelerationStructureKHR accelerationStructure);
 		void AddAccelerationStructureArray(HashString name, const std::vector<vk::AccelerationStructureKHR>& accelerationStructures);

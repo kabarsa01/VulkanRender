@@ -98,15 +98,15 @@ namespace CGE
 		}
 	}
 	
-	void VulkanImage::SetData(const std::vector<char>& inData)
-	{
-		m_data = inData;
-	}
-	
-	void VulkanImage::SetData(DeviceSize inSize, char* inData)
-	{
-		m_data.assign(inData, inData + inSize);
-	}
+	//void VulkanImage::SetData(const std::vector<char>& inData)
+	//{
+	//	m_data = inData;
+	//}
+	//
+	//void VulkanImage::SetData(DeviceSize inSize, char* inData)
+	//{
+	//	m_data.assign(inData, inData + inSize);
+	//}
 	
 	void VulkanImage::BindMemory(MemoryPropertyFlags inMemoryPropertyFlags)
 	{
@@ -278,8 +278,7 @@ namespace CGE
 		m_stagingBuffer.createInfo.setQueueFamilyIndexCount(1);
 		m_stagingBuffer.createInfo.setPQueueFamilyIndices(&inQueueFamilyIndex);
 		m_stagingBuffer.Create(false);
-//		m_stagingBuffer.BindMemory(MemoryPropertyFlagBits::eHostVisible | MemoryPropertyFlagBits::eHostCoherent);
-		MemoryRecord& rec = m_stagingBuffer.GetMemoryRecord();
+		MemoryRecord rec = m_stagingBuffer.GetMemoryRecord();
 		rec.pos.memory.MapCopyUnmap(MemoryMapFlags(), rec.pos.offset, size, inData, 0, size);
 	
 		return &m_stagingBuffer;
