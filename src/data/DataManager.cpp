@@ -7,6 +7,12 @@
 #include "async/Job.h"
 #include "async/ThreadPool.h"
 
+namespace
+{
+	static constexpr uint32_t SAMPLE_COUNT = 5;
+	static constexpr uint32_t SEQUENCE_SIZE = 10;
+}
+
 namespace CGE
 {
 	
@@ -168,10 +174,12 @@ namespace CGE
 	{
 		std::random_device rd;
 		std::mt19937 rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
-		std::uniform_int_distribution<uint32_t> dist(0, static_cast<uint32_t>(m_resourcesTable.size()) - 1);
 
+		for (uint32_t idx = 0; idx < SAMPLE_COUNT; ++idx)
 		{
 			std::scoped_lock<std::mutex> lock(m_mutex);
+
+			std::uniform_int_distribution<uint32_t> dist(0, static_cast<uint32_t>(m_resourcesTable.size()) - 1);
 
 			auto it = m_resourcesTable.begin();
 			std::advance(it, dist(rng));
@@ -180,7 +188,7 @@ namespace CGE
 			uint16_t counter = 0;
 			while (it != endIt)
 			{
-				if (it->second.use_count() == 2)
+				if (it->second.use_count() <= 2)
 				{
 					m_cleanupChain[m_cleanupChainIndex].push_back(it->second);
 					m_resourcesMap[it->second->GetClass().GetName()].erase(it->first);
@@ -190,7 +198,7 @@ namespace CGE
 				{
 					++it;
 				}
-				if (counter++ >= 10)
+				if (counter++ >= SEQUENCE_SIZE)
 				{
 					break;
 				}

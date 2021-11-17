@@ -74,7 +74,10 @@ namespace CGE
 
 		if (m_buffer.IsDeviceLocal())
 		{
-			m_staging = CreateStaging(size);
+			if (!m_staging)
+			{
+				m_staging = CreateStaging(size);
+			}
 			m_staging->CopyTo(size, data);
 			TransferList::GetInstance()->PushBuffer(get_shared_from_this<BufferData>());
 		}
@@ -92,10 +95,6 @@ namespace CGE
 
 	std::shared_ptr<BufferData> BufferData::CreateStaging(vk::DeviceSize size)
 	{
-		if (m_staging)
-		{
-			return m_staging;
-		}
 		vk::BufferUsageFlags usage = vk::BufferUsageFlagBits::eTransferSrc | m_buffer.createInfo.usage;
 		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(GetResourceId() + HashString("_staging"), size, usage, false);
 		buffer->Create();

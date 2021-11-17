@@ -6,7 +6,6 @@
 #include "../objects/VulkanDescriptorSet.h"
 #include <any>
 #include "data/TextureData.h"
-#include "../resources/VulkanBuffer.h"
 #include "RtShader.h"
 #include "data/BufferData.h"
 

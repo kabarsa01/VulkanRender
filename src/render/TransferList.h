@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include "resources/VulkanBuffer.h"
-#include "resources/VulkanImage.h"
 #include "data/MeshData.h"
 #include "data/TextureData.h"
 

@@ -2,7 +2,6 @@
 
 #include "vulkan/vulkan.hpp"
 #include <vector>
-#include "../resources/VulkanBuffer.h"
 #include "../memory/DeviceMemoryManager.h"
 #include "../resources/VulkanImage.h"
 #include "../PipelineRegistry.h"

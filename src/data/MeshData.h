@@ -8,7 +8,6 @@
 
 #include "data/Resource.h"
 #include "vulkan/vulkan.hpp"
-#include "render/resources/VulkanBuffer.h"
 #include "render/resources/VulkanDeviceMemory.h"
 #include "core/Engine.h"
 #include "render/Renderer.h"
@@ -53,7 +52,6 @@ namespace CGE
 	
 		void CreateBuffer();
 		void DestroyBuffer();
-//		void Draw();
 	
 		BufferDataPtr GetVertexBuffer() { return m_vertexBuffer; }
 		uint32_t GetVertexBufferSizeBytes();

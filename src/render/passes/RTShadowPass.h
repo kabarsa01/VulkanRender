@@ -6,7 +6,6 @@
 #include "messages/Messages.h"
 #include "messages/MessageSubscriber.h"
 #include <memory>
-#include "../resources/VulkanBuffer.h"
 #include "../shader/ShaderResourceMapper.h"
 #include "data/BufferData.h"
 

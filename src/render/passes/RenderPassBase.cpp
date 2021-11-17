@@ -1,6 +1,5 @@
 #include "RenderPassBase.h"
 #include "utils/Singleton.h"
-#include "../resources/VulkanBuffer.h"
 #include "data/Texture2D.h"
 #include "core/Engine.h"
 #include "../Renderer.h"

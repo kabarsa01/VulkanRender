@@ -10,7 +10,6 @@ namespace CGE
 	VulkanBuffer::VulkanBuffer(bool inScoped, bool inCleanup)
 		: m_scoped(inScoped)
 		, m_cleanup(inCleanup)
-//		, m_stagingBuffer(nullptr)
 	{
 	}
 	
@@ -28,7 +27,6 @@ namespace CGE
 		{
 			return;
 		}
-//		m_deviceLocal = deviceLocal;
 		m_vulkanDevice = &Engine::GetRendererInstance()->GetVulkanDevice();
 		m_buffer = m_vulkanDevice->GetDevice().createBuffer(createInfo);
 	
@@ -41,22 +39,7 @@ namespace CGE
 	
 	void VulkanBuffer::CopyTo(DeviceSize inSize, const char* inData, bool pushToTransfer)
 	{
-//		if (m_memRecord.deviceLocal)
-		{
-//			CreateStagingBuffer(inSize, inData);
-		}
-		//if (m_stagingBuffer)
-		//{
-		//	m_stagingBuffer->CopyTo(inSize, inData, pushToTransfer);
-		//	if (pushToTransfer)
-		//	{
-		//		TransferList::GetInstance()->PushBuffer(this);
-		//	}
-		//}
-		//else
-		{
-			m_memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), m_memRecord.pos.offset, inSize, inData, 0, inSize);
-		}
+		m_memRecord.pos.memory.MapCopyUnmap(MemoryMapFlags(), m_memRecord.pos.offset, inSize, inData, 0, inSize);
 	}
 	
 	void VulkanBuffer::Destroy()
@@ -65,12 +48,6 @@ namespace CGE
 		{
 			return;
 		}
-		//if (m_stagingBuffer != nullptr)
-		//{
-		//	m_stagingBuffer->Destroy();
-		//	delete m_stagingBuffer;
-		//	m_stagingBuffer = nullptr;
-		//}
 		if (m_buffer)
 		{
 			m_vulkanDevice->GetDevice().destroyBuffer(m_buffer);
@@ -94,32 +71,6 @@ namespace CGE
 	{
 		m_vulkanDevice->GetDevice().bindBufferMemory(m_buffer, inDeviceMemory, inMemOffset);
 	}
-	
-//	VulkanBuffer* VulkanBuffer::CreateStagingBuffer()
-//	{
-//		return CreateStagingBuffer(createInfo.size, nullptr);
-//	}
-//	
-//	VulkanBuffer* VulkanBuffer::CreateStagingBuffer(DeviceSize inSize, const char* inData)
-//	{
-//		if (m_stagingBuffer)
-//		{
-//			return m_stagingBuffer;
-//		}
-//	
-//		m_stagingBuffer = new VulkanBuffer();
-//		m_stagingBuffer->createInfo.setSize(inSize);
-//		m_stagingBuffer->createInfo.setUsage(createInfo.usage | vk::BufferUsageFlagBits::eTransferSrc);
-//		m_stagingBuffer->createInfo.setSharingMode(SharingMode::eExclusive);
-//		m_stagingBuffer->Create(false);
-//		if (inData)
-//		{
-////			MemoryRecord& memRec = m_stagingBuffer->GetMemoryRecord();
-////			memRec.pos.memory.MapCopyUnmap(MemoryMapFlags(), memRec.pos.offset, inSize, inData, 0, inSize);
-//		}
-//	
-//		return m_stagingBuffer;
-//	}
 	
 	BufferCopy VulkanBuffer::CreateBufferCopy()
 	{

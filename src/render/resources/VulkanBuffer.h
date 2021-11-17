@@ -37,7 +37,6 @@ namespace CGE
 		DescriptorBufferInfo& GetDescriptorInfo();
 		DescriptorBufferInfo GetDescriptorInfo() const;
 	
-//		VulkanBuffer* GetStagingBuffer() { return m_stagingBuffer; }
 		Buffer& GetNativeBuffer();
 		Buffer GetNativeBuffer() const;
 		MemoryRequirements GetMemoryRequirements() const;
@@ -57,13 +56,8 @@ namespace CGE
 	
 		bool m_scoped = false;
 		bool m_cleanup = true;
-//		bool m_deviceLocal = true;
-	
-//		VulkanBuffer* m_stagingBuffer;
 
 		void BindMemory(MemoryPropertyFlags inMemPropertyFlags);
 		void BindMemory(const DeviceMemory& inDeviceMemory, DeviceSize inMemOffset);
-		//VulkanBuffer* CreateStagingBuffer();
-		//VulkanBuffer* CreateStagingBuffer(DeviceSize inSize, const char* inData);
 	};
 }

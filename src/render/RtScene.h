@@ -7,7 +7,6 @@
 #include <vulkan/vulkan.hpp>
 
 #include "messages/MessageSubscriber.h"
-#include "resources/VulkanBuffer.h"
 #include "common/HashString.h"
 #include "utils/RTUtils.h"
 #include "shader/RtShader.h"

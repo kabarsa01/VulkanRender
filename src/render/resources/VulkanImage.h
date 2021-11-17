@@ -3,7 +3,6 @@
 #include "vulkan/vulkan.hpp"
 #include "../objects/VulkanDevice.h"
 #include "../memory/DeviceMemoryManager.h"
-#include "VulkanBuffer.h"
 #include <vector>
 
 // Wrapper for a Vulkan image resource

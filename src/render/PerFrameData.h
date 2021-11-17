@@ -2,7 +2,6 @@
 
 #include "render/DataStructures.h"
 #include "objects/VulkanDescriptorSet.h"
-#include "resources/VulkanBuffer.h"
 #include "vulkan/vulkan.hpp"
 #include "data/BufferData.h"
 

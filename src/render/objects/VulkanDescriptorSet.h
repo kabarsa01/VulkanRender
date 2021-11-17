@@ -3,7 +3,6 @@
 #include "vulkan/vulkan.hpp"
 #include "../shader/Shader.h"
 #include "../shader/RtShader.h"
-#include "../resources/VulkanBuffer.h"
 
 namespace CGE
 {

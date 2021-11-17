@@ -83,8 +83,6 @@ namespace CGE
 		DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
 	protected:
 	private:
-		// TEMP
-		VulkanBuffer uniformBuffer;
 		//======================= VARS ===============================
 		uint32_t version;
 		int width = 1920;

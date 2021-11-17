@@ -117,11 +117,6 @@ namespace CGE
 		m_indexBuffer = nullptr;
 	}
 	
-	//void MeshData::Draw()
-	//{
-	//	// bind VAO and draw
-	//}
-	
 	VertexInputBindingDescription MeshData::GetBindingDescription(uint32_t inDesiredBinding)
 	{
 		VertexInputBindingDescription bindingDescription;
