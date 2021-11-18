@@ -123,6 +123,7 @@ namespace CGE
 	
 	void Engine::Cleanup()
 	{
+		ThreadPool::DestroyInstance();
 		DataManager::ShutdownInstance();
 	
 		m_rendererInstance->Cleanup();
@@ -134,7 +135,6 @@ namespace CGE
 		glfwTerminate();
 
 		MessageBus::DestroyInstance();
-		ThreadPool::DestroyInstance();
 	}
 	
 	void Engine::InitWindow()
