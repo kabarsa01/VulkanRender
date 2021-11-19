@@ -46,8 +46,11 @@ namespace CGE
 
 		m_device = &Engine::GetRendererInstance()->GetVulkanDevice();
 
-		m_renderPass = CreateRenderPass(*m_initContext);
-		m_framebuffers = CreateFramebuffers(*m_initContext);
+		if (!m_initContext->compute)
+		{
+			m_renderPass = CreateRenderPass(*m_initContext);
+			m_framebuffers = CreateFramebuffers(*m_initContext);
+		}
 
 		m_executeContext->m_attachments = m_initContext->m_attachments;
 		m_executeContext->m_depthAttachments = m_initContext->m_depthAttachments;
@@ -81,12 +84,15 @@ namespace CGE
 				0, 1, 0, 1);
 			barriers.emplace_back(textureBarrier);
 		}
-		commandBuffer->pipelineBarrier(
-			vk::PipelineStageFlagBits::eAllCommands,
-			vk::PipelineStageFlagBits::eAllCommands,
-			vk::DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			static_cast<uint32_t>(barriers.size()), barriers.data());
+		if (!barriers.empty())
+		{
+			commandBuffer->pipelineBarrier(
+				vk::PipelineStageFlagBits::eAllCommands,
+				vk::PipelineStageFlagBits::eAllCommands,
+				vk::DependencyFlags(),
+				0, nullptr, 0, nullptr,
+				static_cast<uint32_t>(barriers.size()), barriers.data());
+		}
 
 		ExecutePass(commandBuffer, *m_executeContext, *Singleton<RenderPassDataTable>::GetInstance());
 	}
