@@ -22,13 +22,13 @@ namespace CGE
 
 		static vk::ImageViewType ImageTypeToViewType(vk::ImageType imageType);
 
-		static VulkanImage CreateImage2D(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage);
-		static VulkanImage CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
-		static VulkanImage CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
-		static Texture2DPtr CreateColorAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
-		static Texture2DPtr CreateDepthAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
-		static std::vector<Texture2DPtr> CreateColorAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm);
-		static std::vector<Texture2DPtr> CreateDepthAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight);
+		static VulkanImage CreateImage2D(uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage);
+		static VulkanImage CreateColorImage(uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm, bool storageUse = false);
+		static VulkanImage CreateDepthImage(uint32_t inWidth, uint32_t inHeight, bool storageUse = false);
+		static Texture2DPtr CreateColorTexture(const HashString& name, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm, bool storageUse = false);
+		static Texture2DPtr CreateDepthTexture(const HashString& name, uint32_t inWidth, uint32_t inHeight, bool storageUse = false);
+		static std::vector<Texture2DPtr> CreateColorTextureArray(const HashString& name, uint32_t count, uint32_t inWidth, uint32_t inHeight, vk::Format format = vk::Format::eR8G8B8A8Unorm, bool storageUse = false);
+		static std::vector<Texture2DPtr> CreateDepthTextureArray(const HashString& name, uint32_t count, uint32_t inWidth, uint32_t inHeight, bool storageUse = false);
 
 		static VulkanBuffer CreateBuffer(vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal = true);
 		static BufferDataPtr CreateBufferData(HashString name, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal = true);

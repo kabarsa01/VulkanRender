@@ -82,6 +82,7 @@ namespace CGE
 		// for round robin usage for double buffering
 		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray);
 
+		HashString GetPassName() { return m_owner->m_name; }
 		uint32_t GetWidth() { return m_owner->m_width; }
 		uint32_t GetHeight() { return m_owner->m_height; }
 	private:
@@ -110,6 +111,7 @@ namespace CGE
 		Texture2DPtr GetDepthAttachment(uint32_t frameIndex = UINT32_MAX);
 		const std::vector<Texture2DPtr>& GetDepthAttachments();
 
+		HashString GetPassName() { return m_owner->m_name; }
 		uint32_t GetWidth() { return m_owner->m_width; }
 		uint32_t GetHeight() { return m_owner->m_height; }
 

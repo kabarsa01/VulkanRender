@@ -54,8 +54,8 @@ namespace CGE
 		void SetStorageBuffer(const std::string& inName, uint64_t inSize, const char* inData);
 		void SetUniformBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
 		void SetStorageBufferArray(const std::string& inName, uint32_t arraySize, uint64_t dataSize, const char* inData);
-		void SetUniformBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer);
-		void SetStorageBufferExternal(const std::string& inName, const BufferDataPtr& inBuffer);
+		void SetUniformBufferExternal(const std::string& inName, BufferDataPtr inBuffer);
+		void SetStorageBufferExternal(const std::string& inName, BufferDataPtr inBuffer);
 		void SetAccelerationStructure(const std::string& inName, vk::AccelerationStructureKHR inAccelStruct);
 		template<typename T>
 		void UpdateUniformBuffer(const std::string& inName, T& inUniformBuffer);
@@ -64,39 +64,48 @@ namespace CGE
 	
 		BufferDataPtr GetUniformBuffer(const std::string& inName);
 		BufferDataPtr GetStorageBuffer(const std::string& inName);
+		TextureDataPtr GetSampledTexture(const std::string& inName);
+		TextureDataPtr GetStorageTexture(const std::string& inName);
+		template<typename ...Args>
+		std::vector<TextureDataPtr> GetSampledTextures(Args&& ...names);
+		template<typename ...Args>
+		std::vector<TextureDataPtr> GetStorageTextures(Args&& ...names);
 	
-		inline ShaderPtr GetVertexShader() { return vertexShader; }
-		inline ShaderPtr GetFragmentShader() { return fragmentShader; }
-		inline ShaderPtr GetComputeShader() { return computeShader; }
-		inline const std::string& GetVertexEntrypoint() const { return vertexEntrypoint; };
-		inline const std::string& GetFragmentEntrypoint() const { return fragmentEntrypoint; };
-		inline const std::string& GetComputeEntrypoint() const { return computeEntrypoint; };
+		inline ShaderPtr GetVertexShader() { return m_vertexShader; }
+		inline ShaderPtr GetFragmentShader() { return m_fragmentShader; }
+		inline ShaderPtr GetComputeShader() { return m_computeShader; }
+		inline const std::string& GetVertexEntrypoint() const { return m_vertexEntrypoint; };
+		inline const std::string& GetFragmentEntrypoint() const { return m_fragmentEntrypoint; };
+		inline const std::string& GetComputeEntrypoint() const { return m_computeEntrypoint; };
+
+		inline std::vector<TextureDataPtr> GetAllTextures() const;
+		inline std::vector<BufferDataPtr> GetAllBuffers() const;
 	
 		bool Create() override;
 	protected:
-		std::string vertexShaderPath;
-		std::string fragmentShaderPath;
-		std::string computeShaderPath;
-		std::string vertexEntrypoint;
-		std::string fragmentEntrypoint;
-		std::string computeEntrypoint;
-		HashString shaderHash;
+		std::string m_vertexShaderPath;
+		std::string m_fragmentShaderPath;
+		std::string m_computeShaderPath;
+		std::string m_vertexEntrypoint;
+		std::string m_fragmentEntrypoint;
+		std::string m_computeEntrypoint;
+		HashString m_shaderHash;
 	
-		ShaderPtr vertexShader;
-		ShaderPtr fragmentShader;
-		ShaderPtr computeShader;
-		std::map<HashString, Texture2DPtr> sampledImages2D;
-		std::map<HashString, std::vector<TextureDataPtr>> sampledImage2DArrays;
-		std::map<HashString, Texture2DPtr> storageImages2D;
-		std::map<HashString, std::vector<TextureDataPtr>> storageImage2DArrays;
-		std::map<HashString, BufferDataPtr> buffers;
-		std::map<HashString, std::vector<BufferDataPtr>> bufferArrays;
-		std::map<HashString, BufferDataPtr> storageBuffers;
-		std::map<HashString, std::vector<BufferDataPtr>> storageBufferArrays;
-		std::map<HashString, vk::AccelerationStructureKHR> accelerationStructures;
-		std::map<HashString, std::vector<vk::AccelerationStructureKHR>> accelerationStructureArrays;
+		ShaderPtr m_vertexShader;
+		ShaderPtr m_fragmentShader;
+		ShaderPtr m_computeShader;
+		std::map<HashString, Texture2DPtr> m_sampledImages2D;
+		std::map<HashString, std::vector<TextureDataPtr>> m_sampledImage2DArrays;
+		std::map<HashString, Texture2DPtr> m_storageImages2D;
+		std::map<HashString, std::vector<TextureDataPtr>> m_storageImage2DArrays;
+		std::map<HashString, BufferDataPtr> m_buffers;
+		std::map<HashString, std::vector<BufferDataPtr>> m_bufferArrays;
+		std::map<HashString, BufferDataPtr> m_storageBuffers;
+		std::map<HashString, std::vector<BufferDataPtr>> m_storageBufferArrays;
+		std::map<HashString, vk::AccelerationStructureKHR> m_accelerationStructures;
+		std::map<HashString, std::vector<vk::AccelerationStructureKHR>> m_accelerationStructureArrays;
 	
-		VulkanDevice* vulkanDevice;
+		VulkanDevice* m_vulkanDevice;
 		ShaderResourceMapper m_resourceMapper;
 	
 		bool Destroy() override;
@@ -126,4 +135,20 @@ namespace CGE
 		UpdateUniformBuffer(inName, sizeof(T), reinterpret_cast<const char*>(&inUniformBuffer));
 	}
 	
+	template<typename ...Args>
+	std::vector<TextureDataPtr> Material::GetSampledTextures(Args&& ...names)
+	{
+		std::vector<TextureDataPtr> res;
+		(res.push_back(m_sampledImages2D[names]), ...);
+		return res;
+	}
+
+	template<typename ...Args>
+	std::vector<TextureDataPtr> Material::GetStorageTextures(Args&& ...names)
+	{
+		std::vector<TextureDataPtr> res;
+		(res.push_back(m_storageImages2D[names]), ...);
+		return res;
+	}
+
 }

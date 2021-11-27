@@ -61,8 +61,6 @@ namespace CGE
 
 	void DepthPrepass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
-		VulkanDevice& device = Engine::GetRendererInstance()->GetVulkanDevice();
-
 		initContext.depthInfo.depthWriteEnable = VK_TRUE;
 		initContext.depthInfo.depthTestEnable = VK_TRUE;
 		initContext.depthInfo.depthCompareOp = vk::CompareOp::eLessOrEqual;
@@ -70,7 +68,7 @@ namespace CGE
 		auto passData = std::make_shared<DepthPrepassData>();
 		dataTable.AddPassData<DepthPrepassData>(passData);
 
-		passData->depthTextures = ResourceUtils::CreateDepthAttachmentTextures("main_depth", 2, &device, initContext.GetWidth(), initContext.GetHeight());
+		passData->depthTextures = ResourceUtils::CreateDepthTextureArray("main_depth", 2, initContext.GetWidth(), initContext.GetHeight());
 
 		initContext.SetDepthAttachments(passData->depthTextures);
 	}

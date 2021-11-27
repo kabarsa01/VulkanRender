@@ -109,15 +109,16 @@ namespace CGE
 		lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
 		lightClusteringPass->Create();
 		gBufferPass = new GBufferPass(HashString("GBufferPass"));
-		gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
-		gBufferPass->SetResolution(width, height);
-		gBufferPass->Create();
+		//gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
+		//gBufferPass->SetResolution(width, height);
+		gBufferPass->Init();// Create();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
 		rtShadowPass->SetResolution(width, height);
 		rtShadowPass->Create();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
-		deferredLightingPass->SetResolution(width, height);
-		deferredLightingPass->Create();
+		//deferredLightingPass->SetResolution(width, height);
+		//deferredLightingPass->Create();
+		deferredLightingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 		postProcessPass->SetResolution(width, height);
 		postProcessPass->Create();
@@ -172,49 +173,49 @@ namespace CGE
 		lightClusteringPass->RecordCommands(&cmdBuffer);
 		//--------------------------------------------------------
 		// gbuffer pass
-		gBufferPass->RecordCommands(&cmdBuffer);
+		gBufferPass->Execute(&cmdBuffer);
 		// barriers ----------------------------------------------
-		const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
-		std::vector<ImageMemoryBarrier> gBufferBarriers;
-		for (uint32_t index = 0; index < gBufferAttachments.size(); index++)
-		{
-			ImageMemoryBarrier attachmentBarrier = gBufferAttachments[index].CreateLayoutBarrier(
-				ImageLayout::eColorAttachmentOptimal,
-				ImageLayout::eShaderReadOnlyOptimal,
-				AccessFlagBits::eColorAttachmentWrite,
-				AccessFlagBits::eShaderRead,
-				ImageAspectFlagBits::eColor,
-				0, 1, 0, 1);
-			gBufferBarriers.push_back(attachmentBarrier);
-		}
-		cmdBuffer.pipelineBarrier(
-			PipelineStageFlagBits::eColorAttachmentOutput,
-			PipelineStageFlagBits::eFragmentShader,
-			DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			static_cast<uint32_t>(gBufferBarriers.size()),
-			gBufferBarriers.data());
+		//const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
+		//std::vector<ImageMemoryBarrier> gBufferBarriers;
+		//for (uint32_t index = 0; index < gBufferAttachments.size(); index++)
+		//{
+		//	ImageMemoryBarrier attachmentBarrier = gBufferAttachments[index].CreateLayoutBarrier(
+		//		ImageLayout::eColorAttachmentOptimal,
+		//		ImageLayout::eShaderReadOnlyOptimal,
+		//		AccessFlagBits::eColorAttachmentWrite,
+		//		AccessFlagBits::eShaderRead,
+		//		ImageAspectFlagBits::eColor,
+		//		0, 1, 0, 1);
+		//	gBufferBarriers.push_back(attachmentBarrier);
+		//}
+		//cmdBuffer.pipelineBarrier(
+		//	PipelineStageFlagBits::eColorAttachmentOutput,
+		//	PipelineStageFlagBits::eFragmentShader,
+		//	DependencyFlags(),
+		//	0, nullptr, 0, nullptr,
+		//	static_cast<uint32_t>(gBufferBarriers.size()),
+		//	gBufferBarriers.data());
 		//--------------------------------------------------------
 		// deferred lighting pass
 		rtShadowPass->RecordCommands(&cmdBuffer);
 		//--------------------------------------------------------
 		//--------------------------------------------------------
 		// deferred lighting pass
-		deferredLightingPass->RecordCommands(&cmdBuffer);
+		deferredLightingPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
-		ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
-			ImageLayout::eColorAttachmentOptimal,
-			ImageLayout::eShaderReadOnlyOptimal,
-			AccessFlagBits::eColorAttachmentWrite,
-			AccessFlagBits::eShaderRead,
-			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		cmdBuffer.pipelineBarrier(
-			PipelineStageFlagBits::eColorAttachmentOutput,
-			PipelineStageFlagBits::eFragmentShader,
-			DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			1, &attachmentBarrier);
+		//ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
+		//	ImageLayout::eColorAttachmentOptimal,
+		//	ImageLayout::eShaderReadOnlyOptimal,
+		//	AccessFlagBits::eColorAttachmentWrite,
+		//	AccessFlagBits::eShaderRead,
+		//	ImageAspectFlagBits::eColor,
+		//	0, 1, 0, 1);
+		//cmdBuffer.pipelineBarrier(
+		//	PipelineStageFlagBits::eColorAttachmentOutput,
+		//	PipelineStageFlagBits::eFragmentShader,
+		//	DependencyFlags(),
+		//	0, nullptr, 0, nullptr,
+		//	1, &attachmentBarrier);
 		//--------------------------------------------------------
 		// post process pass
 		postProcessPass->RecordCommands(&cmdBuffer);
@@ -258,9 +259,9 @@ namespace CGE
 	
 		postProcessPass->Destroy();
 		delete postProcessPass;
-		deferredLightingPass->Destroy();
+//		deferredLightingPass->Destroy();
 		delete deferredLightingPass;
-		gBufferPass->Destroy();
+//		gBufferPass->Destroy();
 		delete gBufferPass;
 		rtShadowPass->Destroy();
 		delete rtShadowPass;

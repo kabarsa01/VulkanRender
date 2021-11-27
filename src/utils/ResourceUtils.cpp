@@ -70,7 +70,7 @@ namespace CGE
 		return viewType;
 	}
 
-	VulkanImage ResourceUtils::CreateImage2D(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage)
+	VulkanImage ResourceUtils::CreateImage2D(uint32_t inWidth, uint32_t inHeight, vk::Format inFormat, vk::ImageUsageFlags inUsage)
 	{
 		VulkanImage image;
 
@@ -89,8 +89,14 @@ namespace CGE
 		return image;
 	}
 
-	VulkanImage ResourceUtils::CreateColorAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format)
+	VulkanImage ResourceUtils::CreateColorImage(uint32_t inWidth, uint32_t inHeight, vk::Format format, bool storageUse/* = false*/)
 	{
+		vk::ImageUsageFlags usage = ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst;
+		if (storageUse)
+		{
+			usage |= ImageUsageFlagBits::eStorage;
+		}
+
 		VulkanImage colorAttachmentImage;
 		colorAttachmentImage.createInfo.setArrayLayers(1);
 		colorAttachmentImage.createInfo.setFormat(format);
@@ -104,14 +110,20 @@ namespace CGE
 		colorAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
 		colorAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		colorAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
-		colorAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eColorAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
+		colorAttachmentImage.createInfo.setUsage(usage);
 		colorAttachmentImage.Create();
 	
 		return colorAttachmentImage;
 	}
 	
-	VulkanImage ResourceUtils::CreateDepthAttachment(VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	VulkanImage ResourceUtils::CreateDepthImage(uint32_t inWidth, uint32_t inHeight, bool storageUse/* = false*/)
 	{
+		vk::ImageUsageFlags usage = ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst;
+		if (storageUse)
+		{
+			usage |= ImageUsageFlagBits::eStorage;
+		}
+
 		VulkanImage depthAttachmentImage;
 		depthAttachmentImage.createInfo.setArrayLayers(1);
 		depthAttachmentImage.createInfo.setFormat(Format::eD24UnormS8Uint);
@@ -123,46 +135,46 @@ namespace CGE
 		depthAttachmentImage.createInfo.setTiling(ImageTiling::eOptimal);
 		depthAttachmentImage.createInfo.setFlags(ImageCreateFlags());
 		depthAttachmentImage.createInfo.setExtent(Extent3D(inWidth, inHeight, 1));
-		depthAttachmentImage.createInfo.setUsage(ImageUsageFlagBits::eDepthStencilAttachment | ImageUsageFlagBits::eSampled | ImageUsageFlagBits::eTransferDst);
+		depthAttachmentImage.createInfo.setUsage(usage);
 		depthAttachmentImage.Create();
 	
 		return depthAttachmentImage;
 	}
 	
-	Texture2DPtr ResourceUtils::CreateColorAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/)
+	Texture2DPtr ResourceUtils::CreateColorTexture(const HashString& name, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/, bool storageUse/* = false*/)
 	{
-		VulkanImage image = ResourceUtils::CreateColorAttachment(inDevice, inWidth, inHeight, format);
+		VulkanImage image = ResourceUtils::CreateColorImage(inWidth, inHeight, format, storageUse);
 		Texture2DPtr texture = ObjectBase::NewObject<Texture2D, const HashString&>(name);
 		texture->CreateFromExternal(image, image.CreateView(CreateColorSubresRange(), vk::ImageViewType::e2D), true);
 		return texture;
 	}
 
-	Texture2DPtr ResourceUtils::CreateDepthAttachmentTexture(const HashString& name, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	Texture2DPtr ResourceUtils::CreateDepthTexture(const HashString& name, uint32_t inWidth, uint32_t inHeight, bool storageUse/* = false*/)
 	{
-		VulkanImage image = ResourceUtils::CreateDepthAttachment(inDevice, inWidth, inHeight);
+		VulkanImage image = ResourceUtils::CreateDepthImage(inWidth, inHeight, storageUse);
 		Texture2DPtr texture = ObjectBase::NewObject<Texture2D, const HashString&>(name);
 		texture->CreateFromExternal(image, image.CreateView(CreateDepthSubresRange(), vk::ImageViewType::e2D), true);
 		return texture;
 	}
 
-	std::vector<Texture2DPtr> ResourceUtils::CreateColorAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/)
+	std::vector<Texture2DPtr> ResourceUtils::CreateColorTextureArray(const HashString& name, uint32_t count, uint32_t inWidth, uint32_t inHeight, vk::Format format /*= vk::Format::eR8G8B8A8Unorm*/, bool storageUse/* = false*/)
 	{
 		std::vector<Texture2DPtr> textures;
 		textures.resize(count);
 		for (uint32_t index = 0; index < count; ++index)
 		{
-			textures[index] = CreateColorAttachmentTexture(name + std::to_string(index), inDevice, inWidth, inHeight, format);
+			textures[index] = CreateColorTexture(name + std::to_string(index), inWidth, inHeight, format, storageUse);
 		}
 		return textures;
 	}
 
-	std::vector<Texture2DPtr> ResourceUtils::CreateDepthAttachmentTextures(const HashString& name, uint32_t count, VulkanDevice* inDevice, uint32_t inWidth, uint32_t inHeight)
+	std::vector<Texture2DPtr> ResourceUtils::CreateDepthTextureArray(const HashString& name, uint32_t count, uint32_t inWidth, uint32_t inHeight, bool storageUse/* = false*/)
 	{
 		std::vector<Texture2DPtr> textures;
 		textures.resize(count);
 		for (uint32_t index = 0; index < count; ++index)
 		{
-			textures[index] = CreateDepthAttachmentTexture(name + std::to_string(index), inDevice, inWidth, inHeight);
+			textures[index] = CreateDepthTexture(name + std::to_string(index), inWidth, inHeight, storageUse);
 		}
 		return textures;
 	}

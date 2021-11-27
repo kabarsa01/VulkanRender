@@ -27,15 +27,20 @@ namespace CGE
 
 	void ClusterComputePass::ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable)
 	{
+		auto depthData = dataTable.GetPassData<DepthPrepassData>();
+
+		uint32_t materialIndex = Engine::GetFrameIndex(m_computeMaterials.size());
+		uint32_t depthIndex = Engine::GetFrameIndex(depthData->depthTextures.size());
+
 		// barriers ----------------------------------------------
-		ImageMemoryBarrier depthTextureBarrier = depthTexture->GetImage().CreateLayoutBarrier(
+		ImageMemoryBarrier depthTextureBarrier = depthData->depthTextures[depthIndex]->GetImage().CreateLayoutBarrier(
 			vk::ImageLayout::eDepthStencilAttachmentOptimal,
 			vk::ImageLayout::eShaderReadOnlyOptimal,
 			vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		BufferDataPtr clusterBuffer = computeMaterial->GetStorageBuffer("clusterLightsData");
+		BufferDataPtr clusterBuffer = m_computeMaterials[materialIndex]->GetStorageBuffer("clusterLightsData");
 		BufferMemoryBarrier clusterDataBarrier = clusterBuffer->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			vk::AccessFlagBits::eShaderRead,
@@ -49,7 +54,7 @@ namespace CGE
 			1, &clusterDataBarrier,
 			static_cast<uint32_t>(barriers.size()), barriers.data());
 
-		PipelineData& pipelineData = executeContext.FindPipeline(computeMaterial);
+		PipelineData& pipelineData = executeContext.FindPipeline(m_computeMaterials[materialIndex]);
 
 		DeviceSize offset = 0;
 		commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
@@ -65,13 +70,22 @@ namespace CGE
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		
-		computeMaterial = DataManager::RequestResourceType<Material>("ClusterComputeMaterial");
-		computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
-		computeMaterial->SetStorageBuffer<ClusterLightsData>("clusterLightsData", *clusterLightData);
-		computeMaterial->SetUniformBuffer<LightsList>("lightsList", *lightsList);
-		computeMaterial->SetUniformBuffer<LightsIndices>("lightsIndices", *lightsIndices);
-		computeMaterial->SetTextureArray("depthTextures", depthData->depthTextures);
-		computeMaterial->LoadResources();
+		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
+		{
+			MaterialPtr computeMaterial = DataManager::RequestResourceType<Material>("ClusterComputeMaterial_" + std::to_string(idx));
+			computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
+			computeMaterial->SetStorageBuffer("clusterLightsData", sizeof(ClusterLightsData), nullptr);
+			computeMaterial->SetUniformBuffer("lightsList", sizeof(LightsList), nullptr);
+			computeMaterial->SetUniformBuffer("lightsIndices", sizeof(LightsIndices), nullptr);
+			computeMaterial->SetTexture("depthTextures", depthData->depthTextures[idx]);
+			computeMaterial->LoadResources();
+
+			m_computeMaterials.push_back(computeMaterial);
+		}
+
+		auto clusterDataPtr = std::make_shared<ClusterComputeData>();
+		clusterDataPtr->computeMaterials = m_computeMaterials;
+		dataTable.AddPassData<ClusterComputeData>(clusterDataPtr);
 	}
 
 	void ClusterComputePass::HandleUpdate(const std::shared_ptr<GlobalPostSceneMessage> msg)
@@ -91,19 +105,20 @@ namespace CGE
 
 			sortedLights[lightComp->type].push_back(info);
 		}
-		lightsIndices->directionalPosition.x = 0;
-		lightsIndices->directionalPosition.y = static_cast<uint32_t>(sortedLights[LT_Directional].size());
-		lightsIndices->pointPosition.x = lightsIndices->directionalPosition.y;
-		lightsIndices->pointPosition.y = static_cast<uint32_t>(sortedLights[LT_Point].size());
-		lightsIndices->spotPosition.x = lightsIndices->pointPosition.x + lightsIndices->pointPosition.y;
-		lightsIndices->spotPosition.y = static_cast<uint32_t>(sortedLights[LT_Spot].size());
+		m_lightsIndices->directionalPosition.x = 0;
+		m_lightsIndices->directionalPosition.y = static_cast<uint32_t>(sortedLights[LT_Directional].size());
+		m_lightsIndices->pointPosition.x = m_lightsIndices->directionalPosition.y;
+		m_lightsIndices->pointPosition.y = static_cast<uint32_t>(sortedLights[LT_Point].size());
+		m_lightsIndices->spotPosition.x = m_lightsIndices->pointPosition.x + m_lightsIndices->pointPosition.y;
+		m_lightsIndices->spotPosition.y = static_cast<uint32_t>(sortedLights[LT_Spot].size());
 
-		std::memcpy(&lightsList->lights[lightsIndices->directionalPosition.x], sortedLights[LT_Directional].data(), sizeof(LightInfo) * lightsIndices->directionalPosition.y);
-		std::memcpy(&lightsList->lights[lightsIndices->spotPosition.x], sortedLights[LT_Spot].data(), sizeof(LightInfo) * lightsIndices->spotPosition.y);
-		std::memcpy(&lightsList->lights[lightsIndices->pointPosition.x], sortedLights[LT_Point].data(), sizeof(LightInfo) * lightsIndices->pointPosition.y);
+		std::memcpy(&m_lightsList->lights[m_lightsIndices->directionalPosition.x], sortedLights[LT_Directional].data(), sizeof(LightInfo) * m_lightsIndices->directionalPosition.y);
+		std::memcpy(&m_lightsList->lights[m_lightsIndices->spotPosition.x], sortedLights[LT_Spot].data(), sizeof(LightInfo) * m_lightsIndices->spotPosition.y);
+		std::memcpy(&m_lightsList->lights[m_lightsIndices->pointPosition.x], sortedLights[LT_Point].data(), sizeof(LightInfo) * m_lightsIndices->pointPosition.y);
 
-		computeMaterial->UpdateUniformBuffer<LightsList>("lightsList", *lightsList);
-		computeMaterial->UpdateUniformBuffer<LightsIndices>("lightsIndices", *lightsIndices);
+		uint32_t materialIndex = Engine::GetFrameIndex(m_computeMaterials.size());
+		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsList>("lightsList", *m_lightsList);
+		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsIndices>("lightsIndices", *m_lightsIndices);
 	}
 
 }

@@ -130,7 +130,7 @@ namespace CGE
 	
 	void ZPrepass::CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight)
 	{
-		outDepthAttachment = ResourceUtils::CreateDepthAttachment(GetVulkanDevice(), inWidth, inHeight);
+		outDepthAttachment = ResourceUtils::CreateDepthImage(inWidth, inHeight);
 		outDepthAttachmentView = outDepthAttachment.CreateView({ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 }, ImageViewType::e2D);
 	}
 	
