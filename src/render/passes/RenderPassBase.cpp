@@ -104,7 +104,7 @@ namespace CGE
 		std::vector<vk::AttachmentDescription> attachDescArray;
 		std::vector<vk::AttachmentReference> colorAttachRefArray;
 
-		attachDescArray.reserve(initContext.m_attachments.size());
+		attachDescArray.resize(initContext.m_attachments.size());
 
 		for (auto& attachRecPair : initContext.m_attachments)
 		{
@@ -193,7 +193,7 @@ namespace CGE
 		for (uint32_t framebufferIndex = 0; framebufferIndex < framebufferCount; ++framebufferIndex)
 		{
 			std::vector<vk::ImageView> viewArray;
-			viewArray.reserve(initContext.m_attachments.size());
+			viewArray.resize(initContext.m_attachments.size());
 
 			for (auto& attachPair : initContext.m_attachments)
 			{
@@ -258,7 +258,7 @@ namespace CGE
 		vk::PipelineMultisampleStateCreateInfo multisampleInfo;
 
 		std::vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachmentStates;
-		colorBlendAttachmentStates.reserve(initContext.m_attachments.size());
+		colorBlendAttachmentStates.resize(initContext.m_attachments.size());
 		for (auto attachPair : initContext.m_attachments)
 		{
 			vk::PipelineColorBlendAttachmentState& blendState = colorBlendAttachmentStates[attachPair.first];

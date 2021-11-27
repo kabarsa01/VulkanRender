@@ -52,16 +52,19 @@ namespace CGE
 		//BufferDataPtr m_clusterLightsData;
 		//BufferDataPtr m_lightsList;
 		//BufferDataPtr m_lightsIndices;
-
 		std::vector<ShaderResourceMapper> m_shaderResourceMappers;
 
-		vk::Pipeline m_rtPipeline;
-		vk::PipelineLayout m_rtPipelineLayout;
-		std::vector<VulkanDescriptorSet> m_sets;
-		std::vector<vk::DescriptorSet> m_nativeSets;
-		vk::PhysicalDeviceRayTracingPipelinePropertiesKHR m_rtProps;
-		BufferDataPtr m_sbtBuffer;
-		uint32_t m_handleSizeAligned;
+		struct RtShadowPassFrameData
+		{
+			vk::Pipeline m_rtPipeline;
+			vk::PipelineLayout m_rtPipelineLayout;
+			std::vector<VulkanDescriptorSet> m_sets;
+			std::vector<vk::DescriptorSet> m_nativeSets;
+			vk::PhysicalDeviceRayTracingPipelinePropertiesKHR m_rtProps;
+			BufferDataPtr m_sbtBuffer;
+			uint32_t m_handleSizeAligned;
+		};
+		std::vector<RtShadowPassFrameData> m_frameDataArray;
 
 		void HandlePreUpdate(std::shared_ptr<GlobalPreFrameMessage> msg);
 		void UpdateShaderResources();

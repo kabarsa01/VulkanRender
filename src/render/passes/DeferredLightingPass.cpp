@@ -274,6 +274,7 @@ namespace CGE
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		auto clusterData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
+		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
 
 		uint32_t frameIndex = Engine::GetFrameIndex(m_lightingMaterials.size());
 		MaterialPtr lightingMat = m_lightingMaterials[frameIndex];
@@ -311,7 +312,7 @@ namespace CGE
 		//	ImageAspectFlagBits::eColor,
 		//	0, 1, 0, 1);
 		std::vector<ImageMemoryBarrier> barriers{ depthTextureBarrier };
-		for (auto tex : rtPass->GetVisibilityTextures())
+		for (auto tex : rtShadowsData->visibilityTextures)
 		{
 			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
 				ImageLayout::eUndefined,
@@ -330,18 +331,9 @@ namespace CGE
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		auto clusteringData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
-		//auto rtshadowsData = dataTable.GetPassData<>();
-		
-		//albedoTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingAlbedoTexture");
-		//albedoTexture->CreateFromExternal(gBufferPass->GetAttachments()[0], gBufferPass->GetAttachmentViews()[0]);
-		//normalTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingNormalTexture");
-		//normalTexture->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
-		//depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingDepthTexture");
-		//depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
-		//visibilityTexture = ObjectBase::NewObject<Texture2D, const HashString&>("DeferredLightingVisibilityTexture");
-		//visibilityTexture->CreateFromExternal(rtShadowPass->GetVisibilityTexture(), false);
+		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
 
-		assert(depthData->depthTextures.size() == clusteringData->computeMaterials.size() == gbufferData->albedos.size(), "Wrong number of resources");
+		assert((depthData->depthTextures.size() == clusteringData->computeMaterials.size()) && (clusteringData->computeMaterials.size() == gbufferData->albedos.size()), "Wrong number of resources");
 
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
 		{
@@ -356,16 +348,16 @@ namespace CGE
 			lightingMaterial->SetTexture("albedoTex", gbufferData->albedos[idx]);
 			lightingMaterial->SetTexture("normalsTex", gbufferData->normals[idx]);
 			lightingMaterial->SetTexture("depthTex", depthData->depthTextures[idx]);
-//			lightingMaterial->SetTextureArray("visibilityTextures", rtShadowPass->GetVisibilityTextures());
+			lightingMaterial->SetTextureArray("visibilityTextures", rtShadowsData->visibilityTextures);
 			lightingMaterial->SetAccelerationStructure("topLevelAS", Singleton<RtScene>::GetInstance()->GetTlas().accelerationStructure);
 			lightingMaterial->LoadResources();
 
 			m_lightingMaterials.push_back(lightingMaterial);
 		}
 
-
-		auto defferedLightingData = dataTable.CreatePassData<DeferredLightingData>();
-		//defferedLightingData->
+		auto deferredLightingData = dataTable.CreatePassData<DeferredLightingData>();
+		deferredLightingData->hdrRenderTargets = ResourceUtils::CreateColorTextureArray("DeferredLightingRT", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, false);
+		initContext.SetAttachments(0, deferredLightingData->hdrRenderTargets);
 	}
 
 }

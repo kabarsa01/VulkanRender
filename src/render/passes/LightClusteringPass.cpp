@@ -111,7 +111,7 @@ namespace CGE
 	
 		texture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeTexture");
 		texture->CreateFromExternal(image, imageView, true);
-		ZPrepass* zPrepass = GetRenderer()->GetZPrepass();
+		ZPrepass* zPrepass = nullptr;// GetRenderer()->GetZPrepass();
 		depthTexture = ObjectBase::NewObject<Texture2D, const HashString&>("ComputeDepthTexture");
 		depthTexture->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
 	

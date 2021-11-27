@@ -22,7 +22,7 @@ namespace CGE
 		//Texture2DPtr texture;
 		//Texture2DPtr depthTexture;
 
-		ClusterComputePass();
+		ClusterComputePass(const HashString& name);
 		~ClusterComputePass();
 	protected:
 		MessageSubscriber m_subscriber;

@@ -14,15 +14,16 @@
 namespace CGE
 {
 
-	ClusterComputePass::ClusterComputePass()
-		: RenderPassBase("ClusterComputePass")
+	ClusterComputePass::ClusterComputePass(const HashString& name)
+		: RenderPassBase(name)
 	{
 		m_subscriber.AddHandler<GlobalPostSceneMessage>(this, &ClusterComputePass::HandleUpdate);
 	}
 
 	ClusterComputePass::~ClusterComputePass()
 	{
-
+		delete m_lightsList;
+		delete m_lightsIndices;
 	}
 
 	void ClusterComputePass::ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable)
@@ -66,8 +67,10 @@ namespace CGE
 
 	void ClusterComputePass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
-		initContext.compute = true;
+		m_lightsList = new LightsList();
+		m_lightsIndices = new LightsIndices();
 
+		initContext.compute = true;
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)

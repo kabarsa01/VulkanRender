@@ -42,7 +42,7 @@ namespace CGE
 
 		MeshDataPtr meshData = MeshData::FullscreenQuad();
 
-		PipelineData& pipelineData = executeContext.FindPipeline(postProcessMaterial);
+		PipelineData& pipelineData = executeContext.FindPipeline(m_postProcessMaterials[Engine::GetFrameIndex(m_postProcessMaterials.size())]);
 
 		ClearValue clearValue;
 		clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
@@ -85,19 +85,21 @@ namespace CGE
 
 	void PostProcessPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
-		DeferredLightingPass* lightingPass = Engine::GetRendererInstance()->GetDeferredLightingPass();
-		screenImage = ObjectBase::NewObject<Texture2D, const HashString&>("SceneImageTexture");
-		screenImage->CreateFromExternal(lightingPass->GetAttachments()[0], lightingPass->GetAttachmentViews()[0]);
-		
-		postProcessMaterial = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
-			"PostProcessMaterial",
-			"content/shaders/PostProcessVert.spv",
-			"content/shaders/PostProcessFrag.spv"
-			);
-		ObjectMVPData objData;
-		postProcessMaterial->SetUniformBuffer<ObjectMVPData>("mvpBuffer", objData);
-		postProcessMaterial->SetTexture("screenImage", screenImage);//GetRenderer()->GetLightClusteringPass()->texture);
-		postProcessMaterial->LoadResources();
+		auto deferredLightingData = dataTable.GetPassData<DeferredLightingData>();
+		m_screenImages = deferredLightingData->hdrRenderTargets;
+		m_postProcessMaterials.resize(m_screenImages.size());
+
+		for (uint32_t idx = 0; idx < m_screenImages.size(); ++idx)
+		{
+			m_postProcessMaterials[idx] = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
+				"PostProcessMaterial",
+				"content/shaders/PostProcessVert.spv",
+				"content/shaders/PostProcessFrag.spv"
+				);
+			m_postProcessMaterials[idx]->SetUniformBuffer("mvpBuffer" + std::to_string(idx), sizeof(ObjectMVPData), nullptr);
+			m_postProcessMaterials[idx]->SetTexture("screenImage", m_screenImages[idx]);//GetRenderer()->GetLightClusteringPass()->texture);
+			m_postProcessMaterials[idx]->LoadResources();
+		}
 	}
 
 	//void PostProcessPass::RecordCommands(CommandBuffer* inCommandBuffer)

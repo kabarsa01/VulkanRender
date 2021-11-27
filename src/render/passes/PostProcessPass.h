@@ -11,8 +11,8 @@ namespace CGE
 		PostProcessPass(HashString inName);
 //		void RecordCommands(CommandBuffer* inCommandBuffer) override;
 	protected:
-		MaterialPtr postProcessMaterial;
-		Texture2DPtr screenImage;
+		std::vector<MaterialPtr> m_postProcessMaterials;
+		std::vector<Texture2DPtr> m_screenImages;
 	
 
 		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;

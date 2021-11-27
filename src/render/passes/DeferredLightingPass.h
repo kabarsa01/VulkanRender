@@ -8,7 +8,7 @@ namespace CGE
 
 	struct DeferredLightingData : public Identifiable<DeferredLightingData>
 	{
-		std::vector<Texture2DPtr> hdrRenderTarget;
+		std::vector<Texture2DPtr> hdrRenderTargets;
 	};
 
 	class DeferredLightingPass : public RenderPassBase

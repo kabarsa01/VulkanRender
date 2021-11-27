@@ -36,6 +36,7 @@
 #include "passes/RenderPassBase.h"
 #include "passes/DepthPrepass.h"
 #include "data/TextureData.h"
+#include "passes/ClusterComputePass.h"
 
 namespace CGE
 {
@@ -103,25 +104,16 @@ namespace CGE
 		m_depthPrepass->Init();
 		/// /////////////////////////////////////////////
 	
-		zPrepass = new ZPrepass(HashString("ZPrepass"));
-		zPrepass->SetResolution(width, height);
-		zPrepass->Create();
-		lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
-		lightClusteringPass->Create();
+		m_clusterComputePass = new ClusterComputePass(HashString("LightClusteringPass"));
+		m_clusterComputePass->Init();
 		gBufferPass = new GBufferPass(HashString("GBufferPass"));
-		//gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
-		//gBufferPass->SetResolution(width, height);
-		gBufferPass->Init();// Create();
+		gBufferPass->Init();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
-		rtShadowPass->SetResolution(width, height);
-		rtShadowPass->Create();
+		rtShadowPass->Init();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
-		//deferredLightingPass->SetResolution(width, height);
-		//deferredLightingPass->Create();
 		deferredLightingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
-		postProcessPass->SetResolution(width, height);
-		postProcessPass->Create();
+		postProcessPass->Init();
 	}
 	
 	void Renderer::RenderFrame()
@@ -142,7 +134,6 @@ namespace CGE
 		}
 	
 		perFrameData->UpdateBufferData();
-		lightClusteringPass->UpdateData();
 	
 		CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
 	
@@ -164,13 +155,11 @@ namespace CGE
 		Singleton<RtScene>::GetInstance()->BuildSceneTlas(&cmdBuffer);
 
 		// render passes
-		// 
+		// depth prepass
 		m_depthPrepass->Execute(&cmdBuffer);
-		// z prepass
-		zPrepass->RecordCommands(&cmdBuffer);
 		//----------------------------------------------------------
 		// light clustering pass
-		lightClusteringPass->RecordCommands(&cmdBuffer);
+		m_clusterComputePass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// gbuffer pass
 		gBufferPass->Execute(&cmdBuffer);
@@ -197,7 +186,7 @@ namespace CGE
 		//	gBufferBarriers.data());
 		//--------------------------------------------------------
 		// deferred lighting pass
-		rtShadowPass->RecordCommands(&cmdBuffer);
+		rtShadowPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		//--------------------------------------------------------
 		// deferred lighting pass
@@ -218,7 +207,7 @@ namespace CGE
 		//	1, &attachmentBarrier);
 		//--------------------------------------------------------
 		// post process pass
-		postProcessPass->RecordCommands(&cmdBuffer);
+		postProcessPass->Execute(&cmdBuffer);
 		// end commands recording
 		cmdBuffer.end();
 	
@@ -256,19 +245,11 @@ namespace CGE
 		WaitForDevice();
 
 		delete m_depthPrepass;
-	
-		postProcessPass->Destroy();
 		delete postProcessPass;
-//		deferredLightingPass->Destroy();
 		delete deferredLightingPass;
-//		gBufferPass->Destroy();
 		delete gBufferPass;
-		rtShadowPass->Destroy();
 		delete rtShadowPass;
-		zPrepass->Destroy();
-		delete zPrepass;
-		lightClusteringPass->Destroy();
-		delete lightClusteringPass;
+		delete m_clusterComputePass;
 	
 		Scene* scene = Engine::GetSceneInstance();
 		MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
@@ -341,14 +322,12 @@ namespace CGE
 		GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
 		glfwGetFramebufferSize(window, &width, &height);
 	
-		postProcessPass->Destroy();
 		delete postProcessPass;
 		swapChain.DestroyForResolution();
 	
 		swapChain.CreateForResolution(width, height);
 		postProcessPass = new PostProcessPass("PostProcessPass");
-		postProcessPass->SetResolution(width, height);
-		postProcessPass->Create();
+		postProcessPass->Init();
 	}
 	
 	void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)
