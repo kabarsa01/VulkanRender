@@ -39,10 +39,13 @@ namespace CGE
 		static std::shared_ptr<T> RequestResourceType(HashString inKey, ArgTypes&& ...args);
 		template<class T>
 		std::unordered_map<HashString, ResourcePtr>& GetResourcesTable();
+
+		void DestroyHint(HashString id);
 	protected:
 		std::mutex m_mutex;
 		std::unordered_map<HashString, ResourcePtr> m_resourcesTable;
 		std::unordered_map<HashString, std::unordered_map<HashString, ResourcePtr>> m_resourcesMap;
+		std::vector<HashString> m_deletionHints;
 	private:
 		static DataManager* m_instance;
 		static std::mutex m_staticMutex;

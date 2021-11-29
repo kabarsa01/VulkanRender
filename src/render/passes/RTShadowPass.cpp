@@ -54,6 +54,7 @@ namespace CGE
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		auto clusterComputeData = dataTable.GetPassData<ClusterComputeData>();
+		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		uint32_t depthIndex = Engine::GetFrameIndex(depthData->depthTextures.size());
 		uint32_t computeIndex = Engine::GetFrameIndex(clusterComputeData->computeMaterials.size());
 
@@ -90,6 +91,23 @@ namespace CGE
 				0, 1, 0, 1);
 			barriers.push_back(visibilityBarrier);
 		}
+		vk::ImageMemoryBarrier albedoBarrier = gbufferData->albedos[depthIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eColorAttachmentWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		barriers.push_back(albedoBarrier);
+		vk::ImageMemoryBarrier normalsBarrier = gbufferData->normals[depthIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eColorAttachmentWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		barriers.push_back(normalsBarrier);
+
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,
 			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
@@ -148,7 +166,9 @@ namespace CGE
 				true);
 			m_visibilityTextures.push_back(visibilityTex);
 		}
-		dataTable.CreatePassData<RTShadowsData>()->visibilityTextures = m_visibilityTextures;
+		auto data = dataTable.CreatePassData<RTShadowsData>();
+		data->visibilityTextures = m_visibilityTextures;
+		data->visibilityTex = m_visibilityTex;
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		auto clusterData = dataTable.GetPassData<ClusterComputeData>();
@@ -285,9 +305,12 @@ namespace CGE
 		{
 			// TODO
 		}
-//		m_sbtBuffer.Destroy();
+		if (frameData.m_sbtBuffer)
+		{
+			frameData.m_sbtBuffer->DestroyHint();
+		}
 		frameData.m_sbtBuffer = ResourceUtils::CreateBufferData(
-			"rt_scene_sbt_buffer",
+			"rt_scene_sbt_buffer" + std::to_string(Engine::GetInstance()->GetFrameCount()),
 			sbtSize,
 			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR | vk::BufferUsageFlagBits::eTransferDst,
 			true

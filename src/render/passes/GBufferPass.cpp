@@ -35,7 +35,7 @@ namespace CGE
 		passBeginInfo.setRenderPass(executeContext.GetRenderPass());
 		passBeginInfo.setFramebuffer(executeContext.GetFramebuffer());
 		passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), Extent2D(executeContext.GetWidth(), executeContext.GetHeight())));
-		passBeginInfo.setClearValueCount(static_cast<uint32_t>( clearValues.size() ));
+		passBeginInfo.setClearValueCount(static_cast<uint32_t>(clearValues.size()));
 		passBeginInfo.setPClearValues(clearValues.data());
 			
 		DeviceSize offset = 0;
@@ -84,7 +84,7 @@ namespace CGE
 		clearValues[2].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
-		initContext.SetDepthAttachments(depthData->depthTextures);
+		initContext.SetDepthAttachments(depthData->depthTextures, false);
 
 		initContext.depthInfo.setDepthTestEnable(VK_TRUE);
 		initContext.depthInfo.setDepthCompareOp(vk::CompareOp::eEqual);
@@ -97,8 +97,8 @@ namespace CGE
 		gbufferData->albedos = ResourceUtils::CreateColorTextureArray(initContext.GetPassName()+HashString("_albedo"), 2, initContext.GetWidth(), initContext.GetHeight());
 		gbufferData->normals = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_normal"), 2, initContext.GetWidth(), initContext.GetHeight());
 
-		initContext.SetAttachments(0, gbufferData->albedos);
-		initContext.SetAttachments(1, gbufferData->normals);
+		initContext.SetAttachments(0, gbufferData->albedos, true);
+		initContext.SetAttachments(1, gbufferData->normals, true);
 	}
 
 	//void GBufferPass::RecordCommands(CommandBuffer* inCommandBuffer)

@@ -2,6 +2,7 @@
 
 #include "vulkan/vulkan.hpp"
 #include "VulkanDevice.h"
+#include "data/Texture2D.h"
 
 namespace CGE
 {
@@ -32,8 +33,11 @@ namespace CGE
 	
 		void WaitForPresentQueue();
 	
-		Image& GetImage() { return images[imageIndex]; }
-		Image& GetPrevImage() { return images[prevImageIndex]; }
+		std::vector<Texture2DPtr>& GetTextures() { return m_textures; }
+		std::vector<Image>& GetImages() { return m_images; }
+		std::vector<ImageView>& GetImageViews() { return m_imageViews; }
+		Image& GetImage() { return m_images[imageIndex]; }
+		Image& GetPrevImage() { return m_images[prevImageIndex]; }
 		uint32_t GetImageIndex() { return imageIndex; }
 		uint32_t GetPrevImageIndex() { return prevImageIndex; }
 		Semaphore& GetImageAvailableSemaphore() { return imageAvailableSemaphores[prevImageIndex]; }
@@ -59,8 +63,9 @@ namespace CGE
 		SwapchainKHR swapChain;
 		RenderPass renderPass;
 	
-		std::vector<Image> images;
-		std::vector<ImageView> imageViews;
+		std::vector<vk::Image> m_images;
+		std::vector<ImageView> m_imageViews;
+		std::vector<Texture2DPtr> m_textures;
 		std::vector<Framebuffer> framebuffers;
 	
 		std::vector<Semaphore> renderingFinishedSemaphores;

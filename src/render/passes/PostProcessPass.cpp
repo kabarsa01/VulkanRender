@@ -21,6 +21,22 @@ namespace CGE
 		VulkanSwapChain& swapChain = Engine::GetRendererInstance()->GetSwapChain();
 		Image swapChainImage = swapChain.GetImage();
 
+		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
+		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
+		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eColorAttachmentOptimal,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eColorAttachmentWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		commandBuffer->pipelineBarrier(
+			PipelineStageFlagBits::eColorAttachmentOutput,
+			PipelineStageFlagBits::eFragmentShader,
+			DependencyFlags(),
+			0, nullptr, 0, nullptr,
+			1, &attachmentBarrier);
+		// 
 		// barriers ----------------------------------------------
 		//ImageMemoryBarrier attachmentBarrier;
 		//attachmentBarrier.setImage(swapChainImage);
@@ -48,8 +64,8 @@ namespace CGE
 		clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
 
 		RenderPassBeginInfo passBeginInfo;
-		passBeginInfo.setRenderPass(swapChain.GetRenderPass());
-		passBeginInfo.setFramebuffer(swapChain.GetFramebuffer());
+		passBeginInfo.setRenderPass(executeContext.GetRenderPass());
+		passBeginInfo.setFramebuffer(executeContext.GetFramebuffer());
 		passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), swapChain.GetExtent()));
 		passBeginInfo.setClearValueCount(1);
 		passBeginInfo.setPClearValues(&clearValue);
@@ -100,6 +116,9 @@ namespace CGE
 			m_postProcessMaterials[idx]->SetTexture("screenImage", m_screenImages[idx]);//GetRenderer()->GetLightClusteringPass()->texture);
 			m_postProcessMaterials[idx]->LoadResources();
 		}
+
+		VulkanSwapChain& swapChain = Engine::GetRendererInstance()->GetSwapChain();
+		initContext.SetAttachments(0, swapChain.GetTextures(), true);
 	}
 
 	//void PostProcessPass::RecordCommands(CommandBuffer* inCommandBuffer)

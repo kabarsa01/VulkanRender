@@ -15,6 +15,7 @@ namespace CGE
 	struct RTShadowsData : public Identifiable<RTShadowsData>
 	{
 		std::vector<TextureDataPtr> visibilityTextures;
+		Texture2DPtr visibilityTex;
 	};
 
 	class RTShadowPass : public RenderPassBase

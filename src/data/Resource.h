@@ -19,6 +19,7 @@ namespace CGE
 		HashString GetResourceId();
 	
 		virtual bool Create() = 0;
+		void DestroyHint();
 		bool IsValid();
 	protected:
 		friend class DataManager;

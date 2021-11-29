@@ -304,14 +304,14 @@ namespace CGE
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eDepth | ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		//ImageMemoryBarrier visibilityTextureBarrier = visibilityTexture->GetImage().CreateLayoutBarrier(
-		//	ImageLayout::eUndefined,
-		//	ImageLayout::eShaderReadOnlyOptimal,
-		//	AccessFlagBits::eShaderWrite,
-		//	AccessFlagBits::eShaderRead,
-		//	ImageAspectFlagBits::eColor,
-		//	0, 1, 0, 1);
-		std::vector<ImageMemoryBarrier> barriers{ depthTextureBarrier };
+		ImageMemoryBarrier visibilityTextureBarrier = rtShadowsData->visibilityTex->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eShaderWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		std::vector<ImageMemoryBarrier> barriers{ depthTextureBarrier, visibilityTextureBarrier };
 		for (auto tex : rtShadowsData->visibilityTextures)
 		{
 			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
@@ -321,9 +321,39 @@ namespace CGE
 				AccessFlagBits::eShaderRead,
 				ImageAspectFlagBits::eColor,
 				0, 1, 0, 1);
-
 			barriers.push_back(visibilityBarrier);
 		}
+
+		commandBuffer->pipelineBarrier(
+			PipelineStageFlagBits::eAllCommands,
+			PipelineStageFlagBits::eAllCommands,
+			DependencyFlags(),
+			0, nullptr,
+			1, &clusterDataBarrier,
+			static_cast<uint32_t>(barriers.size()), barriers.data());
+	
+		MeshDataPtr meshData = MeshData::FullscreenQuad();
+		PipelineData& pipelineData = executeContext.FindPipeline(lightingMat);
+	
+		ClearValue clearValue;
+		clearValue.setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+	
+		RenderPassBeginInfo passBeginInfo;
+		passBeginInfo.setRenderPass(executeContext.GetRenderPass());
+		passBeginInfo.setFramebuffer(executeContext.GetFramebuffer());
+		passBeginInfo.setRenderArea(Rect2D(Offset2D(0, 0), Extent2D(executeContext.GetWidth(), executeContext.GetHeight()) ));
+		passBeginInfo.setClearValueCount(1);
+		passBeginInfo.setPClearValues(&clearValue);
+	
+		DeviceSize offset = 0;
+		commandBuffer->beginRenderPass(passBeginInfo, SubpassContents::eInline);
+		commandBuffer->bindPipeline(PipelineBindPoint::eGraphics, pipelineData.pipeline);
+		commandBuffer->bindDescriptorSets(PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
+	
+		commandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer()->GetNativeBuffer(), &offset);
+		commandBuffer->bindIndexBuffer(meshData->GetIndexBuffer()->GetNativeBuffer(), 0, IndexType::eUint32);
+		commandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
+		commandBuffer->endRenderPass();
 	}
 
 	void DeferredLightingPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
@@ -357,7 +387,7 @@ namespace CGE
 
 		auto deferredLightingData = dataTable.CreatePassData<DeferredLightingData>();
 		deferredLightingData->hdrRenderTargets = ResourceUtils::CreateColorTextureArray("DeferredLightingRT", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, false);
-		initContext.SetAttachments(0, deferredLightingData->hdrRenderTargets);
+		initContext.SetAttachments(0, deferredLightingData->hdrRenderTargets, true);
 	}
 
 }

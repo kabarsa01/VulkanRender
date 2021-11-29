@@ -35,7 +35,7 @@ namespace CGE
 
 		// barriers ----------------------------------------------
 		ImageMemoryBarrier depthTextureBarrier = depthData->depthTextures[depthIndex]->GetImage().CreateLayoutBarrier(
-			vk::ImageLayout::eDepthStencilAttachmentOptimal,
+			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eShaderReadOnlyOptimal,
 			vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead,
@@ -80,7 +80,7 @@ namespace CGE
 			computeMaterial->SetStorageBuffer("clusterLightsData", sizeof(ClusterLightsData), nullptr);
 			computeMaterial->SetUniformBuffer("lightsList", sizeof(LightsList), nullptr);
 			computeMaterial->SetUniformBuffer("lightsIndices", sizeof(LightsIndices), nullptr);
-			computeMaterial->SetTexture("depthTextures", depthData->depthTextures[idx]);
+			computeMaterial->SetTexture("depthTexture", depthData->depthTextures[idx]);
 			computeMaterial->LoadResources();
 
 			m_computeMaterials.push_back(computeMaterial);

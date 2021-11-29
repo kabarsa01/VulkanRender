@@ -17,6 +17,7 @@ namespace CGE
 	VulkanImage::VulkanImage()
 		: m_vulkanDevice(nullptr)
 		, m_scoped(false)
+		, m_cleanup(false)
 		, m_image(nullptr)
 	{
 
@@ -25,6 +26,7 @@ namespace CGE
 	VulkanImage::VulkanImage(bool inScoped)
 		: m_vulkanDevice(nullptr)
 		, m_scoped(inScoped)
+		, m_cleanup(false)
 		, m_image(nullptr)
 	{
 	
@@ -40,6 +42,7 @@ namespace CGE
 		createInfo = otherImage.createInfo;
 
 		m_scoped = otherImage.m_scoped;
+		m_cleanup = otherImage.m_cleanup;
 		m_width = otherImage.m_width;
 		m_height = otherImage.m_height;
 		m_depth = otherImage.m_depth;
@@ -76,6 +79,14 @@ namespace CGE
 		BindMemory(vk::MemoryPropertyFlagBits::eDeviceLocal);
 	}
 	
+	void VulkanImage::CreateFromExternal(vk::Image image, bool cleanup)
+	{
+		m_vulkanDevice = &Engine::GetRendererInstance()->GetVulkanDevice();
+		m_cleanup = cleanup;
+		m_image = image;
+		m_requirements = m_vulkanDevice->GetDevice().getImageMemoryRequirements(m_image);
+	}
+
 	ImageView VulkanImage::CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const
 	{
 		ImageViewCreateInfo imageViewInfo;
@@ -90,7 +101,7 @@ namespace CGE
 
 	void VulkanImage::Destroy()
 	{
-		if (m_image)
+		if (m_cleanup && m_image)
 		{
 			m_vulkanDevice->GetDevice().destroyImage(m_image);
 			m_image = nullptr;

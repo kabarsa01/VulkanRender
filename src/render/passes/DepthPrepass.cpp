@@ -70,7 +70,7 @@ namespace CGE
 
 		passData->depthTextures = ResourceUtils::CreateDepthTextureArray("main_depth", 2, initContext.GetWidth(), initContext.GetHeight());
 
-		initContext.SetDepthAttachments(passData->depthTextures);
+		initContext.SetDepthAttachments(passData->depthTextures, true);
 	}
 
 }

@@ -138,6 +138,13 @@ namespace CGE
 		return nullptr;
 	}
 
+	void DataManager::DestroyHint(HashString id)
+	{
+		std::scoped_lock<std::mutex> lock(m_mutex);
+
+		m_deletionHints.push_back(id);
+	}
+
 	bool DataManager::DeleteResource(ResourcePtr inValue)
 	{
 		if (!inValue)
@@ -172,9 +179,25 @@ namespace CGE
 
 	void DataManager::ScanForAbandonedResources()
 	{
+		{
+			// process deletion hints first
+			std::scoped_lock<std::mutex> lock(m_mutex);
+			for (auto& id : m_deletionHints)
+			{
+				auto it = m_resourcesTable.find(id);
+				if ((it != m_resourcesTable.end()) && (it->second.use_count() <= 2))
+				{
+					m_cleanupChain[m_cleanupChainIndex].push_back(it->second);
+					m_resourcesMap[it->second->GetClass().GetName()].erase(id);
+					m_resourcesTable.erase(id);
+				}
+			}
+			m_deletionHints.clear();
+		}
+
 		std::random_device rd;
 		std::mt19937 rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
-
+		// sample resource container randomly looking for abandoned resources
 		for (uint32_t idx = 0; idx < SAMPLE_COUNT; ++idx)
 		{
 			std::scoped_lock<std::mutex> lock(m_mutex);
