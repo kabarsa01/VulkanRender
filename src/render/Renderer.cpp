@@ -24,11 +24,9 @@
 #include "data/DataManager.h"
 #include "PerFrameData.h"
 #include "passes/GBufferPass.h"
-#include "passes/ZPrepass.h"
 #include "passes/PostProcessPass.h"
 #include "PipelineRegistry.h"
 #include "passes/DeferredLightingPass.h"
-#include "passes/LightClusteringPass.h"
 #include "utils/Singleton.h"
 #include "RtScene.h"
 #include "passes/RTShadowPass.h"
@@ -98,12 +96,10 @@ namespace CGE
 		Singleton<ClusteringManager>::GetInstance()->SetMaxNumClusters({32,32});
 		Singleton<RtScene>::GetInstance()->Init();
 
-		/// ////////////////////////////////////////////////////
-		// test
+		///////////////////////////////////////////////////////
+
 		m_depthPrepass = new DepthPrepass();
-		m_depthPrepass->Init();
-		/// /////////////////////////////////////////////
-	
+		m_depthPrepass->Init();	
 		m_clusterComputePass = new ClusterComputePass(HashString("LightClusteringPass"));
 		m_clusterComputePass->Init();
 		gBufferPass = new GBufferPass(HashString("GBufferPass"));
@@ -163,48 +159,13 @@ namespace CGE
 		//--------------------------------------------------------
 		// gbuffer pass
 		gBufferPass->Execute(&cmdBuffer);
-		// barriers ----------------------------------------------
-		//const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
-		//std::vector<ImageMemoryBarrier> gBufferBarriers;
-		//for (uint32_t index = 0; index < gBufferAttachments.size(); index++)
-		//{
-		//	ImageMemoryBarrier attachmentBarrier = gBufferAttachments[index].CreateLayoutBarrier(
-		//		ImageLayout::eColorAttachmentOptimal,
-		//		ImageLayout::eShaderReadOnlyOptimal,
-		//		AccessFlagBits::eColorAttachmentWrite,
-		//		AccessFlagBits::eShaderRead,
-		//		ImageAspectFlagBits::eColor,
-		//		0, 1, 0, 1);
-		//	gBufferBarriers.push_back(attachmentBarrier);
-		//}
-		//cmdBuffer.pipelineBarrier(
-		//	PipelineStageFlagBits::eColorAttachmentOutput,
-		//	PipelineStageFlagBits::eFragmentShader,
-		//	DependencyFlags(),
-		//	0, nullptr, 0, nullptr,
-		//	static_cast<uint32_t>(gBufferBarriers.size()),
-		//	gBufferBarriers.data());
 		//--------------------------------------------------------
 		// deferred lighting pass
+		rtShadowPass->Update();
 		rtShadowPass->Execute(&cmdBuffer);
-		//--------------------------------------------------------
 		//--------------------------------------------------------
 		// deferred lighting pass
 		deferredLightingPass->Execute(&cmdBuffer);
-		//--------------------------------------------------------
-		//ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
-		//	ImageLayout::eColorAttachmentOptimal,
-		//	ImageLayout::eShaderReadOnlyOptimal,
-		//	AccessFlagBits::eColorAttachmentWrite,
-		//	AccessFlagBits::eShaderRead,
-		//	ImageAspectFlagBits::eColor,
-		//	0, 1, 0, 1);
-		//cmdBuffer.pipelineBarrier(
-		//	PipelineStageFlagBits::eColorAttachmentOutput,
-		//	PipelineStageFlagBits::eFragmentShader,
-		//	DependencyFlags(),
-		//	0, nullptr, 0, nullptr,
-		//	1, &attachmentBarrier);
 		//--------------------------------------------------------
 		// post process pass
 		postProcessPass->Execute(&cmdBuffer);

@@ -19,9 +19,6 @@ namespace CGE
 	class ClusterComputePass : public RenderPassBase
 	{
 	public:
-		//Texture2DPtr texture;
-		//Texture2DPtr depthTexture;
-
 		ClusterComputePass(const HashString& name);
 		~ClusterComputePass();
 	protected:

@@ -168,9 +168,6 @@
     <ClCompile Include="src\render\objects\VulkanCommandBuffers.cpp">
       <Filter>Source Files\render\objects</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\passes\VulkanPassBase.cpp">
-      <Filter>Source Files\render\passes</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\DataStructures.cpp">
       <Filter>Source Files\render</Filter>
     </ClCompile>
@@ -204,16 +201,10 @@
     <ClCompile Include="src\render\passes\GBufferPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\passes\ZPrepass.cpp">
-      <Filter>Source Files\render\passes</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\passes\PostProcessPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
     <ClCompile Include="src\render\passes\DeferredLightingPass.cpp">
-      <Filter>Source Files\render\passes</Filter>
-    </ClCompile>
-    <ClCompile Include="src\render\passes\LightClusteringPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
     <ClCompile Include="src\scene\light\LightComponent.cpp">
@@ -401,9 +392,6 @@
     <ClInclude Include="src\render\objects\VulkanCommandBuffers.h">
       <Filter>Source Files\render\objects</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\passes\VulkanPassBase.h">
-      <Filter>Source Files\render\passes</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\DataStructures.h">
       <Filter>Source Files\render</Filter>
     </ClInclude>
@@ -437,16 +425,10 @@
     <ClInclude Include="src\render\passes\GBufferPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\passes\ZPrepass.h">
-      <Filter>Source Files\render\passes</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\passes\PostProcessPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
     <ClInclude Include="src\render\passes\DeferredLightingPass.h">
-      <Filter>Source Files\render\passes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\render\passes\LightClusteringPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
     <ClInclude Include="src\scene\light\LightComponent.h">

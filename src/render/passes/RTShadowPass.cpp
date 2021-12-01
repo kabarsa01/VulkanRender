@@ -3,9 +3,7 @@
 #include "../RtScene.h"
 #include "utils/Singleton.h"
 #include "utils/ResourceUtils.h"
-#include "ZPrepass.h"
 #include "GBufferPass.h"
-#include "LightClusteringPass.h"
 #include "../shader/ShaderResourceMapper.h"
 #include "../PerFrameData.h"
 #include "../objects/VulkanDevice.h"
@@ -25,17 +23,16 @@ namespace CGE
 	RTShadowPass::RTShadowPass(HashString name)
 		: RenderPassBase(name)
 	{
-		m_subscriber.AddHandler<GlobalPreFrameMessage>(this, &RTShadowPass::HandlePreUpdate);
+//		m_subscriber.AddHandler<GlobalPreFrameMessage>(this, &RTShadowPass::HandlePreUpdate);
 	}
 
 	RTShadowPass::~RTShadowPass()
 	{
-		m_subscriber.UnregisterHandlers();
+//		m_subscriber.UnregisterHandlers();
 
 		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 		// TODO cleanup
-//		m_sbtBuffer.Destroy();
-		for (auto& data : m_frameDataArray)
+		for (auto data : m_frameDataArray)
 		{
 			device.destroyPipeline(data.m_rtPipeline);
 			device.destroyPipelineLayout(data.m_rtPipelineLayout);
@@ -183,14 +180,6 @@ namespace CGE
 		m_frameDataArray.resize(depthCount);
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
 		{
-			// obtain resources that were created by other passes
-			//m_normalsTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsNormalTexture");
-			//m_normalsTex->CreateFromExternal(gBufferPass->GetAttachments()[1], gBufferPass->GetAttachmentViews()[1]);
-			//m_depthTex = ObjectBase::NewObject<Texture2D, const HashString&>("RtShadowsDepthTexture");
-			//m_depthTex->CreateFromExternal(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView(), false);
-			//m_clusterLightsData = clusteringPass->computeMaterial->GetStorageBuffer("clusterLightsData");
-			//m_lightsList = clusteringPass->computeMaterial->GetUniformBuffer("lightsList");
-			//m_lightsIndices = clusteringPass->computeMaterial->GetUniformBuffer("lightsIndices");
 			MaterialPtr clusterMat = clusterData->computeMaterials[idx];
 
 			m_shaderResourceMappers[idx].AddSampledImage("normalTex", gbufferData->normals[idx]);

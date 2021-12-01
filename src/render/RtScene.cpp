@@ -368,7 +368,7 @@ namespace CGE
 
 		cmdBuff->buildAccelerationStructuresKHR(1, &m_tlasBuildInfo.geometryInfo, &m_tlasBuildInfo.rangeInfos);
 
-		// waiting for blas's to build
+		// waiting for tlas to build
 		vk::MemoryBarrier barrier;
 		barrier.setSrcAccessMask(vk::AccessFlagBits::eAccelerationStructureWriteKHR);
 		barrier.setDstAccessMask(vk::AccessFlagBits::eAccelerationStructureReadKHR);

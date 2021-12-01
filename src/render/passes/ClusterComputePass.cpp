@@ -122,6 +122,7 @@ namespace CGE
 		uint32_t materialIndex = Engine::GetFrameIndex(m_computeMaterials.size());
 		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsList>("lightsList", *m_lightsList);
 		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsIndices>("lightsIndices", *m_lightsIndices);
+
 	}
 
 }

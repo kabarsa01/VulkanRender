@@ -3,26 +3,20 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "render/passes/VulkanPassBase.h"
 #include "messages/MessageSubscriber.h"
+#include "RenderPassBase.h"
 
 namespace CGE
 {
 
-	class RTGIPass : public VulkanPassBase
+	class RTGIPass : public RenderPassBase
 	{
 	public:
-		void RecordCommands(CommandBuffer* inCommandBuffer) override;
+		RTGIPass(HashString);
+		~RTGIPass();
 	protected:
-		void CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight) override;
-		void CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight) override;
-	
-		vk::Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
-		vk::RenderPass CreateRenderPass() override;
-	
-		void OnCreate() override;
-		void OnDestroy() override;
-	private:
+		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;
+		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;
 	};
 
 }
