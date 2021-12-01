@@ -205,7 +205,7 @@ namespace CGE
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
 				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
+				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 2.0f;
 				lightObj02->GetLightComponent()->color = color;
 	
 				++counter;

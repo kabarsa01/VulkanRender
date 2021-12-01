@@ -192,7 +192,7 @@ namespace CGE
 		{
 			OnResolutionChange();
 		}
-		device.GetGraphicsQueue().waitIdle();
+		//device.GetGraphicsQueue().waitIdle();
 		//swapChain.WaitForPresentQueue();
 	}
 	
