@@ -24,11 +24,9 @@
 #include "data/DataManager.h"
 #include "PerFrameData.h"
 #include "passes/GBufferPass.h"
-#include "passes/ZPrepass.h"
 #include "passes/PostProcessPass.h"
 #include "PipelineRegistry.h"
 #include "passes/DeferredLightingPass.h"
-#include "passes/LightClusteringPass.h"
 #include "utils/Singleton.h"
 #include "RtScene.h"
 #include "passes/RTShadowPass.h"
@@ -36,6 +34,7 @@
 #include "passes/RenderPassBase.h"
 #include "passes/DepthPrepass.h"
 #include "data/TextureData.h"
+#include "passes/ClusterComputePass.h"
 
 namespace CGE
 {
@@ -97,30 +96,20 @@ namespace CGE
 		Singleton<ClusteringManager>::GetInstance()->SetMaxNumClusters({32,32});
 		Singleton<RtScene>::GetInstance()->Init();
 
-		/// ////////////////////////////////////////////////////
-		// test
+		///////////////////////////////////////////////////////
+
 		m_depthPrepass = new DepthPrepass();
-		m_depthPrepass->Init();
-		/// /////////////////////////////////////////////
-	
-		zPrepass = new ZPrepass(HashString("ZPrepass"));
-		zPrepass->SetResolution(width, height);
-		zPrepass->Create();
-		lightClusteringPass = new LightClusteringPass(HashString("LightClusteringPass"));
-		lightClusteringPass->Create();
+		m_depthPrepass->Init();	
+		m_clusterComputePass = new ClusterComputePass(HashString("LightClusteringPass"));
+		m_clusterComputePass->Init();
 		gBufferPass = new GBufferPass(HashString("GBufferPass"));
-		gBufferPass->SetExternalDepth(zPrepass->GetDepthAttachment(), zPrepass->GetDepthAttachmentView());
-		gBufferPass->SetResolution(width, height);
-		gBufferPass->Create();
+		gBufferPass->Init();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
-		rtShadowPass->SetResolution(width, height);
-		rtShadowPass->Create();
+		rtShadowPass->Init();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
-		deferredLightingPass->SetResolution(width, height);
-		deferredLightingPass->Create();
+		deferredLightingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
-		postProcessPass->SetResolution(width, height);
-		postProcessPass->Create();
+		postProcessPass->Init();
 	}
 	
 	void Renderer::RenderFrame()
@@ -141,7 +130,6 @@ namespace CGE
 		}
 	
 		perFrameData->UpdateBufferData();
-		lightClusteringPass->UpdateData();
 	
 		CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
 	
@@ -163,61 +151,24 @@ namespace CGE
 		Singleton<RtScene>::GetInstance()->BuildSceneTlas(&cmdBuffer);
 
 		// render passes
-		// 
+		// depth prepass
 		m_depthPrepass->Execute(&cmdBuffer);
-		// z prepass
-		zPrepass->RecordCommands(&cmdBuffer);
 		//----------------------------------------------------------
 		// light clustering pass
-		lightClusteringPass->RecordCommands(&cmdBuffer);
+		m_clusterComputePass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// gbuffer pass
-		gBufferPass->RecordCommands(&cmdBuffer);
-		// barriers ----------------------------------------------
-		const std::vector<VulkanImage>& gBufferAttachments = gBufferPass->GetAttachments();
-		std::vector<ImageMemoryBarrier> gBufferBarriers;
-		for (uint32_t index = 0; index < gBufferAttachments.size(); index++)
-		{
-			ImageMemoryBarrier attachmentBarrier = gBufferAttachments[index].CreateLayoutBarrier(
-				ImageLayout::eColorAttachmentOptimal,
-				ImageLayout::eShaderReadOnlyOptimal,
-				AccessFlagBits::eColorAttachmentWrite,
-				AccessFlagBits::eShaderRead,
-				ImageAspectFlagBits::eColor,
-				0, 1, 0, 1);
-			gBufferBarriers.push_back(attachmentBarrier);
-		}
-		cmdBuffer.pipelineBarrier(
-			PipelineStageFlagBits::eColorAttachmentOutput,
-			PipelineStageFlagBits::eFragmentShader,
-			DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			static_cast<uint32_t>(gBufferBarriers.size()),
-			gBufferBarriers.data());
+		gBufferPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// deferred lighting pass
-		rtShadowPass->RecordCommands(&cmdBuffer);
-		//--------------------------------------------------------
+		rtShadowPass->Update();
+		rtShadowPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// deferred lighting pass
-		deferredLightingPass->RecordCommands(&cmdBuffer);
-		//--------------------------------------------------------
-		ImageMemoryBarrier attachmentBarrier = deferredLightingPass->GetAttachments()[0].CreateLayoutBarrier(
-			ImageLayout::eColorAttachmentOptimal,
-			ImageLayout::eShaderReadOnlyOptimal,
-			AccessFlagBits::eColorAttachmentWrite,
-			AccessFlagBits::eShaderRead,
-			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		cmdBuffer.pipelineBarrier(
-			PipelineStageFlagBits::eColorAttachmentOutput,
-			PipelineStageFlagBits::eFragmentShader,
-			DependencyFlags(),
-			0, nullptr, 0, nullptr,
-			1, &attachmentBarrier);
+		deferredLightingPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// post process pass
-		postProcessPass->RecordCommands(&cmdBuffer);
+		postProcessPass->Execute(&cmdBuffer);
 		// end commands recording
 		cmdBuffer.end();
 	
@@ -255,19 +206,11 @@ namespace CGE
 		WaitForDevice();
 
 		delete m_depthPrepass;
-	
-		postProcessPass->Destroy();
 		delete postProcessPass;
-		deferredLightingPass->Destroy();
 		delete deferredLightingPass;
-		gBufferPass->Destroy();
 		delete gBufferPass;
-		rtShadowPass->Destroy();
 		delete rtShadowPass;
-		zPrepass->Destroy();
-		delete zPrepass;
-		lightClusteringPass->Destroy();
-		delete lightClusteringPass;
+		delete m_clusterComputePass;
 	
 		Scene* scene = Engine::GetSceneInstance();
 		MeshComponentPtr meshComp = scene->GetSceneComponent<MeshComponent>();
@@ -340,14 +283,12 @@ namespace CGE
 		GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
 		glfwGetFramebufferSize(window, &width, &height);
 	
-		postProcessPass->Destroy();
 		delete postProcessPass;
 		swapChain.DestroyForResolution();
 	
 		swapChain.CreateForResolution(width, height);
 		postProcessPass = new PostProcessPass("PostProcessPass");
-		postProcessPass->SetResolution(width, height);
-		postProcessPass->Create();
+		postProcessPass->Init();
 	}
 	
 	void Renderer::TransferResources(CommandBuffer& inCmdBuffer, uint32_t inQueueFamilyIndex)

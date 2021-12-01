@@ -45,6 +45,11 @@ namespace CGE
 		return m_staticInstance->GetRenderer();
 	}
 	
+	uint32_t Engine::GetFrameIndex(uint32_t div)
+	{
+		return static_cast<uint32_t>(m_staticInstance->m_frameCount % div);
+	}
+
 	Scene* Engine::GetScene()
 	{
 		return m_sceneInstance;

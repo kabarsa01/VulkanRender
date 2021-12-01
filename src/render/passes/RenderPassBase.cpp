@@ -104,7 +104,7 @@ namespace CGE
 		std::vector<vk::AttachmentDescription> attachDescArray;
 		std::vector<vk::AttachmentReference> colorAttachRefArray;
 
-		attachDescArray.reserve(initContext.m_attachments.size());
+		attachDescArray.resize(initContext.m_attachments.size());
 
 		for (auto& attachRecPair : initContext.m_attachments)
 		{
@@ -114,7 +114,7 @@ namespace CGE
 			vk::AttachmentDescription attachDesc;
 			attachDesc.setFormat(info.format);
 			attachDesc.setSamples(info.samples);
-			attachDesc.setLoadOp(vk::AttachmentLoadOp::eClear);
+			attachDesc.setLoadOp(initContext.m_clearAttachment ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad);
 			attachDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
 			attachDesc.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
 			attachDesc.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
@@ -142,10 +142,10 @@ namespace CGE
 			vk::AttachmentDescription depthAttachDesc;
 			depthAttachDesc.setFormat(info.format);
 			depthAttachDesc.setSamples(info.samples);
-			depthAttachDesc.setLoadOp(vk::AttachmentLoadOp::eClear);
+			depthAttachDesc.setLoadOp(initContext.m_clearDepth ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad);
 			depthAttachDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
-			depthAttachDesc.setStencilLoadOp(vk::AttachmentLoadOp::eClear);
-			depthAttachDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
+			depthAttachDesc.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+			depthAttachDesc.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
 			depthAttachDesc.setInitialLayout(ImageLayout::eUndefined);
 			depthAttachDesc.setFinalLayout(ImageLayout::eDepthStencilAttachmentOptimal);
 
@@ -160,9 +160,9 @@ namespace CGE
 		vk::SubpassDependency subpassDependency;
 		subpassDependency.setSrcSubpass(VK_SUBPASS_EXTERNAL);
 		subpassDependency.setDstSubpass(0);
-		subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eAllCommands);
+		subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eAllGraphics);
 		subpassDependency.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
-		subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eAllCommands);
+		subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eAllGraphics);
 		subpassDependency.setDstAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
 
 		vk::RenderPassCreateInfo passCreateInfo;
@@ -193,7 +193,7 @@ namespace CGE
 		for (uint32_t framebufferIndex = 0; framebufferIndex < framebufferCount; ++framebufferIndex)
 		{
 			std::vector<vk::ImageView> viewArray;
-			viewArray.reserve(initContext.m_attachments.size());
+			viewArray.resize(initContext.m_attachments.size());
 
 			for (auto& attachPair : initContext.m_attachments)
 			{
@@ -258,7 +258,7 @@ namespace CGE
 		vk::PipelineMultisampleStateCreateInfo multisampleInfo;
 
 		std::vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachmentStates;
-		colorBlendAttachmentStates.reserve(initContext.m_attachments.size());
+		colorBlendAttachmentStates.resize(initContext.m_attachments.size());
 		for (auto attachPair : initContext.m_attachments)
 		{
 			vk::PipelineColorBlendAttachmentState& blendState = colorBlendAttachmentStates[attachPair.first];
@@ -382,14 +382,16 @@ namespace CGE
 		depthInfo.setStencilTestEnable(VK_FALSE);
 	}
 
-	void PassInitContext::SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray)
+	void PassInitContext::SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray, bool clearAttachment)
 	{
 		m_attachments[attachmentIndex] = attachmentArray;
+		m_clearAttachment = clearAttachment;
 	}
 
-	void PassInitContext::SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray)
+	void PassInitContext::SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray, bool clearDepth)
 	{
 		m_depthAttachments = depthAttachmentArray;
+		m_clearDepth = clearDepth;
 	}
 
 	//-----------------------------------------------------------------------------------------------------------

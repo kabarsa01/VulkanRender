@@ -47,11 +47,10 @@ namespace CGE
 		return m_id;
 	}
 	
-	//bool Resource::Destroy()
-	//{
-	//	DataManager::GetInstance()->DecreaseUsageCount(m_id);
-	//	return true;
-	//}
+	void Resource::DestroyHint()
+	{
+		DataManager::GetInstance()->DestroyHint(m_id);
+	}
 
 	bool Resource::IsValid()
 	{

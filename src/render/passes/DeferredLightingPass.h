@@ -1,27 +1,24 @@
 #pragma once
 
-#include "VulkanPassBase.h"
+#include "RenderPassBase.h"
+#include "data/Material.h"
 
 namespace CGE
 {
-	class DeferredLightingPass : public VulkanPassBase
+
+	struct DeferredLightingData : public Identifiable<DeferredLightingData>
+	{
+		std::vector<Texture2DPtr> hdrRenderTargets;
+	};
+
+	class DeferredLightingPass : public RenderPassBase
 	{
 	public:
 		DeferredLightingPass(HashString inName);
-		void RecordCommands(CommandBuffer* inCommandBuffer) override;
 	protected:
-		MaterialPtr lightingMaterial;
-		Texture2DPtr albedoTexture;
-		Texture2DPtr normalTexture;
-		Texture2DPtr depthTexture;
-		Texture2DPtr visibilityTexture;
-	
-		virtual void OnCreate() override;
-		virtual void OnDestroy() override {}
-		RenderPass CreateRenderPass() override;
-		void CreateColorAttachments(std::vector<VulkanImage>& outAttachments, std::vector<ImageView>& outAttachmentViews, uint32_t inWidth, uint32_t inHeight) override;
-		void CreateDepthAttachment(VulkanImage& outDepthAttachment, ImageView& outDepthAttachmentView, uint32_t inWidth, uint32_t inHeight) override;
-		Pipeline CreatePipeline(MaterialPtr inMaterial, PipelineLayout inLayout, RenderPass inRenderPass) override;
-	
+		std::vector<MaterialPtr> m_lightingMaterials;
+
+		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;
+		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;
 	};
 }

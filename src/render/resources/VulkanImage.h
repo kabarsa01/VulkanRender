@@ -35,6 +35,7 @@ namespace CGE
 		virtual ~VulkanImage();
 	
 		void Create();
+		void CreateFromExternal(vk::Image image, bool cleanup);
 		ImageView CreateView(ImageSubresourceRange inSubRange, ImageViewType inViewType) const;
 		void Destroy();
 	
@@ -92,6 +93,7 @@ namespace CGE
 		MemoryRequirements m_requirements;
 	
 		bool m_scoped;
+		bool m_cleanup;
 		uint32_t m_width = 2;
 		uint32_t m_height = 2;
 		uint32_t m_depth = 1;

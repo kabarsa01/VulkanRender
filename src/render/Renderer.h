@@ -41,7 +41,7 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::Viewport;
 	
 	class PerFrameData;
-	class LightClusteringPass;
+	class ClusterComputePass;
 	class ZPrepass;
 	class GBufferPass;
 	class RTShadowPass;
@@ -76,8 +76,6 @@ namespace CGE
 		Queue GetGraphicsQueue();
 	
 		PerFrameData* GetPerFrameData() { return perFrameData; }
-		ZPrepass* GetZPrepass() { return zPrepass; }
-		LightClusteringPass* GetLightClusteringPass() { return lightClusteringPass; }
 		GBufferPass* GetGBufferPass() { return gBufferPass; }
 		RTShadowPass* GetRTShadowPass() { return rtShadowPass; }
 		DeferredLightingPass* GetDeferredLightingPass() { return deferredLightingPass; }
@@ -108,12 +106,9 @@ namespace CGE
 		PerFrameData* perFrameData;
 	
 		//////////////////////////////////////////////////////////////////////
-		/// testing
-		DepthPrepass* m_depthPrepass;
-		//////////////////////////////////////////////////////////////////////
 
-		ZPrepass* zPrepass;
-		LightClusteringPass* lightClusteringPass;
+		DepthPrepass* m_depthPrepass;
+		ClusterComputePass* m_clusterComputePass;
 		GBufferPass* gBufferPass;
 		RTShadowPass* rtShadowPass;
 		DeferredLightingPass* deferredLightingPass;

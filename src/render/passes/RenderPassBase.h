@@ -77,11 +77,12 @@ namespace CGE
 		PassInitContext(RenderPassBase* owner);
 		// set an array of attachments to a specified index, minimum 2 are needed
 		// for round robin usage for double buffering
-		void SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray);
+		void SetAttachments(uint32_t attachmentIndex, const std::vector<Texture2DPtr>& attachmentArray, bool clearAttachment);
 		// set an array of depth attachments, minimum 2 are needed
 		// for round robin usage for double buffering
-		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray);
+		void SetDepthAttachments(const std::vector<Texture2DPtr>& depthAttachmentArray, bool clearDepth);
 
+		HashString GetPassName() { return m_owner->m_name; }
 		uint32_t GetWidth() { return m_owner->m_width; }
 		uint32_t GetHeight() { return m_owner->m_height; }
 	private:
@@ -91,6 +92,8 @@ namespace CGE
 
 		std::unordered_map<uint32_t, std::vector<Texture2DPtr>> m_attachments;
 		std::vector<Texture2DPtr> m_depthAttachments;
+		bool m_clearAttachment;
+		bool m_clearDepth;
 	};
 
 	//-----------------------------------------------------------------------------------------------------------
@@ -110,6 +113,7 @@ namespace CGE
 		Texture2DPtr GetDepthAttachment(uint32_t frameIndex = UINT32_MAX);
 		const std::vector<Texture2DPtr>& GetDepthAttachments();
 
+		HashString GetPassName() { return m_owner->m_name; }
 		uint32_t GetWidth() { return m_owner->m_width; }
 		uint32_t GetHeight() { return m_owner->m_height; }
 

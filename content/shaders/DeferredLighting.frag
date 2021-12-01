@@ -142,7 +142,7 @@ void main() {
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibilityFiltered(index);
+		float visibilityFactor = GetPixelVisibility(index, uv);
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;
@@ -157,7 +157,7 @@ void main() {
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibilityFiltered(index);
+		float visibilityFactor = GetPixelVisibility(index, uv);
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;
@@ -180,7 +180,7 @@ void main() {
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibilityFiltered(index);
+		float visibilityFactor = GetPixelVisibility(index, uv);
 		if (visibilityFactor <= 0.0f)
 		{
 			continue;

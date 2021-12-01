@@ -1,6 +1,7 @@
 #include "VulkanSwapChain.h"
 #include "core/Engine.h"
 #include <algorithm>
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -67,8 +68,8 @@ namespace CGE
 		presentMode = ChooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
 		imageFormat = surfaceFormat.format;
 	
-		DestroyRenderPass();
-		CreateRenderPass();
+		//DestroyRenderPass();
+		//CreateRenderPass();
 	
 		//int windowWidth, windowHeight;
 		//GLFWwindow* window = Engine::GetInstance()->GetGlfwWindow();
@@ -112,10 +113,22 @@ namespace CGE
 		}
 	
 		swapChain = device.createSwapchainKHR(createInfo);
-		images = device.getSwapchainImagesKHR(swapChain);
+		m_images = device.getSwapchainImagesKHR(swapChain);
+
+		for (uint32_t idx = 0; idx < m_images.size(); ++idx)
+		{
+			VulkanImage image;
+			image.CreateFromExternal(m_images[idx], false);
+			image.createInfo.setFormat(createInfo.imageFormat); // needed to use images CreateView
+			Texture2DPtr texture = ObjectBase::NewObject<Texture2D>("SwapchainTexture_" + std::to_string(idx));
+			texture->CreateFromExternal(image, image.CreateView(ResourceUtils::CreateColorSubresRange(), vk::ImageViewType::e2D), false);
+
+			m_textures.push_back(texture);
+			m_imageViews.push_back(texture->GetImageView());
+		}
 	
-		CreateRTV();
-		CreateFramebuffers();
+		//CreateRTV();
+		//CreateFramebuffers();
 	
 		imageIndex = 0;
 		prevImageIndex = backBuffersCount - 1;
@@ -123,9 +136,15 @@ namespace CGE
 	
 	void VulkanSwapChain::DestroyForResolution()
 	{
-		DestroyRenderPass();
-		DestroyFramebuffers();
-		DestroyRTV();
+//		DestroyRenderPass();
+//		DestroyFramebuffers();
+//		DestroyRTV();
+		
+		for (uint32_t index = 0; index < m_imageViews.size(); index++)
+		{
+			vulkanDevice->GetDevice().destroyImageView(m_imageViews[index]);
+		}
+		m_imageViews.clear();
 	
 		if (swapChain)
 		{
@@ -261,35 +280,35 @@ namespace CGE
 	
 	void VulkanSwapChain::CreateRTV()
 	{
-		imageViews.resize(images.size());
-		for (uint32_t index = 0; index < images.size(); index++)
+		m_imageViews.resize(m_images.size());
+		for (uint32_t index = 0; index < m_images.size(); index++)
 		{
 			vk::ImageViewCreateInfo createInfo;
-			createInfo.setImage(images[index]);
+			createInfo.setImage(m_images[index]);
 			createInfo.setViewType(vk::ImageViewType::e2D);
 			createInfo.setFormat(imageFormat);
 			createInfo.setComponents(vk::ComponentMapping());
 			createInfo.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 	
-			imageViews[index] = vulkanDevice->GetDevice().createImageView(createInfo);
+			m_imageViews[index] = vulkanDevice->GetDevice().createImageView(createInfo);
 		}
 	}
 	
 	void VulkanSwapChain::DestroyRTV()
 	{
-		for (uint32_t index = 0; index < imageViews.size(); index++)
+		for (uint32_t index = 0; index < m_imageViews.size(); index++)
 		{
-			vulkanDevice->GetDevice().destroyImageView(imageViews[index]);
+			vulkanDevice->GetDevice().destroyImageView(m_imageViews[index]);
 		}
-		imageViews.clear();
+		m_imageViews.clear();
 	}
 	
 	void VulkanSwapChain::CreateFramebuffers()
 	{
 		framebuffers.resize(backBuffersCount);
-		for (int index = 0; index < imageViews.size(); index++)
+		for (int index = 0; index < m_imageViews.size(); index++)
 		{
-			ImageView attachments[] = { imageViews[index] };
+			ImageView attachments[] = { m_imageViews[index] };
 	
 			vk::FramebufferCreateInfo framebufferInfo;
 			framebufferInfo.setRenderPass(renderPass);
