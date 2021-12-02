@@ -120,7 +120,6 @@ namespace CGE
 			framebufferResized = false;
 			return;
 		}
-	
 		bool outdated = false;
 		uint32_t imageIndex = swapChain.AcquireNextImage(outdated);
 		if (outdated)
@@ -131,7 +130,7 @@ namespace CGE
 	
 		perFrameData->UpdateBufferData();
 	
-		CommandBuffer& cmdBuffer = commandBuffers.GetNextForPool(imageIndex);
+		CommandBuffer& cmdBuffer = commandBuffers.GetBufferForFrame();
 	
 		CommandBufferBeginInfo beginInfo;
 		beginInfo.setFlags(CommandBufferUsageFlagBits::eSimultaneousUse);
@@ -171,7 +170,7 @@ namespace CGE
 		postProcessPass->Execute(&cmdBuffer);
 		// end commands recording
 		cmdBuffer.end();
-	
+
 		SubmitInfo submitInfo{};
 		Semaphore waitSemaphores[] = { swapChain.GetImageAvailableSemaphore() };
 		PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };

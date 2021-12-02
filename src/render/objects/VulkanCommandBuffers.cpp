@@ -1,4 +1,5 @@
 #include "VulkanCommandBuffers.h"
+#include "core/Engine.h"
 
 namespace CGE
 {
@@ -29,31 +30,31 @@ namespace CGE
 		CommandPoolCreateInfo poolInfo;
 		poolInfo.setQueueFamilyIndex(device->GetPhysicalDevice().GetCachedQueueFamiliesIndices().transferFamily.value());
 		poolInfo.setFlags(CommandPoolCreateFlagBits::eResetCommandBuffer);
-		transferPool = device->GetDevice().createCommandPool(poolInfo);
+		m_transferPool = device->GetDevice().createCommandPool(poolInfo);
 	
 		CommandBufferAllocateInfo buffersInfo;
-		buffersInfo.setCommandPool(transferPool);
+		buffersInfo.setCommandPool(m_transferPool);
 		buffersInfo.setCommandBufferCount(cmdBuffersPerPool);
 		buffersInfo.setLevel(CommandBufferLevel::ePrimary);
-		transferBuffers = device->GetDevice().allocateCommandBuffers(buffersInfo);
+		m_transferBuffers = device->GetDevice().allocateCommandBuffers(buffersInfo);
 	
 		nextTransferBuffer = 0;
 	
 		//---------------------------------------------
 	
-		pools.resize(poolsCount);
+		m_pools.resize(poolsCount);
 		for (uint32_t index = 0; index < poolsCount; index++)
 		{
 			CommandPoolCreateInfo poolInfo;
 			poolInfo.setQueueFamilyIndex(device->GetPhysicalDevice().GetCachedQueueFamiliesIndices().graphicsFamily.value());
 			poolInfo.setFlags(CommandPoolCreateFlagBits::eResetCommandBuffer);
-			pools[index] = device->GetDevice().createCommandPool(poolInfo);
+			m_pools[index] = device->GetDevice().createCommandPool(poolInfo);
 	
 			CommandBufferAllocateInfo buffersInfo;
-			buffersInfo.setCommandPool(pools[index]);
+			buffersInfo.setCommandPool(m_pools[index]);
 			buffersInfo.setCommandBufferCount(cmdBuffersPerPool);
 			buffersInfo.setLevel(CommandBufferLevel::ePrimary);
-			buffers[index] = device->GetDevice().allocateCommandBuffers(buffersInfo);
+			m_buffers[index] = device->GetDevice().allocateCommandBuffers(buffersInfo);
 		}
 	
 		nextBuffer = std::vector<uint32_t>(poolsCount, 0);
@@ -63,44 +64,41 @@ namespace CGE
 	{
 		if (device)
 		{
-			device->GetDevice().freeCommandBuffers(transferPool, cmdBuffersPerPool, transferBuffers.data());
-			device->GetDevice().destroyCommandPool(transferPool);
+			device->GetDevice().freeCommandBuffers(m_transferPool, cmdBuffersPerPool, m_transferBuffers.data());
+			device->GetDevice().destroyCommandPool(m_transferPool);
 	
 			for (uint32_t index = 0; index < poolsCount; index++)
 			{
-				device->GetDevice().freeCommandBuffers(pools[index], cmdBuffersPerPool, buffers[index].data());
-				device->GetDevice().destroyCommandPool(pools[index]);
+				device->GetDevice().freeCommandBuffers(m_pools[index], cmdBuffersPerPool, m_buffers[index].data());
+				device->GetDevice().destroyCommandPool(m_pools[index]);
 			}
 		}
 	}
 	
 	CommandPool& VulkanCommandBuffers::GetCommandPool(uint32_t inPoolIndex)
 	{
-		return pools[inPoolIndex];
+		return m_pools[inPoolIndex];
 	}
 	
-	CommandBuffer& VulkanCommandBuffers::GetNextForPool(uint32_t inPoolIndex)
+	CommandBuffer& VulkanCommandBuffers::GetBufferForPool(uint32_t inPoolIndex, uint32_t inBufferIndex)
 	{
-		uint32_t bufferIndex = nextBuffer[inPoolIndex];
-		nextBuffer[inPoolIndex] = (bufferIndex + 1) % cmdBuffersPerPool;
-		return buffers[inPoolIndex][bufferIndex];
+		return m_buffers[inPoolIndex][inBufferIndex];
 	}
 	
-	CommandBuffer& VulkanCommandBuffers::GetForPool(uint32_t inPoolIndex, uint32_t inBufferIndex)
+	CommandBuffer& VulkanCommandBuffers::GetBufferForFrame()
 	{
-		return buffers[inPoolIndex][inBufferIndex];
+		uint32_t poolIndex = Engine::GetFrameIndex(m_pools.size());
+		return m_buffers[poolIndex][0]; // leave 0 for now, not sure if more buffers needed
 	}
-	
+
 	CommandPool& VulkanCommandBuffers::GetTransferPool()
 	{
-		return transferPool;
+		return m_transferPool;
 	}
 	
-	CommandBuffer& VulkanCommandBuffers::GetNextTransferBuffer()
+	CommandBuffer& VulkanCommandBuffers::GetTransferBufferForFrame()
 	{
-		uint32_t bufferIndex = nextTransferBuffer;
-		nextTransferBuffer = (bufferIndex + 1) % cmdBuffersPerPool;
-		return transferBuffers[bufferIndex];
+		return m_transferBuffers[Engine::GetFrameIndex(m_transferBuffers.size())];
 	}
 	
 }

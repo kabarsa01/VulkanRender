@@ -20,19 +20,19 @@ namespace CGE
 		void Destroy();
 	
 		CommandPool& GetCommandPool(uint32_t inPoolIndex);
-		CommandBuffer& GetNextForPool(uint32_t inPoolIndex);
-		CommandBuffer& GetForPool(uint32_t inPoolIndex, uint32_t inBufferIndex);
+		CommandBuffer& GetBufferForPool(uint32_t inPoolIndex, uint32_t inBufferIndex);
+		CommandBuffer& GetBufferForFrame();
 	
 		CommandPool& GetTransferPool();
-		CommandBuffer& GetNextTransferBuffer();
+		CommandBuffer& GetTransferBufferForFrame();
 	private:
 		VulkanDevice* device;
-		std::vector<CommandPool> pools;
-		std::map<uint32_t, std::vector<CommandBuffer>> buffers;
+		std::vector<CommandPool> m_pools;
+		std::map<uint32_t, std::vector<CommandBuffer>> m_buffers;
 		std::vector<uint32_t> nextBuffer;
 	
-		CommandPool transferPool;
-		std::vector<CommandBuffer> transferBuffers;
+		CommandPool m_transferPool;
+		std::vector<CommandBuffer> m_transferBuffers;
 		uint32_t nextTransferBuffer;
 	
 		uint32_t poolsCount;

@@ -4,6 +4,7 @@
 #include "objects/VulkanDescriptorSet.h"
 #include "vulkan/vulkan.hpp"
 #include "data/BufferData.h"
+#include "core/Engine.h"
 
 namespace CGE
 {
@@ -18,25 +19,29 @@ namespace CGE
 		void Create(VulkanDevice* inDevice);
 		void Destroy();
 		void UpdateBufferData();
-		VulkanDescriptorSet& GetVulkanDescriptorSet() { return m_set; }
-		DescriptorSet& GetSet() { return m_set.GetSet(); }
-		DescriptorSetLayout& GetLayout() { return m_set.GetLayout(); }
+		VulkanDescriptorSet& GetVulkanDescriptorSet() { return GetData().m_set; }
+		DescriptorSet& GetSet() { return GetData().m_set.GetSet(); }
+		DescriptorSetLayout& GetLayout() { return GetData().m_set.GetLayout(); }
 	private:
 		VulkanDevice* device;
 	
-		BufferDataPtr shaderDataBuffer;
-		BufferDataPtr transformDataBuffer;
-		DescriptorSetLayoutBinding shaderDataBinding;
-		DescriptorSetLayoutBinding transformDataBinding;
-	
-		VulkanDescriptorSet m_set;
-		std::vector<WriteDescriptorSet> descriptorWrites;
+		struct FrameData
+		{
+			BufferDataPtr shaderDataBuffer;
+			BufferDataPtr transformDataBuffer;
+			DescriptorSetLayoutBinding shaderDataBinding;
+			DescriptorSetLayoutBinding transformDataBinding;
+			VulkanDescriptorSet m_set;
+			std::vector<WriteDescriptorSet> descriptorWrites;
+		};
+		std::vector<FrameData> m_data;
 	
 		GlobalShaderData* globalShaderData;
 		GlobalTransformData* globalTransformData;
 	
-		std::vector<DescriptorSetLayoutBinding> ProduceBindings();
-		std::vector<WriteDescriptorSet> ProduceWrites(VulkanDescriptorSet& inSet);
+		FrameData& GetData() { return m_data[Engine::GetFrameIndex(m_data.size())]; }
+		std::vector<DescriptorSetLayoutBinding> ProduceBindings(FrameData& frameData);
+		std::vector<WriteDescriptorSet> ProduceWrites(FrameData& frameData);
 		void GatherData();
 	};
 }
