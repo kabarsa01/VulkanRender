@@ -297,6 +297,12 @@
     <ClCompile Include="src\render\passes\ClusterComputePass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\memory\IMemoryChunk.cpp">
+      <Filter>Source Files\render\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\memory\ArrayMemoryChunk.cpp">
+      <Filter>Source Files\render\memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -520,6 +526,12 @@
     </ClInclude>
     <ClInclude Include="src\render\passes\ClusterComputePass.h">
       <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\memory\IMemoryChunk.h">
+      <Filter>Source Files\render\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\memory\ArrayMemoryChunk.h">
+      <Filter>Source Files\render\memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -263,8 +263,10 @@ exit /b</Command>
     <ClCompile Include="src\render\ClusteringManager.cpp" />
     <ClCompile Include="src\render\DataStructures.cpp" />
     <ClCompile Include="src\render\GlobalSamplers.cpp" />
+    <ClCompile Include="src\render\memory\ArrayMemoryChunk.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryChunk.cpp" />
     <ClCompile Include="src\render\memory\DeviceMemoryManager.cpp" />
+    <ClCompile Include="src\render\memory\IMemoryChunk.cpp" />
     <ClCompile Include="src\render\objects\VulkanCommandBuffers.cpp" />
     <ClCompile Include="src\render\objects\VulkanDescriptorPools.cpp" />
     <ClCompile Include="src\render\objects\VulkanDescriptorSet.cpp" />
@@ -339,8 +341,10 @@ exit /b</Command>
     <ClInclude Include="src\render\ClusteringManager.h" />
     <ClInclude Include="src\render\DataStructures.h" />
     <ClInclude Include="src\render\GlobalSamplers.h" />
+    <ClInclude Include="src\render\memory\ArrayMemoryChunk.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryChunk.h" />
     <ClInclude Include="src\render\memory\DeviceMemoryManager.h" />
+    <ClInclude Include="src\render\memory\IMemoryChunk.h" />
     <ClInclude Include="src\render\objects\VulkanCommandBuffers.h" />
     <ClInclude Include="src\render\objects\VulkanDescriptorPools.h" />
     <ClInclude Include="src\render\objects\VulkanDescriptorSet.h" />

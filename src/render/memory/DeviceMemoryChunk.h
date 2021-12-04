@@ -2,25 +2,10 @@
 
 #include <deque>
 #include "../resources/VulkanDeviceMemory.h"
+#include "IMemoryChunk.h"
 
 namespace CGE
 {
-	struct MemoryPosition
-	{
-		bool valid = false;
-		uint32_t layer;
-		uint32_t index;
-		DeviceSize offset;
-		VulkanDeviceMemory memory;
-	
-		MemoryPosition()
-			: valid(false)
-			, layer(-1)
-			, index(-1)
-			, offset(-1)
-			, memory()
-		{}
-	};
 	
 	class DeviceMemoryChunk
 	{

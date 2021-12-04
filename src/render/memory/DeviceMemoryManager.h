@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include "DeviceMemoryChunk.h"
+#include "ArrayMemoryChunk.h"
 
 namespace CGE
 {
@@ -54,11 +55,11 @@ namespace CGE
 		void ReturnMemory(const MemoryRecord& inMemoryRecord);
 		void CleanupMemory();
 	
-		DeviceMemoryChunk* GetMemoryChunk(MemoryRecord inMemPosition);
+		IMemoryChunk* GetMemoryChunk(MemoryRecord inMemPosition);
 	protected:
 		static DeviceMemoryManager* staticInstance;
 	
-		std::map<uint64_t, std::vector<DeviceMemoryChunk*>> memRegions;
+		std::map<uint64_t, std::vector<IMemoryChunk*>> memRegions;
 	
 		DeviceMemoryManager();
 		DeviceMemoryManager(const DeviceMemoryManager&) {}
