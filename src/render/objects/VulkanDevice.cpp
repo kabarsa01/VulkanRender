@@ -52,11 +52,7 @@ namespace CGE
 			instanceExtensions.push_back(glfwExtensions[idx]);
 		}
 		instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-		for (auto ext : requiredDeviceExtensions)
-		{
-//			instanceExtensions.push_back(ext);
-		}
-	
+
 		InstanceCreateInfo instanceCreateInfo;
 		instanceCreateInfo.setPApplicationInfo(&applicationInfo);
 		instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(instanceExtensions.size()));

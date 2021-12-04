@@ -140,6 +140,7 @@ namespace CGE
 //		DestroyFramebuffers();
 //		DestroyRTV();
 		
+		m_textures.clear();
 		for (uint32_t index = 0; index < m_imageViews.size(); index++)
 		{
 			vulkanDevice->GetDevice().destroyImageView(m_imageViews[index]);
@@ -172,7 +173,6 @@ namespace CGE
 		if (imageIndexResult.result == vk::Result::eErrorOutOfDateKHR || imageIndexResult.result == vk::Result::eErrorIncompatibleDisplayKHR)
 		{
 			outBecameOutdated = true;
-	//		return 0;
 		}
 		else if (imageIndexResult.result != vk::Result::eSuccess && imageIndexResult.result != vk::Result::eSuboptimalKHR)
 		{

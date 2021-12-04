@@ -11,6 +11,7 @@ namespace CGE
 		m_memory.SetSize(GetChunkSize());
 		m_memory.Allocate();
 
+		m_freeSegmentBlocks.reserve(4 * 1024);
 		m_freeSegmentBlocks.emplace_back(MemRecord{ 0, static_cast<uint32_t>(GetChunkSize() / GetSegmentSize()) });
 	}
 

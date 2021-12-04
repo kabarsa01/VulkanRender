@@ -59,12 +59,12 @@ namespace CGE
 	
 	void DataManager::ShutdownInstance()
 	{
-		m_instance->CleanupResources();
 		if (m_instance)
 		{
 			std::scoped_lock<std::mutex> lock(m_staticMutex);
 			if (m_instance)
 			{
+				m_instance->CleanupResources();
 				delete m_instance;
 				m_instance = nullptr;
 			}
@@ -81,6 +81,14 @@ namespace CGE
 		}
 		m_resourcesTable.clear();
 		m_resourcesMap.clear();
+		for (auto& chain : m_cleanupChain)
+		{
+			for (auto resPtr : chain)
+			{
+				resPtr->Destroy();
+			}
+			chain.clear();
+		}
 	}
 
 	bool DataManager::HasResource(HashString inKey)

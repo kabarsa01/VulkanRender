@@ -11,7 +11,6 @@ namespace CGE
 		static TransferList* GetInstance();
 	
 		void PushBuffer(BufferDataPtr inBuffer);
-		void PushBuffers(MeshDataPtr inData);
 		void PushImage(TextureDataPtr inImage);
 	
 		const std::vector<BufferDataPtr>& GetBuffers() { return buffers; }

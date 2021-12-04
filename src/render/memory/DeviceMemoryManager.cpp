@@ -47,9 +47,8 @@ namespace CGE
 	
 	MemoryRecord DeviceMemoryManager::RequestMemory(MemoryRequirements inMemRequirements, MemoryPropertyFlags inMemPropertyFlags)
 	{
-		std::printf("allocation alignment requirement is %I64u \n", inMemRequirements.alignment);
-	
-		auto startTime = std::chrono::high_resolution_clock::now();
+		//std::printf("allocation alignment requirement is %I64u \n", inMemRequirements.alignment);	
+		//auto startTime = std::chrono::high_resolution_clock::now();
 	
 		MemoryRecord memoryRecord;
 		memoryRecord.deviceLocal = (inMemPropertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal;
@@ -72,28 +71,22 @@ namespace CGE
 					memoryRecord.chunkIndex = index;
 					memoryRecord.pos = pos;
 	
-					auto currentTime = std::chrono::high_resolution_clock::now();
-					double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
-	
-					std::printf("suballocation from %I64u bytes memtype %I64u for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, memTypeIndex, requiredSize, deltaTime);
+					//auto currentTime = std::chrono::high_resolution_clock::now();
+					//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+					//std::printf("suballocation from 512MB bytes memtype %I64u for %I64u took %f microseconds\n", memTypeIndex, requiredSize, deltaTime);
 	
 					return memoryRecord;
 				}
 			}
 		}
 	
-		startTime = std::chrono::high_resolution_clock::now();
+		//startTime = std::chrono::high_resolution_clock::now();
 
 		chunkArray.push_back(new ArrayMemoryChunk(4*1024, 512*1024*1024, inMemRequirements, inMemPropertyFlags));//GetRangeBase(static_cast<uint32_t>(rangeIndex)), memoryTreeDepth));
 	
-		//ArrayMemoryChunk* chunk = chunkArray.back();
-		//chunk->SetRequirements(inMemRequirements).SetPropertyFlags(inMemPropertyFlags);
-		//chunk->Allocate();
-	
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
-	
-		std::printf("vulkan allocation of %I64u bytes memtype %I64u for %I64u took %f microseconds\n", GetRangeBase(static_cast<uint32_t>(rangeIndex)) * 2048, memTypeIndex, requiredSize, deltaTime);
+		//auto currentTime = std::chrono::high_resolution_clock::now();
+		//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+		//std::printf("vulkan allocation of 512MB bytes memtype %I64u for %I64u took %f microseconds\n", memTypeIndex, requiredSize, deltaTime);
 	
 		MemoryPosition pos = chunkArray.back()->AcquireSegment(requiredSize);
 	
@@ -101,15 +94,22 @@ namespace CGE
 		memoryRecord.chunkIndex = chunkArray.size() - 1;
 		memoryRecord.pos = pos;
 	
-		currentTime = std::chrono::high_resolution_clock::now();
-		deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
-	
 		return memoryRecord;
 	}
 	
 	void DeviceMemoryManager::ReturnMemory(const MemoryRecord& inMemoryRecord)
 	{
+		if (!inMemoryRecord.pos.valid || (inMemoryRecord.pos.size == 0))
+		{
+			return;
+		}
+		//auto startTime = std::chrono::high_resolution_clock::now();
+		//-------------------------------------------------------------------------------------------------------------
 		memRegions[inMemoryRecord.regionHash][inMemoryRecord.chunkIndex]->ReleaseSegment(inMemoryRecord.pos);
+		//-------------------------------------------------------------------------------------------------------------
+		//auto currentTime = std::chrono::high_resolution_clock::now();
+		//double deltaTime = std::chrono::duration<double, std::chrono::microseconds::period>(currentTime - startTime).count();
+		//std::printf("Return of %I64u bytes took %f microseconds\n", inMemoryRecord.pos.size, deltaTime);
 	}
 	
 	void DeviceMemoryManager::CleanupMemory()

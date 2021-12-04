@@ -14,12 +14,6 @@ namespace CGE
 		buffers.push_back(inBuffer);
 	}
 	
-	void TransferList::PushBuffers(MeshDataPtr inData)
-	{
-		buffers.push_back(inData->GetVertexBuffer());
-		buffers.push_back(inData->GetIndexBuffer());
-	}
-	
 	void TransferList::PushImage(TextureDataPtr inImage)
 	{
 		images.push_back(inImage);

@@ -35,9 +35,10 @@ namespace CGE
 			std::vector<WriteDescriptorSet> descriptorWrites;
 		};
 		std::vector<FrameData> m_data;
-	
-		GlobalShaderData* globalShaderData;
-		GlobalTransformData* globalTransformData;
+		
+		GlobalShaderData* m_globalShaderData;
+		GlobalTransformData* m_globalTransformData;
+		uint64_t m_relevantTransformsSize = 0;
 	
 		FrameData& GetData() { return m_data[Engine::GetFrameIndex(m_data.size())]; }
 		std::vector<DescriptorSetLayoutBinding> ProduceBindings(FrameData& frameData);

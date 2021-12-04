@@ -315,6 +315,7 @@ namespace CGE
 				VK_QUEUE_FAMILY_IGNORED, 
 				AccessFlagBits::eTransferWrite, 
 				AccessFlagBits::eVertexAttributeRead));
+			buffer->DiscardStaging();
 		}
 	
 		// images

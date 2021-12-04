@@ -222,7 +222,6 @@ namespace CGE
 			{
 				MeshDataPtr meshData = importer.GetMeshes()[MeshIndex];
 				meshData->CreateBuffer();
-				tl->PushBuffers(meshData);
 	
 				float width = 500.0f;
 				float depth = 500.0f;
@@ -249,7 +248,6 @@ namespace CGE
 		}
 	
 		MeshData::FullscreenQuad()->CreateBuffer();
-		tl->PushBuffers(MeshData::FullscreenQuad());
 
 		for (SceneObjectBasePtr objPtr : m_primaryPack.objectsList)
 		{

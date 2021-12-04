@@ -17,7 +17,7 @@ namespace CGE
 	VulkanImage::VulkanImage()
 		: m_vulkanDevice(nullptr)
 		, m_scoped(false)
-		, m_cleanup(false)
+		, m_cleanup(true)
 		, m_image(nullptr)
 	{
 
@@ -26,7 +26,7 @@ namespace CGE
 	VulkanImage::VulkanImage(bool inScoped)
 		: m_vulkanDevice(nullptr)
 		, m_scoped(inScoped)
-		, m_cleanup(false)
+		, m_cleanup(true)
 		, m_image(nullptr)
 	{
 	

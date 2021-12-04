@@ -34,8 +34,8 @@ namespace CGE
 		GlobalSamplers::GetInstance()->SetMipLodBias(-0.75f);
 		GlobalSamplers::GetInstance()->Create(device);
 	
-		globalShaderData = new GlobalShaderData();
-		globalTransformData = new GlobalTransformData();
+		m_globalShaderData = new GlobalShaderData();
+		m_globalTransformData = new GlobalTransformData();
 
 		m_data.resize(2);
 		
@@ -67,8 +67,8 @@ namespace CGE
 	
 	void PerFrameData::Destroy()
 	{
-		delete globalShaderData;
-		delete globalTransformData;
+		delete m_globalShaderData;
+		delete m_globalTransformData;
 		
 		for (auto& data : m_data)
 		{
@@ -83,8 +83,8 @@ namespace CGE
 	void PerFrameData::UpdateBufferData()
 	{
 		GatherData();
-		GetData().shaderDataBuffer->CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( globalShaderData ));
-		GetData().transformDataBuffer->CopyTo(sizeof(GlobalTransformData), reinterpret_cast<const char*>( globalTransformData ));
+		GetData().shaderDataBuffer->CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( m_globalShaderData ));
+		GetData().transformDataBuffer->CopyTo(m_relevantTransformsSize, reinterpret_cast<const char*>( m_globalTransformData ));
 	}
 	
 	std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings(FrameData& frameData)
@@ -137,28 +137,29 @@ namespace CGE
 	
 	void PerFrameData::GatherData()
 	{
-		globalShaderData->time = TimeManager::GetInstance()->GetTime();
-		globalShaderData->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
+		m_globalShaderData->time = TimeManager::GetInstance()->GetTime();
+		m_globalShaderData->deltaTime = TimeManager::GetInstance()->GetDeltaTime();
 	
 		Scene* scene = Engine::GetSceneInstance();
 		CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	
-		globalShaderData->worldToView = camComp->CalculateViewMatrix();
-		globalShaderData->viewToProj = camComp->CalculateProjectionMatrix();
-		globalShaderData->cameraPos = camComp->GetParent()->transform.GetLocation();
-		globalShaderData->viewVector = camComp->GetParent()->transform.GetForwardVector();
+		m_globalShaderData->worldToView = camComp->CalculateViewMatrix();
+		m_globalShaderData->viewToProj = camComp->CalculateProjectionMatrix();
+		m_globalShaderData->cameraPos = camComp->GetParent()->transform.GetLocation();
+		m_globalShaderData->viewVector = camComp->GetParent()->transform.GetForwardVector();
 
-		globalShaderData->numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
-		globalShaderData->clusterSize = Singleton<ClusteringManager>::GetInstance()->GetClusterSize();
-		globalShaderData->halfScreenOffset = Singleton<ClusteringManager>::GetInstance()->GetHalfScreenOffset();
-		globalShaderData->clusterScreenOverflow = Singleton<ClusteringManager>::GetInstance()->GetClusterScreenOverflow();
+		m_globalShaderData->numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
+		m_globalShaderData->clusterSize = Singleton<ClusteringManager>::GetInstance()->GetClusterSize();
+		m_globalShaderData->halfScreenOffset = Singleton<ClusteringManager>::GetInstance()->GetHalfScreenOffset();
+		m_globalShaderData->clusterScreenOverflow = Singleton<ClusteringManager>::GetInstance()->GetClusterScreenOverflow();
 
-		globalShaderData->cameraNear = camComp->GetNearPlane();
-		globalShaderData->cameraFar = camComp->GetFarPlane();
-		globalShaderData->cameraFov = camComp->GetFov();
-		globalShaderData->cameraAspect = camComp->GetAspectRatio();
+		m_globalShaderData->cameraNear = camComp->GetNearPlane();
+		m_globalShaderData->cameraFar = camComp->GetFarPlane();
+		m_globalShaderData->cameraFov = camComp->GetFov();
+		m_globalShaderData->cameraAspect = camComp->GetAspectRatio();
 	
-		std::memcpy(globalTransformData->modelToWorld, scene->GetModelMatrices().data(), scene->GetRelevantMatricesCount() * sizeof(glm::mat4x4));
+		m_relevantTransformsSize = scene->GetRelevantMatricesCount() * sizeof(glm::mat4x4);
+		std::memcpy(m_globalTransformData->modelToWorld, scene->GetModelMatrices().data(), m_relevantTransformsSize);
 	}
 }
 
