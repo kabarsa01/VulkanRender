@@ -81,7 +81,7 @@ namespace CGE
 		dataTable.AddPassData<GBufferPassData>(gbufferData);
 
 		gbufferData->albedos = ResourceUtils::CreateColorTextureArray(initContext.GetPassName()+HashString("_albedo"), 2, initContext.GetWidth(), initContext.GetHeight());
-		gbufferData->normals = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_normal"), 2, initContext.GetWidth(), initContext.GetHeight());
+		gbufferData->normals = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_normal"), 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat);
 
 		initContext.SetAttachments(0, gbufferData->albedos, true);
 		initContext.SetAttachments(1, gbufferData->normals, true);
