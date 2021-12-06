@@ -36,10 +36,7 @@ layout(set = 1, binding = 4) uniform LightsIndices
 	uvec2 pointPosition;
 } lightsIndices;
 
-// shared
-shared uint clusterStatus[64];
-
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 uint Pack16BitIndex(uint lightIndexData, uint lightIndexInCluster, uint lightIndexGlobal)
 {
@@ -71,182 +68,125 @@ bool IsConeIntersectsSphere(vec3 coneOrigin, vec3 coneDir, float coneLength, flo
 }
 
 void main() {
-	if (gl_LocalInvocationIndex == 0)
-	{
-		for (uint idx = 0; idx < 64; idx++)
-		{
-			clusterStatus[idx] = 0;
-		}
-	}
-	memoryBarrierShared();
-
 	float near = globalData.cameraNear;
 	float far = globalData.cameraFar;
 
-	uvec2 screenRes = textureSize(sampler2D( depthTexture, repeatLinearSampler ), 0);
-	vec2 pixelUVSize =  1.0 / vec2(screenRes);
-	vec2 pixelUVHalfSize =  0.5 * pixelUVSize;
+	uint clusterIndex = gl_LocalInvocationIndex;
+	uint nextClusterIndex = clusterIndex + 1;
 
-	ivec2 tileStart = (ivec2(gl_WorkGroupID.xy) * globalData.clusterSize) - globalData.halfScreenOffset;
-	ivec2 tileFinish = tileStart + globalData.clusterSize;
+	// find the light source intersections for this cluster
+	// first we find our cluster bounds for AABB. clusters are small so it's an 'okay' approximation
+	float clusterNear = -1.0 * near * pow(far/near, float(clusterIndex)/64.0);
+	float clusterFar = -1.0 * near * pow(far/near, float(nextClusterIndex)/64.0);
 
-	int workgroupSize = int(gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z);
-	ivec2 threadChunkSize = ivec2(4,4);
-	ivec2 threadChunksNum = (globalData.clusterSize + ivec2(3,3)) / 4;
-	int threadChunksNumFlat = threadChunksNum.x * threadChunksNum.y;
-	int chunksPerThread = (threadChunksNumFlat + workgroupSize - 1) / workgroupSize;
+	float fovMultiplier = tan(radians(globalData.cameraFov * 0.5)) * 2.0;
+	float nearHeight = globalData.clusterScreenOverflow.y * abs(clusterNear * fovMultiplier);
+	float farHeight = globalData.clusterScreenOverflow.y * abs(clusterFar * fovMultiplier);
+	float nearWidth = globalData.clusterScreenOverflow.x * nearHeight * globalData.cameraAspect;
+	float farWidth = globalData.clusterScreenOverflow.x * farHeight * globalData.cameraAspect;
 
-	for (int chunkIndex = int(gl_LocalInvocationIndex) * chunksPerThread; chunkIndex < chunksPerThread * int(gl_LocalInvocationIndex + 1); chunkIndex++)
+	float clusterLeft = min(nearWidth * (-0.5f + float(gl_WorkGroupID.x) / float(globalData.numClusters.x)), farWidth * (-0.5f + float(gl_WorkGroupID.x) / float(globalData.numClusters.x)));
+	float clusterRight = max(nearWidth * (-0.5f + float(gl_WorkGroupID.x + 1) / float(globalData.numClusters.x)), farWidth * (-0.5f + float(gl_WorkGroupID.x + 1) / float(globalData.numClusters.x)));
+
+	float clusterBottom = min(nearHeight * (-0.5f + float(gl_WorkGroupID.y) / float(globalData.numClusters.y)), farHeight * (-0.5f + float(gl_WorkGroupID.y) / float(globalData.numClusters.y)));
+	float clusterTop = max(nearHeight * (-0.5f + float(gl_WorkGroupID.y + 1) / float(globalData.numClusters.y)), farHeight * (-0.5f + float(gl_WorkGroupID.y + 1) / float(globalData.numClusters.y)));
+
+	// we make an AABB from our cluster frustum and then we make a sphere out of it
+	vec4 boundingSphere;
+	vec3 clusterExtentMax = vec3(clusterRight, clusterTop, clusterNear);
+	vec3 clusterExtentMin = vec3(clusterLeft, clusterBottom, clusterFar);
+	vec3 extents = (clusterExtentMax - clusterExtentMin) * 0.5;
+	boundingSphere.xyz = clusterExtentMin + extents;
+	boundingSphere.w = length(extents);
+
+	uint lightIndexInCluster = 0;
+
+	for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
 	{
-		if (chunkIndex >= threadChunksNumFlat)
-		{
-			return;
-		}
-		ivec2 chunkCoord = ivec2(chunkIndex % threadChunksNum.x, chunkIndex / threadChunksNum.x);
-		ivec2 chunkStart = tileStart + chunkCoord * threadChunkSize;
+		LightInfo lightInfo = lightsList.lights[index];
 
-		for (int index = 0; index < (threadChunkSize.x * threadChunkSize.y); index++)
-		{
-			ivec2 localPixelCoord = ivec2(index % threadChunkSize.x, index / threadChunkSize.x);
-			ivec2 pixelCoord = chunkStart + localPixelCoord;
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
 
-			if (pixelCoord.x < 0 || pixelCoord.y < 0) continue;
-			if (pixelCoord.x >= screenRes.x || pixelCoord.y >= screenRes.y) continue;
-			if (pixelCoord.x >= tileFinish.x || pixelCoord.y >= tileFinish.y) continue;
-
-			vec2 pixelUV = pixelUVHalfSize + pixelCoord * pixelUVSize;
-
-			float depth = texture(sampler2D( depthTexture, repeatLinearSampler ), pixelUV).r;
-			if (depth <= 0.0 || depth >= 1.0)
-			{
-				continue;
-			}
-
-			float linearDepth = near * far / (far + depth * (near - far));
-			// depthSlice = near * (far/near) ^ (slice/numSlices) --- pretty good distribution from Doom 2016
-			// cluster index = maxClusters * log(linearDepth/near) / log(far/near);
-			uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it for zero based index just in case
-			uint nextClusterIndex = clusterIndex + 1;
-			uint clusterChecked = atomicOr(clusterStatus[clusterIndex], 1);
-			if (clusterChecked != 0)
-			{
-				continue;
-			}
-
-			// find the light source intersections for this cluster
-			// first we find our cluster bounds for AABB. clusters are small so it's an 'okay' approximation
-
-			float clusterNear = -1.0 * near * pow(far/near, float(clusterIndex)/64.0);
-			float clusterFar = -1.0 * near * pow(far/near, float(nextClusterIndex)/64.0);
-
-			float fovMultiplier = tan(radians(globalData.cameraFov * 0.5)) * 2.0;
-			float nearHeight = globalData.clusterScreenOverflow.y * abs(clusterNear * fovMultiplier);
-			float farHeight = globalData.clusterScreenOverflow.y * abs(clusterFar * fovMultiplier);
-			float nearWidth = globalData.clusterScreenOverflow.x * nearHeight * globalData.cameraAspect;
-			float farWidth = globalData.clusterScreenOverflow.x * farHeight * globalData.cameraAspect;
-
-			float clusterLeft = min(nearWidth * (-0.5 + gl_WorkGroupID.x / float(globalData.numClusters.x)), farWidth * (-0.5 + gl_WorkGroupID.x / float(globalData.numClusters.x)));
-			float clusterRight = max(nearWidth * (-0.5 + (gl_WorkGroupID.x + 1) / float(globalData.numClusters.x)), farWidth * (-0.5 + (gl_WorkGroupID.x + 1) / float(globalData.numClusters.x)));
-
-			float clusterBottom = min(nearHeight * (-0.5 + gl_WorkGroupID.y / float(globalData.numClusters.y)), farHeight * (-0.5 + gl_WorkGroupID.y / float(globalData.numClusters.y)));
-			float clusterTop = max(nearHeight * (-0.5 + (gl_WorkGroupID.y + 1) / float(globalData.numClusters.y)), farHeight * (-0.5 + (gl_WorkGroupID.y + 1) / float(globalData.numClusters.y)));
-
-			// we make an AABB from our cluster frustum and then we make a sphere out of it
-			vec4 boundingSphere;
-			vec3 clusterExtentMax = vec3(clusterRight, clusterTop, clusterNear);
-			vec3 clusterExtentMin = vec3(clusterLeft, clusterBottom, clusterFar);
-			vec3 extents = (clusterExtentMax - clusterExtentMin) * 0.5;
-			boundingSphere.xyz = clusterExtentMin + extents;
-			boundingSphere.w = length(extents);
-
-			uint lightIndexInCluster = 0;
-
-			for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
-			{
-				LightInfo lightInfo = lightsList.lights[index];
-
-				uint entryIndex = lightIndexInCluster / 2;
-				uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
-				lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
-				clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
-
-				lightIndexInCluster++;
-			}
-			uint directionalLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
-			directionalLightOffsetData &= 0xffff0000;
-			// offset is always 0
-			directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
-			clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = directionalLightOffsetData;
-
-			uint spotLightOffset = lightIndexInCluster;
-			uint spotLightCount = 0;
-			for (uint index = lightsIndices.spotPosition.x; index < lightsIndices.spotPosition.x + lightsIndices.spotPosition.y; index++)
-			{
-				if (lightIndexInCluster > 255)
-				{
-					break;
-				}
-
-				LightInfo lightInfo = lightsList.lights[index];
-				vec4 lightPos = globalData.worldToView * vec4(lightInfo.position.xyz, 1.0);
-				lightPos /= lightPos.w;
-				vec3 lightDir = (globalData.worldToView * vec4(lightInfo.direction.xyz, 0.0)).xyz;
-
-				if (!IsConeIntersectsSphere(lightPos.xyz, lightDir, lightInfo.rai.x, radians(lightInfo.rai.y), boundingSphere))
-				{
-					continue;
-				}
-				spotLightCount++;
-
-				uint entryIndex = lightIndexInCluster / 2;
-				uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
-				lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
-				clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
-
-				lightIndexInCluster++;
-			}
-			uint spotLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
-			spotLightOffsetData &= 0x0000ffff;
-			spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
-			spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
-			clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = spotLightOffsetData;
-
-			uint pointLightOffset = lightIndexInCluster;
-			uint pointLightCount = 0;
-			for (uint index = lightsIndices.pointPosition.x; index < lightsIndices.pointPosition.x + lightsIndices.pointPosition.y; index++)
-			{
-				if (lightIndexInCluster > 255)
-				{
-					break;
-				}
-				LightInfo lightInfo = lightsList.lights[index];
-				vec4 lightPos = globalData.worldToView * vec4(lightInfo.position.xyz, 1.0);
-				lightPos /= lightPos.w;
-
-				vec3 lightSphereClippedPos = clamp(lightPos.xyz, clusterExtentMin, clusterExtentMax);
-				vec3 centerToAABB = lightSphereClippedPos - lightPos.xyz;
-
-				if (dot(centerToAABB, centerToAABB) > (lightInfo.rai.x * lightInfo.rai.x))
-				{
-					continue;
-				}
-				pointLightCount++;
-
-				uint entryIndex = lightIndexInCluster / 2;
-				uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
-				lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
-				clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;
-
-				lightIndexInCluster++;
-			}
-			uint pointLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y;
-			pointLightOffsetData &= 0xffff0000;
-			pointLightOffsetData |= 0x000000ff & pointLightOffset;
-			pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
-			clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
-
-			//vec4 color = vec4(depth, depth, depth, 1.0);
-			//imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
-		}
+		lightIndexInCluster++;
 	}
+	uint directionalLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+	directionalLightOffsetData &= 0xffff0000;
+	// offset is always 0
+	directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
+	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = directionalLightOffsetData;
+
+	uint spotLightOffset = lightIndexInCluster;
+	uint spotLightCount = 0;
+	for (uint index = lightsIndices.spotPosition.x; index < lightsIndices.spotPosition.x + lightsIndices.spotPosition.y; index++)
+	{
+		if (lightIndexInCluster > 255)
+		{
+			break;
+		}
+
+		LightInfo lightInfo = lightsList.lights[index];
+		vec4 lightPos = globalData.worldToView * vec4(lightInfo.position.xyz, 1.0);
+		lightPos /= lightPos.w;
+		vec4 lightDir4 = globalData.worldToView * vec4(lightInfo.direction.xyz, 0.0);
+		lightDir4 /= lightDir4.w;
+		vec3 lightDir = lightDir4.xyz;
+
+		if (!IsConeIntersectsSphere(lightPos.xyz, lightDir, lightInfo.rai.x, radians(lightInfo.rai.y), boundingSphere))
+		{
+			continue;
+		}
+		spotLightCount++;
+
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;			
+
+		lightIndexInCluster++;
+	}
+	uint spotLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+	spotLightOffsetData &= 0x0000ffff;
+	spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
+	spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
+	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = spotLightOffsetData;
+
+	uint pointLightOffset = lightIndexInCluster;
+	uint pointLightCount = 0;
+	for (uint index = lightsIndices.pointPosition.x; index < lightsIndices.pointPosition.x + lightsIndices.pointPosition.y; index++)
+	{
+		if (lightIndexInCluster > 255)
+		{
+			break;
+		}
+		LightInfo lightInfo = lightsList.lights[index];
+		vec4 lightPos = globalData.worldToView * vec4(lightInfo.position.xyz, 1.0);
+		lightPos /= lightPos.w;
+
+		vec3 lightSphereClippedPos = clamp(lightPos.xyz, clusterExtentMin, clusterExtentMax);
+		vec3 centerToAABB = lightSphereClippedPos - lightPos.xyz;
+
+		if (dot(centerToAABB, centerToAABB) > (lightInfo.rai.x * lightInfo.rai.x))
+		{
+			continue;
+		}
+		pointLightCount++;
+
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		clusterLightsData.lightIndices[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex][entryIndex] = lightIndexData;
+
+		lightIndexInCluster++;
+	}
+	uint pointLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y;
+	pointLightOffsetData &= 0xffff0000;
+	pointLightOffsetData |= 0x000000ff & pointLightOffset;
+	pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
+	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
+
+	//vec4 color = vec4(depth, depth, depth, 1.0);
+	//imageStore(storageTex, ivec2(pixelUV * vec2(63,63)), color);//vec4(vec3(gl_LocalInvocationID) / vec3(gl_WorkGroupSize), 1.0));
 }

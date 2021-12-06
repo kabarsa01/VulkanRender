@@ -166,23 +166,23 @@ namespace CGE
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 45.0f });
 		cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
-		cameraObj->GetCameraComponent()->SetFov(40.0f);
+		cameraObj->GetCameraComponent()->SetFov(60.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 	
-		LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
-		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-		lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
-		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 0.6f;
-		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
+		//LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
+		//lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+		//lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
+		//lightObj->GetLightComponent()->type = LT_Directional;
+		//lightObj->GetLightComponent()->intensity = 0.6f;
+		//lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-		//lightObj01->transform.SetLocation({ -125.0f, 0.0f, 0.0f });
+		//lightObj01->transform.SetLocation({ 0.0f, -10.0f, -55.0f });
 		//lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
-		//lightObj01->GetLightComponent()->type = LT_Spot;
-		//lightObj01->GetLightComponent()->radius = 245.0f;
+		//lightObj01->GetLightComponent()->type = LT_Point;
+		//lightObj01->GetLightComponent()->radius = 500.0f;
 		//lightObj01->GetLightComponent()->spotHalfAngle = 30.0f;
 		//lightObj01->GetLightComponent()->intensity = 5.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 0.6f, 1.0f };
@@ -196,11 +196,11 @@ namespace CGE
 		{
 			for (uint32_t indexY = 0; indexY < countY; indexY++)
 			{
-				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 1) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
+				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 2) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
 				bool isSpot = false;// counter % 2;
 	
 				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				lightObj02->transform.SetLocation({ -width * 0.5f + (indexX + 0.5f) * width / float(countX - 1), -15.0f, -1.0 * indexY * depth / float(countY - 1) });
+				lightObj02->transform.SetLocation({ -width * 0.5f + ((indexX + 0.5f) * width / float(countX - 1)), -10.0f, -1.0 * (indexY) * depth / float(countY - 1) });
 				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
@@ -236,7 +236,7 @@ namespace CGE
 	
 						MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
 						mo3->GetMeshComponent()->meshData = meshData;
-						mo3->transform.SetLocation({ -width * 0.5f + indexX * width / float(countX - 1), 0.0f, -1.0 * indexY * depth / float(countY - 1) });
+						mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), 0.0f, -1.0 * indexY * depth / float(countY - 1) });
 						//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 						mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 						mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
@@ -254,9 +254,6 @@ namespace CGE
 			m_sceneTree->AddObject(objPtr);
 		}
 		m_sceneTree->Update();
-
-		//DataManager::GetInstance()->GetResourceByType<Shader>(HashString("ddddddd"));
-		//DataManager::GetInstance()->GetResourcesByType<Shader>();
 	}
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -293,11 +290,11 @@ namespace CGE
 	
 	void Scene::PrepareObjectsLists()
 	{
+		// testing scene tree agains camera frustum
 		GatherObjectsInFrustum();
 
 		/*
 		single threaded simple scene data processing for batching and instancing. later it'll become multi threaded procedure
-		with scene data stored in tree as it should
 		*/
 		m_shadersList.clear();
 		m_shaderToMaterial.clear();
