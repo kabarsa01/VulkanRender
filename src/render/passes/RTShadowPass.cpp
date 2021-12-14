@@ -121,20 +121,22 @@ namespace CGE
 			frameData.m_nativeSets.data(),
 			0, nullptr);
 
+		ShaderBindingTable& globalSBT = rtScene->GetGlobalShaderBindingTable();
+
 		vk::StridedDeviceAddressRegionKHR rayGenRegion;
-		rayGenRegion.setDeviceAddress(frameData.m_sbtBuffer->GetDeviceAddress());
-		rayGenRegion.setSize(frameData.m_handleSizeAligned * rtScene->GetRayGenGroupsSize());
-		rayGenRegion.setStride(frameData.m_handleSizeAligned);
+		rayGenRegion.setDeviceAddress(globalSBT.GetBuffer()->GetDeviceAddress());
+		rayGenRegion.setSize(globalSBT.GetRayGenGroupsSizeBytes());
+		rayGenRegion.setStride(globalSBT.GetHandleSizeAlignedBytes());
 
 		vk::StridedDeviceAddressRegionKHR rayMissRegion;
-		rayMissRegion.setDeviceAddress(frameData.m_sbtBuffer->GetDeviceAddress() + frameData.m_handleSizeAligned * rtScene->GetMissGroupsOffset());
-		rayMissRegion.setSize(frameData.m_handleSizeAligned * rtScene->GetMissGroupsSize());
-		rayMissRegion.setStride(frameData.m_handleSizeAligned);
+		rayMissRegion.setDeviceAddress(globalSBT.GetBuffer()->GetDeviceAddress() + globalSBT.GetMissGroupsOffsetBytes());
+		rayMissRegion.setSize(globalSBT.GetMissGroupsSizeBytes());
+		rayMissRegion.setStride(globalSBT.GetHandleSizeAlignedBytes());
 
 		vk::StridedDeviceAddressRegionKHR rayHitRegion;
-		rayHitRegion.setDeviceAddress(frameData.m_sbtBuffer->GetDeviceAddress() + frameData.m_handleSizeAligned * rtScene->GetHitGroupsOffset());
-		rayHitRegion.setSize(frameData.m_handleSizeAligned * rtScene->GetHitGroupsSize());
-		rayHitRegion.setStride(frameData.m_handleSizeAligned);
+		rayHitRegion.setDeviceAddress(globalSBT.GetBuffer()->GetDeviceAddress() + globalSBT.GetHitGroupsOffsetBytes());
+		rayHitRegion.setSize(globalSBT.GetHitGroupsSizeBytes());
+		rayHitRegion.setStride(globalSBT.GetHandleSizeAlignedBytes());
 
 		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 2, executeContext.GetHeight() / 2, 1);
 	}
@@ -217,7 +219,7 @@ namespace CGE
 		RtScene* rtScene = Singleton<RtScene>::GetInstance();
 
 		uint32_t frameIndex = Engine::GetFrameIndex(m_shaderResourceMappers.size());
-		std::vector<RtShaderPtr>& shaders = rtScene->GetShaders();
+		std::vector<RtShaderPtr>& shaders = rtScene->GetGlobalShaderBindingTable().GetShaders();
 		m_shaderResourceMappers[frameIndex].SetShaders(shaders);
 
 		m_shaderResourceMappers[frameIndex].Update();
@@ -229,7 +231,7 @@ namespace CGE
 		uint32_t frameIndex = Engine::GetFrameIndex(m_shaderResourceMappers.size());
 
 		RtScene* rtScene = Singleton<RtScene>::GetInstance();
-		if (rtScene->GetShaderGroups().size() == 0)
+		if (rtScene->GetGlobalShaderBindingTable().GetShaderGroups().size() == 0)
 		{
 			return;
 		}
@@ -263,10 +265,10 @@ namespace CGE
 		//------------------------------------------------------------------
 		// pipeline create info
 		vk::RayTracingPipelineCreateInfoKHR pipelineInfo;
-		pipelineInfo.setGroupCount(static_cast<uint32_t>(rtScene->GetShaderGroups().size()));
-		pipelineInfo.setPGroups(rtScene->GetShaderGroups().data());
-		pipelineInfo.setStageCount(static_cast<uint32_t>(rtScene->GetShaderStages().size()));
-		pipelineInfo.setPStages(rtScene->GetShaderStages().data());
+		pipelineInfo.setGroupCount(static_cast<uint32_t>(rtScene->GetGlobalShaderBindingTable().GetShaderGroups().size()));
+		pipelineInfo.setPGroups(rtScene->GetGlobalShaderBindingTable().GetShaderGroups().data());
+		pipelineInfo.setStageCount(static_cast<uint32_t>(rtScene->GetGlobalShaderBindingTable().GetShaderStages().size()));
+		pipelineInfo.setPStages(rtScene->GetGlobalShaderBindingTable().GetShaderStages().data());
 		pipelineInfo.setFlags({});
 		pipelineInfo.setLayout(frameData.m_rtPipelineLayout);
 
@@ -276,45 +278,7 @@ namespace CGE
 			return;
 		}
 		frameData.m_rtPipeline = pipelineResult.value;
-
-		vk::StructureChain<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR> structChain =
-			device->GetPhysicalDevice().GetDevice().getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
-		frameData.m_rtProps = structChain.get<vk::PhysicalDeviceRayTracingPipelinePropertiesKHR>();
-		uint32_t handleSize = frameData.m_rtProps.shaderGroupHandleSize;
-		uint32_t alignment = frameData.m_rtProps.shaderGroupBaseAlignment;
-		// nvidia recommended to use base alignment
-		// we avoid using power of two version formula just in case. who knows
-		frameData.m_handleSizeAligned = alignment * ((handleSize + alignment - 1) / alignment);
-		uint32_t groupCount = static_cast<uint32_t>(rtScene->GetShaderGroups().size());
-		uint64_t sbtSize = groupCount * frameData.m_handleSizeAligned;
-		std::vector<char> shadersHandles(sbtSize);
-
-		auto handlesResult = nativeDevice.getRayTracingShaderGroupHandlesKHR(frameData.m_rtPipeline, 0, groupCount, sbtSize, shadersHandles.data());
-		if (handlesResult != vk::Result::eSuccess)
-		{
-			// TODO
-		}
-		if (frameData.m_sbtBuffer)
-		{
-			frameData.m_sbtBuffer->DestroyHint();
-		}
-		frameData.m_sbtBuffer = ResourceUtils::CreateBufferData(
-			"rt_scene_sbt_buffer" + std::to_string(Engine::GetInstance()->GetFrameCount()),
-			sbtSize,
-			vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eShaderBindingTableKHR | vk::BufferUsageFlagBits::eTransferDst,
-			true
-		);
-		if (sbtSize > 0)
-		{
-			std::vector<char> alignedShadersHandles(sbtSize);
-			char* addr = alignedShadersHandles.data();
-			for (uint32_t idx = 0; idx < groupCount; idx++)
-			{
-				memcpy(addr, shadersHandles.data() + handleSize * idx, handleSize);
-				addr += frameData.m_handleSizeAligned;
-			}
-			frameData.m_sbtBuffer->CopyTo(sbtSize, alignedShadersHandles.data());
-		}
+		rtScene->GetGlobalShaderBindingTable().ConstructBuffer(frameData.m_rtPipeline, "rt_scene_sbt_buffer");
 	}
 
 }

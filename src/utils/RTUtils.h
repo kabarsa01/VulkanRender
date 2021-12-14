@@ -56,6 +56,9 @@ namespace CGE
 		static void CleanupAccelerationStructure(AccelStructure& accelStructure);
 		static void CleanupBuildInfo(AccelStructureBuildInfo& buildInfo);
 		static void CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos);
+
+		static vk::PipelineLayout CreatePipelineLayout();
+		static vk::Pipeline CreatePipeline(vk::PipelineLayout);
 	};
 
 	//-------------------------------------------------------------------------------------

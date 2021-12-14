@@ -303,6 +303,9 @@
     <ClCompile Include="src\render\memory\ArrayMemoryChunk.cpp">
       <Filter>Source Files\render\memory</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\shader\ShaderBindingTable.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -532,6 +535,9 @@
     </ClInclude>
     <ClInclude Include="src\render\memory\ArrayMemoryChunk.h">
       <Filter>Source Files\render\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\shader\ShaderBindingTable.h">
+      <Filter>Source Files\render\shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -291,6 +291,7 @@ exit /b</Command>
     <ClCompile Include="src\render\RtScene.cpp" />
     <ClCompile Include="src\render\ShaderRegistry.cpp" />
     <ClCompile Include="src\render\shader\RtShader.cpp" />
+    <ClCompile Include="src\render\shader\ShaderBindingTable.cpp" />
     <ClCompile Include="src\render\shader\ShaderResourceMapper.cpp" />
     <ClCompile Include="src\render\shader\VulkanShaderModule.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
@@ -369,6 +370,7 @@ exit /b</Command>
     <ClInclude Include="src\render\RtScene.h" />
     <ClInclude Include="src\render\ShaderRegistry.h" />
     <ClInclude Include="src\render\shader\RtShader.h" />
+    <ClInclude Include="src\render\shader\ShaderBindingTable.h" />
     <ClInclude Include="src\render\shader\ShaderResourceMapper.h" />
     <ClInclude Include="src\render\shader\VulkanShaderModule.h" />
     <ClInclude Include="src\render\shader\Shader.h" />

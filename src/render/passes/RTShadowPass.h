@@ -47,9 +47,6 @@ namespace CGE
 			vk::PipelineLayout m_rtPipelineLayout;
 			std::vector<VulkanDescriptorSet> m_sets;
 			std::vector<vk::DescriptorSet> m_nativeSets;
-			vk::PhysicalDeviceRayTracingPipelinePropertiesKHR m_rtProps;
-			BufferDataPtr m_sbtBuffer;
-			uint32_t m_handleSizeAligned;
 		};
 		std::vector<RtShadowPassFrameData> m_frameDataArray;
 

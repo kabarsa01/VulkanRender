@@ -171,12 +171,12 @@ namespace CGE
 		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 	
-		//LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
-		//lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-		//lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
-		//lightObj->GetLightComponent()->type = LT_Directional;
-		//lightObj->GetLightComponent()->intensity = 0.6f;
-		//lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
+		LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
+		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+		lightObj->transform.SetRotation({ -10.0f, -90.0f, 0.0f });
+		lightObj->GetLightComponent()->type = LT_Directional;
+		lightObj->GetLightComponent()->intensity = 1.6f;
+		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
 		//lightObj01->transform.SetLocation({ 0.0f, -10.0f, -55.0f });
@@ -205,7 +205,7 @@ namespace CGE
 				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
 				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
 				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 2.0f;
+				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
 				lightObj02->GetLightComponent()->color = color;
 	
 				++counter;

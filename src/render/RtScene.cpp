@@ -20,6 +20,7 @@ namespace CGE
 	RtScene::RtScene()
 		: m_frameIndexTruncated(0)
 	{
+		m_shaderBindingTables.resize(2);
 		m_blasTable.reserve(1024 * 8);
 		// message handlers
 		m_messageSubscriber.AddHandler<GlobalUpdateMessage>(this, &RtScene::HandleUpdate);
@@ -79,72 +80,18 @@ namespace CGE
 
 	void RtScene::UpdateShaders()
 	{
-		m_groups.clear();
-		m_stages.clear();
-		m_shaders.clear();
-		m_shaderIndices.clear();
-		m_materialGroupIndices.clear();
-		for (auto& shaderList : m_shadersByType)
-		{
-			shaderList.clear();
-		}
-
-		std::unordered_map<HashString, ResourcePtr>& shadersTable = DataManager::GetInstance()->GetResourcesTable<RtShader>();
-
-		for (auto& pair : shadersTable)
-		{
-			RtShaderPtr shader = ObjectBase::Cast<RtShader>(pair.second);
-
-			m_shadersByType[shader->GetTypeIntegral()].push_back(shader);
-			m_shaderIndices[pair.first] = static_cast<uint32_t>(m_shaders.size());
-			m_shaders.push_back(shader);
-
-			vk::PipelineShaderStageCreateInfo stageInfo;
-			stageInfo.setModule(shader->GetShaderModule());
-			stageInfo.setPName("main");
-			stageInfo.setStage(shader->GetStageFlags());
-			m_stages.push_back(stageInfo);
-		}
-
-		// process ray gen shaders
-		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_RAY_GEN)], m_groups);
-		// remember miss groups offset
-		m_missGroupsOffset = static_cast<uint32_t>(m_groups.size());
-		// process miss shaders
-		FillGeneralShaderGroups(m_shadersByType[ToInt(ERtShaderType::RST_MISS)], m_groups);
-		// remember hit groups offset
-		m_hitGroupsOffset = static_cast<uint32_t>(m_groups.size());
-		// process materials as hit groups
-		std::unordered_map<HashString, ResourcePtr>& materialsTable = DataManager::GetInstance()->GetResourcesTable<RtMaterial>();
-		for (auto& pair : materialsTable)
-		{
-			RtMaterialPtr mat = ObjectBase::Cast<RtMaterial>(pair.second);
-			if (!mat->HasHitGroup())
-			{
-				continue;
-			}
-			RtShaderPtr intersect = mat->GetShader(ERtShaderType::RST_INTERSECT);
-			RtShaderPtr anyHit = mat->GetShader(ERtShaderType::RST_ANY_HIT);
-			RtShaderPtr closestHit = mat->GetShader(ERtShaderType::RST_CLOSEST_HIT);
-
-			vk::RayTracingShaderGroupTypeKHR type = intersect ? vk::RayTracingShaderGroupTypeKHR::eProceduralHitGroup : vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup;
-
-			vk::RayTracingShaderGroupCreateInfoKHR groupInfo;
-			groupInfo.setType(type);
-			groupInfo.setGeneralShader(VK_SHADER_UNUSED_KHR);
-			groupInfo.setIntersectionShader(intersect ? m_shaderIndices[intersect->GetResourceId()] : VK_SHADER_UNUSED_KHR);
-			groupInfo.setAnyHitShader(anyHit ? m_shaderIndices[anyHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
-			groupInfo.setClosestHitShader(closestHit ? m_shaderIndices[closestHit->GetResourceId()] : VK_SHADER_UNUSED_KHR);
-
-			m_materialGroupIndices[mat->GetResourceId()] = static_cast<uint32_t>(m_groups.size());
-			m_groups.push_back(groupInfo);
-		}
+		auto& sbt = m_shaderBindingTables[Engine::GetFrameIndex(m_shaderBindingTables.size())];
+		sbt.Clear();
+		sbt.AddShaders(DataManager::GetInstance()->GetResourcesByType<RtShader>());
+		sbt.AddRtMaterials(DataManager::GetInstance()->GetResourcesByType<RtMaterial>());
+		sbt.Update();
 	}
 
 	void RtScene::UpdateInstances()
 	{
 		Scene* scene = Engine::GetSceneInstance();
 		SceneObjectsPack& sceneObjects = scene->GetObjectsPack(false);
+		auto& sbt = m_shaderBindingTables[Engine::GetFrameIndex(m_shaderBindingTables.size())];
 
 		m_instances.clear();
 
@@ -163,7 +110,7 @@ namespace CGE
 			instance.setAccelerationStructureReference(accelAddr);
 			instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
 			instance.setInstanceCustomIndex(instanceIndex++);
-			uint32_t sbtOffset = m_materialGroupIndices[meshComp->rtMaterial->GetResourceId()] - m_hitGroupsOffset;
+			uint32_t sbtOffset = sbt.GetHitGroupOffset(meshComp->rtMaterial);
 			instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
 			instance.setMask(0xffffffff);
 
@@ -378,22 +325,6 @@ namespace CGE
 			vk::DependencyFlags(),
 			1, &barrier,
 			0, nullptr, 0, nullptr);
-	}
-
-	void RtScene::FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups)
-	{
-		for (RtShaderPtr shader : shaders)
-		{
-			vk::RayTracingShaderGroupCreateInfoKHR groupInfo;
-
-			groupInfo.setType(vk::RayTracingShaderGroupTypeKHR::eGeneral);
-			groupInfo.setGeneralShader(m_shaderIndices[shader->GetResourceId()]);
-			groupInfo.setIntersectionShader(VK_SHADER_UNUSED_KHR);
-			groupInfo.setAnyHitShader(VK_SHADER_UNUSED_KHR);
-			groupInfo.setClosestHitShader(VK_SHADER_UNUSED_KHR);
-
-			groups.push_back(groupInfo);
-		}
 	}
 
 	void RtScene::HandleUpdate(std::shared_ptr<GlobalUpdateMessage> msg)
