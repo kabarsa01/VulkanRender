@@ -8,6 +8,7 @@
 #include "../shader/ShaderResourceMapper.h"
 #include "data/BufferData.h"
 #include "RenderPassBase.h"
+#include "../shader/ShaderBindingTable.h"
 
 namespace CGE
 {
@@ -43,10 +44,11 @@ namespace CGE
 
 		struct RtShadowPassFrameData
 		{
-			vk::Pipeline m_rtPipeline;
-			vk::PipelineLayout m_rtPipelineLayout;
-			std::vector<VulkanDescriptorSet> m_sets;
-			std::vector<vk::DescriptorSet> m_nativeSets;
+			vk::Pipeline rtPipeline;
+			vk::PipelineLayout rtPipelineLayout;
+			std::vector<VulkanDescriptorSet> sets;
+			std::vector<vk::DescriptorSet> nativeSets;
+			ShaderBindingTable sbt;
 		};
 		std::vector<RtShadowPassFrameData> m_frameDataArray;
 

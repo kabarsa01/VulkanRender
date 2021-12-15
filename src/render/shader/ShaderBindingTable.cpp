@@ -24,15 +24,12 @@ namespace CGE
 
 	void ShaderBindingTable::AddShader(RtShaderPtr rtShader)
 	{
-		assert(rtShader->IsGeneral() && "General raytracing shader expected");
 		m_shaders.emplace_back(rtShader);
 	}
 
 	void ShaderBindingTable::AddShader(ShaderPtr rtShader)
 	{
-		RtShaderPtr shaderCast = ObjectBase::Cast<RtShader>(rtShader);
-		assert(shaderCast->IsGeneral() && "General raytracing shader expected");
-		m_shaders.emplace_back(shaderCast);
+		m_shaders.emplace_back(ObjectBase::Cast<RtShader>(rtShader));
 	}
 
 	void ShaderBindingTable::AddShaders(const std::vector<RtShaderPtr>& rtShaders)
@@ -144,7 +141,7 @@ namespace CGE
 		// nvidia recommended to use base alignment
 		// we avoid using power of two version formula just in case. who knows
 		m_handleSizeAlignedBytes = alignment * ((handleSize + alignment - 1) / alignment);
-		uint32_t groupCount = static_cast<uint32_t>(rtScene->GetGlobalShaderBindingTable().GetShaderGroups().size());
+		uint32_t groupCount = static_cast<uint32_t>(m_groups.size());
 		uint64_t sbtSize = groupCount * m_handleSizeAlignedBytes;
 		std::vector<char> shadersHandles(sbtSize);
 
