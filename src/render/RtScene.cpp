@@ -110,7 +110,7 @@ namespace CGE
 			instance.setAccelerationStructureReference(accelAddr);
 			instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
 			instance.setInstanceCustomIndex(instanceIndex++);
-			uint32_t sbtOffset = sbt.GetHitGroupOffset(meshComp->rtMaterial);
+			uint32_t sbtOffset = sbt.GetGroupTypeOffset(ERtShaderType::RST_ANY_HIT, meshComp->rtMaterial->GetResourceId());
 			instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
 			instance.setMask(0xffffffff);
 

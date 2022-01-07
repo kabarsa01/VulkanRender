@@ -32,7 +32,7 @@ namespace CGE
 
 		vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 		// TODO cleanup
-		for (auto data : m_frameDataArray)
+		for (auto& data : m_frameDataArray)
 		{
 			device.destroyPipeline(data.rtPipeline);
 			device.destroyPipelineLayout(data.rtPipelineLayout);
@@ -123,20 +123,9 @@ namespace CGE
 
 		ShaderBindingTable& sbt = frameData.sbt;
 
-		vk::StridedDeviceAddressRegionKHR rayGenRegion;
-		rayGenRegion.setDeviceAddress(sbt.GetBuffer()->GetDeviceAddress());
-		rayGenRegion.setSize(sbt.GetRayGenGroupsSizeBytes());
-		rayGenRegion.setStride(sbt.GetHandleSizeAlignedBytes());
-
-		vk::StridedDeviceAddressRegionKHR rayMissRegion;
-		rayMissRegion.setDeviceAddress(sbt.GetBuffer()->GetDeviceAddress() + sbt.GetMissGroupsOffsetBytes());
-		rayMissRegion.setSize(sbt.GetMissGroupsSizeBytes());
-		rayMissRegion.setStride(sbt.GetHandleSizeAlignedBytes());
-
-		vk::StridedDeviceAddressRegionKHR rayHitRegion;
-		rayHitRegion.setDeviceAddress(sbt.GetBuffer()->GetDeviceAddress() + sbt.GetHitGroupsOffsetBytes());
-		rayHitRegion.setSize(sbt.GetHitGroupsSizeBytes());
-		rayHitRegion.setStride(sbt.GetHandleSizeAlignedBytes());
+		vk::StridedDeviceAddressRegionKHR rayGenRegion = sbt.GetRegion(ERtShaderType::RST_RAY_GEN, HashString::NONE);
+		vk::StridedDeviceAddressRegionKHR rayMissRegion = sbt.GetRegion(ERtShaderType::RST_MISS, HashString::NONE);
+		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
 		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 2, executeContext.GetHeight() / 2, 1);
 	}

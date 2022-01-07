@@ -77,5 +77,23 @@ namespace CGE
 		buildInfos.scratchBuffers.clear();
 	}
 
+	vk::Pipeline RTUtils::CreatePipeline(vk::PipelineLayout layout, ShaderBindingTable& sbt)
+	{
+		vk::RayTracingPipelineCreateInfoKHR pipelineInfo;
+		pipelineInfo.setGroupCount(static_cast<uint32_t>(sbt.GetShaderGroups().size()));
+		pipelineInfo.setPGroups(sbt.GetShaderGroups().data());
+		pipelineInfo.setStageCount(static_cast<uint32_t>(sbt.GetShaderStages().size()));
+		pipelineInfo.setPStages(sbt.GetShaderStages().data());
+		pipelineInfo.setFlags({});
+		pipelineInfo.setLayout(layout);
+
+		auto pipelineResult = Engine::GetRendererInstance()->GetDevice().createRayTracingPipelineKHR(nullptr, nullptr, pipelineInfo);
+		if (pipelineResult.result != vk::Result::eSuccess)
+		{
+			return nullptr;
+		}
+		return pipelineResult.value;
+	}
+
 }
 

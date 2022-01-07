@@ -24,27 +24,25 @@ namespace CGE
 		void AddShader(RtShaderPtr rtShader);
 		void AddShader(ShaderPtr rtShader);
 		void AddShaders(const std::vector<RtShaderPtr>& rtShaders);
+		void SetShaders(const std::vector<RtShaderPtr>& rtShaders);
 		void AddRtMaterial(RtMaterialPtr rtMaterial);
 		void AddRtMaterials(const std::vector<RtMaterialPtr>& rtMaterials);
+		void SetRtMaterials(const std::vector<RtMaterialPtr>& rtMaterials);
+		void AddGlobalRtMaterial(RtMaterialPtr rtMaterial);
+		void SetGlobalRtMaterials(const std::vector<RtMaterialPtr>& rtMaterials);
 
 		std::vector<RtShaderPtr>& GetShaders() { return m_shaders; }
 		std::vector<vk::PipelineShaderStageCreateInfo>& GetShaderStages() { return m_stages; }
 		std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& GetShaderGroups() { return m_groups; }
 		// offsets getters
-		uint32_t GetMissGroupsOffset() { return m_missGroupsOffset; }
-		uint32_t GetMissGroupsOffsetBytes() { return m_handleSizeAlignedBytes * GetMissGroupsOffset(); }
-		uint32_t GetHitGroupsOffset() { return m_hitGroupsOffset; }
-		uint32_t GetHitGroupsOffsetBytes() { return m_handleSizeAlignedBytes * GetHitGroupsOffset(); }
-		uint32_t GetHitGroupOffset(RtMaterialPtr material) { return m_materialGroupIndices[material->GetResourceId()] - m_hitGroupsOffset; }
-		uint32_t GetHitGroupOffsetBytes(RtMaterialPtr material) { return m_handleSizeAlignedBytes * GetHitGroupOffset(material); }
-		// sizes and strides getters
-		uint32_t GetRayGenGroupsSize() { return m_missGroupsOffset; }
-		uint32_t GetRayGenGroupsSizeBytes() { return m_handleSizeAlignedBytes * GetRayGenGroupsSize(); }
-		uint32_t GetMissGroupsSize() { return m_hitGroupsOffset - m_missGroupsOffset; }
-		uint32_t GetMissGroupsSizeBytes() { return m_handleSizeAlignedBytes * GetMissGroupsSize(); }
-		uint32_t GetHitGroupsSize() { return static_cast<uint32_t>(m_groups.size()) - m_hitGroupsOffset; }
-		uint32_t GetHitGroupsSizeBytes() { return m_handleSizeAlignedBytes * GetHitGroupsSize(); }
+		uint32_t GetGroupOffset(HashString id);
+		uint32_t GetGroupTypeOffset(ERtShaderType type) { return m_groupTypeOffsets[ToInt(type)]; }
+		uint32_t GetGroupTypeOffset(ERtShaderType type, HashString id) { return GetGroupOffset(id) - m_groupTypeOffsets[ToInt(type)]; }
+		uint32_t GetGroupTypeOffsetBytes(ERtShaderType type) { return GetGroupTypeOffset(type) * m_handleSizeAlignedBytes; }
+		// handle size
 		uint32_t GetHandleSizeAlignedBytes() { return m_handleSizeAlignedBytes; }
+		// regions
+		vk::StridedDeviceAddressRegionKHR GetRegion(ERtShaderType type, HashString id);
 		// buffer getter
 		BufferDataPtr GetBuffer() { return m_sbtBuffer; }
 
@@ -54,19 +52,21 @@ namespace CGE
 	private:
 		std::vector<RtShaderPtr> m_shaders;
 		std::vector<RtMaterialPtr> m_materials;
+		std::vector<RtMaterialPtr> m_globalMaterials;
 		std::vector<vk::PipelineShaderStageCreateInfo> m_stages;
-		std::unordered_map<HashString, uint32_t> m_shaderIndices;
+		std::unordered_map<HashString, uint32_t> m_shaderStagesIndices;
 		std::array<std::vector<RtShaderPtr>, static_cast<uint32_t>(ERtShaderType::RST_MAX)> m_shadersByType;
 		// groups data
 		std::vector<vk::RayTracingShaderGroupCreateInfoKHR> m_groups;
-		std::unordered_map<HashString, uint32_t> m_materialGroupIndices;
-		uint32_t m_missGroupsOffset;
-		uint32_t m_hitGroupsOffset;
+		std::unordered_map<HashString, uint32_t> m_groupIndices;
+		std::array<uint32_t, static_cast<uint32_t>(ERtShaderType::RST_MAX) + 1> m_groupTypeOffsets;
+		// handle size in bytes aligned - very important stuff
 		uint32_t m_handleSizeAlignedBytes;
 		// sbt buffer
 		BufferDataPtr m_sbtBuffer;
 
 		void FillGeneralShaderGroups(const std::vector<RtShaderPtr>& shaders, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>& groups);
+		vk::RayTracingShaderGroupCreateInfoKHR CreateGroupForMaterial(RtMaterialPtr rtMaterial);
 	};
 
 }

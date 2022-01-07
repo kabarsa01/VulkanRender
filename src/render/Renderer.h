@@ -19,18 +19,18 @@
 
 // pre-build batch to compile all our shaders
 //
-//call :treeProcess
+//call:treeProcess
 //goto : eof
 //
-//: treeProcess
-//rem Do whatever you want here over the files of this subdir, for example :
-//for %%f in(*.vert *.tesc *.tese *.geom *.frag *.comp) do glslangValidator - V % %f - o % %~nf.spv
-//for / D % %d in(*) do (
-//	cd %%d
-//	call : treeProcess
-//	cd ..
-//)
-//exit / b
+//	: treeProcess
+//	rem Do whatever you want here over the files of this subdir, for example :
+//	for%% f in(*.vert * .tesc * .tese * .geom * .frag * .comp * .rgen * .rmiss * .rchit) do glslangValidator --target - env vulkan1.2 - V % %f - o % %~nf.spv
+//		for / D % %d in(*) do (
+//			cd % %d
+//			call : treeProcess
+//			cd ..
+//			)
+//			exit / b
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -45,6 +45,7 @@ namespace CGE
 	class ZPrepass;
 	class GBufferPass;
 	class RTShadowPass;
+	class RTGIPass;
 	class DeferredLightingPass;
 	class PostProcessPass;
 
@@ -111,6 +112,7 @@ namespace CGE
 		ClusterComputePass* m_clusterComputePass;
 		GBufferPass* gBufferPass;
 		RTShadowPass* rtShadowPass;
+		RTGIPass* rtGIPass;
 		DeferredLightingPass* deferredLightingPass;
 		PostProcessPass* postProcessPass;
 	

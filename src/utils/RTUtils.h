@@ -6,6 +6,7 @@
 #include "data/MeshData.h"
 #include "scene/mesh/MeshComponent.h"
 #include "data/BufferData.h"
+#include "render/shader/ShaderBindingTable.h"
 
 namespace CGE
 {
@@ -57,8 +58,7 @@ namespace CGE
 		static void CleanupBuildInfo(AccelStructureBuildInfo& buildInfo);
 		static void CleanupBuildInfos(AccelStructuresBuildInfos& buildInfos);
 
-		static vk::PipelineLayout CreatePipelineLayout();
-		static vk::Pipeline CreatePipeline(vk::PipelineLayout);
+		static vk::Pipeline CreatePipeline(vk::PipelineLayout layout, ShaderBindingTable& sbt);
 	};
 
 	//-------------------------------------------------------------------------------------

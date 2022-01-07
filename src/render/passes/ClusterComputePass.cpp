@@ -70,6 +70,8 @@ namespace CGE
 		m_lightsList = new LightsList();
 		m_lightsIndices = new LightsIndices();
 
+		auto clusterDataPtr = dataTable.CreatePassData<ClusterComputeData>();
+
 		initContext.compute = true;
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		
@@ -84,11 +86,14 @@ namespace CGE
 			computeMaterial->LoadResources();
 
 			m_computeMaterials.push_back(computeMaterial);
+
+			// storing for easier access
+			clusterDataPtr->clusterLightsData.push_back(computeMaterial->GetStorageBuffer("clusterLightsData"));
+			clusterDataPtr->lightsList.push_back(computeMaterial->GetUniformBuffer("lightsList"));
+			clusterDataPtr->lightsIndices.push_back(computeMaterial->GetUniformBuffer("lightsIndices"));
 		}
 
-		auto clusterDataPtr = std::make_shared<ClusterComputeData>();
 		clusterDataPtr->computeMaterials = m_computeMaterials;
-		dataTable.AddPassData<ClusterComputeData>(clusterDataPtr);
 	}
 
 	void ClusterComputePass::HandleUpdate(const std::shared_ptr<GlobalPostSceneMessage> msg)

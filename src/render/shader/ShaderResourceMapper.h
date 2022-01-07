@@ -22,6 +22,8 @@ namespace CGE
 		}
 
 		std::vector<VulkanDescriptorSet>& GetDescriptorSets() { return m_sets; }
+		std::vector<vk::DescriptorSet>& GetNativeDescriptorSets() { return m_nativeSets; }
+		std::vector<vk::DescriptorSetLayout> GetNativeLayouts();
 
 		void SetShaders(const std::vector<ShaderPtr>& shaders) { m_shaders = shaders; }
 		void SetShaders(const std::vector<RtShaderPtr>& shaders);
@@ -56,6 +58,7 @@ namespace CGE
 
 		std::vector<ShaderPtr> m_shaders;
 		std::vector<VulkanDescriptorSet> m_sets;
+		std::vector<vk::DescriptorSet> m_nativeSets;
 
 		std::unordered_map<HashString, std::any> m_resourcesNames;
 		std::unordered_map<vk::DescriptorType, std::vector<char*>> m_writeInfos;

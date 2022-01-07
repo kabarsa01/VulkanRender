@@ -583,5 +583,20 @@
     <None Include="content\shaders\CommonDepth.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\RayMissGI.rmiss">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayGenGI.rgen">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitGI.rchit">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitDefault2.rchit">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitDefault1.rchit">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

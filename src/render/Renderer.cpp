@@ -35,6 +35,7 @@
 #include "passes/DepthPrepass.h"
 #include "data/TextureData.h"
 #include "passes/ClusterComputePass.h"
+#include "passes/RTGIPass.h"
 
 namespace CGE
 {
@@ -106,6 +107,8 @@ namespace CGE
 		gBufferPass->Init();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
 		rtShadowPass->Init();
+		rtGIPass = new RTGIPass(HashString("RTGIPass"));
+		rtGIPass->Init();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
 		deferredLightingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
@@ -159,9 +162,13 @@ namespace CGE
 		// gbuffer pass
 		gBufferPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
-		// deferred lighting pass
+		// rt shadows light visibility pass
 		rtShadowPass->Update();
 		rtShadowPass->Execute(&cmdBuffer);
+		//--------------------------------------------------------
+		// rt GI pass
+		rtGIPass->Update();
+		rtGIPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// deferred lighting pass
 		deferredLightingPass->Execute(&cmdBuffer);
@@ -209,6 +216,7 @@ namespace CGE
 		delete deferredLightingPass;
 		delete gBufferPass;
 		delete rtShadowPass;
+		delete rtGIPass;
 		delete m_clusterComputePass;
 	
 		Scene* scene = Engine::GetSceneInstance();
