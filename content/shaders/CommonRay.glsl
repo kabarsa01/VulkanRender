@@ -9,6 +9,11 @@
 //#extension GL_EXT_scalar_block_layout : enable
 //#extension GL_GOOGLE_include_directive : enable
 
+struct HitPayloadDebug
+{
+	vec3 color;
+};
+
 bool RayQueryIsShadow(accelerationStructureEXT tlas, vec3 pos, vec3 dir, float startOffset, float dist)
 {
 	rayQueryEXT rayQuery;

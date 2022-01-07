@@ -183,6 +183,7 @@ namespace CGE
 		std::function func = [this]() { ScanForAbandonedResources(); };
 		std::shared_ptr<Job<void()>> job = std::make_shared<Job<void()>>(std::move(func));
 		ThreadPool::GetInstance()->AddJob(job);
+		//ScanForAbandonedResources();
 	}
 
 	void DataManager::ScanForAbandonedResources()
@@ -213,7 +214,8 @@ namespace CGE
 			std::uniform_int_distribution<uint32_t> dist(0, static_cast<uint32_t>(m_resourcesTable.size()) - 1);
 
 			auto it = m_resourcesTable.begin();
-			std::advance(it, dist(rng));
+			uint32_t offset = dist(rng);
+			std::advance(it, offset);
 
 			auto endIt = m_resourcesTable.end();
 			uint16_t counter = 0;

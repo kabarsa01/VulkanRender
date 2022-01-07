@@ -8,6 +8,17 @@
 namespace CGE
 {
 
+	std::vector<vk::DescriptorSetLayout> ShaderResourceMapper::GetNativeLayouts()
+	{
+		std::vector<vk::DescriptorSetLayout> layouts;
+		layouts.resize(m_sets.size());
+		for (uint32_t idx = 0; idx < m_sets.size(); ++idx)
+		{
+			layouts[idx] = m_sets[idx].GetLayout();
+		}
+		return layouts;
+	}
+
 	void ShaderResourceMapper::SetShaders(const std::vector<RtShaderPtr>& shaders)
 	{
 		std::vector<ShaderPtr> shadersCast;
@@ -102,8 +113,15 @@ namespace CGE
 			set.Destroy();
 		}
 		m_sets.clear();
+		m_nativeSets.clear();
 		// collect all data
 		m_sets = VulkanDescriptorSet::Create(device, m_shaders);
+		m_nativeSets.resize(m_sets.size());
+		for (uint32_t idx = 0; idx < m_sets.size(); ++idx)
+		{
+			m_nativeSets[idx] = m_sets[idx].GetSet();
+		}
+
 		m_bindingsNames.clear();
 		for (ShaderPtr shader : m_shaders)
 		{
@@ -236,6 +254,7 @@ namespace CGE
 			set.Destroy();
 		}
 		m_sets.clear();
+		m_nativeSets.clear();
 	}
 
 }

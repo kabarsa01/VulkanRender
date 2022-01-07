@@ -147,7 +147,7 @@ goto :eof
 
 :treeProcess
 rem Do whatever you want here over the files of this subdir, for example:
-for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss *.rchit) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
 for /D %%d in (*) do (
     cd %%d
     call :treeProcess
@@ -226,7 +226,7 @@ goto :eof
 
 :treeProcess
 rem Do whatever you want here over the files of this subdir, for example:
-for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
+for %%f in (*.vert *.tesc *.tese *.geom *.frag *.comp *.rgen *.rmiss *.rchit) do glslangValidator --target-env vulkan1.2 -V %%f -o %%~nf.spv
 for /D %%d in (*) do (
     cd %%d
     call :treeProcess
@@ -291,6 +291,7 @@ exit /b</Command>
     <ClCompile Include="src\render\RtScene.cpp" />
     <ClCompile Include="src\render\ShaderRegistry.cpp" />
     <ClCompile Include="src\render\shader\RtShader.cpp" />
+    <ClCompile Include="src\render\shader\ShaderBindingTable.cpp" />
     <ClCompile Include="src\render\shader\ShaderResourceMapper.cpp" />
     <ClCompile Include="src\render\shader\VulkanShaderModule.cpp" />
     <ClCompile Include="src\render\shader\Shader.cpp" />
@@ -369,6 +370,7 @@ exit /b</Command>
     <ClInclude Include="src\render\RtScene.h" />
     <ClInclude Include="src\render\ShaderRegistry.h" />
     <ClInclude Include="src\render\shader\RtShader.h" />
+    <ClInclude Include="src\render\shader\ShaderBindingTable.h" />
     <ClInclude Include="src\render\shader\ShaderResourceMapper.h" />
     <ClInclude Include="src\render\shader\VulkanShaderModule.h" />
     <ClInclude Include="src\render\shader\Shader.h" />
@@ -405,7 +407,12 @@ exit /b</Command>
     <None Include="content\shaders\LightClustering.comp" />
     <None Include="content\shaders\PostProcessFrag.frag" />
     <None Include="content\shaders\PostProcessVert.vert" />
+    <None Include="content\shaders\RayClosestHitDefault1.rchit" />
+    <None Include="content\shaders\RayClosestHitDefault2.rchit" />
+    <None Include="content\shaders\RayClosestHitGI.rchit" />
+    <None Include="content\shaders\RayGenGI.rgen" />
     <None Include="content\shaders\RayGenShadows.rgen" />
+    <None Include="content\shaders\RayMissGI.rmiss" />
     <None Include="content\shaders\RayMissShadows.rmiss" />
     <None Include="content\shaders\ScreenSpaceVert.vert" />
   </ItemGroup>

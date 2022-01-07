@@ -303,6 +303,9 @@
     <ClCompile Include="src\render\memory\ArrayMemoryChunk.cpp">
       <Filter>Source Files\render\memory</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\shader\ShaderBindingTable.cpp">
+      <Filter>Source Files\render\shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -533,6 +536,9 @@
     <ClInclude Include="src\render\memory\ArrayMemoryChunk.h">
       <Filter>Source Files\render\memory</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\shader\ShaderBindingTable.h">
+      <Filter>Source Files\render\shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="content\shaders\DeferredLighting.frag">
@@ -575,6 +581,21 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="content\shaders\CommonDepth.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayMissGI.rmiss">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayGenGI.rgen">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitGI.rchit">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitDefault2.rchit">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\RayClosestHitDefault1.rchit">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -70,20 +70,27 @@ float GetPixelVisibility(uint index, vec2 uvCoord)
 	return 1.0f;
 }
 
-float GetPixelVisibilityFiltered(uint index)
+float GetPixelVisibilityFiltered(uint index, float linearDepth, float near, float far, uint clusterIndex)
 {
 	float value = 0.0f;
-	vec2 uvDelta = vec2(0.001f,0.002f);
+	float counter = 0.0000001f;
+	vec2 uvDelta = vec2(0.001f,0.001f);
 
-	for (int x = 0; x < 1; x++)
+	for (int x = -1; x < 2; x++)
 	{
-		for (int y = 0; y < 1; y++)
+		for (int y = -1; y < 2; y++)
 		{
-			value += GetPixelVisibility(index, uv + uvDelta * vec2(x,y));
+			vec2 sampleUV = uv + uvDelta * vec2(x,y);
+			float linearDepthSample = near * far / (far + texture(sampler2D( depthTex, repeatLinearSampler ), sampleUV).r * (near - far));
+			if (abs(linearDepthSample - linearDepth) < 0.01f)
+			{
+				value += GetPixelVisibility(index, sampleUV);
+				counter += 1.0f;
+			}
 		}
 	}
 
-	return value / 1.0f;
+	return value / counter;
 }
 
 void main() {
@@ -121,7 +128,7 @@ void main() {
 
 	vec3 albedo = texture( sampler2D( albedoTex, repeatLinearSampler ), uv ).xyz;
 	vec3 N = texture( sampler2D( normalsTex, repeatLinearSampler ), uv ).xyz;
-	float roughness = 0.4;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
+	float roughness = 0.94;//texture( sampler2D( roughnessTex, repeatLinearSampler ), uv ).r;
 	float metallness = 0.0;//texture( sampler2D( metallnessTex, repeatLinearSampler ), uv ).r;
 
 	vec3 Lo = vec3(0.0);
@@ -142,8 +149,8 @@ void main() {
 
 	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index, uv);
-		if (visibilityFactor <= 0.0f)
+		float visibilityFactor = GetPixelVisibilityFiltered(index, linearDepth, near, far, clusterIndex);//GetPixelVisibility(index, uv);
+		if (visibilityFactor <= 0.1f)
 		{
 			continue;
 		}
@@ -157,8 +164,8 @@ void main() {
 	}
 	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index, uv);
-		if (visibilityFactor <= 0.0f)
+		float visibilityFactor = GetPixelVisibilityFiltered(index, linearDepth, near, far, clusterIndex);//GetPixelVisibility(index, uv);
+		if (visibilityFactor <= 0.1f)
 		{
 			continue;
 		}
@@ -180,8 +187,8 @@ void main() {
 	}
 	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
 	{
-		float visibilityFactor = GetPixelVisibility(index, uv);
-		if (visibilityFactor <= 0.0f)
+		float visibilityFactor = GetPixelVisibilityFiltered(index, linearDepth, near, far, clusterIndex);//GetPixelVisibility(index, uv);
+		if (visibilityFactor <= 0.1f)
 		{
 			continue;
 		}

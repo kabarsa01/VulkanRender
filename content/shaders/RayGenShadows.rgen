@@ -108,17 +108,17 @@ void main()
 		if (surfaceCosine >= 0.0f)
 		{
 			isVisible = false;
-		    traceRayEXT(tlas,               // acceleration structure
-				  rayFlags,                 // rayFlags
-				  0xFF,                     // cullMask
-				  0,							    // sbtRecordOffset
-				  0,					           // sbtRecordStride
-				  0,					            // missIndex
+		    traceRayEXT(tlas,						// acceleration structure
+				  rayFlags,							// rayFlags
+				  0xFF,								// cullMask
+				  0,								// sbtRecordOffset
+				  0,								// sbtRecordStride
+				  0,								// missIndex
 				  rayStart,							// ray origin
-				  tMin,						      // ray min range
-				  normalize(pixelToLightDir.xyz),  // ray direction
-				  tMax,                     // ray max range
-				  0                         // payload (location = 0)
+				  tMin,								// ray min range
+				  normalize(pixelToLightDir.xyz),	// ray direction
+				  tMax,								// ray max range
+				  0									// payload (location = 0)
 			);
 			visibility = WriteVisibility(visibility, index, isVisible);
 		}

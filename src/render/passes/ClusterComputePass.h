@@ -14,6 +14,9 @@ namespace CGE
 	struct ClusterComputeData : public Identifiable<ClusterComputeData>
 	{
 		std::vector<MaterialPtr> computeMaterials;
+		std::vector<BufferDataPtr> clusterLightsData;
+		std::vector<BufferDataPtr> lightsList;
+		std::vector<BufferDataPtr> lightsIndices;
 	};
 
 	class ClusterComputePass : public RenderPassBase

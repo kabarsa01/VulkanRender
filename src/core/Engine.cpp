@@ -47,6 +47,10 @@ namespace CGE
 	
 	uint32_t Engine::GetFrameIndex(uint32_t div)
 	{
+		if (div == 0)
+		{
+			return 0;
+		}
 		return static_cast<uint32_t>(m_staticInstance->m_frameCount % div);
 	}
 

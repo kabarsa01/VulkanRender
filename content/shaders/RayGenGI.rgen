@@ -1,0 +1,216 @@
+#version 460
+#extension GL_EXT_ray_tracing : require
+#extension GL_EXT_buffer_reference : require
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_nonuniform_qualifier : enable
+
+
+#include "CommonFrameData.glsl"
+#include "CommonRay.glsl"
+#include "CommonLight.glsl"
+#include "CommonDepth.glsl"
+
+layout(location = 0) rayPayloadEXT HitPayloadDebug poop;
+
+layout(set = 1, binding = 0) uniform texture2D normalTex;
+layout(set = 1, binding = 1) uniform texture2D depthTex;
+// light clustering data
+layout(set = 1, binding = 2) readonly buffer ClusterLightsData
+{
+	uvec2 clusters[32][32][64];
+	uint lightIndices[32][32][64][128];
+} clusterLightsData;
+// lights list data
+struct LightInfo
+{
+	vec4 position;
+	vec4 direction;
+	vec4 color;
+	vec4 rai;
+};
+layout(set = 1, binding = 3) uniform LightsList
+{
+	LightInfo lights[1024];
+} lightsList;
+layout(set = 1, binding = 4) uniform LightsIndices
+{
+	uvec2 directionalPosition;
+	uvec2 spotPosition;
+	uvec2 pointPosition;
+} lightsIndices;
+
+layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
+layout(set = 1, binding = 6, rgba16f) uniform image2D lightTex;
+layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[32];
+
+//layout(buffer_reference) buffer TestStuff
+//{
+//	vec3 coords[];
+//};
+//layout(set = 1, binding = 7) buffer TestStuffBlock
+//{
+//	TestStuff stuffs[];
+//} testStuffBlock;
+// light texture to store accumulated GI
+
+uint WriteVisibility(uint vis, uint index, bool visible)
+{
+	uint base = 1;
+	return visible ? vis | (base << index) : vis & ~(base << index);
+}
+
+void main() 
+{
+	float tMin = 0.1f;
+	float tMax = 1000.f;
+    uint  rayFlags = gl_RayFlagsOpaqueEXT;
+
+	uint visibility = 0;
+
+	const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5, 0.5);
+    const vec2 uv = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
+
+	vec2 clusteredUV = (uv + 0.5f * (globalData.clusterScreenOverflow - vec2(1.0f))) / globalData.clusterScreenOverflow;
+    uint clusterX = uint(clamp(clusteredUV.x * globalData.numClusters.x, 0, globalData.numClusters.x - 1));
+	uint clusterY = uint(clamp(clusteredUV.y * globalData.numClusters.y, 0, globalData.numClusters.y - 1));
+
+	float near = globalData.cameraNear;
+	float far = globalData.cameraFar;
+	float depth = texture(sampler2D( depthTex, repeatLinearSampler ), uv).r;
+	if (depth == 0.0 || depth >= 1.0)
+	{
+		return;
+	}
+
+	float linearDepth = near * far / (far + depth * (near - far));
+	float height = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
+	float width = height * globalData.cameraAspect;
+	float pixelViewSpaceX = width * (-0.5 + uv.x);
+	float pixelViewSpaceY = height * (-0.5 + uv.y);
+
+	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(pixelViewSpaceX, pixelViewSpaceY, -linearDepth, 1.0);
+	pixelCoordWorld /= pixelCoordWorld.w;
+	uint clusterIndex = clamp(uint(64.0 * log(linearDepth/near) / log(far/near)), 0, 63); // clump it just in case
+
+	uvec2 lightsPositions = clusterLightsData.clusters[clusterX][clusterY][clusterIndex];
+	uint directionalCount = (lightsPositions.x >> 8) & 0x000000ff;
+	uint directionalOffset = lightsPositions.x & 0x000000ff;
+	uint spotCount = (lightsPositions.x >> 24) & 0x000000ff;
+	uint spotOffset = (lightsPositions.x >> 16) & 0x000000ff;
+	uint pointCount = (lightsPositions.y >> 8) & 0x000000ff;
+	uint pointOffset = lightsPositions.y & 0x000000ff;
+
+	vec3 N = normalize( texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz );
+	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
+
+	traceRayEXT(tlas,							// acceleration structure
+			rayFlags,							// rayFlags
+			0xFF,								// cullMask
+			1,									// sbtRecordOffset
+			0,									// sbtRecordStride
+			0,									// missIndex
+			rayStart,							// ray origin
+			tMin,								// ray min range
+			N,									// ray direction
+			tMax,								// ray max range
+			0									// payload (location = 0)
+	);
+
+//
+//	uint lightIndex = 0;
+//	for (uint index = directionalOffset; index < directionalOffset + directionalCount; index++)
+//	{
+//		if (lightIndex > 31)
+//		{
+//			return;
+//		}
+//
+//		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+//		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+//
+//		vec3 pixelToLightDir = -lightInfo.direction.xyz;
+//		float surfaceCosine = dot(normalize(pixelToLightDir), N);
+//
+//		if (surfaceCosine >= 0.0f)
+//		{
+//			isVisible = false;
+//		    traceRayEXT(tlas,						// acceleration structure
+//				  rayFlags,							// rayFlags
+//				  0xFF,								// cullMask
+//				  0,								// sbtRecordOffset
+//				  0,								// sbtRecordStride
+//				  0,								// missIndex
+//				  rayStart,							// ray origin
+//				  tMin,								// ray min range
+//				  normalize(pixelToLightDir.xyz),	// ray direction
+//				  tMax,								// ray max range
+//				  0									// payload (location = 0)
+//			);
+//			visibility = WriteVisibility(visibility, index, isVisible);
+//		}
+//	}
+//	for (uint index = spotOffset; index < spotOffset + spotCount; index++)
+//	{
+//		if (lightIndex > 31)
+//		{
+//			return;
+//		}
+//
+//		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+//		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+//
+//		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+//		float surfaceCosine = dot(normalize(pixelToLightDir), N);
+//
+//		if (surfaceCosine >= 0.0f)
+//		{
+//			isVisible = false;
+//		    traceRayEXT(tlas,               // acceleration structure
+//				  rayFlags,                 // rayFlags
+//				  0xFF,                     // cullMask
+//				  0,							    // sbtRecordOffset
+//				  0,					           // sbtRecordStride
+//				  0,					            // missIndex
+//				  rayStart,							// ray origin
+//				  tMin,						      // ray min range
+//				  normalize(pixelToLightDir.xyz),  // ray direction
+//				  length(pixelToLightDir),                     // ray max range
+//				  0                         // payload (location = 0)
+//			);
+//			visibility = WriteVisibility(visibility, index, isVisible);
+//		}
+//	}
+//	for (uint index = pointOffset; index < pointOffset + pointCount; index++)
+//	{
+//		if (lightIndex > 31)
+//		{
+//			return;
+//		}
+//
+//		uint lightIndicesPacked = clusterLightsData.lightIndices[clusterX][clusterY][clusterIndex][index / 2];
+//		LightInfo lightInfo = lightsList.lights[UnpackLightIndex(lightIndicesPacked, index)];
+//
+//		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
+//		float surfaceCosine = dot(normalize(pixelToLightDir), N);
+//
+//		if (surfaceCosine >= 0.0f)
+//		{
+//			isVisible = false;
+//		    traceRayEXT(tlas,               // acceleration structure
+//				  rayFlags,                 // rayFlags
+//				  0xFF,                     // cullMask
+//				  0,							    // sbtRecordOffset
+//				  0,					           // sbtRecordStride
+//				  0,					            // missIndex
+//				  rayStart,							// ray origin
+//				  tMin,						      // ray min range
+//				  normalize(pixelToLightDir.xyz),  // ray direction
+//				  length(pixelToLightDir),                     // ray max range
+//				  0                         // payload (location = 0)
+//			);
+//			visibility = WriteVisibility(visibility, index, isVisible);
+//		}
+//	}
+
+	imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(poop.color, 1.0));
+}

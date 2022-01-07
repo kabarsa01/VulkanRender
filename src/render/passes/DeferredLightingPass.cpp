@@ -108,7 +108,8 @@ namespace CGE
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
 
-		assert((depthData->depthTextures.size() == clusteringData->computeMaterials.size()) && (clusteringData->computeMaterials.size() == gbufferData->albedos.size()), "Wrong number of resources");
+		bool isValid = (depthData->depthTextures.size() == clusteringData->computeMaterials.size()) && (clusteringData->computeMaterials.size() == gbufferData->albedos.size());
+		assert(isValid && "Number of render targets mismatch");
 
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
 		{

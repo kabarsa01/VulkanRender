@@ -1,5 +1,6 @@
 #include "ResourceUtils.h"
 #include "data/Texture2D.h"
+#include "data/DataManager.h"
 
 namespace CGE
 {
@@ -365,9 +366,7 @@ namespace CGE
 
 	BufferDataPtr ResourceUtils::CreateBufferData(HashString name, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal /*= true*/)
 	{
-		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(name, inSize, inUsage, deviceLocal);
-		buffer->Create();
-		return buffer;
+		return DataManager::GetInstance()->RequestResourceByType<BufferData>(name, inSize, inUsage, deviceLocal);
 	}
 
 	std::vector<BufferDataPtr> ResourceUtils::CreateBufferDataArray(HashString name, uint32_t count, vk::DeviceSize inSize, vk::BufferUsageFlags inUsage, bool deviceLocal /*= true*/)

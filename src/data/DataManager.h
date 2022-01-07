@@ -51,7 +51,7 @@ namespace CGE
 		static std::mutex m_staticMutex;
 
 		MessageSubscriber m_messageSubscriber;
-		std::array<std::vector<ResourcePtr>, 4> m_cleanupChain;
+		std::array<std::vector<ResourcePtr>, 3> m_cleanupChain;
 		uint32_t m_cleanupChainIndex = 0;
 	
 		DataManager();
