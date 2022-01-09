@@ -8,6 +8,6 @@ layout(location = 0) rayPayloadInEXT HitPayloadDebug payload;
 
 void main()
 {
-	payload.color = vec3(0.5f, 0.0f, 0.5f);
+	payload.color = vec3(0.0f, 0.0f, 0.0f);
 }
 

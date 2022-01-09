@@ -15,7 +15,7 @@ namespace CGE
 	class MeshImporter
 	{
 	public:
-		void Import(std::string inPath);
+		void Import(std::string inPath, bool generateSmoothNormals = false);
 		std::vector<std::shared_ptr<MeshData>>& GetMeshes();
 	protected:
 		std::string path;

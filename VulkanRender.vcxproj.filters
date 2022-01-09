@@ -598,5 +598,8 @@
     <None Include="content\shaders\RayClosestHitDefault1.rchit">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\CommonSampling.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

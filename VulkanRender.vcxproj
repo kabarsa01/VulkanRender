@@ -401,6 +401,7 @@ exit /b</Command>
     <None Include="content\shaders\CommonFrameData.glsl" />
     <None Include="content\shaders\CommonLight.glsl" />
     <None Include="content\shaders\CommonRay.glsl" />
+    <None Include="content\shaders\CommonSampling.glsl" />
     <None Include="content\shaders\DeferredLighting.frag" />
     <None Include="content\shaders\GBufferFrag.frag" />
     <None Include="content\shaders\GBufferVert.vert" />

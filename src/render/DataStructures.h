@@ -70,5 +70,12 @@ namespace CGE
 		alignas(8) glm::u32vec2 clusters[g_ClusteringResolution.x][g_ClusteringResolution.y][g_ClusteringResolution.z];
 		alignas(4) glm::uint lightIndices[g_ClusteringResolution.x][g_ClusteringResolution.y][g_ClusteringResolution.z][g_LightsPerCluster / 2];
 	};
+
+	// coordinate list
+	struct alignas(16) CoordinateList
+	{
+		alignas(16) glm::vec4 coords[1000];
+		alignas(4) glm::uint size;
+	};
 	
 }

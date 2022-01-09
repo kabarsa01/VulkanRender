@@ -11,6 +11,7 @@
 #include "core/Engine.h"
 #include "../Renderer.h"
 #include "../PerFrameData.h"
+#include "import/MeshImporter.h"
 
 
 namespace CGE
@@ -74,9 +75,9 @@ namespace CGE
 		{
 			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
 				ImageLayout::eUndefined,
-				ImageLayout::eGeneral,
-				vk::AccessFlagBits::eShaderRead,
+				ImageLayout::eShaderReadOnlyOptimal,
 				vk::AccessFlagBits::eShaderWrite,
+				vk::AccessFlagBits::eShaderRead,
 				vk::ImageAspectFlagBits::eColor,
 				0, 1, 0, 1);
 			barriers.push_back(visibilityBarrier);
@@ -97,6 +98,15 @@ namespace CGE
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
 		barriers.push_back(normalsBarrier);
+		// lighting data
+		vk::ImageMemoryBarrier lightingData = m_lightingData[frameIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eGeneral,
+			vk::AccessFlagBits::eShaderRead,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		barriers.push_back(lightingData);
 
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,
@@ -123,11 +133,35 @@ namespace CGE
 		vk::StridedDeviceAddressRegionKHR rayMissRegion = sbt.GetRegion(ERtShaderType::RST_MISS, m_rayMiss->GetResourceId());
 		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
-		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 2, executeContext.GetHeight() / 2, 1);
+		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth(), executeContext.GetHeight(), 1);
 	}
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
+		MeshImporter meshImporter;
+		meshImporter.Import("./content/meshes/hemisphere_sample/hemisphere_sample.fbx");
+		for (unsigned int MeshIndex = 0; MeshIndex < meshImporter.GetMeshes().size(); MeshIndex++)
+		{
+			m_hemisphereSamplingPoints = meshImporter.GetMeshes()[MeshIndex];
+			m_hemisphereSamplingPoints->CreateBuffer();
+			break;
+		}
+		m_samplingPointsBuffer = ResourceUtils::CreateBufferData("GI_hemisphere_sampling", sizeof(CoordinateList), vk::BufferUsageFlagBits::eUniformBuffer, true);
+		{
+			CoordinateList samplingPoints;
+			auto& vertices = m_hemisphereSamplingPoints->vertices;
+			for (uint32_t idx = 0; idx < vertices.size(); ++idx)
+			{
+				if (idx >= sizeof(samplingPoints.coords)/16)
+				{
+					break;
+				}
+				samplingPoints.coords[idx] = glm::vec4(vertices[idx].position, 1.0f) * glm::vec4(1.0f, 1.0f, -1.0f, 1.0f);
+			}
+			samplingPoints.size = static_cast<uint32_t>(vertices.size());
+			m_samplingPointsBuffer->CopyTo(sizeof(CoordinateList), reinterpret_cast<const char*>( &samplingPoints ));
+		}
+
 		m_rayGen = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayGenGI.spv", ERtShaderType::RST_RAY_GEN);
 		m_rayMiss = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayMissGI.spv", ERtShaderType::RST_MISS);
 		//m_closestHit = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayClosestHitGI.spv", ERtShaderType::RST_CLOSEST_HIT);
@@ -144,13 +178,16 @@ namespace CGE
 		auto rtShadowData = dataTable.GetPassData<RTShadowsData>();
 
 		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);
-		m_frameData.resize(2);
+		dataTable.CreatePassData<RTGIPassData>()->lightingData = m_lightingData;
 
+		m_frameData.resize(2);
 		for (uint32_t idx = 0; idx < m_frameData.size(); ++idx)
 		{
 			auto& frameData = m_frameData[idx];
 			frameData.pipelineLayout = nullptr;
 			frameData.pipeline = nullptr;
+
+			frameData.sbt.AddGlobalRtMaterial(m_globalRTGIMaterial);
 
 			auto& resMapper = frameData.resourceMapper;
 
@@ -165,6 +202,8 @@ namespace CGE
 			resMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
 			// rt light visibility data
 			resMapper.AddSampledImageArray("visibilityTextures", rtShadowData->visibilityTextures);
+			// hemisphere sampling points prebaked
+			resMapper.AddUniformBuffer("samplingPoints", m_samplingPointsBuffer);
 			// shaders
 			resMapper.SetShaders(std::vector<RtShaderPtr>{ m_rayGen, m_rayMiss });
 

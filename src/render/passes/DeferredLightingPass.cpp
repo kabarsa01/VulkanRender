@@ -10,6 +10,7 @@
 #include "core/Engine.h"
 #include "ClusterComputePass.h"
 #include "DepthPrepass.h"
+#include "RTGIPass.h"
 
 namespace CGE
 {
@@ -26,6 +27,7 @@ namespace CGE
 		auto clusterData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
+		auto rtGIData = dataTable.GetPassData<RTGIPassData>();
 
 		uint32_t frameIndex = Engine::GetFrameIndex(m_lightingMaterials.size());
 		MaterialPtr lightingMat = m_lightingMaterials[frameIndex];
@@ -67,6 +69,14 @@ namespace CGE
 				0, 1, 0, 1);
 			barriers.push_back(visibilityBarrier);
 		}
+		ImageMemoryBarrier giLightingData = rtGIData->lightingData[Engine::GetFrameIndex(rtGIData->lightingData.size())]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eShaderWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		barriers.push_back(giLightingData);
 
 		commandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eAllGraphics | PipelineStageFlagBits::eRayTracingShaderKHR,
@@ -107,6 +117,7 @@ namespace CGE
 		auto clusteringData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
+		auto rtGIData = dataTable.GetPassData<RTGIPassData>();
 
 		bool isValid = (depthData->depthTextures.size() == clusteringData->computeMaterials.size()) && (clusteringData->computeMaterials.size() == gbufferData->albedos.size());
 		assert(isValid && "Number of render targets mismatch");

@@ -9,26 +9,30 @@
 
 namespace CGE
 {
-	void MeshImporter::Import(std::string inPath)
+
+	void MeshImporter::Import(std::string inPath, bool generateSmoothNormals /*= false*/)
 	{
 		path = inPath;
-		Assimp::Importer LocalImporter;
-		const aiScene* scene = LocalImporter.ReadFile(
-			inPath, 
-			aiProcess_Triangulate
+		Assimp::Importer localImporter;
+		uint32_t flags = aiProcess_Triangulate
 			| aiProcess_CalcTangentSpace
-	//		| aiProcess_GenSmoothNormals
-	//		| aiProcess_ValidateDataStructure
-	//		| aiProcess_FindDegenerates
+			| aiProcess_JoinIdenticalVertices
+			| aiProcess_ValidateDataStructure
+			//| aiProcess_FindDegenerates
 			| aiProcess_FindInvalidData
 			| aiProcess_MakeLeftHanded
 			| aiProcess_FlipWindingOrder
-	//		| aiProcess_FlipUVs
-		);
+			//| aiProcess_FlipUVs
+			;
+		if (generateSmoothNormals)
+		{
+			flags |= aiProcess_GenSmoothNormals;
+		}
+		const aiScene* scene = localImporter.ReadFile(inPath, flags);
 	
 		if ( (scene == nullptr) || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || (scene->mRootNode == nullptr) )
 		{
-			std::cout << "ASSIMP::ERROR import " << LocalImporter.GetErrorString() << std::endl;
+			std::cout << "ASSIMP::ERROR import " << localImporter.GetErrorString() << std::endl;
 	
 			if (scene != nullptr)
 			{
@@ -73,9 +77,12 @@ namespace CGE
 			V.position.y = inAiMesh->mVertices[Index].y;
 			V.position.z = inAiMesh->mVertices[Index].z;
 	
-			V.normal.x = inAiMesh->mNormals[Index].x;
-			V.normal.y = inAiMesh->mNormals[Index].y;
-			V.normal.z = inAiMesh->mNormals[Index].z;
+			if (inAiMesh->HasNormals())
+			{
+				V.normal.x = inAiMesh->mNormals[Index].x;
+				V.normal.y = inAiMesh->mNormals[Index].y;
+				V.normal.z = inAiMesh->mNormals[Index].z;
+			}
 	
 			// we use only one set of texture coordinates for one
 			if (inAiMesh->HasTextureCoords(0))

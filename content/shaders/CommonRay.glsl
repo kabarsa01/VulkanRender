@@ -14,6 +14,20 @@ struct HitPayloadDebug
 	vec3 color;
 };
 
+// ray payload for initial hemisphere rays that will hit other surfaces
+struct HitPayloadGI
+{
+	vec3 worldPos;
+	uint instanceId;
+};
+
+// coordinate list
+struct CoordinateList
+{
+	vec3 coords[1000];
+	uint size;
+};
+
 bool RayQueryIsShadow(accelerationStructureEXT tlas, vec3 pos, vec3 dir, float startOffset, float dist)
 {
 	rayQueryEXT rayQuery;

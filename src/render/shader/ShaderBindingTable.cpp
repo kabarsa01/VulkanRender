@@ -89,7 +89,8 @@ namespace CGE
 	vk::StridedDeviceAddressRegionKHR ShaderBindingTable::GetRegion(ERtShaderType type, HashString id)
 	{
 		uint32_t typeOffset = m_groupTypeOffsets[ToInt(type)];
-		uint32_t nextTypeOffset = m_groupTypeOffsets[ToInt(type) + 1];
+		uint32_t nextTypeIndex = type > ERtShaderType::RST_MISS ? ToInt(ERtShaderType::RST_MAX) : ToInt(type) + 1;
+		uint32_t nextTypeOffset = m_groupTypeOffsets[nextTypeIndex];
 		uint32_t groupOffsetIndex = GetGroupOffset(id);
 		if (groupOffsetIndex == UINT32_MAX)
 		{
