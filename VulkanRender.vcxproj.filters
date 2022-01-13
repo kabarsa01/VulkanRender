@@ -601,5 +601,8 @@
     <None Include="content\shaders\CommonSampling.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\LightGrid.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

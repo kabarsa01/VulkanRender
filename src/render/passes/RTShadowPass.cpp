@@ -53,12 +53,9 @@ namespace CGE
 		auto clusterComputeData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		uint32_t depthIndex = Engine::GetFrameIndex(depthData->depthTextures.size());
-		uint32_t computeIndex = Engine::GetFrameIndex(clusterComputeData->computeMaterials.size());
-
-		BufferDataPtr buffer = clusterComputeData->computeMaterials[computeIndex]->GetStorageBuffer("clusterLightsData");
 
 		// barriers ----------------------------------------------
-		BufferMemoryBarrier clusterDataBarrier = buffer->GetBuffer().CreateMemoryBarrier(
+		BufferMemoryBarrier clusterDataBarrier = clusterComputeData->clusterLightsData->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead);
@@ -167,20 +164,18 @@ namespace CGE
 
 		uint32_t depthCount = depthData->depthTextures.size();
 		uint32_t gbufferCount = gbufferData->albedos.size();
-		uint32_t clusterDataCount = clusterData->computeMaterials.size();
+		uint32_t clusterDataCount = clusterData->lightsList.size();
 		assert((depthCount == gbufferCount) && (gbufferCount == clusterDataCount));
 
 		m_shaderResourceMappers.resize(depthCount);
 		m_frameDataArray.resize(depthCount);
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
 		{
-			MaterialPtr clusterMat = clusterData->computeMaterials[idx];
-
 			m_shaderResourceMappers[idx].AddSampledImage("normalTex", gbufferData->normals[idx]);
 			m_shaderResourceMappers[idx].AddSampledImage("depthTex", depthData->depthTextures[idx]);
-			m_shaderResourceMappers[idx].AddStorageBuffer("clusterLightsData", clusterMat->GetStorageBuffer("clusterLightsData"));
-			m_shaderResourceMappers[idx].AddUniformBuffer("lightsList", clusterMat->GetUniformBuffer("lightsList"));
-			m_shaderResourceMappers[idx].AddUniformBuffer("lightsIndices", clusterMat->GetUniformBuffer("lightsIndices"));
+			m_shaderResourceMappers[idx].AddStorageBuffer("clusterLightsData", clusterData->clusterLightsData);
+			m_shaderResourceMappers[idx].AddUniformBuffer("lightsList", clusterData->lightsList[idx]);
+			m_shaderResourceMappers[idx].AddUniformBuffer("lightsIndices", clusterData->lightsIndices[idx]);
 			// visibility image
 			m_shaderResourceMappers[idx].AddStorageImage("visibilityTex", m_visibilityTex);
 			m_shaderResourceMappers[idx].AddStorageImageArray("visibilityTextures", m_visibilityTextures);

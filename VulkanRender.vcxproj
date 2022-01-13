@@ -406,6 +406,7 @@ exit /b</Command>
     <None Include="content\shaders\GBufferFrag.frag" />
     <None Include="content\shaders\GBufferVert.vert" />
     <None Include="content\shaders\LightClustering.comp" />
+    <None Include="content\shaders\LightGrid.comp" />
     <None Include="content\shaders\PostProcessFrag.frag" />
     <None Include="content\shaders\PostProcessVert.vert" />
     <None Include="content\shaders\RayClosestHitDefault1.rchit" />

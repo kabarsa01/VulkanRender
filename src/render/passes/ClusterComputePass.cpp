@@ -10,6 +10,7 @@
 #include "utils/Singleton.h"
 #include "DepthPrepass.h"
 #include "data/DataManager.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -55,14 +56,26 @@ namespace CGE
 			1, &clusterDataBarrier,
 			static_cast<uint32_t>(barriers.size()), barriers.data());
 
-		PipelineData& pipelineData = executeContext.FindPipeline(m_computeMaterials[materialIndex]);
+		{
+			PipelineData& pipelineData = executeContext.FindPipeline(m_computeMaterials[materialIndex]);
 
-		DeviceSize offset = 0;
-		commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
-		commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
+			DeviceSize offset = 0;
+			commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
+			commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
-		glm::uvec2 numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
-		commandBuffer->dispatch(numClusters.x, numClusters.y, 1);
+			glm::uvec2 numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
+			commandBuffer->dispatch(numClusters.x, numClusters.y, 1);
+		}
+
+		{
+			PipelineData& gridPipelineData = executeContext.FindPipeline(m_gridComputeMaterials[materialIndex]);
+
+			DeviceSize offset = 0;
+			commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, gridPipelineData.pipeline);
+			commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, gridPipelineData.pipelineLayout, 0, gridPipelineData.descriptorSets, {});
+
+			commandBuffer->dispatch(25, 25, 6);
+		}
 	}
 
 	void ClusterComputePass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
@@ -74,26 +87,37 @@ namespace CGE
 
 		initContext.compute = true;
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
+
+		// storing for easier access
+		clusterDataPtr->lightsList = ResourceUtils::CreateBufferDataArray("lightsList", 2, sizeof(LightsList), vk::BufferUsageFlagBits::eUniformBuffer, true);
+		clusterDataPtr->lightsIndices = ResourceUtils::CreateBufferDataArray("lightsIndices", 2, sizeof(LightsIndices), vk::BufferUsageFlagBits::eUniformBuffer, true);
+		// clusters data
+		clusterDataPtr->clusterLightsData = ResourceUtils::CreateBufferData("clusterLightsData", sizeof(ClusterLightsData), vk::BufferUsageFlagBits::eStorageBuffer, true);
+		// grid data
+		clusterDataPtr->gridLightsData = CreateLightsGrid();
 		
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
 		{
 			MaterialPtr computeMaterial = DataManager::RequestResourceType<Material>("ClusterComputeMaterial_" + std::to_string(idx));
 			computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
-			computeMaterial->SetStorageBuffer("clusterLightsData", sizeof(ClusterLightsData), nullptr);
-			computeMaterial->SetUniformBuffer("lightsList", sizeof(LightsList), nullptr);
-			computeMaterial->SetUniformBuffer("lightsIndices", sizeof(LightsIndices), nullptr);
+			computeMaterial->SetStorageBufferExternal("clusterLightsData", clusterDataPtr->clusterLightsData);
+			computeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[0]);
+			computeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[0]);
 			computeMaterial->SetTexture("depthTexture", depthData->depthTextures[idx]);
 			computeMaterial->LoadResources();
 
 			m_computeMaterials.push_back(computeMaterial);
 
-			// storing for easier access
-			clusterDataPtr->clusterLightsData.push_back(computeMaterial->GetStorageBuffer("clusterLightsData"));
-			clusterDataPtr->lightsList.push_back(computeMaterial->GetUniformBuffer("lightsList"));
-			clusterDataPtr->lightsIndices.push_back(computeMaterial->GetUniformBuffer("lightsIndices"));
-		}
+			MaterialPtr gridComputeMaterial = DataManager::RequestResourceType<Material>("GridComputeMaterial_" + std::to_string(idx));
+			gridComputeMaterial->SetComputeShaderPath("content/shaders/LightGrid.spv");
+			gridComputeMaterial->SetStorageBufferExternal("gridLightsData", clusterDataPtr->gridLightsData);
+			gridComputeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[0]);
+			gridComputeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[0]);
+			gridComputeMaterial->SetTexture("depthTexture", depthData->depthTextures[idx]);
+			gridComputeMaterial->LoadResources();
 
-		clusterDataPtr->computeMaterials = m_computeMaterials;
+			m_gridComputeMaterials.push_back(gridComputeMaterial);
+		}
 	}
 
 	void ClusterComputePass::HandleUpdate(const std::shared_ptr<GlobalPostSceneMessage> msg)
@@ -128,6 +152,40 @@ namespace CGE
 		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsList>("lightsList", *m_lightsList);
 		m_computeMaterials[materialIndex]->UpdateUniformBuffer<LightsIndices>("lightsIndices", *m_lightsIndices);
 
+	}
+
+	BufferDataPtr ClusterComputePass::CreateLightsGrid()
+	{
+		uint64_t headerSizeBytes = sizeof(GridHierarchy);
+
+		GridHierarchy grid;
+		grid.gridSpecs = glm::uvec4(25, 25, 25, 6);
+
+		grid.lightsPerCell = 256;
+
+		uint64_t cellSizeBytes = grid.lightsPerCell * 2; // 2 bytes per light index
+		uint64_t gridSizeBytes = cellSizeBytes * grid.gridSpecs.x * grid.gridSpecs.y * grid.gridSpecs.z;
+		uint64_t gridsSizeBytes = gridSizeBytes * grid.gridSpecs.w;
+		uint64_t gridsListSizeBytes = grid.gridSpecs.w * sizeof(vk::DeviceAddress);
+
+		uint64_t totalSize = headerSizeBytes + gridsListSizeBytes + gridsSizeBytes;
+		BufferDataPtr buffer = ResourceUtils::CreateBufferData("lights_grid", totalSize, vk::BufferUsageFlagBits::eStorageBuffer, true);
+
+		grid.grids = buffer->GetDeviceAddress() + headerSizeBytes;
+		uint64_t gridsOffsetBytes = headerSizeBytes + gridsListSizeBytes;
+		char* data = new char[gridsOffsetBytes]();
+		memcpy(data, &grid, headerSizeBytes);
+
+		for (uint32_t idx = 0; idx < grid.gridSpecs.w; ++idx)
+		{
+			vk::DeviceAddress* deviceAddress = reinterpret_cast<vk::DeviceAddress*>(data + headerSizeBytes);
+			deviceAddress[idx] = buffer->GetDeviceAddress() + gridsOffsetBytes + (idx * gridSizeBytes);
+		}
+
+		buffer->CopyTo(gridsOffsetBytes, data);
+		delete[] data;
+
+		return buffer;
 	}
 
 }

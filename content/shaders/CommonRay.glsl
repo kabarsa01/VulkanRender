@@ -18,7 +18,7 @@ struct HitPayloadDebug
 struct HitPayloadGI
 {
 	vec3 worldPos;
-	uint instanceId;
+	uint instanceCustomId;
 };
 
 // coordinate list

@@ -107,10 +107,10 @@ namespace CGE
 		gBufferPass->Init();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
 		rtShadowPass->Init();
-		rtGIPass = new RTGIPass(HashString("RTGIPass"));
-		rtGIPass->Init();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
 		deferredLightingPass->Init();
+		rtGIPass = new RTGIPass(HashString("RTGIPass"));
+		rtGIPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 		postProcessPass->Init();
 	}
@@ -166,12 +166,12 @@ namespace CGE
 		rtShadowPass->Update();
 		rtShadowPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
+		// deferred lighting pass
+		deferredLightingPass->Execute(&cmdBuffer);
+		//--------------------------------------------------------
 		// rt GI pass
 		rtGIPass->Update();
 		rtGIPass->Execute(&cmdBuffer);
-		//--------------------------------------------------------
-		// deferred lighting pass
-		deferredLightingPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
 		// post process pass
 		postProcessPass->Execute(&cmdBuffer);

@@ -6,9 +6,11 @@
 
 #include "CommonRay.glsl"
 
-layout(location = 0) rayPayloadInEXT HitPayloadDebug payload;
+layout(location = 0) rayPayloadInEXT HitPayloadGI payload;
 
 void main()
 {
-	payload.color = vec3(1.0f, 1.0f, 1.0f);
+	payload.worldPos = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
+	payload.instanceCustomId = gl_InstanceCustomIndexEXT;
+	//payload.color = vec3(1.0f, 1.0f, 1.0f);
 }

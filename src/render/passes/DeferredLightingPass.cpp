@@ -27,11 +27,11 @@ namespace CGE
 		auto clusterData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
-		auto rtGIData = dataTable.GetPassData<RTGIPassData>();
+//		auto rtGIData = dataTable.GetPassData<RTGIPassData>();
 
 		uint32_t frameIndex = Engine::GetFrameIndex(m_lightingMaterials.size());
 		MaterialPtr lightingMat = m_lightingMaterials[frameIndex];
-		BufferDataPtr buffer = lightingMat->GetStorageBuffer("clusterLightsData");
+		BufferDataPtr buffer = clusterData->clusterLightsData;
 		TextureDataPtr depthTex = lightingMat->GetSampledTexture("depthTex");
 
 		auto textures = lightingMat->GetSampledTextures("albedoTex", "normalsTex");
@@ -69,14 +69,14 @@ namespace CGE
 				0, 1, 0, 1);
 			barriers.push_back(visibilityBarrier);
 		}
-		ImageMemoryBarrier giLightingData = rtGIData->lightingData[Engine::GetFrameIndex(rtGIData->lightingData.size())]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			AccessFlagBits::eShaderWrite,
-			AccessFlagBits::eShaderRead,
-			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		barriers.push_back(giLightingData);
+		//ImageMemoryBarrier giLightingData = rtGIData->lightingData[Engine::GetFrameIndex(rtGIData->lightingData.size())]->GetImage().CreateLayoutBarrier(
+		//	ImageLayout::eUndefined,
+		//	ImageLayout::eShaderReadOnlyOptimal,
+		//	AccessFlagBits::eShaderWrite,
+		//	AccessFlagBits::eShaderRead,
+		//	ImageAspectFlagBits::eColor,
+		//	0, 1, 0, 1);
+		//barriers.push_back(giLightingData);
 
 		commandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eAllGraphics | PipelineStageFlagBits::eRayTracingShaderKHR,
@@ -117,9 +117,9 @@ namespace CGE
 		auto clusteringData = dataTable.GetPassData<ClusterComputeData>();
 		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto rtShadowsData = dataTable.GetPassData<RTShadowsData>();
-		auto rtGIData = dataTable.GetPassData<RTGIPassData>();
+		//auto rtGIData = dataTable.GetPassData<RTGIPassData>();
 
-		bool isValid = (depthData->depthTextures.size() == clusteringData->computeMaterials.size()) && (clusteringData->computeMaterials.size() == gbufferData->albedos.size());
+		bool isValid = (depthData->depthTextures.size() == clusteringData->lightsList.size()) && (clusteringData->lightsList.size() == gbufferData->albedos.size());
 		assert(isValid && "Number of render targets mismatch");
 
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
@@ -129,9 +129,9 @@ namespace CGE
 				"content/shaders/ScreenSpaceVert.spv",
 				"content/shaders/DeferredLighting.spv"
 				);
-			lightingMaterial->SetStorageBufferExternal("clusterLightsData", clusteringData->computeMaterials[idx]->GetStorageBuffer("clusterLightsData"));
-			lightingMaterial->SetUniformBufferExternal("lightsList", clusteringData->computeMaterials[idx]->GetUniformBuffer("lightsList"));
-			lightingMaterial->SetUniformBufferExternal("lightsIndices", clusteringData->computeMaterials[idx]->GetUniformBuffer("lightsIndices"));
+			lightingMaterial->SetStorageBufferExternal("clusterLightsData", clusteringData->clusterLightsData);
+			lightingMaterial->SetUniformBufferExternal("lightsList", clusteringData->lightsList[idx]);
+			lightingMaterial->SetUniformBufferExternal("lightsIndices", clusteringData->lightsIndices[idx]);
 			lightingMaterial->SetTexture("albedoTex", gbufferData->albedos[idx]);
 			lightingMaterial->SetTexture("normalsTex", gbufferData->normals[idx]);
 			lightingMaterial->SetTexture("depthTex", depthData->depthTextures[idx]);

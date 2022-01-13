@@ -166,6 +166,8 @@ namespace CGE
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
 		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 45.0f });
 		cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
+		//cameraObj->transform.SetLocation({ 0.0f, 0.0f, -45.0f });
+		//cameraObj->transform.SetRotation({ 0.0f, -180.0f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(60.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);

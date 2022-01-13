@@ -1,0 +1,186 @@
+#version 450
+#extension GL_EXT_buffer_reference : require
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "CommonFrameData.glsl"
+
+layout(set = 1, binding = 0) uniform texture2D depthTexture;
+layout(set = 1, binding = 1, rgba8) uniform image2D storageTex;
+
+// cluster lights indices
+//layout(set = 1, binding = 2) buffer ClusterLightsData
+//{
+//	uvec2 clusters[32][32][64];
+//	uint lightIndices[32][32][64][128];
+//} clusterLightsData;
+
+// cluster lights
+
+struct LightInfo
+{
+	vec4 position;
+	vec4 direction;
+	vec4 color;
+	vec4 rai;
+};
+
+layout(set = 1, binding = 2) uniform LightsList
+{
+	LightInfo lights[1024];
+} lightsList;
+
+layout(set = 1, binding = 3) uniform LightsIndices
+{
+	uvec2 directionalPosition;
+	uvec2 spotPosition;
+	uvec2 pointPosition;
+} lightsIndices;
+
+//---------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------
+
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer Grid
+{
+    uint data[25][25][25][128];
+};
+
+layout(buffer_reference, std430, buffer_reference_align = 8) buffer Grids
+{
+	Grid grid[];
+};
+
+layout(set = 1, binding = 4) readonly buffer GridLightsData
+{
+	uvec4 gridSpecs;
+	uint lightsPerCell;
+	Grids gridList;
+} gridLightsData;
+
+//---------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------
+
+layout(local_size_x = 25, local_size_y = 1, local_size_z = 1) in;
+
+uint Pack16BitIndex(uint lightIndexData, uint lightIndexInCluster, uint lightIndexGlobal)
+{
+	uint bitOffset = 16 * (lightIndexInCluster % 2);
+	uint nullBits = 0xffff0000;
+	// nullify
+	lightIndexData &= nullBits >> bitOffset;
+	// set
+	lightIndexData |= lightIndexGlobal << bitOffset;
+
+	return lightIndexData;
+}
+
+bool IsConeIntersectsSphere(vec3 coneOrigin, vec3 coneDir, float coneLength, float halfAngle, vec4 sphere)
+{
+    const vec3 centerToCenter = sphere.xyz - coneOrigin;
+    const float centersDistanceSqr = dot(centerToCenter, centerToCenter);
+	// vector between cone and sphere centers projected onto cone direction, do not forget to normalize coneDir
+    const float projectionOnCone = dot(centerToCenter, coneDir);
+	// this is simply can be calculated looking at similar triangles, v2 * tan(angle) - v1 * sin(angle) gives us distance to cone border,
+	// where v2 is a distance from sphere center to the end of projection vector, which is vector between cone and sphere centers projected on cone direction
+    const float distanceToConeBorder = cos(halfAngle) * sqrt(centersDistanceSqr - projectionOnCone*projectionOnCone) - projectionOnCone * sin(halfAngle);
+ 
+    const bool isSphereOutsideConeAngle = distanceToConeBorder > sphere.w;
+    const bool isOutsideFront = projectionOnCone > (sphere.w + coneLength);
+    const bool isBehindBack  = projectionOnCone < -sphere.w;
+
+	return !(isSphereOutsideConeAngle || isOutsideFront || isBehindBack);
+}
+
+void main()
+{
+	vec3 threadCoord = vec3(gl_WorkGroupID.x, gl_WorkGroupID.y, gl_LocalInvocationIndex);
+
+	vec3 cellSize = vec3(pow(5.0f, float(gl_WorkGroupID.z)));
+	vec3 gridSize = cellSize * 25.0f;
+	vec3 cellCoord = globalData.cameraPos + (threadCoord * cellSize) - (gridSize * 0.5f);
+	
+	uint lightIndexInCluster = 2;
+
+	for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
+	{
+		LightInfo lightInfo = lightsList.lights[index];
+
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex] = lightIndexData;			
+
+		lightIndexInCluster++;
+	}
+//	uint directionalLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+//	directionalLightOffsetData &= 0xffff0000;
+//	// offset is always 0
+//	directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
+//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = directionalLightOffsetData;
+
+	uint spotLightOffset = lightIndexInCluster;
+	uint spotLightCount = 0;
+	for (uint index = lightsIndices.spotPosition.x; index < lightsIndices.spotPosition.x + lightsIndices.spotPosition.y; index++)
+	{
+		if (lightIndexInCluster > 255)
+		{
+			break;
+		}
+
+		LightInfo lightInfo = lightsList.lights[index];
+		vec4 boundingSphere = vec4(cellCoord + cellSize * 0.5, length(cellSize * 0.5));
+
+		if (!IsConeIntersectsSphere(lightInfo.position.xyz, lightInfo.direction.xyz, lightInfo.rai.x, radians(lightInfo.rai.y), boundingSphere))
+		{
+			continue;
+		}
+		spotLightCount++;
+
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex] = lightIndexData;
+
+		lightIndexInCluster++;
+	}
+//	uint spotLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+//	spotLightOffsetData &= 0x0000ffff;
+//	spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
+//	spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
+//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = spotLightOffsetData;
+
+	uint pointLightOffset = lightIndexInCluster;
+	uint pointLightCount = 0;
+	for (uint index = lightsIndices.pointPosition.x; index < lightsIndices.pointPosition.x + lightsIndices.pointPosition.y; index++)
+	{
+		if (lightIndexInCluster > 255)
+		{
+			break;
+		}
+		LightInfo lightInfo = lightsList.lights[index];
+
+		vec3 lightSphereClippedPos = clamp(lightInfo.position.xyz, cellCoord, cellCoord + cellSize);
+		vec3 centerToAABB = lightSphereClippedPos - lightInfo.position.xyz;
+
+		if (dot(centerToAABB, centerToAABB) > (lightInfo.rai.x * lightInfo.rai.x))
+		{
+			continue;
+		}
+		pointLightCount++;
+
+		uint entryIndex = lightIndexInCluster / 2;
+		uint lightIndexData = gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex];
+		lightIndexData = Pack16BitIndex(lightIndexData, lightIndexInCluster, index);
+		gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][entryIndex] = lightIndexData;
+
+		lightIndexInCluster++;
+	}
+//	uint pointLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y;
+//	pointLightOffsetData &= 0xffff0000;
+//	pointLightOffsetData |= 0x000000ff & pointLightOffset;
+//	pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
+//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
+
+	// just lazy using first 4 bytes to store number of lights in a cell
+	gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][0] = lightIndexInCluster - 2;
+}

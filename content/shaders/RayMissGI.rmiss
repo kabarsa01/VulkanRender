@@ -4,10 +4,11 @@
 
 #include "CommonRay.glsl"
 
-layout(location = 0) rayPayloadInEXT HitPayloadDebug payload;
+layout(location = 0) rayPayloadInEXT HitPayloadGI payload;
 
 void main()
 {
-	payload.color = vec3(0.0f, 0.0f, 0.0f);
+	payload.instanceCustomId = 0xffffffff;
+	//payload.color = vec3(0.0f, 0.0f, 0.0f);
 }
 

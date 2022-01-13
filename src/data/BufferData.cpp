@@ -57,7 +57,7 @@ namespace CGE
 		{
 			m_buffer.createInfo.setSharingMode(vk::SharingMode::eExclusive);
 			m_buffer.createInfo.setSize(m_size);
-			m_buffer.createInfo.setUsage(m_usage | vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst);
+			m_buffer.createInfo.setUsage(m_usage | vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress);
 		}
 
 		m_buffer.Create(m_deviceLocal);

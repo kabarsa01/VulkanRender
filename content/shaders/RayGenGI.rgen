@@ -16,8 +16,9 @@ layout(location = 1) rayPayloadEXT HitPayloadGI payloadGI;
 
 layout(set = 1, binding = 0) uniform texture2D normalTex;
 layout(set = 1, binding = 1) uniform texture2D depthTex;
+layout(set = 1, binding = 2) uniform texture2D directLightTex;
 // light clustering data
-layout(set = 1, binding = 2) readonly buffer ClusterLightsData
+layout(set = 1, binding = 3) readonly buffer ClusterLightsData
 {
 	uvec2 clusters[32][32][64];
 	uint lightIndices[32][32][64][128];
@@ -30,20 +31,20 @@ struct LightInfo
 	vec4 color;
 	vec4 rai;
 };
-layout(set = 1, binding = 3) uniform LightsList
+layout(set = 1, binding = 4) uniform LightsList
 {
 	LightInfo lights[1024];
 } lightsList;
-layout(set = 1, binding = 4) uniform LightsIndices
+layout(set = 1, binding = 5) uniform LightsIndices
 {
 	uvec2 directionalPosition;
 	uvec2 spotPosition;
 	uvec2 pointPosition;
 } lightsIndices;
 
-layout(set = 1, binding = 5) uniform accelerationStructureEXT tlas;
-layout(set = 1, binding = 6, rgba16f) uniform image2D lightTex;
-layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[32];
+layout(set = 1, binding = 6) uniform accelerationStructureEXT tlas;
+layout(set = 1, binding = 7, rgba16f) uniform image2D lightTex;
+layout(set = 1, binding = 8, rgba8) uniform image2D visibilityTextures[32];
 
 layout(set = 2, binding = 0) uniform SamplingPoints
 {
@@ -52,21 +53,56 @@ layout(set = 2, binding = 0) uniform SamplingPoints
 	uint size;
 } samplingPoints;
 
-//layout(buffer_reference) buffer TestStuff
-//{
-//	vec3 coords[];
-//};
-//layout(set = 1, binding = 7) buffer TestStuffBlock
-//{
-//	TestStuff stuffs[];
-//} testStuffBlock;
-// light texture to store accumulated GI
+//----------------------------------------------------------------------------------------------------------------------------------
 
-uint WriteVisibility(uint vis, uint index, bool visible)
+layout(buffer_reference, std430, buffer_reference_align = 4) buffer Grid
 {
-	uint base = 1;
-	return visible ? vis | (base << index) : vis & ~(base << index);
+    uint data[25][25][25][128];
+};
+
+layout(buffer_reference, std430, buffer_reference_align = 8) buffer Grids
+{
+	Grid grid[];
+};
+
+layout(set = 2, binding = 1) readonly buffer GridLightsData
+{
+	uvec4 gridSpecs;
+	uint lightsPerCell;
+	Grids gridList;
+} gridLightsData;
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+
+bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 color)
+{
+	if (viewSpacePosition.z < globalData.cameraNear || viewSpacePosition.z > globalData.cameraFar)
+	{
+		return false;
+	}
+	float maxY = viewSpacePosition.z * tan(radians(globalData.cameraFov * 0.5));
+	float maxX = maxY * globalData.cameraAspect;
+
+	if (abs(viewSpacePosition.x) > abs(maxX) || abs(viewSpacePosition.y) > abs(maxY))
+	{
+		return false;
+	}
+
+	vec2 halfScreenOffset = vec2(maxY, maxY);
+	vec2 uv = (viewSpacePosition.xy + halfScreenOffset) / (halfScreenOffset * 2.0f);
+
+	color = texture(sampler2D(directLightTex, repeatLinearSampler), uv).xyz;
+
+	return true;
 }
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void main() 
 {
@@ -134,10 +170,29 @@ void main()
 				tMin,								// ray min range
 				normalize(direction),				// ray direction
 				tMax,								// ray max range
-				0									// payload (location = 0)
+				1									// payload (location = 0)
 		);
 
-		accumulatedLight += surfaceCos * payloadDebug.color;
+		if (payloadGI.instanceCustomId == 0xffffffff)
+		{
+			accumulatedLight += vec3(0.001, 0.0, 0.0);
+			continue;
+		}
+
+		vec4 hitPointViewSpace = globalData.worldToView * vec4(payloadGI.worldPos, 1.0f);
+		hitPointViewSpace /= hitPointViewSpace.w;
+
+		vec3 directColor = vec3(0.0f);
+		if (CheckAndAccumulateViewSpaceVisibility(hitPointViewSpace, directColor))
+		{
+			accumulatedLight += surfaceCos * directColor;
+			continue;
+		}
+
+//		for ()
+//		{
+//		}
+		
 	}
 
 //
@@ -236,5 +291,5 @@ void main()
 //		}
 //	}
 
-	imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(accumulatedLight / 10.0f, 1.0));
+	imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(accumulatedLight, 1.0));
 }

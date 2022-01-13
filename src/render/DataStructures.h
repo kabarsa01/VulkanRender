@@ -77,5 +77,13 @@ namespace CGE
 		alignas(16) glm::vec4 coords[1000];
 		alignas(4) glm::uint size;
 	};
+
+	// coordinate list
+	struct alignas(16) GridHierarchy
+	{
+		alignas(16) glm::uvec4 gridSpecs;
+		alignas(4) glm::uint lightsPerCell;
+		alignas(8) vk::DeviceAddress grids;
+	};
 	
 }
