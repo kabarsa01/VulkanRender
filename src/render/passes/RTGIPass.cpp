@@ -153,7 +153,7 @@ namespace CGE
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
 		MeshImporter meshImporter;
-		meshImporter.Import("./content/meshes/hemisphere_sample/hemisphere_sample.fbx");
+		meshImporter.Import("./content/meshes/hemisphere_sample/hemisphere_sample_1241.fbx");
 		for (unsigned int MeshIndex = 0; MeshIndex < meshImporter.GetMeshes().size(); MeshIndex++)
 		{
 			m_hemisphereSamplingPoints = meshImporter.GetMeshes()[MeshIndex];
@@ -166,11 +166,11 @@ namespace CGE
 			auto& vertices = m_hemisphereSamplingPoints->vertices;
 			for (uint32_t idx = 0; idx < vertices.size(); ++idx)
 			{
-				if (idx >= sizeof(samplingPoints.coords)/16)
+				if (idx >= 2048)
 				{
 					break;
 				}
-				samplingPoints.coords[idx] = glm::vec4(vertices[idx].position, 1.0f) * glm::vec4(1.0f, 1.0f, -1.0f, 1.0f);
+				samplingPoints.coords[idx] = glm::vec4(vertices[idx].position, 1.0f);
 			}
 			samplingPoints.size = static_cast<uint32_t>(vertices.size());
 			m_samplingPointsBuffer->CopyTo(sizeof(CoordinateList), reinterpret_cast<const char*>( &samplingPoints ));

@@ -133,7 +133,6 @@ void main()
 		vec4 lightPos = globalData.worldToView * vec4(lightInfo.position.xyz, 1.0);
 		lightPos /= lightPos.w;
 		vec4 lightDir4 = globalData.worldToView * vec4(lightInfo.direction.xyz, 0.0);
-		lightDir4 /= lightDir4.w;
 		vec3 lightDir = lightDir4.xyz;
 
 		if (!IsConeIntersectsSphere(lightPos.xyz, lightDir, lightInfo.rai.x, radians(lightInfo.rai.y), boundingSphere))

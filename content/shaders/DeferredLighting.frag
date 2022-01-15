@@ -141,9 +141,10 @@ void main() {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallness;
 	// some ambient lighting
-    vec3 irradiance = vec3(0.01);//texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * albedo;
-    vec3 ambient = (kD * diffuse);// * AO;
+	// replace with GI
+//    vec3 irradiance = vec3(0.0);//texture(irradianceMap, N).rgb;
+//    vec3 diffuse = irradiance * albedo;
+//    vec3 ambient = (kD * diffuse);// * AO;
 
 	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.01f);
 
@@ -206,5 +207,5 @@ void main() {
 		Lo += visibilityFactor * CalculateLightInfluence(albedo, N, V, F, pixelToLightDir, lightColor, kD, roughness);
 	}
 
-	outScreenColor = vec4(ambient + Lo, 1.0);//vec4(normal, 1.0);//
+	outScreenColor = vec4(/*ambient +*/ Lo, 1.0);//vec4(normal, 1.0);//
 }

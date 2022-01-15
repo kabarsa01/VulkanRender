@@ -4,6 +4,7 @@
 #include "GBufferPass.h"
 #include "../DataStructures.h"
 #include "DeferredLightingPass.h"
+#include "RTGIPass.h"
 
 namespace CGE
 {
@@ -21,6 +22,8 @@ namespace CGE
 		Image swapChainImage = swapChain.GetImage();
 
 		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
+		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
+
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
@@ -29,12 +32,21 @@ namespace CGE
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
+		ImageMemoryBarrier giBarrier = rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			AccessFlagBits::eShaderWrite,
+			AccessFlagBits::eShaderRead,
+			ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+
+		std::vector<ImageMemoryBarrier> imageBarriers { attachmentBarrier, giBarrier };
 		commandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eAllCommands,
 			PipelineStageFlagBits::eFragmentShader,
 			DependencyFlags(),
 			0, nullptr, 0, nullptr,
-			1, &attachmentBarrier);
+			static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 
 		// barriers ----------------------------------------------
 
@@ -83,6 +95,7 @@ namespace CGE
 
 	void PostProcessPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
+		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
 		auto deferredLightingData = dataTable.GetPassData<DeferredLightingData>();
 		m_screenImages = deferredLightingData->hdrRenderTargets;
 		m_postProcessMaterials.resize(m_screenImages.size());
@@ -96,6 +109,7 @@ namespace CGE
 				);
 			m_postProcessMaterials[idx]->SetUniformBuffer("mvpBuffer" + std::to_string(idx), sizeof(ObjectMVPData), nullptr);
 			m_postProcessMaterials[idx]->SetTexture("screenImage", m_screenImages[idx]);
+			m_postProcessMaterials[idx]->SetTexture("indirectLight", rtgiData->lightingData[idx]);
 			m_postProcessMaterials[idx]->LoadResources();
 		}
 

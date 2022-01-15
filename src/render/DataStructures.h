@@ -74,7 +74,7 @@ namespace CGE
 	// coordinate list
 	struct alignas(16) CoordinateList
 	{
-		alignas(16) glm::vec4 coords[1000];
+		alignas(16) glm::vec4 coords[2048];
 		alignas(4) glm::uint size;
 	};
 

@@ -58,7 +58,7 @@ layout(set = 1, binding = 7, rgba8) uniform image2D visibilityTextures[32];
 layout(set = 2, binding = 0) uniform SamplingPoints
 {
 //	CoordinateList samplingPoints;
-	vec3 coords[1000];
+	vec4 coords[2048];
 	uint size;
 } samplingPoints;
 
@@ -90,6 +90,7 @@ layout(set = 2, binding = 2) uniform texture2D directLightTex;
 
 bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 color)
 {
+	// my left and right handed martices, don't ask, will handle it sometime in the future
 	if (viewSpacePosition.z < globalData.cameraNear || viewSpacePosition.z > globalData.cameraFar)
 	{
 		return false;
@@ -102,7 +103,7 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 		return false;
 	}
 
-	vec2 halfScreenOffset = vec2(maxY, maxY);
+	vec2 halfScreenOffset = vec2(maxX, maxY);
 	vec2 uv = (viewSpacePosition.xy + halfScreenOffset) / (halfScreenOffset * 2.0f);
 
 	color = texture(sampler2D(directLightTex, repeatLinearSampler), uv).xyz;
@@ -144,6 +145,8 @@ void main()
 	vec3 N = normalize( texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz );
 	vec3 tangent, bitangent;
 	CreateCoordinateSystem(N, tangent, bitangent);
+	tangent = normalize(tangent);
+	bitangent = normalize(bitangent);
 
 	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
 
@@ -152,9 +155,10 @@ void main()
 
 	for (uint idx = 0; idx < samplingPoints.size; ++idx)
 	{
-		vec3 hemisphereDir = normalize( samplingPoints.coords[idx] );
-		vec3 direction = hemisphereDir.x * tangent + hemisphereDir.y * bitangent + hemisphereDir.z * N;
-		float surfaceCos = dot(N, direction);
+		vec3 hemisphereDir = normalize( samplingPoints.coords[idx].xyz );
+		vec3 direction = normalize( hemisphereDir.x * tangent + hemisphereDir.y * bitangent + hemisphereDir.z * N );
+		float initialSurfaceCos = clamp( dot(N, direction), 0.0f, 1.0f );
+
 		traceRayEXT(tlas,							// acceleration structure
 				rayFlags,							// rayFlags
 				0xFF,								// cullMask
@@ -163,7 +167,7 @@ void main()
 				0,									// missIndex
 				rayStart,							// ray origin
 				tMin,								// ray min range
-				normalize(direction),				// ray direction
+				direction,							// ray direction
 				tMax,								// ray max range
 				1									// payload (location = 0)
 		);
@@ -174,19 +178,32 @@ void main()
 			continue;
 		}
 
+		//------------------------------------------------------------------------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------------------------------------------------------------------------
+		// falloff
+		vec3 pointDistance = rayStart - payloadGI.worldPos;
+		float lightMaxRadiusSqr = 250000.0;
+		float pointDistanceSqr = dot(pointDistance, pointDistance);
+		float initialDistanceFactor = max(lightMaxRadiusSqr - pointDistanceSqr, 0) / max(lightMaxRadiusSqr, 0.001);
+		//------------------------------------------------------------------------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------------------------------------------------------------------------
+
 		vec4 hitPointViewSpace = globalData.worldToView * vec4(payloadGI.worldPos, 1.0f);
 		hitPointViewSpace /= hitPointViewSpace.w;
+		hitPointViewSpace.z *= -1.0f; // my coordinate systems and LH-RH shennanigans, sorry
 
 		vec3 directColor = vec3(0.0f);
 		if (CheckAndAccumulateViewSpaceVisibility(hitPointViewSpace, directColor))
 		{
-			accumulatedLight += surfaceCos * directColor;
+			accumulatedLight += initialDistanceFactor * /*initialSurfaceCos */ directColor / samplingPoints.size;
 			continue;
 		}
 		else
 		{
-//			accumulatedLight += vec3(0.0f, 0.001f, 0.0f);
+//			accumulatedLight += vec3(0.001f, 0.0f, 0.0f);
+//			continue;
 		}
+
 
 		vec3 gridVector = payloadGI.worldPos - globalData.cameraPos;
 		float maxExtent = 2.0f * max(abs(gridVector.x), max(abs(gridVector.y), abs(gridVector.z)));
@@ -234,7 +251,7 @@ void main()
 				traceRayEXT(tlas,						// acceleration structure
 					  rayFlags,							// rayFlags
 					  0xFF,								// cullMask
-					  0,								// sbtRecordOffset
+					  1,								// sbtRecordOffset
 					  0,								// sbtRecordStride
 					  0,								// missIndex
 					  payloadGI.worldPos,				// ray origin
@@ -245,7 +262,7 @@ void main()
 				);
 				if (payloadGI.instanceCustomId == 0xffffffff)
 				{
-					accumulatedLight += lightInfo.color.xyz;
+					accumulatedLight += lightInfo.color.xyz / samplingPoints.size;
 				}
 			}
 		}
@@ -262,7 +279,7 @@ void main()
 				traceRayEXT(tlas,							// acceleration structure
 					  rayFlags,								// rayFlags
 					  0xFF,									// cullMask
-					  0,									// sbtRecordOffset
+					  1,									// sbtRecordOffset
 					  0,									// sbtRecordStride
 					  0,									// missIndex
 					  payloadGI.worldPos,					// ray origin
@@ -276,7 +293,7 @@ void main()
 					float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 					float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 					float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
-					accumulatedLight += distanceFactor * lightInfo.color.xyz;
+					accumulatedLight += distanceFactor * lightInfo.color.xyz / samplingPoints.size;
 				}
 			}
 		}
@@ -293,7 +310,7 @@ void main()
 				traceRayEXT(tlas,								// acceleration structure
 					  rayFlags,									// rayFlags
 					  0xFF,										// cullMask
-					  0,										// sbtRecordOffset
+					  1,										// sbtRecordOffset
 					  0,										// sbtRecordStride
 					  0,										// missIndex
 					  payloadGI.worldPos,						// ray origin
@@ -307,11 +324,12 @@ void main()
 					float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 					float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 					float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
-					accumulatedLight += distanceFactor * lightInfo.color.xyz;
+					accumulatedLight += distanceFactor * lightInfo.color.xyz / samplingPoints.size;
 				}
 			}
 		}
 		
+		accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos;
 	}
 
 	imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(accumulatedLight, 1.0));

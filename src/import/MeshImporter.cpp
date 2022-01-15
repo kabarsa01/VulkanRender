@@ -20,8 +20,8 @@ namespace CGE
 			| aiProcess_ValidateDataStructure
 			//| aiProcess_FindDegenerates
 			| aiProcess_FindInvalidData
-			| aiProcess_MakeLeftHanded
-			| aiProcess_FlipWindingOrder
+			//| aiProcess_MakeLeftHanded
+			//| aiProcess_FlipWindingOrder
 			//| aiProcess_FlipUVs
 			;
 		if (generateSmoothNormals)
