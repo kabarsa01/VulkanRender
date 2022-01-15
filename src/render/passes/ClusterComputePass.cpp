@@ -30,6 +30,7 @@ namespace CGE
 	void ClusterComputePass::ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable)
 	{
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
+		auto computeData = dataTable.GetPassData<ClusterComputeData>();
 
 		uint32_t materialIndex = Engine::GetFrameIndex(m_computeMaterials.size());
 		uint32_t depthIndex = Engine::GetFrameIndex(depthData->depthTextures.size());
@@ -42,19 +43,25 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		BufferDataPtr clusterBuffer = m_computeMaterials[materialIndex]->GetStorageBuffer("clusterLightsData");
-		BufferMemoryBarrier clusterDataBarrier = clusterBuffer->GetBuffer().CreateMemoryBarrier(
+		BufferMemoryBarrier clusterDataBarrier = computeData->clusterLightsData->GetBuffer().CreateMemoryBarrier(
 			0, 0,
 			vk::AccessFlagBits::eShaderRead,
 			vk::AccessFlagBits::eShaderWrite);
-		std::vector<ImageMemoryBarrier> barriers{ depthTextureBarrier };
+		BufferMemoryBarrier gridDataBarrier = computeData->gridLightsData->GetBuffer().CreateMemoryBarrier(
+			0, 0,
+			vk::AccessFlagBits::eShaderRead,
+			vk::AccessFlagBits::eShaderWrite);
+
+		std::vector<ImageMemoryBarrier> imagesBarriers{ depthTextureBarrier };
+		std::vector<BufferMemoryBarrier> buffersBarriers{ clusterDataBarrier, gridDataBarrier };
+
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,
 			vk::PipelineStageFlagBits::eComputeShader,
 			vk::DependencyFlags(),
 			0, nullptr,
-			1, &clusterDataBarrier,
-			static_cast<uint32_t>(barriers.size()), barriers.data());
+			static_cast<uint32_t>(buffersBarriers.size()), buffersBarriers.data(),
+			static_cast<uint32_t>(imagesBarriers.size()), imagesBarriers.data());
 
 		{
 			PipelineData& pipelineData = executeContext.FindPipeline(m_computeMaterials[materialIndex]);
@@ -163,7 +170,8 @@ namespace CGE
 
 		grid.lightsPerCell = 256;
 
-		uint64_t cellSizeBytes = grid.lightsPerCell * 2; // 2 bytes per light index
+		uint64_t lightOffsetsInfoSizeBytes = sizeof(glm::uvec2);
+		uint64_t cellSizeBytes = lightOffsetsInfoSizeBytes + (grid.lightsPerCell * 2); // 2 bytes per light index
 		uint64_t gridSizeBytes = cellSizeBytes * grid.gridSpecs.x * grid.gridSpecs.y * grid.gridSpecs.z;
 		uint64_t gridsSizeBytes = gridSizeBytes * grid.gridSpecs.w;
 		uint64_t gridsListSizeBytes = grid.gridSpecs.w * sizeof(vk::DeviceAddress);

@@ -124,7 +124,7 @@ namespace CGE
 		imageBarriers.push_back(lightingData);
 
 		commandBuffer->pipelineBarrier(
-			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eAllCommands,
 			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
 			vk::DependencyFlags(),
 			0, nullptr,
@@ -147,7 +147,7 @@ namespace CGE
 		vk::StridedDeviceAddressRegionKHR rayMissRegion = sbt.GetRegion(ERtShaderType::RST_MISS, m_rayMiss->GetResourceId());
 		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
-		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth(), executeContext.GetHeight(), 1);
+		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 4, executeContext.GetHeight() / 4, 1);
 	}
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
@@ -193,7 +193,7 @@ namespace CGE
 		// initial deferred lighting pass can be used to sample direct lighting in case our rays hit something in screenspace
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 
-		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);
+		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
 		dataTable.CreatePassData<RTGIPassData>()->lightingData = m_lightingData;
 
 		m_frameData.resize(2);
@@ -211,7 +211,7 @@ namespace CGE
 			resMapper.AddSampledImage("normalTex", gbufferData->normals[idx]);
 			resMapper.AddStorageImage("lightTex", m_lightingData[idx]);
 			// light clustering data
-			resMapper.AddStorageBuffer("clusterLightsData", clusterData->clusterLightsData);
+			//resMapper.AddStorageBuffer("clusterLightsData", clusterData->clusterLightsData);
 			resMapper.AddStorageBuffer("gridLightsData", clusterData->gridLightsData);
 			resMapper.AddUniformBuffer("lightsList", clusterData->lightsList[idx]);
 			resMapper.AddUniformBuffer("lightsIndices", clusterData->lightsIndices[idx]);

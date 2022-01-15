@@ -23,14 +23,14 @@ namespace CGE
 		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eColorAttachmentOptimal,
+			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
 			AccessFlagBits::eColorAttachmentWrite,
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
 		commandBuffer->pipelineBarrier(
-			PipelineStageFlagBits::eColorAttachmentOutput,
+			PipelineStageFlagBits::eAllCommands,
 			PipelineStageFlagBits::eFragmentShader,
 			DependencyFlags(),
 			0, nullptr, 0, nullptr,

@@ -42,6 +42,7 @@ layout(set = 1, binding = 3) uniform LightsIndices
 
 layout(buffer_reference, std430, buffer_reference_align = 4) buffer Grid
 {
+	uvec2 lightOffsets[25][25][25];
     uint data[25][25][25][128];
 };
 
@@ -99,8 +100,7 @@ void main()
 	vec3 gridSize = cellSize * 25.0f;
 	vec3 cellCoord = globalData.cameraPos + (threadCoord * cellSize) - (gridSize * 0.5f);
 	
-	uint lightIndexInCluster = 2;
-
+	uint lightIndexInCluster = 0;
 	for (uint index = lightsIndices.directionalPosition.x; index < lightsIndices.directionalPosition.x + lightsIndices.directionalPosition.y; index++)
 	{
 		LightInfo lightInfo = lightsList.lights[index];
@@ -112,11 +112,11 @@ void main()
 
 		lightIndexInCluster++;
 	}
-//	uint directionalLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
-//	directionalLightOffsetData &= 0xffff0000;
-//	// offset is always 0
-//	directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
-//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = directionalLightOffsetData;
+	uint directionalLightOffsetData = gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].x;//clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
+	directionalLightOffsetData &= 0xffff0000;
+	// offset is always 0
+	directionalLightOffsetData |= 0x0000ff00 & (lightIndexInCluster << 8);
+	gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].x = directionalLightOffsetData;
 
 	uint spotLightOffset = lightIndexInCluster;
 	uint spotLightCount = 0;
@@ -143,11 +143,11 @@ void main()
 
 		lightIndexInCluster++;
 	}
-//	uint spotLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x;
-//	spotLightOffsetData &= 0x0000ffff;
-//	spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
-//	spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
-//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].x = spotLightOffsetData;
+	uint spotLightOffsetData = gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].x;
+	spotLightOffsetData &= 0x0000ffff;
+	spotLightOffsetData |= 0x00ff0000 & (spotLightOffset << 16);
+	spotLightOffsetData |= 0xff000000 & (spotLightCount << 24);
+	gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].x = spotLightOffsetData;
 
 	uint pointLightOffset = lightIndexInCluster;
 	uint pointLightCount = 0;
@@ -175,12 +175,9 @@ void main()
 
 		lightIndexInCluster++;
 	}
-//	uint pointLightOffsetData = clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y;
-//	pointLightOffsetData &= 0xffff0000;
-//	pointLightOffsetData |= 0x000000ff & pointLightOffset;
-//	pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
-//	clusterLightsData.clusters[gl_WorkGroupID.x][gl_WorkGroupID.y][clusterIndex].y = pointLightOffsetData;
-
-	// just lazy using first 4 bytes to store number of lights in a cell
-	gridLightsData.gridList.grid[gl_WorkGroupID.z].data[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex][0] = lightIndexInCluster - 2;
+	uint pointLightOffsetData = gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].y;
+	pointLightOffsetData &= 0xffff0000;
+	pointLightOffsetData |= 0x000000ff & pointLightOffset;
+	pointLightOffsetData |= 0x0000ff00 & (pointLightCount << 8);
+	gridLightsData.gridList.grid[gl_WorkGroupID.z].lightOffsets[gl_WorkGroupID.x][gl_WorkGroupID.y][gl_LocalInvocationIndex].y = pointLightOffsetData;
 }
