@@ -40,6 +40,7 @@ namespace CGE
 
 		std::vector<RTGIPassFrameData> m_frameData;
 		std::vector<Texture2DPtr> m_lightingData;
+		Texture2DPtr m_temporalCounter;
 		RtShaderPtr m_rayGen;
 		RtShaderPtr m_rayMiss;
 		RtShaderPtr m_closestHit;

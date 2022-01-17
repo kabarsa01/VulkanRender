@@ -68,6 +68,15 @@ namespace CGE
 
 	//=======================================================================================================
 	//=======================================================================================================
+
+	struct MatrixPair
+	{
+		glm::mat4 previousMatrix;
+		glm::mat4 matrix;
+	};
+
+	//=======================================================================================================
+	//=======================================================================================================
 	
 	class Scene
 	{
@@ -87,9 +96,10 @@ namespace CGE
 		inline std::vector<HashString>& GetShadersList() { return m_shadersList; }
 		inline std::unordered_map<HashString, std::vector<MaterialPtr>>& GetShaderToMaterial() { return m_shaderToMaterial; }
 		inline std::unordered_map<HashString, std::vector<MeshDataPtr>>& GetMaterialToMeshData() { return m_materialToMeshData; }
-		inline std::unordered_map<HashString, std::vector<glm::mat4>>& GetMeshDataToTransform(const HashString& materialId) { return m_matToMeshToTransform[materialId]; }
+		inline std::unordered_map<HashString, std::vector<MatrixPair>>& GetMeshDataToTransform(const HashString& materialId) { return m_matToMeshToTransform[materialId]; }
 		inline std::unordered_map<HashString, uint32_t>& GetMeshDataToIndex(const HashString& materialId) { return m_materialToMeshDataToIndex[materialId]; }
 		inline std::vector<glm::mat4>& GetModelMatrices() { return m_modelMatrices; }
+		inline std::vector<glm::mat4>& GetPreviousModelMatrices() { return m_previousModelMatrices; }
 		inline uint32_t GetRelevantMatricesCount() { return m_relevantMatricesCount; }
 	
 		void PerFrameUpdate();
@@ -118,9 +128,10 @@ namespace CGE
 		std::vector<HashString> m_shadersList;
 		std::unordered_map<HashString, std::vector<MaterialPtr>> m_shaderToMaterial;
 		std::unordered_map<HashString, std::vector<MeshDataPtr>> m_materialToMeshData;
-		std::unordered_map<HashString, std::unordered_map<HashString, std::vector<glm::mat4>>> m_matToMeshToTransform;
+		std::unordered_map<HashString, std::unordered_map<HashString, std::vector<MatrixPair>>> m_matToMeshToTransform;
 		std::unordered_map<HashString, std::unordered_map<HashString, uint32_t>> m_materialToMeshDataToIndex;
 		std::vector<glm::mat4> m_modelMatrices;
+		std::vector<glm::mat4> m_previousModelMatrices;
 		uint32_t m_relevantMatricesCount;
 
 		void GatherObjectsInFrustum();

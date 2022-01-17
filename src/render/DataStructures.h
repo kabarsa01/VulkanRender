@@ -5,7 +5,7 @@
 
 namespace CGE
 {
-	inline constexpr uint32_t g_GlobalTransformDataSize = 1024 * 1024;
+	inline constexpr uint32_t g_GlobalTransformDataSize = 256 * 1024;
 	inline constexpr uint32_t g_LightsListSize = 1024;
 	inline constexpr glm::u32vec3 g_ClusteringResolution = { 32,32,64 };
 	inline constexpr uint32_t g_LightsPerCluster = 256;
@@ -14,9 +14,13 @@ namespace CGE
 	struct alignas(16) GlobalShaderData
 	{
 		alignas(16) glm::mat4 worldToView;
+		alignas(16) glm::mat4 previousWorldToView;
 		alignas(16) glm::mat4 viewToProj;
+		alignas(16) glm::mat4 previousViewToProj;
 		alignas(16) glm::vec3 cameraPos;
+		alignas(16) glm::vec3 previousCameraPos;
 		alignas(16) glm::vec3 viewVector;
+		alignas(16) glm::vec3 previousViewVector;
 		alignas(8) glm::uvec2 numClusters;
 		alignas(8) glm::uvec2 clusterSize;
 		alignas(8) glm::uvec2 halfScreenOffset;

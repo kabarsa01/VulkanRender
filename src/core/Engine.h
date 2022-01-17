@@ -20,6 +20,7 @@ namespace CGE
 		static Scene* GetSceneInstance();
 		static Renderer* GetRendererInstance();
 		static uint32_t GetFrameIndex(uint32_t div);
+		static uint32_t GetPreviousFrameIndex(uint32_t div);
 	
 		void Run();
 	

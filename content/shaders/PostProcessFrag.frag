@@ -16,7 +16,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 	vec4 color = texture( sampler2D( screenImage, repeatLinearSampler ), uv );
-	color.xyz += texture( sampler2D( indirectLight, repeatLinearSampler ), uv ).xyz;
+	color.xyz += 0.1f * texture( sampler2D( indirectLight, repeatLinearSampler ), uv ).xyz;
 	// tonemap
     color.xyz = color.xyz / (color.xyz + vec3(1.0, 1.0, 1.0) );
 	// gamma correct

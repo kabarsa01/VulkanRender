@@ -44,6 +44,7 @@ namespace CGE
 		RtScene* rtScene = Singleton<RtScene>::GetInstance();
 
 		uint32_t frameIndex = Engine::GetFrameIndex(m_frameData.size());
+		uint32_t prevFrameIndex = Engine::GetPreviousFrameIndex(m_frameData.size());
 		RTGIPassFrameData& frameData = m_frameData[frameIndex];
 		if (!frameData.pipeline)
 		{
@@ -57,6 +58,7 @@ namespace CGE
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 
 		uint32_t depthIndex = Engine::GetFrameIndex(depthData->depthTextures.size());
+		uint32_t prevDepthIndex = Engine::GetPreviousFrameIndex(depthData->depthTextures.size());
 
 		// barriers ----------------------------------------------
 		BufferMemoryBarrier clusterDataBarrier = clusterComputeData->clusterLightsData->GetBuffer().CreateMemoryBarrier(
@@ -69,6 +71,7 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead);
 		std::vector<BufferMemoryBarrier> buffersBarriers { clusterDataBarrier, gridDataBarrier };
 
+		std::vector<ImageMemoryBarrier> imageBarriers;
 		ImageMemoryBarrier depthTextureBarrier = depthData->depthTextures[depthIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
@@ -76,7 +79,15 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
 			0, 1, 0, 1);
-		std::vector<ImageMemoryBarrier> imageBarriers{ depthTextureBarrier };
+		imageBarriers.push_back(depthTextureBarrier);
+		ImageMemoryBarrier prevDepthTextureBarrier = depthData->depthTextures[prevDepthIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
+			0, 1, 0, 1);
+		imageBarriers.push_back(prevDepthTextureBarrier);
 		for (auto tex : rtShadowData->visibilityTextures)
 		{
 			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
@@ -104,6 +115,14 @@ namespace CGE
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
 		imageBarriers.push_back(normalsBarrier);
+		vk::ImageMemoryBarrier velocityBarrier = gbufferData->velocity[depthIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eColorAttachmentWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		imageBarriers.push_back(velocityBarrier);
 		// direct lighting data
 		vk::ImageMemoryBarrier directLightBarrier = directLightingData->hdrRenderTargets[depthIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
@@ -113,6 +132,7 @@ namespace CGE
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
 		imageBarriers.push_back(directLightBarrier);
+		//---------------------------------------------------------------------------------------------------------------------------
 		// lighting data
 		vk::ImageMemoryBarrier lightingData = m_lightingData[frameIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
@@ -122,6 +142,15 @@ namespace CGE
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
 		imageBarriers.push_back(lightingData);
+		vk::ImageMemoryBarrier previousLightingData = m_lightingData[prevFrameIndex]->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		imageBarriers.push_back(previousLightingData);
+		//---------------------------------------------------------------------------------------------------------------------------
 
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands,
@@ -193,6 +222,7 @@ namespace CGE
 		// initial deferred lighting pass can be used to sample direct lighting in case our rays hit something in screenspace
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 
+		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR64Uint, true);
 		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
 		dataTable.CreatePassData<RTGIPassData>()->lightingData = m_lightingData;
 
@@ -207,9 +237,14 @@ namespace CGE
 
 			auto& resMapper = frameData.resourceMapper;
 
+			resMapper.AddSampledImage("albedoTex", gbufferData->albedos[idx]);
 			resMapper.AddSampledImage("depthTex", depthData->depthTextures[idx]);
+			resMapper.AddSampledImage("previousDepthTex", depthData->depthTextures[(idx - 1 + depthData->depthTextures.size()) % depthData->depthTextures.size()]);
 			resMapper.AddSampledImage("normalTex", gbufferData->normals[idx]);
+			resMapper.AddSampledImage("velocityTex", gbufferData->velocity[idx]);
+			resMapper.AddSampledImage("previousLightTex", m_lightingData[(idx + m_lightingData.size() - 1) % m_lightingData.size()]);
 			resMapper.AddStorageImage("lightTex", m_lightingData[idx]);
+			resMapper.AddStorageImage("counterTex", m_temporalCounter);
 			// light clustering data
 			//resMapper.AddStorageBuffer("clusterLightsData", clusterData->clusterLightsData);
 			resMapper.AddStorageBuffer("gridLightsData", clusterData->gridLightsData);

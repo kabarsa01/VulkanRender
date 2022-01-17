@@ -14,11 +14,14 @@ layout(location = 0) out FragmentInput {
 	vec3 worldPos;
 	vec3 worldNormal;
 	vec2 uv;
+	vec2 framePosProjected;
+	vec2 prevFramePosProjected;
 	mat3x3 TBN;
 } fragInput;
 
 void main() {
 	mat4 modelMatrix = globalTransformData.modelToWorld[pushConst.transformIndexOffset + gl_InstanceIndex];
+	mat4 previousModelMatrix = globalPreviousTransformData.modelToWorld[pushConst.transformIndexOffset + gl_InstanceIndex];
 
 	fragInput.worldPos = (modelMatrix * vec4(inPos, 1.0)).xyz;
 	fragInput.uv = inUV;
@@ -30,7 +33,11 @@ void main() {
 	vec3 N = normalize(modelMatrix * vec4(inNormal, 0.0)).xyz;
 	fragInput.TBN = mat3x3(T, B, N);
 
+	vec4 prevPos = globalData.previousViewToProj * globalData.previousWorldToView * previousModelMatrix * vec4(inPos, 1.0);
+	fragInput.prevFramePosProjected = prevPos.xy / prevPos.w;
+
 	gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);
+	fragInput.framePosProjected = gl_Position.xy / gl_Position.w;
 }
 
 

@@ -43,11 +43,26 @@ float rnd(inout uint prev)
 // Sampling
 //-------------------------------------------------------------------------------------------------
 
+#define M_PI 3.141592
+
+vec3 SphericalFibonacci(float i, float n) {
+    const float PHI = sqrt(5) * 0.5f + 0.5f;
+    float fraction = (i * (PHI - 1)) - floor(i * (PHI - 1));
+    float phi = 2.f * M_PI * fraction;
+    float cosTheta = 1.f - (2.f * i + 1.f) * (1.f / n);
+    float sinTheta = sqrt(clamp(1.f - cosTheta*cosTheta, 0.0f, 1.0f));
+
+    return vec3(cos(phi) * sinTheta , sin(phi) * sinTheta , cosTheta);
+}
+
+//Ray generateSphericalFibonacciRay(int index) {
+//    float numRays = imageSize.x * imageSize.y;
+//    return Ray(vec3(0.f), 0.f, sphericalFibonacci(index , numRays), inf);
+//}
+
 // Randomly sampling around +Z
 vec3 SamplingHemisphere(inout uint seed, in vec3 x, in vec3 y, in vec3 z)
 {
-#define M_PI 3.141592
-
   float r1 = rnd(seed);
   float r2 = rnd(seed);
   float sq = sqrt(1.0 - r2);

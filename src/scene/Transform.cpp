@@ -118,4 +118,9 @@ namespace CGE
 		return glm::vec3(Up);
 	}
 	
+	void Transform::MemorizeTransformMatrix()
+	{
+		memorizedMatrix = CalculateMatrix();
+	}
+
 }

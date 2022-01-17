@@ -11,6 +11,7 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "ClusteringManager.h"
 #include "utils/Singleton.h"
+#include "utils/ResourceUtils.h"
 
 namespace CGE
 {
@@ -36,24 +37,26 @@ namespace CGE
 	
 		m_globalShaderData = new GlobalShaderData();
 		m_globalTransformData = new GlobalTransformData();
+		m_globalPreviousTransformData = new GlobalTransformData();
+
+		std::vector<BufferDataPtr> transformDataBuffer = ResourceUtils::CreateBufferDataArray(
+			"global_transform_data_", 
+			2, 
+			sizeof(GlobalTransformData), 
+			vk::BufferUsageFlagBits::eStorageBuffer, 
+			true);
+
+		BufferDataPtr shaderDataBuffer = ResourceUtils::CreateBufferData("PerFrameShaderData_", sizeof(GlobalShaderData), BufferUsageFlagBits::eUniformBuffer, true);
 
 		m_data.resize(2);
 		
 		uint32_t counter = 0;
 		for (auto& frameData : m_data)
 		{
-			frameData.shaderDataBuffer = ObjectBase::NewObject<BufferData>(
-				"PerFrameShaderData_" + std::to_string(counter), 
-				sizeof(GlobalShaderData), 
-				BufferUsageFlagBits::eUniformBuffer | BufferUsageFlagBits::eTransferDst, 
-				true);
-			frameData.shaderDataBuffer->Create();
-			frameData.transformDataBuffer = ObjectBase::NewObject<BufferData>(
-				"PerFrameTransformData_" + std::to_string(counter), 
-				sizeof(GlobalTransformData), 
-				BufferUsageFlagBits::eStorageBuffer | BufferUsageFlagBits::eTransferDst, 
-				true);
-			frameData.transformDataBuffer->Create();
+			frameData.shaderDataBuffer = shaderDataBuffer;
+
+			frameData.transformDataBuffer = transformDataBuffer[0];
+			frameData.previousTransformDataBuffer = transformDataBuffer[1];
 
 			frameData.m_set.SetBindings(ProduceBindings(frameData));
 			frameData.m_set.Create(device);
@@ -69,11 +72,13 @@ namespace CGE
 	{
 		delete m_globalShaderData;
 		delete m_globalTransformData;
+		delete m_globalPreviousTransformData;
 		
 		for (auto& data : m_data)
 		{
 			data.shaderDataBuffer = nullptr;
 			data.transformDataBuffer = nullptr;
+			data.previousTransformDataBuffer = nullptr;
 			data.m_set.Destroy();
 		}
 		
@@ -85,6 +90,7 @@ namespace CGE
 		GatherData();
 		GetData().shaderDataBuffer->CopyTo(sizeof(GlobalShaderData), reinterpret_cast<const char*>( m_globalShaderData ));
 		GetData().transformDataBuffer->CopyTo(m_relevantTransformsSize, reinterpret_cast<const char*>( m_globalTransformData ));
+		GetData().previousTransformDataBuffer->CopyTo(m_relevantTransformsSize, reinterpret_cast<const char*>(m_globalPreviousTransformData));
 	}
 	
 	std::vector<DescriptorSetLayoutBinding> PerFrameData::ProduceBindings(FrameData& frameData)
@@ -100,12 +106,23 @@ namespace CGE
 		shaderDataBinding.setStageFlags(stageFlags);
 		bindings.push_back(shaderDataBinding);
 		
-		vk::DescriptorSetLayoutBinding& transformDataBinding = frameData.transformDataBinding;
-		transformDataBinding.setBinding(static_cast<uint32_t>( bindings.size()) );
-		transformDataBinding.setDescriptorCount(1);
-		transformDataBinding.setDescriptorType(DescriptorType::eStorageBuffer);
-		transformDataBinding.setStageFlags(stageFlags);
-		bindings.push_back(transformDataBinding);
+		{
+			vk::DescriptorSetLayoutBinding& transformDataBinding = frameData.transformDataBinding;
+			transformDataBinding.setBinding(static_cast<uint32_t>(bindings.size()));
+			transformDataBinding.setDescriptorCount(1);
+			transformDataBinding.setDescriptorType(DescriptorType::eStorageBuffer);
+			transformDataBinding.setStageFlags(stageFlags);
+			bindings.push_back(transformDataBinding);
+		}
+
+		{
+			vk::DescriptorSetLayoutBinding& transformDataBinding = frameData.previousTransformDataBinding;
+			transformDataBinding.setBinding(static_cast<uint32_t>(bindings.size()));
+			transformDataBinding.setDescriptorCount(1);
+			transformDataBinding.setDescriptorType(DescriptorType::eStorageBuffer);
+			transformDataBinding.setStageFlags(stageFlags);
+			bindings.push_back(transformDataBinding);
+		}
 	
 		return bindings;
 	}
@@ -123,14 +140,27 @@ namespace CGE
 		shaderDataWrite.setPBufferInfo(&frameData.shaderDataBuffer->GetBuffer().GetDescriptorInfo());
 		writes.push_back(shaderDataWrite);
 	
-		WriteDescriptorSet transformDataWrite;
-		transformDataWrite.setDescriptorCount(1);
-		transformDataWrite.setDescriptorType(frameData.transformDataBinding.descriptorType);
-		transformDataWrite.setDstArrayElement(0);
-		transformDataWrite.setDstBinding(frameData.transformDataBinding.binding);
-		transformDataWrite.setDstSet(frameData.m_set.GetSet());
-		transformDataWrite.setPBufferInfo(&frameData.transformDataBuffer->GetBuffer().GetDescriptorInfo());
-		writes.push_back(transformDataWrite);
+		{
+			WriteDescriptorSet transformDataWrite;
+			transformDataWrite.setDescriptorCount(1);
+			transformDataWrite.setDescriptorType(frameData.transformDataBinding.descriptorType);
+			transformDataWrite.setDstArrayElement(0);
+			transformDataWrite.setDstBinding(frameData.transformDataBinding.binding);
+			transformDataWrite.setDstSet(frameData.m_set.GetSet());
+			transformDataWrite.setPBufferInfo(&frameData.transformDataBuffer->GetBuffer().GetDescriptorInfo());
+			writes.push_back(transformDataWrite);
+		}
+
+		{
+			WriteDescriptorSet transformDataWrite;
+			transformDataWrite.setDescriptorCount(1);
+			transformDataWrite.setDescriptorType(frameData.previousTransformDataBinding.descriptorType);
+			transformDataWrite.setDstArrayElement(0);
+			transformDataWrite.setDstBinding(frameData.previousTransformDataBinding.binding);
+			transformDataWrite.setDstSet(frameData.m_set.GetSet());
+			transformDataWrite.setPBufferInfo(&frameData.previousTransformDataBuffer->GetBuffer().GetDescriptorInfo());
+			writes.push_back(transformDataWrite);
+		}
 	
 		return writes;
 	}
@@ -143,9 +173,13 @@ namespace CGE
 		Scene* scene = Engine::GetSceneInstance();
 		CameraComponentPtr camComp = scene->GetSceneComponent<CameraComponent>();
 	
+		m_globalShaderData->previousWorldToView = m_globalShaderData->worldToView;
 		m_globalShaderData->worldToView = camComp->CalculateViewMatrix();
+		m_globalShaderData->previousViewToProj = m_globalShaderData->viewToProj;
 		m_globalShaderData->viewToProj = camComp->CalculateProjectionMatrix();
+		m_globalShaderData->previousCameraPos = m_globalShaderData->cameraPos;
 		m_globalShaderData->cameraPos = camComp->GetParent()->transform.GetLocation();
+		m_globalShaderData->previousViewVector = m_globalShaderData->viewVector;
 		m_globalShaderData->viewVector = camComp->GetParent()->transform.GetForwardVector();
 
 		m_globalShaderData->numClusters = Singleton<ClusteringManager>::GetInstance()->GetNumClusters();
@@ -160,6 +194,7 @@ namespace CGE
 	
 		m_relevantTransformsSize = scene->GetRelevantMatricesCount() * sizeof(glm::mat4x4);
 		std::memcpy(m_globalTransformData->modelToWorld, scene->GetModelMatrices().data(), m_relevantTransformsSize);
+		std::memcpy(m_globalPreviousTransformData->modelToWorld, scene->GetPreviousModelMatrices().data(), m_relevantTransformsSize);
 	}
 }
 

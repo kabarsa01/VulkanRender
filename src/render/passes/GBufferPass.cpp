@@ -67,7 +67,8 @@ namespace CGE
 		// just init clear values
 		clearValues[0].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
 		clearValues[1].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
-		clearValues[2].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
+		clearValues[2].setColor(ClearColorValue(std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 1.0f })));
+		clearValues[3].setDepthStencil(ClearDepthStencilValue(1.0f, 0));
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		initContext.SetDepthAttachments(depthData->depthTextures, false);
@@ -80,11 +81,13 @@ namespace CGE
 		std::shared_ptr<GBufferPassData> gbufferData = std::make_shared<GBufferPassData>();
 		dataTable.AddPassData<GBufferPassData>(gbufferData);
 
-		gbufferData->albedos = ResourceUtils::CreateColorTextureArray(initContext.GetPassName()+HashString("_albedo"), 2, initContext.GetWidth(), initContext.GetHeight());
+		gbufferData->albedos = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_albedo"), 2, initContext.GetWidth(), initContext.GetHeight());
 		gbufferData->normals = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_normal"), 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat);
+		gbufferData->velocity = ResourceUtils::CreateColorTextureArray(initContext.GetPassName() + HashString("_velocity"), 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16Sfloat);
 
 		initContext.SetAttachments(0, gbufferData->albedos, true);
 		initContext.SetAttachments(1, gbufferData->normals, true);
+		initContext.SetAttachments(2, gbufferData->velocity, true);
 	}
 	
 }

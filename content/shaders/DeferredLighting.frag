@@ -177,7 +177,9 @@ void main() {
 		vec3 pixelToLightDir = (lightInfo.position - pixelCoordWorld).xyz;
 
 		float cosine = dot( normalize(-1.0 * pixelToLightDir), normalize(lightInfo.direction.xyz) );
-		float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
+		float spotCosine = cos(radians(lightInfo.rai.y));
+		float angleFactor = clamp(cosine - spotCosine, 0.0, 1.0);// / clamp(1.0f - spotCosine, 0.0, 1.0);
+		//float angleFactor = clamp(cosine - cos(radians(lightInfo.rai.y)), 0, 1);
 		float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
 		float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
 		float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);

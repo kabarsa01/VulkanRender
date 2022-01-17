@@ -29,8 +29,10 @@ namespace CGE
 		{
 			BufferDataPtr shaderDataBuffer;
 			BufferDataPtr transformDataBuffer;
+			BufferDataPtr previousTransformDataBuffer;
 			DescriptorSetLayoutBinding shaderDataBinding;
 			DescriptorSetLayoutBinding transformDataBinding;
+			DescriptorSetLayoutBinding previousTransformDataBinding;
 			VulkanDescriptorSet m_set;
 			std::vector<WriteDescriptorSet> descriptorWrites;
 		};
@@ -38,6 +40,7 @@ namespace CGE
 		
 		GlobalShaderData* m_globalShaderData;
 		GlobalTransformData* m_globalTransformData;
+		GlobalTransformData* m_globalPreviousTransformData;
 		uint64_t m_relevantTransformsSize = 0;
 	
 		FrameData& GetData() { return m_data[Engine::GetFrameIndex(m_data.size())]; }

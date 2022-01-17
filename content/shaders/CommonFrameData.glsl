@@ -13,9 +13,13 @@ layout(set = 0, binding = 3) uniform sampler borderWhiteLinearSampler;
 layout(set = 0, binding = 4) uniform ShaderGlobalData
 {
 	mat4 worldToView;
+	mat4 previousWorldToView;
 	mat4 viewToProj;
+	mat4 previousViewToProj;
 	vec3 cameraPos;
+	vec3 previousCameraPos;
 	vec3 viewVector;
+	vec3 previousViewVector;
 	ivec2 numClusters;
 	ivec2 clusterSize;
 	ivec2 halfScreenOffset;
@@ -32,5 +36,10 @@ layout(set = 0, binding = 5) readonly buffer GlobalTransformData
 {
 	mat4 modelToWorld[];
 } globalTransformData;
+
+layout(set = 0, binding = 6) readonly buffer GlobalPreviousTransformData
+{
+	mat4 modelToWorld[];
+} globalPreviousTransformData;
 
 #endif

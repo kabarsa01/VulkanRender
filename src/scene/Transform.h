@@ -34,11 +34,16 @@ namespace CGE
 		glm::vec3 GetForwardVector() const;
 		glm::vec3 GetLeftVector() const;
 		glm::vec3 GetUpVector() const;
+
+		// do not use in usual code, scene specific
+		void MemorizeTransformMatrix();
+		glm::mat4 GetMemorizedTransformMatrix() { return memorizedMatrix; };
 	protected:
 		glm::vec3 location;
 		glm::vec3 rotation;
 		glm::vec3 scale;
 		glm::mat4 matrix;
+		glm::mat4 memorizedMatrix;
 		bool isDirty;
 	};
 

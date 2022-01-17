@@ -12,6 +12,7 @@ namespace CGE
 	{
 		std::vector<Texture2DPtr> albedos;
 		std::vector<Texture2DPtr> normals;
+		std::vector<Texture2DPtr> velocity;
 	};
 
 	class GBufferPass : public RenderPassBase
@@ -19,7 +20,7 @@ namespace CGE
 	public:
 		GBufferPass(HashString inName);
 	protected:
-		std::array<vk::ClearValue, 3> clearValues;
+		std::array<vk::ClearValue, 4> clearValues;
 	
 		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;
 		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;

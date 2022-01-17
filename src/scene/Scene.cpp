@@ -141,27 +141,57 @@ namespace CGE
 		//	 }));
 		//}
 		m_modelMatrices.resize(g_GlobalTransformDataSize);
+		m_previousModelMatrices.resize(g_GlobalTransformDataSize);
 	
 		TransferList* tl = TransferList::GetInstance();
 	
 		//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/gun/Textures/Cerberus_A.tga", false, true, false);
 		//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/gun/Textures/Cerberus_N.tga", false, true, true);
 		//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/uv_base.png", false, true, false);
-		Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/textures/white.png", false, true, false);
+		Texture2DPtr white = DataManager::RequestResourceType<Texture2D>("content/textures/white.png", false, true, false);
+		Texture2DPtr red = DataManager::RequestResourceType<Texture2D>("content/textures/red.png", false, true, false);
+		Texture2DPtr green = DataManager::RequestResourceType<Texture2D>("content/textures/green.png", false, true, false);
 		//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
 		//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
 		Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/textures/normals_flat.png", false, true, true, true);
-		tl->PushImage(albedo);
+		tl->PushImage(white);
+		tl->PushImage(red);
+		tl->PushImage(green);
 		tl->PushImage(normal);
 	
+		//------------------------------------------------------------------------------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------------------------------------------------------------------------------
+		// materials
+
 		MaterialPtr mat = DataManager::RequestResourceType<Material>(
 			"default",
 			"content/shaders/GBufferVert.spv",
 			"content/shaders/GBufferFrag.spv"
 			);
-		mat->SetTexture("albedo", albedo);
+		mat->SetTexture("albedo", white);
 		mat->SetTexture("normal", normal);
 		mat->LoadResources();
+
+		MaterialPtr mat_red = DataManager::RequestResourceType<Material>(
+			"red",
+			"content/shaders/GBufferVert.spv",
+			"content/shaders/GBufferFrag.spv"
+			);
+		mat_red->SetTexture("albedo", red);
+		mat_red->SetTexture("normal", normal);
+		mat_red->LoadResources();
+
+		MaterialPtr mat_green = DataManager::RequestResourceType<Material>(
+			"green",
+			"content/shaders/GBufferVert.spv",
+			"content/shaders/GBufferFrag.spv"
+			);
+		mat_green->SetTexture("albedo", green);
+		mat_green->SetTexture("normal", normal);
+		mat_green->LoadResources();
+
+		//------------------------------------------------------------------------------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 		Renderer* renderer = Engine::GetRendererInstance();
 		// hardcoding dirty sample scene 
@@ -175,21 +205,22 @@ namespace CGE
 		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
 		cameraObj->GetCameraComponent()->SetAspectRatio(float(renderer->GetWidth()) / float(renderer->GetHeight()));
 	
-		//LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
-		//lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-		//lightObj->transform.SetRotation({ -20.0f, -115.0f, 0.0f });
-		//lightObj->GetLightComponent()->type = LT_Directional;
-		//lightObj->GetLightComponent()->intensity = 1.6f;
-		//lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
+		LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
+		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+		lightObj->transform.SetRotation({ -20.0f, -115.0f, 0.0f });
+		lightObj->GetLightComponent()->type = LT_Directional;
+		lightObj->GetLightComponent()->intensity = 1.6f;
+		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
-		LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-		lightObj01->transform.SetLocation({ -15.0f, -1.0f, 5.0f });
-		lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
-		lightObj01->GetLightComponent()->type = LT_Spot;
-		lightObj01->GetLightComponent()->radius = 115.0f;
-		lightObj01->GetLightComponent()->spotHalfAngle = 40.0f;
-		lightObj01->GetLightComponent()->intensity = 2.0f;
-		lightObj01->GetLightComponent()->color = { 1.0f, 0.5f, 1.0f };
+
+		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
+		//lightObj01->transform.SetLocation({ -15.0f, -1.0f, 5.0f });
+		//lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
+		//lightObj01->GetLightComponent()->type = LT_Spot;
+		//lightObj01->GetLightComponent()->radius = 115.0f;
+		//lightObj01->GetLightComponent()->spotHalfAngle = 30.0f;
+		//lightObj01->GetLightComponent()->intensity = 2.0f;
+		//lightObj01->GetLightComponent()->color = { 0.2f, 1.0f, 0.2f };
 	
 		float width = 500.0f;
 		float depth = 500.0f;
@@ -256,6 +287,38 @@ namespace CGE
 						mo3->GetMeshComponent()->SetMaterial(mat);
 						mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 					}
+				}
+			}
+
+			MeshImporter cube;
+			//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+			//importer.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+			//importer.Import("./content/meshes/cube/cube.fbx");
+			cube.Import("./content/meshes/cube/cube.fbx");
+			MeshDataPtr meshData = cube.GetMeshes()[0];
+			meshData->CreateBuffer();
+
+
+			float width = 15.0f;
+			float depth = 15.0f;
+			uint32_t countX = 2;
+			uint32_t countY = 2;
+			for (uint32_t indexX = 0; indexX < countX; indexX++)
+			{
+				for (uint32_t indexY = 0; indexY < countY; indexY++)
+				{
+					float randomY = std::rand() / float(RAND_MAX);
+					float randomZ = std::rand() / float(RAND_MAX);
+
+					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
+					mo3->GetMeshComponent()->meshData = meshData;
+					mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -10.0f, -1.0 * indexY * depth / float(countY - 1) });
+					//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+					//mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
+					mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+					mo3->transform.SetScale({ 2.0f, 5.0f, 2.0f });
+					mo3->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
+					mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 				}
 			}
 		}
@@ -338,7 +401,15 @@ namespace CGE
 			{
 				m_materialToMeshData[materialId].push_back(meshData);
 			}
-			m_matToMeshToTransform[materialId][meshDataId].push_back(meshComponent->GetParent()->transform.CalculateMatrix());
+
+			auto& transform = meshComponent->GetParent()->transform;
+			MatrixPair pair;
+			pair.previousMatrix = transform.GetMemorizedTransformMatrix();
+			pair.matrix = transform.CalculateMatrix();
+
+			m_matToMeshToTransform[materialId][meshDataId].emplace_back(pair);
+
+			transform.MemorizeTransformMatrix();
 		}
 
 		uint32_t counter = 0;
@@ -349,9 +420,11 @@ namespace CGE
 				for (MeshDataPtr meshData : m_materialToMeshData[material->GetResourceId()])
 				{
 					m_materialToMeshDataToIndex[material->GetResourceId()][meshData->GetResourceId()] = counter;
-					for (glm::mat4& modelMatrix : m_matToMeshToTransform[material->GetResourceId()][meshData->GetResourceId()])
+					for (auto& matrixPair : m_matToMeshToTransform[material->GetResourceId()][meshData->GetResourceId()])
 					{
-						m_modelMatrices[counter++] = modelMatrix;
+						m_modelMatrices[counter] = matrixPair.matrix;
+						m_previousModelMatrices[counter] = matrixPair.previousMatrix;
+						++counter;
 					}
 				}
 			}
@@ -385,14 +458,16 @@ namespace CGE
 		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
 		for (LightComponentPtr light : lights)
 		{
-			light->GetParent()->transform.AddRotation({ 0.0f, 0.1f, 0.0f });
+
+			light->GetParent()->transform.AddRotation({ 0.0f, 0.05f, 0.0f });
 		}
 
 		double time = TimeManager::GetInstance()->GetTime();
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
-			//cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 65.0f * glm::sin(time / 15.0f), 0.0f});
+
+//			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time / 10.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();
