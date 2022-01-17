@@ -222,7 +222,7 @@ namespace CGE
 		// initial deferred lighting pass can be used to sample direct lighting in case our rays hit something in screenspace
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 
-		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR64Uint, true);
+		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Uint, true);
 		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
 		dataTable.CreatePassData<RTGIPassData>()->lightingData = m_lightingData;
 

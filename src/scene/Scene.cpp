@@ -212,7 +212,6 @@ namespace CGE
 		lightObj->GetLightComponent()->intensity = 1.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.6f };
 	
-
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
 		//lightObj01->transform.SetLocation({ -15.0f, -1.0f, 5.0f });
 		//lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
@@ -458,7 +457,6 @@ namespace CGE
 		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
 		for (LightComponentPtr light : lights)
 		{
-
 			light->GetParent()->transform.AddRotation({ 0.0f, 0.05f, 0.0f });
 		}
 
@@ -466,7 +464,6 @@ namespace CGE
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
-
 //			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time / 10.0f), 0.0f});
 		}
 	

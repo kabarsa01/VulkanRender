@@ -85,7 +85,7 @@ layout(set = 2, binding = 3) uniform texture2D previousLightTex;
 layout(set = 2, binding = 4) uniform texture2D previousDepthTex;
 layout(set = 2, binding = 5) uniform texture2D velocityTex;
 layout(set = 2, binding = 6) uniform texture2D albedoTex;
-layout(set = 2, binding = 7, r64ui) uniform uimage2D counterTex;
+layout(set = 2, binding = 7, r32ui) uniform uimage2D counterTex;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -203,11 +203,16 @@ void main()
 	uint samplePoolSize = 8192;
 	uint sampleStep = samplePoolSize / 32;
 	uint sampleStart = temporalCounter % sampleStep;
+	uint jitterSeed = tea(temporalCounter, sampleStart);
 	for (uint idx = sampleStart; idx < samplePoolSize; idx += sampleStep)
 	{
-		vec3 hemisphereDir = SphericalFibonacci(idx, samplePoolSize);
+		vec3 jitter = vec3(rnd(jitterSeed), rnd(jitterSeed), rnd(jitterSeed));
+		jitter = (normalize(jitter) - vec3(0.5f)) * 0.1;
+
+		vec3 hemisphereDir = SphericalFibonacci(idx, samplePoolSize) + jitter;
 		hemisphereDir.z = abs(hemisphereDir.z);
 		vec3 direction = normalize( hemisphereDir.x * tangent + hemisphereDir.y * bitangent + hemisphereDir.z * N );
+
 		float initialSurfaceCos = clamp( dot(N, direction), 0.0f, 1.0f );
 
 		traceRayEXT(tlas,							// acceleration structure

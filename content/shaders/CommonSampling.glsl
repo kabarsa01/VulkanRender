@@ -38,6 +38,40 @@ float rnd(inout uint prev)
   return (float(lcg(prev)) / float(0x01000000));
 }
 
+//uint JenkinsHash(uint x)
+//{
+//    x += x << 10;
+//    x ^= x >> 6;
+//    x += x << 3;
+//    x ^= x >> 11;
+//    x += x << 15;
+//    return x;
+//}
+//
+//uint InitRNG(uvec2 pixel , uvec2 resolution , uint frame)
+//{
+//    uint rngState = uint(dot(pixel , uvec2(1, resolution.x))) ^ JenkinsHash(frame);
+//    return JenkinsHash(rngState);
+//}
+//
+//float UintToFloat(uint x)
+//{
+//    return asfloat(0x3f800000 | (x >> 9)) - 1.f;
+//}
+//
+//uint Xorshift(inout uint rngState)
+//{
+//    rngState ^= rngState << 13;
+//    rngState ^= rngState >> 17;
+//    rngState ^= rngState << 5;
+//    return rngState;
+//}
+//
+//float Rand(inout uint rngState)
+//{
+//    return UintToFloat(Xorshift(rngState));
+//}
+
 
 //-------------------------------------------------------------------------------------------------
 // Sampling
