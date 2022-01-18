@@ -17,6 +17,7 @@ namespace CGE
 	struct RTGIPassData : public Identifiable<RTGIPassData>
 	{
 		std::vector<Texture2DPtr> lightingData;
+		std::vector<Texture2DPtr> giDepthData;
 	};
 
 	class RTGIPass : public RenderPassBase
@@ -40,14 +41,12 @@ namespace CGE
 
 		std::vector<RTGIPassFrameData> m_frameData;
 		std::vector<Texture2DPtr> m_lightingData;
+		std::vector<Texture2DPtr> m_giDepthData;
 		Texture2DPtr m_temporalCounter;
 		RtShaderPtr m_rayGen;
 		RtShaderPtr m_rayMiss;
 		RtShaderPtr m_closestHit;
 		RtMaterialPtr m_globalRTGIMaterial;
-
-		MeshDataPtr m_hemisphereSamplingPoints;
-		BufferDataPtr m_samplingPointsBuffer;
 
 		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;
 		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;

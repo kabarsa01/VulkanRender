@@ -28,6 +28,7 @@ namespace CGE
 	void RenderPassDataTable::AddPassData(std::shared_ptr<Identifiable<T>> data)
 	{
 		static_assert(std::is_base_of<Identifiable<T>, T>().value, "!!! Identifiable expected !!! Please use something derived from Identifiable<T>");
+		assert(m_data.find(data->GetId()) == m_data.end());
 		m_data[data->GetId()] = data;
 	}
 
@@ -36,6 +37,7 @@ namespace CGE
 	{
 		static_assert(std::is_base_of<Identifiable<T>, T>().value, "!!! Identifiable expected !!! Please use something derived from Identifiable<T>");
 		std::shared_ptr<T> data = std::make_shared<T, Args...>(std::forward<Args>(args)...);
+		assert(m_data.find(data->GetId()) == m_data.end());
 		m_data[data->GetId()] = data;
 		return data;
 	}

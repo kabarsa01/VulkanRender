@@ -36,6 +36,7 @@
 #include "data/TextureData.h"
 #include "passes/ClusterComputePass.h"
 #include "passes/RTGIPass.h"
+#include "passes/LightCompositingPass.h"
 
 namespace CGE
 {
@@ -111,6 +112,8 @@ namespace CGE
 		deferredLightingPass->Init();
 		rtGIPass = new RTGIPass(HashString("RTGIPass"));
 		rtGIPass->Init();
+		compositingPass = new LightCompositingPass(HashString("LightCompositingPass"));
+		compositingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
 		postProcessPass->Init();
 	}
@@ -173,6 +176,9 @@ namespace CGE
 		rtGIPass->Update();
 		rtGIPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
+		// light compositing pass
+		compositingPass->Execute(&cmdBuffer);
+		//--------------------------------------------------------
 		// post process pass
 		postProcessPass->Execute(&cmdBuffer);
 		// end commands recording
@@ -217,6 +223,7 @@ namespace CGE
 		delete gBufferPass;
 		delete rtShadowPass;
 		delete rtGIPass;
+		delete compositingPass;
 		delete m_clusterComputePass;
 	
 		Scene* scene = Engine::GetSceneInstance();

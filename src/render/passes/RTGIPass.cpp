@@ -181,30 +181,6 @@ namespace CGE
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
-		MeshImporter meshImporter;
-		meshImporter.Import("./content/meshes/hemisphere_sample/hemisphere_sample_1241.fbx");
-		for (unsigned int MeshIndex = 0; MeshIndex < meshImporter.GetMeshes().size(); MeshIndex++)
-		{
-			m_hemisphereSamplingPoints = meshImporter.GetMeshes()[MeshIndex];
-			m_hemisphereSamplingPoints->CreateBuffer();
-			break;
-		}
-		m_samplingPointsBuffer = ResourceUtils::CreateBufferData("GI_hemisphere_sampling", sizeof(CoordinateList), vk::BufferUsageFlagBits::eUniformBuffer, true);
-		{
-			CoordinateList samplingPoints;
-			auto& vertices = m_hemisphereSamplingPoints->vertices;
-			for (uint32_t idx = 0; idx < vertices.size(); ++idx)
-			{
-				if (idx >= 2048)
-				{
-					break;
-				}
-				samplingPoints.coords[idx] = glm::vec4(vertices[idx].position, 1.0f);
-			}
-			samplingPoints.size = static_cast<uint32_t>(vertices.size());
-			m_samplingPointsBuffer->CopyTo(sizeof(CoordinateList), reinterpret_cast<const char*>( &samplingPoints ));
-		}
-
 		m_rayGen = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayGenGI.spv", ERtShaderType::RST_RAY_GEN);
 		m_rayMiss = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayMissGI.spv", ERtShaderType::RST_MISS);
 		//m_closestHit = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayClosestHitGI.spv", ERtShaderType::RST_CLOSEST_HIT);
@@ -224,7 +200,11 @@ namespace CGE
 
 		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Uint, true);
 		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
-		dataTable.CreatePassData<RTGIPassData>()->lightingData = m_lightingData;
+		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Sfloat, true);
+
+		auto passData = dataTable.CreatePassData<RTGIPassData>();
+		passData->lightingData = m_lightingData;
+		passData->giDepthData = m_giDepthData;
 
 		m_frameData.resize(2);
 		for (uint32_t idx = 0; idx < m_frameData.size(); ++idx)
@@ -238,6 +218,8 @@ namespace CGE
 			auto& resMapper = frameData.resourceMapper;
 
 			resMapper.AddSampledImage("albedoTex", gbufferData->albedos[idx]);
+			resMapper.AddSampledImage("giDepthTex", m_giDepthData[idx]);
+			resMapper.AddSampledImage("previousGIDepthTex", m_giDepthData[(idx - 1 + m_giDepthData.size()) % m_giDepthData.size()]);
 			resMapper.AddSampledImage("depthTex", depthData->depthTextures[idx]);
 			resMapper.AddSampledImage("previousDepthTex", depthData->depthTextures[(idx - 1 + depthData->depthTextures.size()) % depthData->depthTextures.size()]);
 			resMapper.AddSampledImage("normalTex", gbufferData->normals[idx]);
@@ -256,8 +238,6 @@ namespace CGE
 			resMapper.AddSampledImageArray("visibilityTextures", rtShadowData->visibilityTextures);
 			// direct lighting info from deferred lighting pass
 			resMapper.AddSampledImage("directLightTex", directLightingData->hdrRenderTargets[idx]);
-			// hemisphere sampling points prebaked
-			resMapper.AddUniformBuffer("samplingPoints", m_samplingPointsBuffer);
 			// shaders
 			resMapper.SetShaders(std::vector<RtShaderPtr>{ m_rayGen, m_rayMiss });
 

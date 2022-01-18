@@ -47,6 +47,7 @@ namespace CGE
 	class RTShadowPass;
 	class RTGIPass;
 	class DeferredLightingPass;
+	class LightCompositingPass;
 	class PostProcessPass;
 
 	class DepthPrepass;
@@ -112,8 +113,9 @@ namespace CGE
 		ClusterComputePass* m_clusterComputePass;
 		GBufferPass* gBufferPass;
 		RTShadowPass* rtShadowPass;
-		RTGIPass* rtGIPass;
 		DeferredLightingPass* deferredLightingPass;
+		RTGIPass* rtGIPass;
+		LightCompositingPass* compositingPass;
 		PostProcessPass* postProcessPass;
 	
 		//==================== METHODS ===============================

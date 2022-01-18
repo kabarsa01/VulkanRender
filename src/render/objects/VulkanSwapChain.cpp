@@ -335,6 +335,10 @@ namespace CGE
 	{
 		for (const SurfaceFormatKHR& surfaceFormat : inFormats)
 		{
+			if (surfaceFormat.format == Format::eR16G16B16A16Unorm && surfaceFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+			{
+				return surfaceFormat;
+			}
 			if (surfaceFormat.format == Format::eR8G8B8A8Unorm && surfaceFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
 			{
 				return surfaceFormat;
