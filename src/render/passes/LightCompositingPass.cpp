@@ -4,6 +4,7 @@
 #include "RTGIPass.h"
 #include "data/DataManager.h"
 #include "DeferredLightingPass.h"
+#include "GBufferPass.h"
 
 namespace CGE
 {
@@ -22,6 +23,12 @@ namespace CGE
 		auto depthData = dataTable.GetPassData<DepthPrepassData>();
 		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
+
+
+
+
+
+
 
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 
@@ -97,6 +104,7 @@ namespace CGE
 		auto compositingData = dataTable.CreatePassData<LightCompositingPassData>();
 
 		auto depthData = dataTable.GetPassData<DepthPrepassData>(); 
+		auto gbufferData = dataTable.GetPassData<GBufferPassData>();
 		auto deferredLightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
 
@@ -110,8 +118,8 @@ namespace CGE
 				"content/shaders/PostProcessVert.spv",
 				"content/shaders/LightCompositing.spv"
 				);
-			mat->SetTexture("frameDepth", depthData->depthTextures[idx]);
-			mat->SetTexture("giDepth", rtgiData->giDepthData[idx]);
+			mat->SetTexture("depthTex", depthData->depthTextures[idx]);
+			mat->SetTexture("normalsTex", gbufferData->normals[idx]);
 			mat->SetTexture("frameDirectLight", deferredLightingData->hdrRenderTargets[idx]);
 			mat->SetTexture("frameGILight", rtgiData->lightingData[idx]);
 			mat->LoadResources();

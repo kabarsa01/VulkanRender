@@ -213,13 +213,22 @@ namespace CGE
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.85f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
-		//lightObj01->transform.SetLocation({ -15.0f, -1.0f, 5.0f });
+		//lightObj01->transform.SetLocation({ -15.0f, -1.0f, 20.0f });
 		//lightObj01->transform.SetRotation({ 0.0f, 90.0f, 0.0f });
 		//lightObj01->GetLightComponent()->type = LT_Spot;
 		//lightObj01->GetLightComponent()->radius = 115.0f;
 		//lightObj01->GetLightComponent()->spotHalfAngle = 30.0f;
 		//lightObj01->GetLightComponent()->intensity = 2.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 1.0f, 0.2f };
+
+		//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+		//lightObj02->transform.SetLocation({ 0.0f, -10.0f, 5.0f });
+		//lightObj02->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
+		//lightObj02->GetLightComponent()->type = LT_Point;
+		//lightObj02->GetLightComponent()->radius = 15.0f;
+		//lightObj02->GetLightComponent()->spotHalfAngle = 30.0f;
+		//lightObj02->GetLightComponent()->intensity = 2.0f;
+		//lightObj02->GetLightComponent()->color = { 1.0f, 0.1f, 1.0f };
 	
 		float width = 500.0f;
 		float depth = 500.0f;
@@ -315,7 +324,7 @@ namespace CGE
 					//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 					//mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
 					mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-					mo3->transform.SetScale({ 2.0f, 5.0f, 2.0f });
+					mo3->transform.SetScale({ 2.0f, 25.0f, 2.0f });
 					mo3->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
 					mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 				}
@@ -457,7 +466,7 @@ namespace CGE
 		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
 		for (LightComponentPtr light : lights)
 		{
-			light->GetParent()->transform.AddRotation({ 0.0f, 0.05f, 0.0f });
+			light->GetParent()->transform.AddRotation({ 0.0f, 0.04f, 0.0f });
 		}
 
 		double time = TimeManager::GetInstance()->GetTime();

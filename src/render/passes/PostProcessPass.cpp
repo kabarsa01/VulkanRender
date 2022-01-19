@@ -5,6 +5,7 @@
 #include "../DataStructures.h"
 #include "DeferredLightingPass.h"
 #include "RTGIPass.h"
+#include "LightCompositingPass.h"
 
 namespace CGE
 {
@@ -21,26 +22,18 @@ namespace CGE
 		VulkanSwapChain& swapChain = Engine::GetRendererInstance()->GetSwapChain();
 		Image swapChainImage = swapChain.GetImage();
 
-		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
-		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
+		auto lightingData = dataTable.GetPassData<LightCompositingPassData>();
 
-		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
-		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
+		uint32_t frameIndex = Engine::GetFrameIndex(lightingData->frameImages.size());
+		ImageMemoryBarrier attachmentBarrier = lightingData->frameImages[frameIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
 			AccessFlagBits::eColorAttachmentWrite,
 			AccessFlagBits::eShaderRead,
 			ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
-		ImageMemoryBarrier giBarrier = rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			AccessFlagBits::eShaderWrite,
-			AccessFlagBits::eShaderRead,
-			ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
 
-		std::vector<ImageMemoryBarrier> imageBarriers { attachmentBarrier, giBarrier };
+		std::vector<ImageMemoryBarrier> imageBarriers { attachmentBarrier };
 		commandBuffer->pipelineBarrier(
 			PipelineStageFlagBits::eAllCommands,
 			PipelineStageFlagBits::eFragmentShader,
@@ -95,21 +88,17 @@ namespace CGE
 
 	void PostProcessPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
-		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
-		auto deferredLightingData = dataTable.GetPassData<DeferredLightingData>();
-		m_screenImages = deferredLightingData->hdrRenderTargets;
-		m_postProcessMaterials.resize(m_screenImages.size());
+		auto compositingData = dataTable.GetPassData<LightCompositingPassData>();
+		m_postProcessMaterials.resize(compositingData->frameImages.size());
 
-		for (uint32_t idx = 0; idx < m_screenImages.size(); ++idx)
+		for (uint32_t idx = 0; idx < compositingData->frameImages.size(); ++idx)
 		{
 			m_postProcessMaterials[idx] = DataManager::RequestResourceType<Material, const std::string&, const std::string&>(
 				"PostProcessMaterial_" + std::to_string(idx),
 				"content/shaders/PostProcessVert.spv",
 				"content/shaders/PostProcessFrag.spv"
 				);
-			m_postProcessMaterials[idx]->SetUniformBuffer("mvpBuffer" + std::to_string(idx), sizeof(ObjectMVPData), nullptr);
-			m_postProcessMaterials[idx]->SetTexture("screenImage", m_screenImages[idx]);
-			m_postProcessMaterials[idx]->SetTexture("indirectLight", rtgiData->lightingData[idx]);
+			m_postProcessMaterials[idx]->SetTexture("screenImage", compositingData->frameImages[idx]);
 			m_postProcessMaterials[idx]->LoadResources();
 		}
 

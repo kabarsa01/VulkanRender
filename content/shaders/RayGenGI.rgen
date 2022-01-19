@@ -153,7 +153,7 @@ void main()
     uint rayFlags = gl_RayFlagsOpaqueEXT;
 	uint temporalCounter = 0;
 	vec3 totalLight = vec3(0.0f, 0.0f, 0.0f);
-	vec3 accumulatedLight = vec3(0.4f, 0.4f, 0.4f);
+	vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract UVs 
@@ -171,7 +171,7 @@ void main()
 	float far = globalData.cameraFar;
 	float depth = texture(sampler2D( depthTex, repeatLinearSampler ), uv).r;
 	imageStore(giDepthTex, ivec2(gl_LaunchIDEXT.xy), vec4(depth, 0.0f, 0.0f, 0.0));
-	if (depth == 0.0 || depth >= 1.0)
+	if (depth <= 0.0f || depth >= 1.0f)
 	{
 		imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(0.0f, 0.0f, 0.0f, 1.0));
 		return;
@@ -203,8 +203,7 @@ void main()
 	// ray start
 	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
 
-	uint samplePoolSize = 8192;
-	//uint samplePoolSize = 15000;
+	uint samplePoolSize = 15000;//8192;
 	uint sampleStep = samplePoolSize / 16;
 	uint sampleStart = temporalCounter % sampleStep;
 	uint jitterSeed = tea(temporalCounter, sampleStart);
@@ -213,7 +212,7 @@ void main()
 		vec3 jitter = vec3(rnd(jitterSeed), rnd(jitterSeed), rnd(jitterSeed));
 		jitter = (normalize(jitter) - vec3(0.5f)) * 0.1;
 
-		vec3 hemisphereDir = SphericalFibonacci(idx, samplePoolSize) + jitter;
+		vec3 hemisphereDir = normalize(SphericalFibonacci(idx, samplePoolSize)) + jitter;
 		hemisphereDir.z = abs(hemisphereDir.z);
 		vec3 direction = normalize( hemisphereDir.x * tangent + hemisphereDir.y * bitangent + hemisphereDir.z * N );
 
@@ -389,7 +388,7 @@ void main()
 		accumulatedLight *= initialDistanceFactor * initialSurfaceCos;
 	}
 
-	totalLight = mix(totalLight, albedo * accumulatedLight, 1.0 / float(sampleStep));
+	totalLight = mix(totalLight, albedo * accumulatedLight, 1.0f / float(sampleStep));
 
 	++temporalCounter;
 	imageStore(counterTex, ivec2(gl_LaunchIDEXT.xy), uvec4(temporalCounter, 0,0,0));
