@@ -56,22 +56,26 @@ namespace CGE
 		samplerInfo.setUnnormalizedCoordinates(VK_FALSE);
 		repeatLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
 		samplers.push_back(&repeatLinearMipLinear);
+		m_samplerNames["repeatLinearSampler"] = samplers.back();
 	
 		samplerInfo.setAddressModeU(SamplerAddressMode::eMirroredRepeat);
 		samplerInfo.setAddressModeV(SamplerAddressMode::eMirroredRepeat);
 		samplerInfo.setAddressModeW(SamplerAddressMode::eMirroredRepeat);
 		repeatMirrorLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
 		samplers.push_back(&repeatMirrorLinearMipLinear);
+		m_samplerNames["repeatMirrorLinearSampler"] = samplers.back();
 	
 		samplerInfo.setAddressModeU(SamplerAddressMode::eClampToBorder);
 		samplerInfo.setAddressModeV(SamplerAddressMode::eClampToBorder);
 		samplerInfo.setAddressModeW(SamplerAddressMode::eClampToBorder);
 		borderBlackLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
 		samplers.push_back(&borderBlackLinearMipLinear);
+		m_samplerNames["borderBlackLinearSampler"] = samplers.back();
 	
 		samplerInfo.setBorderColor(BorderColor::eIntOpaqueWhite);
 		borderWhiteLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
 		samplers.push_back(&borderWhiteLinearMipLinear);
+		m_samplerNames["borderWhiteLinearSampler"] = samplers.back();
 	
 		// construct bindings 
 		ConstructBindings();

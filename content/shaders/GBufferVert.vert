@@ -33,7 +33,7 @@ void main() {
 	vec3 N = normalize(modelMatrix * vec4(inNormal, 0.0)).xyz;
 	fragInput.TBN = mat3x3(T, B, N);
 
-	vec4 prevPos = globalData.previousViewToProj * globalData.previousWorldToView * previousModelMatrix * vec4(inPos, 1.0);
+	vec4 prevPos = globalPreviousData.viewToProj * globalPreviousData.worldToView * previousModelMatrix * vec4(inPos, 1.0);
 	fragInput.prevFramePosProjected = prevPos.xy / prevPos.w;
 
 	gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);

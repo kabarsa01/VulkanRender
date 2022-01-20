@@ -151,13 +151,15 @@ namespace CGE
 		Texture2DPtr white = DataManager::RequestResourceType<Texture2D>("content/textures/white.png", false, true, false);
 		Texture2DPtr red = DataManager::RequestResourceType<Texture2D>("content/textures/red.png", false, true, false);
 		Texture2DPtr green = DataManager::RequestResourceType<Texture2D>("content/textures/green.png", false, true, false);
-		//Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
-		//Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
-		Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/textures/normals_flat.png", false, true, true, true);
+		Texture2DPtr albedo = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Albedo.jpg", false, true, false, true);
+		Texture2DPtr normal = DataManager::RequestResourceType<Texture2D>("content/meshes/root/Aset_wood_root_M_rkswd_4K_Normal_LOD0.jpg", false, true, true, true);
+		Texture2DPtr flatNormal = DataManager::RequestResourceType<Texture2D>("content/textures/normals_flat.png", false, true, true, true);
 		tl->PushImage(white);
 		tl->PushImage(red);
 		tl->PushImage(green);
+		tl->PushImage(albedo);
 		tl->PushImage(normal);
+		tl->PushImage(flatNormal);
 	
 		//------------------------------------------------------------------------------------------------------------------------------------------------------
 		//------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,8 +171,17 @@ namespace CGE
 			"content/shaders/GBufferFrag.spv"
 			);
 		mat->SetTexture("albedo", white);
-		mat->SetTexture("normal", normal);
+		mat->SetTexture("normal", flatNormal);
 		mat->LoadResources();
+
+		MaterialPtr woodMat = DataManager::RequestResourceType<Material>(
+			"woodMat",
+			"content/shaders/GBufferVert.spv",
+			"content/shaders/GBufferFrag.spv"
+			);
+		woodMat->SetTexture("albedo", albedo);
+		woodMat->SetTexture("normal", normal);
+		woodMat->LoadResources();
 
 		MaterialPtr mat_red = DataManager::RequestResourceType<Material>(
 			"red",
@@ -239,7 +250,7 @@ namespace CGE
 		{
 			for (uint32_t indexY = 0; indexY < countY; indexY++)
 			{
-				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.0f, 0.0f} : (counter % 3 == 2) ? glm::vec3{0.0f, 1.0f, 0.0f} : glm::vec3{0.0f, 0.0f, 1.0f};
+				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.2f, 0.2f} : (counter % 3 == 2) ? glm::vec3{0.2f, 1.0f, 0.2f} : glm::vec3{0.2f, 0.2f, 1.0f};
 				bool isSpot = false;// counter % 2;
 	
 				//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
@@ -264,69 +275,81 @@ namespace CGE
 			rtMat2->SetShader(ERtShaderType::RST_CLOSEST_HIT, "content/shaders/RayClosestHitDefault2.spv", "main");
 			rtMat2->LoadResources();
 
-			MeshImporter importer;
-			//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
-			//importer.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
-			//importer.Import("./content/meshes/cube/cube.fbx");
-			importer.Import("./content/meshes/rooms/room_01.fbx");
-			for (unsigned int MeshIndex = 0; MeshIndex < importer.GetMeshes().size(); MeshIndex++)
 			{
-				MeshDataPtr meshData = importer.GetMeshes()[MeshIndex];
+				MeshImporter importer;
+				importer.Import("./content/meshes/rooms/room_01.fbx");
+				MeshDataPtr meshData = importer.GetMeshes()[0];
 				meshData->CreateBuffer();
-	
-				float width = 500.0f;
-				float depth = 500.0f;
-				uint32_t countX = 1;
-				uint32_t countY = 1;
+				MeshObjectPtr room_01 = ObjectBase::NewObject<MeshObject>();
+				room_01->GetMeshComponent()->meshData = meshData;
+				room_01->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+				room_01->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+				room_01->transform.SetScale({ 1.0f, 1.0f, 1.0f });
+				room_01->GetMeshComponent()->SetMaterial(mat);
+				room_01->GetMeshComponent()->SetRtMaterial(rtMat1);
+			}
+
+			{
+				//MeshImporter woodImporter;
+				////importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+				//woodImporter.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+				////importer.Import("./content/meshes/cube/cube.fbx");
+				////importer.Import("./content/meshes/rooms/room_01.fbx");
+				//for (unsigned int MeshIndex = 0; MeshIndex < woodImporter.GetMeshes().size(); MeshIndex++)
+				//{
+				//	MeshDataPtr meshData = woodImporter.GetMeshes()[MeshIndex];
+				//	meshData->CreateBuffer();
+
+				//	float width = 500.0f;
+				//	float depth = 500.0f;
+				//	uint32_t countX = 15;
+				//	uint32_t countY = 15;
+				//	for (uint32_t indexX = 0; indexX < countX; indexX++)
+				//	{
+				//		for (uint32_t indexY = 0; indexY < countY; indexY++)
+				//		{
+				//			float randomY = std::rand() / float(RAND_MAX);
+				//			float randomZ = std::rand() / float(RAND_MAX);
+
+				//			MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
+				//			mo3->GetMeshComponent()->meshData = meshData;
+				//			mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
+				//			//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+				//			mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
+				//			//mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+				//			mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
+				//			mo3->GetMeshComponent()->SetMaterial(woodMat);
+				//			mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
+				//		}
+				//	}
+				//}
+			}
+
+			{
+				MeshImporter cubeImporter;
+				cubeImporter.Import("./content/meshes/cube/cube.fbx");
+				MeshDataPtr cubeMeshData = cubeImporter.GetMeshes()[0];
+				cubeMeshData->CreateBuffer();
+
+				float width = 15.0f;
+				float depth = 15.0f;
+				uint32_t countX = 2;
+				uint32_t countY = 2;
 				for (uint32_t indexX = 0; indexX < countX; indexX++)
 				{
 					for (uint32_t indexY = 0; indexY < countY; indexY++)
 					{
 						float randomY = std::rand() / float(RAND_MAX);
 						float randomZ = std::rand() / float(RAND_MAX);
-	
-						MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
-						mo3->GetMeshComponent()->meshData = meshData;
-						//mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), 0.0f, -1.0 * indexY * depth / float(countY - 1) });
-						mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-						//mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
-						mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-						mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
-						mo3->GetMeshComponent()->SetMaterial(mat);
-						mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
+
+						MeshObjectPtr cubeMeshObject = ObjectBase::NewObject<MeshObject>();
+						cubeMeshObject->GetMeshComponent()->meshData = cubeMeshData;
+						cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -10.0f, -1.0 * indexY * depth / float(countY - 1) });
+						cubeMeshObject->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+						cubeMeshObject->transform.SetScale({ 2.0f, 5.0f, 2.0f });
+						cubeMeshObject->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
+						cubeMeshObject->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 					}
-				}
-			}
-
-			MeshImporter cube;
-			//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
-			//importer.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
-			//importer.Import("./content/meshes/cube/cube.fbx");
-			cube.Import("./content/meshes/cube/cube.fbx");
-			MeshDataPtr meshData = cube.GetMeshes()[0];
-			meshData->CreateBuffer();
-
-
-			float width = 15.0f;
-			float depth = 15.0f;
-			uint32_t countX = 2;
-			uint32_t countY = 2;
-			for (uint32_t indexX = 0; indexX < countX; indexX++)
-			{
-				for (uint32_t indexY = 0; indexY < countY; indexY++)
-				{
-					float randomY = std::rand() / float(RAND_MAX);
-					float randomZ = std::rand() / float(RAND_MAX);
-
-					MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
-					mo3->GetMeshComponent()->meshData = meshData;
-					mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -10.0f, -1.0 * indexY * depth / float(countY - 1) });
-					//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-					//mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
-					mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-					mo3->transform.SetScale({ 2.0f, 25.0f, 2.0f });
-					mo3->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
-					mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 				}
 			}
 		}
@@ -460,13 +483,13 @@ namespace CGE
 		{
 			float multiplierY = deltaTime * 10.0f;
 			float multiplierZ = deltaTime * 10.0f;
-			//meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
+//			meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
 		}
 
 		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
 		for (LightComponentPtr light : lights)
 		{
-			light->GetParent()->transform.AddRotation({ 0.0f, 0.04f, 0.0f });
+			light->GetParent()->transform.AddRotation({ 0.0f, 0.025f, 0.0f });
 		}
 
 		double time = TimeManager::GetInstance()->GetTime();

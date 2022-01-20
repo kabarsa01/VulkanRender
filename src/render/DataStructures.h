@@ -14,13 +14,9 @@ namespace CGE
 	struct alignas(16) GlobalShaderData
 	{
 		alignas(16) glm::mat4 worldToView;
-		alignas(16) glm::mat4 previousWorldToView;
 		alignas(16) glm::mat4 viewToProj;
-		alignas(16) glm::mat4 previousViewToProj;
 		alignas(16) glm::vec3 cameraPos;
-		alignas(16) glm::vec3 previousCameraPos;
 		alignas(16) glm::vec3 viewVector;
-		alignas(16) glm::vec3 previousViewVector;
 		alignas(8) glm::uvec2 numClusters;
 		alignas(8) glm::uvec2 clusterSize;
 		alignas(8) glm::uvec2 halfScreenOffset;

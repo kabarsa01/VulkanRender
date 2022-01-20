@@ -177,22 +177,11 @@ void main()
 		return;
 	}
 	float linearDepth = near * far / (far + depth * (near - far));
+	vec4 pixelCoordWorld = CalculateWorldPosition(linearDepth, globalData.cameraFov, globalData.cameraAspect, uv, globalData.worldToView);
 
-	float height = 2.0 * linearDepth * tan(radians(globalData.cameraFov * 0.5));
-	float width = height * globalData.cameraAspect;
-	float pixelViewSpaceX = width * (-0.5 + uv.x);
-	float pixelViewSpaceY = height * (-0.5 + uv.y);
-	vec4 pixelCoordWorld = inverse(globalData.worldToView) * vec4(pixelViewSpaceX, pixelViewSpaceY, -linearDepth, 1.0);
-	pixelCoordWorld /= pixelCoordWorld.w;
-
-	float previousDepth = texture(sampler2D( previousDepthTex, repeatLinearSampler ), prevUV).r;
-	float previousLinearDepth = LinearizeDepth(previousDepth, near, far);
-	if (abs(previousLinearDepth - linearDepth) <= 0.2f)
-	{
-		temporalCounter = imageLoad(counterTex, ivec2(gl_LaunchIDEXT.xy)).r;
-		totalLight = texture( sampler2D( previousLightTex, repeatLinearSampler ), prevUV ).xyz;
-	}
-
+	//----------------------------------------------------------------------------------------------------------------------------------
+	// temporal counter data
+	temporalCounter = imageLoad(counterTex, ivec2(gl_LaunchIDEXT.xy)).r;
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract normals data
 	vec3 N = normalize( texture( sampler2D( normalTex, repeatLinearSampler ), uv ).xyz );
@@ -203,14 +192,14 @@ void main()
 	// ray start
 	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
 
-	uint samplePoolSize = 15000;//8192;
+	uint samplePoolSize = 10101;
 	uint sampleStep = samplePoolSize / 16;
 	uint sampleStart = temporalCounter % sampleStep;
-	uint jitterSeed = tea(temporalCounter, sampleStart);
+	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, temporalCounter);
 	for (uint idx = sampleStart; idx < samplePoolSize; idx += sampleStep)
 	{
-		vec3 jitter = vec3(rnd(jitterSeed), rnd(jitterSeed), rnd(jitterSeed));
-		jitter = (normalize(jitter) - vec3(0.5f)) * 0.1;
+		vec3 jitter = vec3(Rand(randSeed), Rand(randSeed), Rand(randSeed));
+		jitter = 0.05f * normalize(jitter - vec3(0.5f));
 
 		vec3 hemisphereDir = normalize(SphericalFibonacci(idx, samplePoolSize)) + jitter;
 		hemisphereDir.z = abs(hemisphereDir.z);
@@ -388,7 +377,25 @@ void main()
 		accumulatedLight *= initialDistanceFactor * initialSurfaceCos;
 	}
 
-	totalLight = mix(totalLight, albedo * accumulatedLight, 1.0f / float(sampleStep));
+	float previousDepth = texture(sampler2D( previousDepthTex, repeatLinearSampler ), prevUV).r;
+	float previousLinearDepth = LinearizeDepth(previousDepth, near, far);
+	vec4 previousPixelCoordWorld = CalculateWorldPosition(previousLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, prevUV, globalPreviousData.worldToView);
+//	if (length(previousPixelCoordWorld - pixelCoordWorld) >= 0.1f)
+	{
+//		float lightValue = length(accumulatedLight);
+//		totalLight = normalize(totalLight) * lightValue;
+//		float totalValue = length(totalLight);
+
+//		float minLight = min(accumulatedLight.x, min(accumulatedLight.y, accumulatedLight.z));
+//		float maxLight = max(accumulatedLight.x, max(accumulatedLight.y, accumulatedLight.z));
+		//totalLight = accumulatedLight;//clamp(totalLight, vec3(minLight), vec3(maxLight));
+	}
+//	else
+	{
+		totalLight = texture( sampler2D( previousLightTex, repeatLinearSampler ), prevUV ).xyz;
+	}
+
+	totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
 
 	++temporalCounter;
 	imageStore(counterTex, ivec2(gl_LaunchIDEXT.xy), uvec4(temporalCounter, 0,0,0));

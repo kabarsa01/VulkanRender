@@ -2,6 +2,8 @@
 
 #include "vulkan/vulkan.hpp"
 #include "objects/VulkanDevice.h"
+#include <unordered_map>
+#include "common/HashString.h"
 
 namespace CGE
 {
@@ -25,6 +27,8 @@ namespace CGE
 	
 		inline void SetMipLodBias(float inMipLodBias) { mipLodBias = inMipLodBias; }
 	
+		Sampler* GetSampler(uint32_t index) { return samplers[index]; }
+		Sampler* GetSampler(HashString name) { return m_samplerNames[name]; }
 		std::vector<DescriptorSetLayoutBinding> GetBindings(uint32_t inStartIndex = 0);
 	private:
 		static GlobalSamplers* instance;
@@ -32,6 +36,7 @@ namespace CGE
 		VulkanDevice* vulkanDevice;
 		std::vector<DescriptorSetLayoutBinding> bindings;
 		std::vector<Sampler*> samplers;
+		std::unordered_map<HashString, vk::Sampler*> m_samplerNames;
 		float mipLodBias;
 	
 		GlobalSamplers();

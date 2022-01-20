@@ -5,6 +5,7 @@
 #include "vulkan/vulkan.hpp"
 #include "data/BufferData.h"
 #include "core/Engine.h"
+#include "shader/ShaderResourceMapper.h"
 
 namespace CGE
 {
@@ -24,17 +25,16 @@ namespace CGE
 		DescriptorSetLayout& GetLayout() { return GetData().m_set.GetLayout(); }
 	private:
 		VulkanDevice* device;
+
+		BufferDataPtr m_globalDataBuffer;
+		BufferDataPtr m_globalPreviousDataBuffer;
+		BufferDataPtr m_transformDataBuffer;
+		BufferDataPtr m_transformPreviousDataBuffer;
 	
 		struct FrameData
 		{
-			BufferDataPtr shaderDataBuffer;
-			BufferDataPtr transformDataBuffer;
-			BufferDataPtr previousTransformDataBuffer;
-			DescriptorSetLayoutBinding shaderDataBinding;
-			DescriptorSetLayoutBinding transformDataBinding;
-			DescriptorSetLayoutBinding previousTransformDataBinding;
 			VulkanDescriptorSet m_set;
-			std::vector<WriteDescriptorSet> descriptorWrites;
+			ShaderResourceMapper resourceMapper;
 		};
 		std::vector<FrameData> m_data;
 		
@@ -44,8 +44,6 @@ namespace CGE
 		uint64_t m_relevantTransformsSize = 0;
 	
 		FrameData& GetData() { return m_data[Engine::GetFrameIndex(m_data.size())]; }
-		std::vector<DescriptorSetLayoutBinding> ProduceBindings(FrameData& frameData);
-		std::vector<WriteDescriptorSet> ProduceWrites(FrameData& frameData);
 		void GatherData();
 	};
 }

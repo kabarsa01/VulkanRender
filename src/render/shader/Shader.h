@@ -7,6 +7,7 @@
 #include "vulkan\vulkan.hpp"
 #include "data\Resource.h"
 #include "spirv_cross\spirv_cross.hpp"
+#include "..\GlobalSamplers.h"
 
 namespace CGE
 {
@@ -41,6 +42,15 @@ namespace CGE
 			layoutBinding.setDescriptorType(descriptorType);
 			layoutBinding.setDescriptorCount(IsArray() ? arrayDimensions[0] : 1);
 			layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
+
+			if (descriptorType == vk::DescriptorType::eSampler)
+			{
+				vk::Sampler* sampler = GlobalSamplers::GetInstance()->GetSampler(name);
+				if (sampler)
+				{
+					layoutBinding.setPImmutableSamplers(sampler);
+				}
+			}
 				
 			return layoutBinding;
 		}
