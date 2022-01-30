@@ -76,6 +76,14 @@ namespace CGE
 		borderWhiteLinearMipLinear = vulkanDevice->GetDevice().createSampler(samplerInfo);
 		samplers.push_back(&borderWhiteLinearMipLinear);
 		m_samplerNames["borderWhiteLinearSampler"] = samplers.back();
+
+		samplerInfo.setMagFilter(Filter::eNearest);
+		samplerInfo.setMinFilter(Filter::eNearest);
+		samplerInfo.setMipmapMode(SamplerMipmapMode::eNearest);
+		samplerInfo.setBorderColor(BorderColor::eIntOpaqueBlack);
+		borderBlackNearesMipNearest = vulkanDevice->GetDevice().createSampler(samplerInfo);
+		samplers.push_back(&borderBlackNearesMipNearest);
+		m_samplerNames["borderBlackNearestSampler"] = samplers.back();
 	
 		// construct bindings 
 		ConstructBindings();

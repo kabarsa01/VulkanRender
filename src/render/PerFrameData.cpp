@@ -114,6 +114,8 @@ namespace CGE
 		m_globalShaderData->cameraFar = camComp->GetFarPlane();
 		m_globalShaderData->cameraFov = camComp->GetFov();
 		m_globalShaderData->cameraAspect = camComp->GetAspectRatio();
+
+		m_globalShaderData->frameIndex = Engine::Get()->GetFrameCount();
 	
 		m_relevantTransformsSize = scene->GetRelevantMatricesCount() * sizeof(glm::mat4x4);
 		std::memcpy(m_globalTransformData->modelToWorld, scene->GetModelMatrices().data(), m_relevantTransformsSize);

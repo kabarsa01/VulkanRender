@@ -27,6 +27,7 @@ namespace CGE
 		alignas(4) float cameraFar;
 		alignas(4) float cameraFov;
 		alignas(4) float cameraAspect;
+		alignas(4) uint32_t frameIndex;
 	};
 	
 	struct alignas(16) GlobalTransformData
@@ -84,6 +85,14 @@ namespace CGE
 		alignas(16) glm::uvec4 gridSpecs;
 		alignas(4) glm::uint lightsPerCell;
 		alignas(8) vk::DeviceAddress grids;
+	};
+
+	// ddgi probe data
+	struct alignas(16) DDGIProbe
+	{
+		alignas(16) glm::vec4 position;
+		alignas(4) glm::uint texturePosition;
+		alignas(4) glm::uint temporalCounter;
 	};
 	
 }

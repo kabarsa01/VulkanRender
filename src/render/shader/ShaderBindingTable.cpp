@@ -101,7 +101,7 @@ namespace CGE
 
 		vk::StridedDeviceAddressRegionKHR region;
 		region.setDeviceAddress(m_sbtBuffer->GetDeviceAddress() + groupOffsetIndex * m_handleSizeAlignedBytes);
-		region.setSize(groupSizeBytes);
+		region.setSize(type == ERtShaderType::RST_RAY_GEN ? GetHandleSizeAlignedBytes() : groupSizeBytes);
 		region.setStride(GetHandleSizeAlignedBytes());
 
 		return region;

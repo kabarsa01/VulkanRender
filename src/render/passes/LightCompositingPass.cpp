@@ -24,6 +24,12 @@ namespace CGE
 		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
 
+
+
+
+
+
+
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------
@@ -116,7 +122,7 @@ namespace CGE
 			mat->SetTexture("normalsTex", gbufferData->normals[idx]);
 			mat->SetTexture("albedoTex", gbufferData->albedos[idx]);
 			mat->SetTexture("frameDirectLight", deferredLightingData->hdrRenderTargets[idx]);
-			mat->SetTexture("frameGILight", rtgiData->lightingData[idx]);
+			mat->SetTexture("giLight", rtgiData->lightingData[idx]);
 			mat->LoadResources();
 
 			m_materials.push_back(mat);

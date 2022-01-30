@@ -613,5 +613,8 @@
     <None Include="content\shaders\LightCompositing.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\RayGenDDGI.rgen">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

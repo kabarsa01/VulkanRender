@@ -14,8 +14,8 @@ layout(location = 0) out FragmentInput {
 	vec3 worldPos;
 	vec3 worldNormal;
 	vec2 uv;
-	vec2 framePosProjected;
-	vec2 prevFramePosProjected;
+	vec4 framePosProjected;
+	vec4 prevFramePosProjected;
 	mat3x3 TBN;
 } fragInput;
 
@@ -34,10 +34,10 @@ void main() {
 	fragInput.TBN = mat3x3(T, B, N);
 
 	vec4 prevPos = globalPreviousData.viewToProj * globalPreviousData.worldToView * previousModelMatrix * vec4(inPos, 1.0);
-	fragInput.prevFramePosProjected = prevPos.xy / prevPos.w;
+	fragInput.prevFramePosProjected = prevPos;
 
 	gl_Position = globalData.viewToProj * globalData.worldToView * modelMatrix * vec4(inPos, 1.0);
-	fragInput.framePosProjected = gl_Position.xy / gl_Position.w;
+	fragInput.framePosProjected = gl_Position;
 }
 
 

@@ -42,8 +42,11 @@ namespace CGE
 		std::vector<RTGIPassFrameData> m_frameData;
 		std::vector<Texture2DPtr> m_lightingData;
 		std::vector<Texture2DPtr> m_giDepthData;
+		BufferDataPtr m_probeGridBuffer;
+		Texture2DPtr m_probeGridTexture;
 		Texture2DPtr m_temporalCounter;
 		RtShaderPtr m_rayGen;
+		RtShaderPtr m_rayGenDDGI;
 		RtShaderPtr m_rayMiss;
 		RtShaderPtr m_closestHit;
 		RtMaterialPtr m_globalRTGIMaterial;
@@ -52,6 +55,8 @@ namespace CGE
 		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;
 
 		void HandleUpdate(std::shared_ptr<GlobalPostSceneMessage> msg);
+
+		void CreateProbeGridData();
 	};
 
 }

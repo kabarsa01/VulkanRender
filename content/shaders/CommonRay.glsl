@@ -18,6 +18,7 @@ struct HitPayloadDebug
 struct HitPayloadGI
 {
 	vec3 worldPos;
+	float hitT;
 	uint instanceCustomId;
 };
 

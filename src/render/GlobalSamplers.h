@@ -19,6 +19,7 @@ namespace CGE
 		Sampler repeatMirrorLinearMipLinear;
 		Sampler borderBlackLinearMipLinear;
 		Sampler borderWhiteLinearMipLinear;
+		Sampler borderBlackNearesMipNearest;
 	
 		static GlobalSamplers* GetInstance() { return instance; }
 	

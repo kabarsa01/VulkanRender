@@ -173,15 +173,21 @@ namespace CGE
 
 		ShaderBindingTable& sbt = frameData.sbt;
 		vk::StridedDeviceAddressRegionKHR rayGenRegion = sbt.GetRegion(ERtShaderType::RST_RAY_GEN, m_rayGen->GetResourceId());
+		vk::StridedDeviceAddressRegionKHR rayGenDDGIRegion = sbt.GetRegion(ERtShaderType::RST_RAY_GEN, m_rayGenDDGI->GetResourceId());
 		vk::StridedDeviceAddressRegionKHR rayMissRegion = sbt.GetRegion(ERtShaderType::RST_MISS, m_rayMiss->GetResourceId());
 		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
-		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 4, executeContext.GetHeight() / 4, 1);
+		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 8, executeContext.GetHeight() / 8, 1);
+		// dispatch ddgi tracing
+		commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 32, 8);
 	}
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
+		CreateProbeGridData();
+
 		m_rayGen = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayGenGI.spv", ERtShaderType::RST_RAY_GEN);
+		m_rayGenDDGI = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayGenDDGI.spv", ERtShaderType::RST_RAY_GEN);
 		m_rayMiss = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayMissGI.spv", ERtShaderType::RST_MISS);
 		//m_closestHit = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayClosestHitGI.spv", ERtShaderType::RST_CLOSEST_HIT);
 
@@ -198,9 +204,9 @@ namespace CGE
 		// initial deferred lighting pass can be used to sample direct lighting in case our rays hit something in screenspace
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 
-		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Uint, true);
-		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
-		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Sfloat, true);
+		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Uint, true);
+		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR16G16B16A16Sfloat, true);
+		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Sfloat, true);
 
 		auto passData = dataTable.CreatePassData<RTGIPassData>();
 		passData->lightingData = m_lightingData;
@@ -223,6 +229,7 @@ namespace CGE
 			resMapper.AddSampledImage("depthTex", depthData->depthTextures[idx]);
 			resMapper.AddSampledImage("previousDepthTex", depthData->depthTextures[(idx - 1 + depthData->depthTextures.size()) % depthData->depthTextures.size()]);
 			resMapper.AddSampledImage("normalTex", gbufferData->normals[idx]);
+			resMapper.AddSampledImage("previousNormalTex", gbufferData->normals[(idx - 1 + gbufferData->normals.size()) % gbufferData->normals.size()]);
 			resMapper.AddSampledImage("velocityTex", gbufferData->velocity[idx]);
 			resMapper.AddSampledImage("previousLightTex", m_lightingData[(idx + m_lightingData.size() - 1) % m_lightingData.size()]);
 			resMapper.AddStorageImage("lightTex", m_lightingData[idx]);
@@ -232,6 +239,9 @@ namespace CGE
 			resMapper.AddStorageBuffer("gridLightsData", clusterData->gridLightsData);
 			resMapper.AddUniformBuffer("lightsList", clusterData->lightsList[idx]);
 			resMapper.AddUniformBuffer("lightsIndices", clusterData->lightsIndices[idx]);
+			// DDGI grid data
+			resMapper.AddStorageBuffer("probesBuffer", m_probeGridBuffer);
+			resMapper.AddStorageImage("probesImage", m_probeGridTexture);
 			// rt AS data
 			resMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
 			// rt light visibility data
@@ -239,7 +249,7 @@ namespace CGE
 			// direct lighting info from deferred lighting pass
 			resMapper.AddSampledImage("directLightTex", directLightingData->hdrRenderTargets[idx]);
 			// shaders
-			resMapper.SetShaders(std::vector<RtShaderPtr>{ m_rayGen, m_rayMiss });
+			resMapper.SetShaders(std::vector<RtShaderPtr>{ m_rayGen, m_rayGenDDGI, m_rayMiss });
 
 			resMapper.Update();
 		}
@@ -283,6 +293,34 @@ namespace CGE
 		{
 			frameData.sbt.ConstructBuffer(frameData.pipeline, "gi_sbt_buffer_");
 		}
+	}
+
+	void RTGIPass::CreateProbeGridData()
+	{
+		uint64_t probesTableSize = sizeof(DDGIProbe) * 32 * 32 * 8;
+		DDGIProbe probes[32][32][8];
+		glm::vec3 beginning = glm::vec3(-31.0f * 0.5f, -31.0f * 0.5f, -7.0f * 0.5f);
+		for (uint32_t x = 0; x < 32; ++x)
+		{
+			for (uint32_t y = 0; y < 32; ++y)
+			{
+				for (uint32_t z = 0; z < 8; ++z)
+				{
+					DDGIProbe& probe = probes[x][y][z];
+
+					glm::uint textureCoords = y * 24;
+					textureCoords |= (x * z * 24) << 16;
+
+					probe.position = glm::vec4(beginning + glm::vec3(x,y,z), 1.0f);
+					probe.texturePosition = textureCoords;
+					probe.temporalCounter = 0;
+				}
+			}
+		}
+
+		m_probeGridBuffer = ResourceUtils::CreateBufferData("DDGI_grid_buffer", probesTableSize, vk::BufferUsageFlagBits::eStorageBuffer, true);
+		m_probeGridBuffer->CopyTo(probesTableSize, reinterpret_cast<const char*>(probes));
+		m_probeGridTexture = ResourceUtils::CreateColorTexture("DDGI_grid_texture", 6144, 768, vk::Format::eR16G16B16A16Sfloat, true);
 	}
 
 }

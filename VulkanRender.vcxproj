@@ -415,6 +415,7 @@ exit /b</Command>
     <None Include="content\shaders\RayClosestHitDefault1.rchit" />
     <None Include="content\shaders\RayClosestHitDefault2.rchit" />
     <None Include="content\shaders\RayClosestHitGI.rchit" />
+    <None Include="content\shaders\RayGenDDGI.rgen" />
     <None Include="content\shaders\RayGenGI.rgen" />
     <None Include="content\shaders\RayGenShadows.rgen" />
     <None Include="content\shaders\RayMissGI.rmiss" />

@@ -13,8 +13,8 @@ layout(location = 0) in FragmentInput {
 	vec3 worldPos;
 	vec3 worldNormal;
 	vec2 uv;
-    vec2 framePosProjected;
-	vec2 prevFramePosProjected;
+    vec4 framePosProjected;
+	vec4 prevFramePosProjected;
 	mat3x3 TBN;
 } fragInput;
 
@@ -45,7 +45,10 @@ void main() {
     outAlbedo = texture( sampler2D( albedo, repeatLinearSampler ), fragInput.uv );
 	vec3 tangentNormal = texture( sampler2D( normal, repeatLinearSampler ), fragInput.uv ).xyz * 2.0 - 1.0;
 	outNormal = vec4(fragInput.TBN * tangentNormal, 1.0);
-    outVelocity = (fragInput.prevFramePosProjected - fragInput.framePosProjected) * 0.5f;
+
+    vec2 pos = (fragInput.framePosProjected.xy / fragInput.framePosProjected.w) * 0.5f + 0.5f;
+    vec2 prevPos = (fragInput.prevFramePosProjected.xy / fragInput.prevFramePosProjected.w) * 0.5f + 0.5f;
+    outVelocity = (prevPos - pos) * 10.0f;
 }
 
 

@@ -489,14 +489,14 @@ namespace CGE
 		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
 		for (LightComponentPtr light : lights)
 		{
-			light->GetParent()->transform.AddRotation({ 0.0f, 0.025f, 0.0f });
+//			light->GetParent()->transform.AddRotation({ 0.0f, 0.025f, 0.0f });
 		}
 
 		double time = TimeManager::GetInstance()->GetTime();
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
-//			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time / 10.0f), 0.0f});
+			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time / 2.0f), 0.0f});
 		}
 	
 		PrepareObjectsLists();
