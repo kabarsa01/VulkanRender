@@ -90,16 +90,9 @@ layout(set = 2, binding = 7) uniform texture2D albedoTex;
 layout(set = 2, binding = 8, r32ui) uniform uimage2D counterTex;
 layout(set = 2, binding = 9, r32f) uniform image2D giDepthTex;
 
-struct DDGIProbe
-{
-	vec4 position;
-	uint texturePosition;
-	uint temporalCounter;
-};
-
 layout(set = 2, binding = 10) buffer ProbesBuffer
 {
-	DDGIProbe probes[32][32][8];
+	DDGIProbe probes[32][16][32];
 } probesBuffer;
 layout(set = 2, binding = 11, rgba16f) uniform image2D probesImage;
 
@@ -107,29 +100,6 @@ layout(set = 2, binding = 11, rgba16f) uniform image2D probesImage;
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
-
-vec2 DirectionToOctahedronUV(in vec3 direction)
-{
-	float zSign = sign(direction.z);
-	float anglePhi = degrees(acos(dot(normalize(direction.zx), vec2(zSign, 0.0f))));
-	float angleTheta = degrees(acos(dot(direction, vec3(0.0f, 1.0f, 0.0f))));
-
-	vec2 ecuatorVector = vec2(-0.5f * zSign, 0.5f * sign(direction.x));
-	vec2 startCorner = vec2(0.5f + 0.5f * zSign, 0.5f);
-
-	vec2 middlePoint = startCorner + (ecuatorVector * (anglePhi / 90.0f));
-
-	if (angleTheta <= 90.0f)
-	{
-		vec2 uv = vec2(0.5f, 0.5f) + (middlePoint - vec2(0.5f, 0.5f)) * (angleTheta / 90.0f);
-		return vec2(uv.x, 1.0f - uv.y);
-	}
-
-	vec2 southPole = vec2(0.5f + 0.5f * zSign, 0.5f + 0.5f * sign(direction.x));
-	vec2 uv = middlePoint + (southPole - middlePoint) * ((angleTheta - 90.0f) / 90.0f);
-	return vec2(uv.x, 1.0f - uv.y);
-}
-
 //----------------------------------------------------------------------------------------------------------------------------------
 
 bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 color)
@@ -187,7 +157,7 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 void main() 
 {
 	float tMin = 0.1f;
-	float tMax = 1.0f;
+	float tMax = 100.0f;
     uint rayFlags = gl_RayFlagsOpaqueEXT;
 	vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
 	ivec2 lightTexSize = imageSize(lightTex);
@@ -414,7 +384,7 @@ void main()
 		accumulatedLight *= initialDistanceFactor;
 
 		vec2 directionUV = DirectionToOctahedronUV(direction);
-		vec2 targetPixel = probeTexCoord + vec2(1.0f) + directionUV * 22; // 24 pixel area per probe including 1 pixel border
+		vec2 targetPixel = probeTexCoord + vec2(1.0f) + directionUV * 6; // 6 pixel area per probe including 1 pixel border at each side
 		vec3 totalLight = imageLoad(probesImage, ivec2(targetPixel)).xyz;
 		totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
 		imageStore(probesImage, ivec2(targetPixel), vec4(totalLight, hitDepth));

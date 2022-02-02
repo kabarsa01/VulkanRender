@@ -24,16 +24,10 @@ namespace CGE
 		auto lightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
 
-
-
-
-
-
-
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------
-		// barriers 
+		// image barriers 
 		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -55,6 +49,13 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
+		ImageMemoryBarrier probesTextureBarrier = rtgiData->probeGridTexture->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eShaderReadOnlyOptimal,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
 		ImageMemoryBarrier depthBarrier = depthData->depthTextures[rtIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eDepthAttachmentOptimal,
@@ -62,13 +63,19 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eDepth,
 			0, 1, 0, 1);
+		// buffer barriers
+		vk::BufferMemoryBarrier probesBufferBarrier = rtgiData->probeGridBuffer->GetBuffer().CreateMemoryBarrier(
+			0, 0, 
+			vk::AccessFlagBits::eShaderWrite, 
+			vk::AccessFlagBits::eShaderRead);
 
-		std::vector<ImageMemoryBarrier> imageBarriers{ attachmentBarrier, giBarrier, giDepthBarrier, depthBarrier };
+		std::vector<ImageMemoryBarrier> imageBarriers{ attachmentBarrier, giBarrier, giDepthBarrier, probesTextureBarrier, depthBarrier };
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands,
 			vk::PipelineStageFlagBits::eFragmentShader,
 			vk::DependencyFlags(),
-			0, nullptr, 0, nullptr,
+			0, nullptr, 
+			1, &probesBufferBarrier,
 			static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------
@@ -123,6 +130,8 @@ namespace CGE
 			mat->SetTexture("albedoTex", gbufferData->albedos[idx]);
 			mat->SetTexture("frameDirectLight", deferredLightingData->hdrRenderTargets[idx]);
 			mat->SetTexture("giLight", rtgiData->lightingData[idx]);
+			mat->SetTexture("probesImage", rtgiData->probeGridTexture);
+			mat->SetStorageBufferExternal("probesBuffer", rtgiData->probeGridBuffer);
 			mat->LoadResources();
 
 			m_materials.push_back(mat);

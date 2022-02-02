@@ -151,6 +151,22 @@ namespace CGE
 			0, 1, 0, 1);
 		imageBarriers.push_back(previousLightingData);
 		//---------------------------------------------------------------------------------------------------------------------------
+		// ddgi data
+		vk::BufferMemoryBarrier probesBufferBarrier = m_probeGridBuffer->GetBuffer().CreateMemoryBarrier(
+			0, 0,
+			vk::AccessFlagBits::eShaderRead,
+			vk::AccessFlagBits::eShaderWrite);
+		buffersBarriers.push_back(probesBufferBarrier);
+
+		vk::ImageMemoryBarrier probesImageBarrier = m_probeGridTexture->GetImage().CreateLayoutBarrier(
+			ImageLayout::eUndefined,
+			ImageLayout::eGeneral,
+			vk::AccessFlagBits::eShaderRead,
+			vk::AccessFlagBits::eShaderWrite,
+			vk::ImageAspectFlagBits::eColor,
+			0, 1, 0, 1);
+		imageBarriers.push_back(probesImageBarrier);
+		//---------------------------------------------------------------------------------------------------------------------------
 
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands,
@@ -179,7 +195,7 @@ namespace CGE
 
 		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 8, executeContext.GetHeight() / 8, 1);
 		// dispatch ddgi tracing
-		commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 32, 8);
+		commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 16, 32);
 	}
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
@@ -211,6 +227,8 @@ namespace CGE
 		auto passData = dataTable.CreatePassData<RTGIPassData>();
 		passData->lightingData = m_lightingData;
 		passData->giDepthData = m_giDepthData;
+		passData->probeGridBuffer = m_probeGridBuffer;
+		passData->probeGridTexture = m_probeGridTexture;
 
 		m_frameData.resize(2);
 		for (uint32_t idx = 0; idx < m_frameData.size(); ++idx)
@@ -297,19 +315,19 @@ namespace CGE
 
 	void RTGIPass::CreateProbeGridData()
 	{
-		uint64_t probesTableSize = sizeof(DDGIProbe) * 32 * 32 * 8;
-		DDGIProbe probes[32][32][8];
-		glm::vec3 beginning = glm::vec3(-31.0f * 0.5f, -31.0f * 0.5f, -7.0f * 0.5f);
+		uint64_t probesTableSize = sizeof(DDGIProbe) * 32 * 32 * 16;
+		DDGIProbe probes[32][16][32];
+		glm::vec3 beginning = glm::vec3(-31.0f * 0.5f, -15.0f * 0.5f, -31.0f * 0.5f);
 		for (uint32_t x = 0; x < 32; ++x)
 		{
-			for (uint32_t y = 0; y < 32; ++y)
+			for (uint32_t y = 0; y < 16; ++y)
 			{
-				for (uint32_t z = 0; z < 8; ++z)
+				for (uint32_t z = 0; z < 32; ++z)
 				{
 					DDGIProbe& probe = probes[x][y][z];
 
-					glm::uint textureCoords = y * 24;
-					textureCoords |= (x * z * 24) << 16;
+					glm::uint textureCoords = z * 8;
+					textureCoords |= ((x * 16 + y) * 8) << 16;
 
 					probe.position = glm::vec4(beginning + glm::vec3(x,y,z), 1.0f);
 					probe.texturePosition = textureCoords;
@@ -320,7 +338,7 @@ namespace CGE
 
 		m_probeGridBuffer = ResourceUtils::CreateBufferData("DDGI_grid_buffer", probesTableSize, vk::BufferUsageFlagBits::eStorageBuffer, true);
 		m_probeGridBuffer->CopyTo(probesTableSize, reinterpret_cast<const char*>(probes));
-		m_probeGridTexture = ResourceUtils::CreateColorTexture("DDGI_grid_texture", 6144, 768, vk::Format::eR16G16B16A16Sfloat, true);
+		m_probeGridTexture = ResourceUtils::CreateColorTexture("DDGI_grid_texture", 4096, 256, vk::Format::eR16G16B16A16Sfloat, true);
 	}
 
 }

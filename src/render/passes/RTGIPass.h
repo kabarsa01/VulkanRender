@@ -18,6 +18,8 @@ namespace CGE
 	{
 		std::vector<Texture2DPtr> lightingData;
 		std::vector<Texture2DPtr> giDepthData;
+		BufferDataPtr probeGridBuffer;
+		Texture2DPtr probeGridTexture;
 	};
 
 	class RTGIPass : public RenderPassBase

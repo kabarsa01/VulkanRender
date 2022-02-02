@@ -207,7 +207,7 @@ namespace CGE
 		Renderer* renderer = Engine::GetRendererInstance();
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 55.0f });
+		cameraObj->transform.SetLocation({ 0.0f, -5.0f, 15.0f }); // -25 55
 		//cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
 		//cameraObj->transform.SetLocation({ 0.0f, 0.0f, -45.0f });
 		cameraObj->transform.SetRotation({ -15.0f, -180.0f, 0.0f });
@@ -232,14 +232,14 @@ namespace CGE
 		//lightObj01->GetLightComponent()->intensity = 2.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 1.0f, 0.2f };
 
-		//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-		//lightObj02->transform.SetLocation({ 0.0f, -10.0f, 5.0f });
-		//lightObj02->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
-		//lightObj02->GetLightComponent()->type = LT_Point;
-		//lightObj02->GetLightComponent()->radius = 15.0f;
-		//lightObj02->GetLightComponent()->spotHalfAngle = 30.0f;
-		//lightObj02->GetLightComponent()->intensity = 2.0f;
-		//lightObj02->GetLightComponent()->color = { 1.0f, 0.1f, 1.0f };
+		LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+		lightObj02->transform.SetLocation({ 20.0f, -10.0f, 0.0f });
+		lightObj02->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
+		lightObj02->GetLightComponent()->type = LT_Point;
+		lightObj02->GetLightComponent()->radius = 10.0f;
+		lightObj02->GetLightComponent()->spotHalfAngle = 30.0f;
+		lightObj02->GetLightComponent()->intensity = 2.0f;
+		lightObj02->GetLightComponent()->color = { 1.0f, 0.1f, 1.0f };
 	
 		float width = 500.0f;
 		float depth = 500.0f;
@@ -344,7 +344,7 @@ namespace CGE
 
 						MeshObjectPtr cubeMeshObject = ObjectBase::NewObject<MeshObject>();
 						cubeMeshObject->GetMeshComponent()->meshData = cubeMeshData;
-						cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -10.0f, -1.0 * indexY * depth / float(countY - 1) });
+						cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
 						cubeMeshObject->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
 						cubeMeshObject->transform.SetScale({ 2.0f, 5.0f, 2.0f });
 						cubeMeshObject->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
