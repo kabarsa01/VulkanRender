@@ -309,6 +309,9 @@
     <ClCompile Include="src\render\passes\LightCompositingPass.cpp">
       <Filter>Source Files\render\passes</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\passes\LightPropagationComputePass.cpp">
+      <Filter>Source Files\render\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\HashString.h">
@@ -545,6 +548,9 @@
     <ClInclude Include="src\render\passes\LightCompositingPass.h">
       <Filter>Source Files\render\passes</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\passes\LightPropagationComputePass.h">
+      <Filter>Source Files\render\passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="content\shaders\DeferredLighting.frag">
@@ -614,6 +620,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="content\shaders\RayGenDDGI.rgen">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="content\shaders\LightPropagation.comp">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

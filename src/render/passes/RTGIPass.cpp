@@ -229,6 +229,7 @@ namespace CGE
 		passData->giDepthData = m_giDepthData;
 		passData->probeGridBuffer = m_probeGridBuffer;
 		passData->probeGridTexture = m_probeGridTexture;
+		passData->probeGridDepthTexture = m_probeGridDepthTexture;
 
 		m_frameData.resize(2);
 		for (uint32_t idx = 0; idx < m_frameData.size(); ++idx)
@@ -260,6 +261,7 @@ namespace CGE
 			// DDGI grid data
 			resMapper.AddStorageBuffer("probesBuffer", m_probeGridBuffer);
 			resMapper.AddStorageImage("probesImage", m_probeGridTexture);
+			resMapper.AddStorageImage("probesDepthImage", m_probeGridDepthTexture);
 			// rt AS data
 			resMapper.AddAccelerationStructure("tlas", rtScene->GetTlas().accelerationStructure);
 			// rt light visibility data
@@ -328,9 +330,12 @@ namespace CGE
 
 					glm::uint textureCoords = z * 8;
 					textureCoords |= ((x * 16 + y) * 8) << 16;
+					glm::uint depthCoords = z * 18;
+					depthCoords |= ((x * 16 + y) * 18) << 16;
 
 					probe.position = glm::vec4(beginning + glm::vec3(x,y,z), 1.0f);
 					probe.texturePosition = textureCoords;
+					probe.depthPosition = depthCoords;
 					probe.temporalCounter = 0;
 				}
 			}
@@ -339,6 +344,7 @@ namespace CGE
 		m_probeGridBuffer = ResourceUtils::CreateBufferData("DDGI_grid_buffer", probesTableSize, vk::BufferUsageFlagBits::eStorageBuffer, true);
 		m_probeGridBuffer->CopyTo(probesTableSize, reinterpret_cast<const char*>(probes));
 		m_probeGridTexture = ResourceUtils::CreateColorTexture("DDGI_grid_texture", 4096, 256, vk::Format::eR16G16B16A16Sfloat, true);
+		m_probeGridDepthTexture = ResourceUtils::CreateColorTexture("DDGI_grid_depth_texture", 9216, 576, vk::Format::eR16G16Sfloat, true);
 	}
 
 }

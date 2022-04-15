@@ -95,6 +95,7 @@ layout(set = 2, binding = 10) buffer ProbesBuffer
 	DDGIProbe probes[32][16][32];
 } probesBuffer;
 layout(set = 2, binding = 11, rgba16f) uniform image2D probesImage;
+layout(set = 2, binding = 12, rg16f) uniform image2D probesDepthImage;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -195,6 +196,7 @@ void main()
 	// probes data
 	DDGIProbe probe = probesBuffer.probes[gl_LaunchIDEXT.x][gl_LaunchIDEXT.y][gl_LaunchIDEXT.z];
 	uvec2 probeTexCoord = uvec2(probe.texturePosition >> 16, probe.texturePosition & 0xffffu);
+	uvec2 probeDepthCoord = uvec2(probe.depthPosition >> 16, probe.depthPosition & 0xffffu);
 	uint temporalCounter = probe.temporalCounter;
 	probesBuffer.probes[gl_LaunchIDEXT.x][gl_LaunchIDEXT.y][gl_LaunchIDEXT.z].temporalCounter += 1;
 
@@ -203,7 +205,7 @@ void main()
 
 	uint samplePoolSize = 10101;
 	uint sampleStep = samplePoolSize / 32;
-	uint sampleStart = temporalCounter % sampleStep;
+	uint sampleStart = uint(mod(temporalCounter, sampleStep));
 	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, globalData.frameIndex);
 
 	for (uint idx = sampleStart; idx < samplePoolSize; idx += sampleStep)
@@ -211,7 +213,14 @@ void main()
 		vec3 jitter = vec3(Rand(randSeed), Rand(randSeed), Rand(randSeed));
 		jitter = 0.05f * normalize(jitter - vec3(0.5f));
 
-		vec3 direction = normalize(SphericalFibonacci(idx, samplePoolSize)) + jitter;
+		vec3 direction = normalize(SphericalFibonacci(idx, samplePoolSize) + jitter);
+		vec2 directionUV = DirectionToOctahedronUV(direction);
+
+		vec2 targetPixelUV = directionUV * 6.0;
+		vec2 targetPixelUVMin = mod(floor(targetPixelUV - 0.5 + 6.0) + 0.5, 6.0);
+
+		vec2 targetDepthPixelUV = directionUV * 16.0;
+		vec2 targetDepthPixelUVMin = mod(floor(targetPixelUV - 0.5 + 16.0) + 0.5, 16.0);
 
 		traceRayEXT(tlas,							// acceleration structure
 				rayFlags,							// rayFlags
@@ -228,8 +237,12 @@ void main()
 
 		if (payloadGI.instanceCustomId == 0xffffffff)
 		{
+//			vec2 totalDepth = imageLoad(probesDepthImage, ivec2(targetDepthPixel)).xy;
+//			totalDepth = mix(totalDepth, vec2(tMax, tMax * tMax), 1.0f / float(sampleStep));
+//			imageStore(probesDepthImage, ivec2(targetDepthPixel), vec4(totalDepth, 0.0, 0.0));
 			continue;
 		}
+
 		uint initialInstanceId = payloadGI.instanceCustomId;
 		float hitDepth = payloadGI.hitT;
 
@@ -243,20 +256,9 @@ void main()
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 
-		vec4 hitPointViewSpace = globalData.worldToView * vec4(payloadGI.worldPos, 1.0f);
-		hitPointViewSpace /= hitPointViewSpace.w;
-		hitPointViewSpace.z *= -1.0f; // my coordinate systems and LH-RH shennanigans, sorry
-
-		vec3 directColor = vec3(0.0f);
-		if (CheckAndAccumulateViewSpaceVisibility(hitPointViewSpace, directColor))
-		{
-			accumulatedLight += directColor;
-			accumulatedLight *= initialDistanceFactor / 2.0f;
-		}
-
 		vec3 gridVector = payloadGI.worldPos - globalData.cameraPos;
 		float maxExtent = 2.0f * max(abs(gridVector.x), max(abs(gridVector.y), abs(gridVector.z)));
-		float gridExtent = gridLightsData.gridSpecs.x;
+		float gridExtent = gridLightsData.gridSpecs.x; // account for cell size
 		uint gridIndex = 0;
 		for (; gridIndex < gridLightsData.gridSpecs.w; gridIndex++)
 		{
@@ -383,11 +385,36 @@ void main()
 		
 		accumulatedLight *= initialDistanceFactor;
 
-		vec2 directionUV = DirectionToOctahedronUV(direction);
-		vec2 targetPixel = probeTexCoord + vec2(1.0f) + directionUV * 6; // 6 pixel area per probe including 1 pixel border at each side
-		vec3 totalLight = imageLoad(probesImage, ivec2(targetPixel)).xyz;
-		totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
-		imageStore(probesImage, ivec2(targetPixel), vec4(totalLight, hitDepth));
+		// doing bilinear by hand to get a good distribution will limited pixel number
+		vec2 alpha = clamp(min(targetPixelUV - targetPixelUVMin, targetPixelUV + vec2(6.0) - targetPixelUVMin), 0.0, 1.0);
+		vec2 alphaDepth = clamp(min(targetDepthPixelUV - targetDepthPixelUVMin, targetDepthPixelUV + vec2(16.0) - targetDepthPixelUVMin), 0.0, 1.0);
+
+		for (uint idx = 0; idx < 4; idx++)
+		{
+			ivec2 pixelStep = ivec2(idx, idx / 2) & ivec2(1, 1);
+			// bilinear alphas
+			vec2 bilinear = mix(vec2(1.0) - alpha, alpha, vec2(pixelStep));
+			vec2 bilinearDepth = mix(vec2(1.0) - alphaDepth, alphaDepth, vec2(pixelStep));
+			// bilinear weight
+			float weight = bilinear.x * bilinear.y;
+			float weightDepth = bilinearDepth.x * bilinearDepth.y;
+
+			// pixel to write
+			ivec2 currentPixel = ivec2(mod(ivec2(targetPixelUVMin) + pixelStep, ivec2(6,6)));
+			currentPixel += ivec2(probeTexCoord) + ivec2(1,1); 
+			// load pixel, mix and store
+			vec3 totalLight = imageLoad(probesImage, currentPixel).xyz;
+			totalLight = mix(totalLight, accumulatedLight * weight, 1.0f / float(sampleStep));
+			imageStore(probesImage, currentPixel, vec4(totalLight, hitDepth * weight));
+
+			// depth pixel coords
+			ivec2 currentDepthPixel = ivec2(mod(ivec2(targetDepthPixelUVMin) + pixelStep, ivec2(16,16)));
+			currentDepthPixel += ivec2(probeDepthCoord) + ivec2(1,1);
+			// load depth, mix and store
+			vec2 totalDepth = imageLoad(probesDepthImage, currentDepthPixel).xy;
+			totalDepth = mix(totalDepth, vec2(hitDepth * weightDepth, hitDepth * hitDepth * weightDepth), 1.0f / float(sampleStep));
+			imageStore(probesDepthImage, currentDepthPixel, vec4(totalDepth, 0.0, 0.0));
+		}
 	}
 
 //	

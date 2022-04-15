@@ -92,7 +92,9 @@ namespace CGE
 	{
 		alignas(16) glm::vec4 position;
 		alignas(4) glm::uint texturePosition;
+		alignas(4) glm::uint depthPosition;
 		alignas(4) glm::uint temporalCounter;
+		alignas(4) glm::uint pad;
 	};
 	
 }

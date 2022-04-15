@@ -20,6 +20,7 @@ namespace CGE
 		std::vector<Texture2DPtr> giDepthData;
 		BufferDataPtr probeGridBuffer;
 		Texture2DPtr probeGridTexture;
+		Texture2DPtr probeGridDepthTexture;
 	};
 
 	class RTGIPass : public RenderPassBase
@@ -46,6 +47,7 @@ namespace CGE
 		std::vector<Texture2DPtr> m_giDepthData;
 		BufferDataPtr m_probeGridBuffer;
 		Texture2DPtr m_probeGridTexture;
+		Texture2DPtr m_probeGridDepthTexture;
 		Texture2DPtr m_temporalCounter;
 		RtShaderPtr m_rayGen;
 		RtShaderPtr m_rayGenDDGI;

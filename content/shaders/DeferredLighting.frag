@@ -62,7 +62,7 @@ bool IsVisible(uint visibility, uint index)
 float GetPixelVisibility(uint index, vec2 uvCoord)
 {
 	vec4 visibilityInfo = texture(sampler2D( visibilityTextures[index / 4], repeatLinearSampler ), uvCoord);
-	uint comp = index % 4;
+	uint comp = uint(mod(index, 4u));
 	if (comp == 0) return visibilityInfo.r;
 	if (comp == 1) return visibilityInfo.g;
 	if (comp == 2) return visibilityInfo.b;

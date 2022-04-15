@@ -46,6 +46,7 @@ namespace CGE
 	class GBufferPass;
 	class RTShadowPass;
 	class RTGIPass;
+	class LightPropagationComputePass;
 	class DeferredLightingPass;
 	class LightCompositingPass;
 	class PostProcessPass;
@@ -115,6 +116,7 @@ namespace CGE
 		RTShadowPass* rtShadowPass;
 		DeferredLightingPass* deferredLightingPass;
 		RTGIPass* rtGIPass;
+		LightPropagationComputePass* propagationPass;
 		LightCompositingPass* compositingPass;
 		PostProcessPass* postProcessPass;
 	

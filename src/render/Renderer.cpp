@@ -37,6 +37,7 @@
 #include "passes/ClusterComputePass.h"
 #include "passes/RTGIPass.h"
 #include "passes/LightCompositingPass.h"
+#include "passes/LightPropagationComputePass.h"
 
 namespace CGE
 {
@@ -112,6 +113,8 @@ namespace CGE
 		deferredLightingPass->Init();
 		rtGIPass = new RTGIPass(HashString("RTGIPass"));
 		rtGIPass->Init();
+		propagationPass = new LightPropagationComputePass(HashString("LightPropagationPass"));
+		propagationPass->Init();
 		compositingPass = new LightCompositingPass(HashString("LightCompositingPass"));
 		compositingPass->Init();
 		postProcessPass = new PostProcessPass(HashString("PostProcessPass"));
@@ -176,6 +179,9 @@ namespace CGE
 		rtGIPass->Update();
 		rtGIPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
+		// light propagation pass
+		//propagationPass->Execute(&cmdBuffer);
+		//--------------------------------------------------------
 		// light compositing pass
 		compositingPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
@@ -223,6 +229,7 @@ namespace CGE
 		delete gBufferPass;
 		delete rtShadowPass;
 		delete rtGIPass;
+		delete propagationPass;
 		delete compositingPass;
 		delete m_clusterComputePass;
 	

@@ -218,7 +218,7 @@ namespace CGE
 	
 		LightObjectPtr lightObj = ObjectBase::NewObject<LightObject>();
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-		lightObj->transform.SetRotation({ -20.0f, -115.0f, 0.0f });
+		lightObj->transform.SetRotation({ -20.0f, -85.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
 		lightObj->GetLightComponent()->intensity = 1.6f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 0.85f };
@@ -232,14 +232,14 @@ namespace CGE
 		//lightObj01->GetLightComponent()->intensity = 2.0f;
 		//lightObj01->GetLightComponent()->color = { 0.2f, 1.0f, 0.2f };
 
-		LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-		lightObj02->transform.SetLocation({ 20.0f, -10.0f, 0.0f });
-		lightObj02->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
-		lightObj02->GetLightComponent()->type = LT_Point;
-		lightObj02->GetLightComponent()->radius = 10.0f;
-		lightObj02->GetLightComponent()->spotHalfAngle = 30.0f;
-		lightObj02->GetLightComponent()->intensity = 2.0f;
-		lightObj02->GetLightComponent()->color = { 1.0f, 0.1f, 1.0f };
+		//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+		//lightObj02->transform.SetLocation({ 0.0f, -10.0f, 0.0f });
+		//lightObj02->transform.SetRotation({ 0.0f, 0.0f, 0.0f });
+		//lightObj02->GetLightComponent()->type = LT_Point;
+		//lightObj02->GetLightComponent()->radius = 10.0f;
+		//lightObj02->GetLightComponent()->spotHalfAngle = 30.0f;
+		//lightObj02->GetLightComponent()->intensity = 2.0f;
+		//lightObj02->GetLightComponent()->color = { 1.0f, 0.1f, 1.0f };
 	
 		float width = 500.0f;
 		float depth = 500.0f;
@@ -284,7 +284,7 @@ namespace CGE
 				room_01->GetMeshComponent()->meshData = meshData;
 				room_01->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 				room_01->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-				room_01->transform.SetScale({ 1.0f, 1.0f, 1.0f });
+				room_01->transform.SetScale({ 0.3f, 0.3f, 0.3f });
 				room_01->GetMeshComponent()->SetMaterial(mat);
 				room_01->GetMeshComponent()->SetRtMaterial(rtMat1);
 			}
@@ -331,10 +331,10 @@ namespace CGE
 				MeshDataPtr cubeMeshData = cubeImporter.GetMeshes()[0];
 				cubeMeshData->CreateBuffer();
 
-				float width = 15.0f;
-				float depth = 15.0f;
-				uint32_t countX = 2;
-				uint32_t countY = 2;
+				float width = 5.0f;
+				float depth = 5.0f;
+				uint32_t countX = 1;
+				uint32_t countY = 1;
 				for (uint32_t indexX = 0; indexX < countX; indexX++)
 				{
 					for (uint32_t indexY = 0; indexY < countY; indexY++)
@@ -344,9 +344,10 @@ namespace CGE
 
 						MeshObjectPtr cubeMeshObject = ObjectBase::NewObject<MeshObject>();
 						cubeMeshObject->GetMeshComponent()->meshData = cubeMeshData;
-						cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
+						//cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
+						cubeMeshObject->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 						cubeMeshObject->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-						cubeMeshObject->transform.SetScale({ 2.0f, 5.0f, 2.0f });
+						cubeMeshObject->transform.SetScale({ 0.5f, 0.5f, 0.5f });
 						cubeMeshObject->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
 						cubeMeshObject->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
 					}

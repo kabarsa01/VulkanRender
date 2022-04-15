@@ -33,16 +33,33 @@ struct DDGIProbe
 {
 	vec4 position;
 	uint texturePosition;
+	uint depthPosition;
 	uint temporalCounter;
+	uint pad;
 };
+
+float altSign(float num)
+{
+	return num < 0.0 ? -1.0 : 1.0;
+}
 
 vec2 DirectionToOctahedronUV(in vec3 direction)
 {
-	float zSign = sign(direction.z);
-	float anglePhi = degrees(acos(dot(normalize(direction.zx), vec2(zSign, 0.0f))));
-	float angleTheta = degrees(acos(dot(direction, vec3(0.0f, 1.0f, 0.0f))));
+	float xSign = altSign(direction.x);
+	float zSign = altSign(direction.z);
 
-	vec2 ecuatorVector = vec2(-0.5f * zSign, 0.5f * sign(direction.x));
+	vec2 phiVector = direction.zx;
+	if (length(phiVector) < 0.001)
+	{
+		phiVector = vec2(1.0, 0.0);
+	}
+
+	float anglePhi = degrees(acos(clamp( dot( normalize(phiVector), vec2(zSign, 0.0f) )/*dot*/, -1.0, 1.0)/*clamp*/));
+	float angleTheta = degrees(acos(clamp( dot( direction, vec3(0.0f, 1.0f, 0.0f) ),-1.0, 1.0 )/*clamp*/)/*acos*/);
+
+	//return vec2(anglePhi, angleTheta) / 180.0;
+
+	vec2 ecuatorVector = vec2(-0.5f * zSign, 0.5f * xSign);
 	vec2 startCorner = vec2(0.5f + 0.5f * zSign, 0.5f);
 
 	vec2 middlePoint = startCorner + (ecuatorVector * (anglePhi / 90.0f));
@@ -53,7 +70,7 @@ vec2 DirectionToOctahedronUV(in vec3 direction)
 		return vec2(uv.x, 1.0f - uv.y);
 	}
 
-	vec2 southPole = vec2(0.5f + 0.5f * zSign, 0.5f + 0.5f * sign(direction.x));
+	vec2 southPole = vec2(0.5f + 0.5f * zSign, 0.5f + 0.5f * xSign);
 	vec2 uv = middlePoint + (southPole - middlePoint) * ((angleTheta - 90.0f) / 90.0f);
 	return vec2(uv.x, 1.0f - uv.y);
 }
