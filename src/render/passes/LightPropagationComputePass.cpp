@@ -61,6 +61,10 @@ namespace CGE
 			commandBuffer->dispatch(32, 16, 1);
 		}
 
+
+
+
+
 	}
 
 	void LightPropagationComputePass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)

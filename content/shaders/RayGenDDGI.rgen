@@ -217,10 +217,10 @@ void main()
 		vec2 directionUV = DirectionToOctahedronUV(direction);
 
 		vec2 targetPixelUV = directionUV * 6.0;
-		vec2 targetPixelUVMin = mod(floor(targetPixelUV - 0.5 + 6.0) + 0.5, 6.0);
+		vec2 targetPixelUVMin = floor(targetPixelUV - vec2(0.5)) + 0.5;
 
 		vec2 targetDepthPixelUV = directionUV * 16.0;
-		vec2 targetDepthPixelUVMin = mod(floor(targetPixelUV - 0.5 + 16.0) + 0.5, 16.0);
+		vec2 targetDepthPixelUVMin = floor(targetDepthPixelUV - vec2(0.5)) + 0.5;
 
 		traceRayEXT(tlas,							// acceleration structure
 				rayFlags,							// rayFlags
@@ -386,12 +386,13 @@ void main()
 		accumulatedLight *= initialDistanceFactor;
 
 		// doing bilinear by hand to get a good distribution will limited pixel number
-		vec2 alpha = clamp(min(targetPixelUV - targetPixelUVMin, targetPixelUV + vec2(6.0) - targetPixelUVMin), 0.0, 1.0);
-		vec2 alphaDepth = clamp(min(targetDepthPixelUV - targetDepthPixelUVMin, targetDepthPixelUV + vec2(16.0) - targetDepthPixelUVMin), 0.0, 1.0);
+		vec2 alpha = clamp(targetPixelUV - targetPixelUVMin, vec2(0.0), vec2(1.0));
+		vec2 alphaDepth = clamp(targetDepthPixelUV - targetDepthPixelUVMin, vec2(0.0), vec2(1.0));
 
 		for (uint idx = 0; idx < 4; idx++)
 		{
 			ivec2 pixelStep = ivec2(idx, idx / 2) & ivec2(1, 1);
+
 			// bilinear alphas
 			vec2 bilinear = mix(vec2(1.0) - alpha, alpha, vec2(pixelStep));
 			vec2 bilinearDepth = mix(vec2(1.0) - alphaDepth, alphaDepth, vec2(pixelStep));
@@ -400,20 +401,33 @@ void main()
 			float weightDepth = bilinearDepth.x * bilinearDepth.y;
 
 			// pixel to write
-			ivec2 currentPixel = ivec2(mod(ivec2(targetPixelUVMin) + pixelStep, ivec2(6,6)));
-			currentPixel += ivec2(probeTexCoord) + ivec2(1,1); 
+			ivec2 currentPixelLocal = ivec2(targetPixelUVMin) + pixelStep;
+			ivec2 currentPixel = currentPixelLocal + ivec2(probeTexCoord) + ivec2(1,1); 
 			// load pixel, mix and store
 			vec3 totalLight = imageLoad(probesImage, currentPixel).xyz;
 			totalLight = mix(totalLight, accumulatedLight * weight, 1.0f / float(sampleStep));
 			imageStore(probesImage, currentPixel, vec4(totalLight, hitDepth * weight));
+			// check if pixel should be reflected
+			ivec2 reflectedPixel = currentPixelLocal;
+			if (OctahedronReflectBorderPixelIndex(ivec2(6), currentPixelLocal, reflectedPixel))
+			{
+				currentPixel = reflectedPixel + ivec2(probeTexCoord) + ivec2(1,1); 
+				imageStore(probesImage, currentPixel, vec4(totalLight, hitDepth * weight));
+			}
 
 			// depth pixel coords
-			ivec2 currentDepthPixel = ivec2(mod(ivec2(targetDepthPixelUVMin) + pixelStep, ivec2(16,16)));
-			currentDepthPixel += ivec2(probeDepthCoord) + ivec2(1,1);
+			ivec2 currentDepthPixelLocal = ivec2(targetDepthPixelUVMin) + pixelStep;
+			ivec2 currentDepthPixel = currentDepthPixelLocal + ivec2(probeDepthCoord) + ivec2(1,1);
 			// load depth, mix and store
 			vec2 totalDepth = imageLoad(probesDepthImage, currentDepthPixel).xy;
 			totalDepth = mix(totalDepth, vec2(hitDepth * weightDepth, hitDepth * hitDepth * weightDepth), 1.0f / float(sampleStep));
 			imageStore(probesDepthImage, currentDepthPixel, vec4(totalDepth, 0.0, 0.0));
+			reflectedPixel = currentDepthPixelLocal;
+			if (OctahedronReflectBorderPixelIndex(ivec2(16), currentDepthPixelLocal, reflectedPixel))
+			{
+				currentDepthPixel = reflectedPixel + ivec2(probeDepthCoord) + ivec2(1,1); 
+				imageStore(probesDepthImage, currentDepthPixel, vec4(totalDepth, 0.0, 0.0));
+			}
 		}
 	}
 

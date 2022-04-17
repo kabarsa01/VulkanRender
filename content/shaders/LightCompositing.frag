@@ -113,9 +113,9 @@ void main() {
 		float r = length(pixelToProbe);// + 0.1;
 		if (r > mean)// && mean > 0.0f)
 		{
-			//continue;
+//			continue;
 			float variance = abs((mean*mean) - mean2) + 0.01;
-			//weight *= variance / (variance + pow(r - mean, 2.0));
+			weight *= variance / (variance + pow(r - mean, 2.0));
 			//weight *= 0.5; 
 		}
 

@@ -75,6 +75,27 @@ vec2 DirectionToOctahedronUV(in vec3 direction)
 	return vec2(uv.x, 1.0f - uv.y);
 }
 
+bool OctahedronReflectBorderPixelIndex(in ivec2 maxPixels, in ivec2 pixel, out ivec2 newPixel)
+{
+	bool changed = false;
+	if (pixel.x <= 0 || pixel.x >= maxPixels.x - 1)
+	{
+		newPixel.y = maxPixels.y - pixel.y - 1;
+		int signPoint = pixel.x <= 0 ? 0 : maxPixels.x;
+		newPixel.x = pixel.x - int(altSign(pixel.x - signPoint));
+		changed = true;
+	}
+	if (pixel.y <= 0 || pixel.y >= maxPixels.y - 1)
+	{
+		newPixel.x = maxPixels.x - pixel.x - 1;
+		int signPoint = pixel.y <= 0 ? 0 : maxPixels.y;
+		newPixel.y = pixel.y - int(altSign(pixel.y - signPoint));
+		changed = true;
+	}
+
+	return changed;
+}
+
 bool RayQueryIsShadow(accelerationStructureEXT tlas, vec3 pos, vec3 dir, float startOffset, float dist)
 {
 	rayQueryEXT rayQuery;
