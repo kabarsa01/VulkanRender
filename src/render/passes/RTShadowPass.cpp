@@ -76,14 +76,7 @@ namespace CGE
 		std::vector<ImageMemoryBarrier> barriers{ attachmentBarrier, depthTextureBarrier };
 		for (auto tex : m_visibilityTextures)
 		{
-			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
-				ImageLayout::eUndefined,
-				ImageLayout::eGeneral,
-				vk::AccessFlagBits::eShaderRead,
-				vk::AccessFlagBits::eShaderWrite,
-				vk::ImageAspectFlagBits::eColor,
-				0, 1, 0, 1);
-			barriers.push_back(visibilityBarrier);
+			barriers.push_back( tex->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eGeneral, vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite) );
 		}
 		vk::ImageMemoryBarrier albedoBarrier = gbufferData->albedos[depthIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,

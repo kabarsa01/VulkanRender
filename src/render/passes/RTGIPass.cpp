@@ -13,6 +13,7 @@
 #include "../PerFrameData.h"
 #include "import/MeshImporter.h"
 #include "DeferredLightingPass.h"
+#include "UpdateGIProbesPass.h"
 
 
 namespace CGE
@@ -90,14 +91,7 @@ namespace CGE
 		imageBarriers.push_back(prevDepthTextureBarrier);
 		for (auto tex : rtShadowData->visibilityTextures)
 		{
-			ImageMemoryBarrier visibilityBarrier = tex->GetImage().CreateLayoutBarrier(
-				ImageLayout::eUndefined,
-				ImageLayout::eShaderReadOnlyOptimal,
-				vk::AccessFlagBits::eShaderWrite,
-				vk::AccessFlagBits::eShaderRead,
-				vk::ImageAspectFlagBits::eColor,
-				0, 1, 0, 1);
-			imageBarriers.push_back(visibilityBarrier);
+			imageBarriers.push_back( tex->GetImage().CreateLayoutBarrierColor(ImageLayout::eGeneral, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead) );
 		}
 		vk::ImageMemoryBarrier albedoBarrier = gbufferData->albedos[depthIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
@@ -133,23 +127,8 @@ namespace CGE
 			0, 1, 0, 1);
 		imageBarriers.push_back(directLightBarrier);
 		//---------------------------------------------------------------------------------------------------------------------------
-		// lighting data
-		vk::ImageMemoryBarrier lightingData = m_lightingData[frameIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eGeneral,
-			vk::AccessFlagBits::eShaderRead,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		imageBarriers.push_back(lightingData);
-		vk::ImageMemoryBarrier previousLightingData = m_lightingData[prevFrameIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		imageBarriers.push_back(previousLightingData);
+		//imageBarriers.push_back(m_lightingData[frameIndex]->GetImage().ToLayout(vk::ImageLayout::eGeneral, vk::AccessFlagBits::eShaderWrite).CreateCurrentLayoutBarrierColor());
+
 		//---------------------------------------------------------------------------------------------------------------------------
 		// ddgi data
 		vk::BufferMemoryBarrier probesBufferBarrier = m_probeGridBuffer->GetBuffer().CreateMemoryBarrier(
@@ -167,12 +146,11 @@ namespace CGE
 			0, 1, 0, 1);
 		imageBarriers.push_back(probesImageBarrier);
 		//---------------------------------------------------------------------------------------------------------------------------
-
 		commandBuffer->pipelineBarrier(
-			vk::PipelineStageFlagBits::eAllCommands,
+			vk::PipelineStageFlagBits::eAllCommands | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eRayTracingShaderKHR,
 			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
 			vk::DependencyFlags(),
-			0, nullptr,
+			1, &m_memBar,
 			static_cast<uint32_t>(buffersBarriers.size()), buffersBarriers.data(),
 			static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 
@@ -193,13 +171,25 @@ namespace CGE
 		vk::StridedDeviceAddressRegionKHR rayMissRegion = sbt.GetRegion(ERtShaderType::RST_MISS, m_rayMiss->GetResourceId());
 		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
+		// screen space probe tracing
 		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 8, executeContext.GetHeight() / 8, 1);
 		// dispatch ddgi tracing
-		commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 16, 32);
+		//commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 16, 32);
+
+		commandBuffer->pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllCommands | vk::PipelineStageFlagBits::eComputeShader,
+			vk::PipelineStageFlagBits::eRayTracingShaderKHR,
+			vk::DependencyFlags(),
+			1, &m_memBar,
+			0, nullptr,
+			0, nullptr);
 	}
 
 	void RTGIPass::InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext)
 	{
+		m_memBar.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
+		m_memBar.setDstAccessMask(vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead);
+
 		CreateProbeGridData();
 
 		m_rayGen = DataManager::GetInstance()->RequestResourceByType<RtShader>("content/shaders/RayGenGI.spv", ERtShaderType::RST_RAY_GEN);
@@ -219,9 +209,10 @@ namespace CGE
 		auto rtShadowData = dataTable.GetPassData<RTShadowsData>();
 		// initial deferred lighting pass can be used to sample direct lighting in case our rays hit something in screenspace
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
+		auto giProbesData = dataTable.GetPassData<UpdateGIProbesData>();
 
 		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Uint, true);
-		m_lightingData = ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR16G16B16A16Sfloat, true);
+		m_lightingData = giProbesData->screenProbesData; //ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);//
 		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Sfloat, true);
 
 		auto passData = dataTable.CreatePassData<RTGIPassData>();

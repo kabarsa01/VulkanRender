@@ -41,17 +41,16 @@ namespace CGE
 	using VULKAN_HPP_NAMESPACE::Viewport;
 	
 	class PerFrameData;
+	class DepthPrepass;
 	class ClusterComputePass;
-	class ZPrepass;
 	class GBufferPass;
+	class UpdateGIProbesPass;
 	class RTShadowPass;
 	class RTGIPass;
 	class LightPropagationComputePass;
 	class DeferredLightingPass;
 	class LightCompositingPass;
 	class PostProcessPass;
-
-	class DepthPrepass;
 	
 	//=======================================================================================================
 	//=======================================================================================================
@@ -113,6 +112,7 @@ namespace CGE
 		DepthPrepass* m_depthPrepass;
 		ClusterComputePass* m_clusterComputePass;
 		GBufferPass* gBufferPass;
+		UpdateGIProbesPass* m_updateGIProbesPass;
 		RTShadowPass* rtShadowPass;
 		DeferredLightingPass* deferredLightingPass;
 		RTGIPass* rtGIPass;

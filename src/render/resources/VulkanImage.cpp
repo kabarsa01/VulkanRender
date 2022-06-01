@@ -214,6 +214,55 @@ namespace CGE
 		);
 	}
 	
+	ImageMemoryBarrier VulkanImage::CreateLayoutBarrier(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask, ImageAspectFlags inAspectFlags) const
+	{
+		return CreateLayoutBarrier(
+			inOldLayout,
+			inNewLayout,
+			inSrcAccessMask,
+			inDstAccessMask,
+			inAspectFlags,
+			0, 1, 0, 1
+		);
+	}
+
+	vk::ImageMemoryBarrier VulkanImage::CreateLayoutBarrierDepthStencil(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask) const
+	{
+		return CreateLayoutBarrier(inOldLayout, inNewLayout, inSrcAccessMask, inDstAccessMask, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
+	}
+
+	vk::ImageMemoryBarrier VulkanImage::CreateLayoutBarrierColor(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask) const
+	{
+		return CreateLayoutBarrier(inOldLayout, inNewLayout, inSrcAccessMask, inDstAccessMask, vk::ImageAspectFlagBits::eColor);
+	}
+
+	VulkanImage& VulkanImage::ToLayout(ImageLayout inNewLayout, AccessFlags inDstAccessMask)
+	{
+		if (inNewLayout != m_currentLayout)
+		{
+			m_previousLayout = m_currentLayout;
+			m_currentLayout = inNewLayout;
+		}
+
+		if (inDstAccessMask != m_currentAccessFlags)
+		{
+			m_previousAccessFlags = m_currentAccessFlags;
+			m_currentAccessFlags = inDstAccessMask;
+		}
+
+		return *this;
+	}
+
+	vk::ImageMemoryBarrier VulkanImage::CreateCurrentLayoutBarrierDepth()
+	{
+		return CreateLayoutBarrier(m_previousLayout, m_currentLayout, m_previousAccessFlags, m_currentAccessFlags, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
+	}
+
+	vk::ImageMemoryBarrier VulkanImage::CreateCurrentLayoutBarrierColor()
+	{
+		return CreateLayoutBarrier(m_previousLayout, m_currentLayout, m_previousAccessFlags, m_currentAccessFlags, vk::ImageAspectFlagBits::eColor);
+	}
+
 	Image& VulkanImage::GetImage()
 	{
 		return m_image;

@@ -35,7 +35,6 @@ namespace CGE
 		{
 			ShaderBindingTable sbt;
 			ShaderResourceMapper resourceMapper;
-			Texture2DPtr lightingTexture;
 			vk::PipelineLayout pipelineLayout;
 			vk::Pipeline pipeline;
 		};
@@ -54,6 +53,8 @@ namespace CGE
 		RtShaderPtr m_rayMiss;
 		RtShaderPtr m_closestHit;
 		RtMaterialPtr m_globalRTGIMaterial;
+
+		vk::MemoryBarrier m_memBar;
 
 		void ExecutePass(vk::CommandBuffer* commandBuffer, PassExecuteContext& executeContext, RenderPassDataTable& dataTable) override;
 		void InitPass(RenderPassDataTable& dataTable, PassInitContext& initContext) override;

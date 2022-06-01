@@ -38,6 +38,7 @@
 #include "passes/RTGIPass.h"
 #include "passes/LightCompositingPass.h"
 #include "passes/LightPropagationComputePass.h"
+#include "passes/UpdateGIProbesPass.h"
 
 namespace CGE
 {
@@ -107,6 +108,8 @@ namespace CGE
 		m_clusterComputePass->Init();
 		gBufferPass = new GBufferPass(HashString("GBufferPass"));
 		gBufferPass->Init();
+		m_updateGIProbesPass = new UpdateGIProbesPass(HashString("UpdateGIProbesPass"));
+		m_updateGIProbesPass->Init();
 		rtShadowPass = new RTShadowPass(HashString("RTShadowPass"));
 		rtShadowPass->Init();
 		deferredLightingPass = new DeferredLightingPass(HashString("DeferredLightingPass"));
@@ -168,6 +171,9 @@ namespace CGE
 		// gbuffer pass
 		gBufferPass->Execute(&cmdBuffer);
 		//--------------------------------------------------------
+		// update GI probes pass
+		m_updateGIProbesPass->Execute(&cmdBuffer);
+		//--------------------------------------------------------
 		// rt shadows light visibility pass
 		rtShadowPass->Update();
 		rtShadowPass->Execute(&cmdBuffer);
@@ -192,7 +198,7 @@ namespace CGE
 
 		SubmitInfo submitInfo{};
 		Semaphore waitSemaphores[] = { swapChain.GetImageAvailableSemaphore() };
-		PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput };
+		PipelineStageFlags waitStages[] = { PipelineStageFlagBits::eColorAttachmentOutput | PipelineStageFlagBits::eRayTracingShaderKHR | PipelineStageFlagBits::eComputeShader };
 		submitInfo.setWaitSemaphoreCount(1);
 		submitInfo.setPWaitSemaphores(waitSemaphores);
 		submitInfo.setPWaitDstStageMask(waitStages);
@@ -227,6 +233,7 @@ namespace CGE
 		delete postProcessPass;
 		delete deferredLightingPass;
 		delete gBufferPass;
+		delete m_updateGIProbesPass;
 		delete rtShadowPass;
 		delete rtGIPass;
 		delete propagationPass;

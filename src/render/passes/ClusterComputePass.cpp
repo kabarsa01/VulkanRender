@@ -103,13 +103,13 @@ namespace CGE
 		// grid data
 		clusterDataPtr->gridLightsData = CreateLightsGrid();
 		
-		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)
+		for (uint32_t idx = 0; idx < 2; ++idx)
 		{
 			MaterialPtr computeMaterial = DataManager::RequestResourceType<Material>("ClusterComputeMaterial_" + std::to_string(idx));
 			computeMaterial->SetComputeShaderPath("content/shaders/LightClustering.spv");
 			computeMaterial->SetStorageBufferExternal("clusterLightsData", clusterDataPtr->clusterLightsData);
-			computeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[0]);
-			computeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[0]);
+			computeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[idx]);
+			computeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[idx]);
 			computeMaterial->SetTexture("depthTexture", depthData->depthTextures[idx]);
 			computeMaterial->LoadResources();
 
@@ -118,8 +118,8 @@ namespace CGE
 			MaterialPtr gridComputeMaterial = DataManager::RequestResourceType<Material>("GridComputeMaterial_" + std::to_string(idx));
 			gridComputeMaterial->SetComputeShaderPath("content/shaders/LightGrid.spv");
 			gridComputeMaterial->SetStorageBufferExternal("gridLightsData", clusterDataPtr->gridLightsData);
-			gridComputeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[0]);
-			gridComputeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[0]);
+			gridComputeMaterial->SetUniformBufferExternal("lightsList", clusterDataPtr->lightsList[idx]);
+			gridComputeMaterial->SetUniformBufferExternal("lightsIndices", clusterDataPtr->lightsIndices[idx]);
 			gridComputeMaterial->SetTexture("depthTexture", depthData->depthTextures[idx]);
 			gridComputeMaterial->LoadResources();
 

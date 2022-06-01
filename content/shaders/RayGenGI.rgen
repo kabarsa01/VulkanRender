@@ -81,7 +81,7 @@ layout(set = 2, binding = 1) readonly buffer GridLightsData
 } gridLightsData;
 
 layout(set = 2, binding = 2) uniform texture2D directLightTex;
-layout(set = 2, binding = 3) uniform texture2D previousLightTex;
+layout(set = 2, binding = 3, rgba16f) uniform readonly image2D previousLightTex;
 layout(set = 2, binding = 4) uniform texture2D previousDepthTex;
 layout(set = 2, binding = 5) uniform texture2D previousNormalTex;
 layout(set = 2, binding = 6) uniform texture2D velocityTex;
@@ -93,18 +93,59 @@ layout(set = 2, binding = 9, r32f) uniform image2D giDepthTex;
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
+
+bool IsScreenSpaceProbeFit(in vec3 pixelWorldPos, in vec3 probeWorldPos, in vec3 pixelWorldNormal, in vec3 probeWorldNormal)
+{
+	// TODO
+
+	return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
+
+vec3 SampleIllumination(vec3 worldPos, vec2 uvCoord)
+{
+	ivec2 imgSize = imageSize(previousLightTex);
+	vec2 pixelCoord = vec2(imgSize) * uvCoord;
+	ivec2 pixelCoordMin = ivec2(floor(pixelCoord - vec2(0.5, 0.5)));
+
+	vec2 alpha = pixelCoord - (vec2(pixelCoordMin) + vec2(0.5, 0.5));
+
+	for (int idx = 0; idx < 4; idx++)
+	{
+		ivec2 pixelIndex = ivec2(idx / 2, idx & 1);
+		pixelIndex += pixelCoordMin;
+
+		// TODO test probe against current pixel
+		// TODO get probe world coord
+		vec2 probeUV = (vec2(pixelIndex) + vec2(0.5, 0.5)) / vec2(imgSize);
+		float depth = texture(sampler2D( previousDepthTex, borderBlackNearestSampler ), probeUV).r;
+		float linearDepth = LinearizeDepth(depth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
+
+		// TODO load illumination for bilinear sampling
+		vec3 probeIllumination = imageLoad(previousLightTex, pixelIndex).xyz;
+	}
+
+	// TODO return actual illumination
+	return vec3(0.0);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 
 bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 color)
 {
+	// view z reject check
 	if (viewSpacePosition.z < globalData.cameraNear || viewSpacePosition.z > globalData.cameraFar)
 	{
 		return false;
 	}
 	float maxY = viewSpacePosition.z * tan(radians(globalData.cameraFov * 0.5));
 	float maxX = maxY * globalData.cameraAspect;
-
+	// view width/height reject check
 	if (abs(viewSpacePosition.x) > abs(maxX) || abs(viewSpacePosition.y) > abs(maxY))
 	{
 		return false;
@@ -122,14 +163,14 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 
 	float near = globalData.cameraNear;
 	float far = globalData.cameraFar;
-	float linearDepth = near * far / (far + depth * (near - far));
+	float linearDepth = LinearizeDepth(depth, near, far);
 
 	if (abs(linearDepth - viewSpacePosition.z) >= 0.01f)
 	{
 		return false;
 	}
 
-	vec2 uvPrev = uv + texture(sampler2D( velocityTex, repeatLinearSampler ), uv).xy;
+	vec2 uvPrev = uv + texture(sampler2D( velocityTex, repeatLinearSampler ), uv).xy / 10.0;
 	float prevDepth = texture(sampler2D( previousDepthTex, repeatLinearSampler ), uv).r;
 	float prevLinearDepth = LinearizeDepth(prevDepth, near, far);
 
@@ -138,7 +179,13 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 		return false;
 	}
 
-	color = texture(sampler2D(previousLightTex, repeatLinearSampler), uvPrev).xyz;
+	// TODO sample direct light at this point
+	color = texture(sampler2D(directLightTex, repeatLinearSampler), uvPrev).xyz;
+	if (length(color) < 0.005)
+	{
+		return false;
+	}
+	//color = texture(sampler2D(previousLightTex, repeatLinearSampler), uvPrev).xyz;
 	//color = imageLoad(previousLightTex, ivec2(imageSize(previousLightTex) * uvPrev)).xyz;
 
 	return true;
@@ -151,17 +198,18 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 void main() 
 {
 	float tMin = 0.1f;
-	float tMax = 1000.f;
+	float tMax = 100.f;
     uint rayFlags = gl_RayFlagsOpaqueEXT;
 	uint temporalCounter = 0;
 	vec3 totalLight = vec3(0.0f, 0.0f, 0.0f);
-	vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
+	//vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
 	ivec2 lightTexSize = imageSize(lightTex);
+	ivec2 tempCounterTexSize = imageSize(counterTex);
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract UVs 
-	const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5, 0.5);
-    const vec2 uv = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
+	const vec2 screenProbeCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5, 0.5);
+    const vec2 uv = screenProbeCenter/vec2(gl_LaunchSizeEXT.xy);
 	const vec2 velocity = texture( sampler2D( velocityTex, borderBlackLinearSampler ), uv ).xy / 10.0f;
 	const vec2 prevUV = uv + velocity;
 
@@ -177,8 +225,8 @@ void main()
 	imageStore(giDepthTex, ivec2(gl_LaunchIDEXT.xy), vec4(depth, 0.0f, 0.0f, 0.0));
 	if (depth <= 0.0f || depth >= 1.0f)
 	{
-		imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(0.0f, 0.0f, 0.0f, 1.0));
-		return;
+//		imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(0.0f, 0.0f, 0.0f, 1.0));
+//		return;
 	}
 	float linearDepth = near * far / (far + depth * (near - far));
 	vec4 pixelCoordWorld = CalculateWorldPosition(linearDepth, globalData.cameraFov, globalData.cameraAspect, uv, globalData.worldToView);
@@ -193,105 +241,16 @@ void main()
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// reproject previous illumination
-
-	if (length(velocity) < 0.00001f)
+	vec2 prevScreenProbePos = prevUV * vec2(gl_LaunchSizeEXT.xy);
+	vec2 prevScreenProbeMin = floor(prevScreenProbePos - vec2(0.5,0.5));
+	for (int probeOffsetIdx = 0; probeOffsetIdx < 4; probeOffsetIdx++)
 	{
-		float divisor = 0.0001f;
-		for (uint idx = 0; idx < 4; ++idx)
-		{
-			vec2 localUV = (vec2(gl_LaunchIDEXT.xy * 4 + ivec2(1 + idx / 2, 1 + idx % 2)) + vec2(0.5f)) / vec2(4 * gl_LaunchSizeEXT.xy);
-			const vec2 localVelocity = texture( sampler2D( velocityTex, borderBlackLinearSampler ), localUV ).xy / 10.0f;
-			vec2 localPrevUV = localUV + localVelocity;
-
-			float localDepth = texture(sampler2D( depthTex, borderBlackLinearSampler ), localUV).r;
-			float localLinearDepth = near * far / (far + localDepth * (near - far));
-			vec4 localCoordWorld = CalculateWorldPosition(localLinearDepth, globalData.cameraFov, globalData.cameraAspect, localUV, globalData.worldToView);
-
-			float localPreviousDepth = texture(sampler2D( previousDepthTex, borderBlackLinearSampler ), localPrevUV).r;
-			float localPreviousLinearDepth = LinearizeDepth(localPreviousDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
-			vec4 localpreviousCoordWorld = CalculateWorldPosition(localPreviousLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, localPrevUV, globalPreviousData.worldToView);
-
-			vec3 localN = normalize( texture( sampler2D( normalTex, borderBlackLinearSampler ), localUV ).xyz );
-			vec3 localPreviousN = normalize( texture( sampler2D( previousNormalTex, borderBlackLinearSampler ), localPrevUV ).xyz );
-
-			bool normalsFit = (dot(localN, N) > cos(radians(30.0f))) && (dot(localN, localPreviousN) > cos(radians(5.0f)));
-			float normalFactor = clamp(-1.0f * dot(localN, localPreviousN), 0.0f, 1.0f);
-
-			if (length(localpreviousCoordWorld.xyz - localCoordWorld.xyz) <= 0.05f)
-			{
-				if (normalsFit)
-				{
-					totalLight += texture( sampler2D( previousLightTex, borderBlackLinearSampler ), localPrevUV ).xyz;
-					divisor += 1.0f;
-				}
-			}
-			else if (normalFactor > 0.0f)
-			{
-				totalLight += normalFactor * texture( sampler2D( previousLightTex, borderBlackLinearSampler ), localPrevUV ).xyz;
-				divisor += 1.0f;
-			}
-		}
-		if (divisor > 0.01f)
-		{
-			totalLight /= divisor;
-			temporalCounter = imageLoad(counterTex, ivec2(lightTexSize * prevUV)).r;
-		}
-		else
-		{
-			vec3 referenceNormal = normalize( texture( sampler2D( previousNormalTex, borderBlackNearestSampler ), prevUV ).xyz );
-			vec2 illuminationUVPixelSize = 1.0f / vec2(lightTexSize);
-			for (uint idx = 0; idx < 9; ++idx)
-			{
-				vec2 localUV = prevUV + illuminationUVPixelSize * vec2(idx/3 - 1, idx%3 - 1);
-
-				float localDepth = texture(sampler2D( previousDepthTex, borderBlackNearestSampler ), localUV).r;
-				float localLinearDepth = LinearizeDepth(localDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
-				vec4 localCoordWorld = CalculateWorldPosition(localLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, localUV, globalPreviousData.worldToView);
-
-//				float localPreviousDepth = texture(sampler2D( previousDepthTex, borderBlackLinearSampler ), localPrevUV).r;
-//				float localPreviousLinearDepth = LinearizeDepth(localPreviousDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
-//				vec4 localpreviousCoordWorld = CalculateWorldPosition(localPreviousLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, localPrevUV, globalPreviousData.worldToView);
-
-				vec3 localN = normalize( texture( sampler2D( previousNormalTex, borderBlackNearestSampler ), localUV ).xyz );
-				//vec3 localPreviousN = normalize( texture( sampler2D( normalTex, borderBlackLinearSampler ), localPrevUV ).xyz );
-
-				bool normalsFit = dot(localN, referenceNormal) > cos(radians(5.0f));
-				float normalFactor = clamp(-1.0f * dot(localN, referenceNormal), 0.0f, 1.0f);
-
-				if (length(pixelCoordWorld.xyz - localCoordWorld.xyz) <= 0.2f)
-				{
-					if (normalsFit)
-					{
-						totalLight += texture( sampler2D( previousLightTex, borderBlackNearestSampler ), localUV ).xyz;
-						divisor += 1.0f;
-					}
-				}
-				else if (normalFactor > 0.0f)
-				{
-					totalLight += normalFactor * texture( sampler2D( previousLightTex, borderBlackNearestSampler ), localUV ).xyz;
-					divisor += 1.0f;
-				}
-			}
-			if (divisor > 0.01f)
-			{
-				totalLight /= divisor;
-			}
-		}
-	}
-	else if (length(previousPixelCoordWorld.xyz - pixelCoordWorld.xyz) <= 1.1f)
-	{
-//		float divisor = 0.0f;
-		//totalLight = imageLoad(previousLightTex, ivec2(lightTexSize * prevUV)).xyz;
-		totalLight = texture( sampler2D( previousLightTex, borderBlackLinearSampler ), prevUV ).xyz;
-//		if ((prevUV * lightTexSize) == (uv * lightTexSize))
-		{
-//			totalLight /= 16.0f;
-		}
-		//----------------------------------------------------------------------------------------------------------------------------------
-		// temporal counter data
-		temporalCounter = imageLoad(counterTex, ivec2(lightTexSize * prevUV)).r;
+		
 	}
 
+	//----------------------------------------------------------------------------------------------------------------------------------
+	// load temporal counter
+	temporalCounter = imageLoad(counterTex, ivec2(tempCounterTexSize * prevUV)).r;
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract normals data
@@ -303,12 +262,15 @@ void main()
 	// ray start
 	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
 
-	uint samplePoolSize = temporalCounter == 0 ? 16 : 10101;
-	uint sampleStep = samplePoolSize / 16;
+	uint samplePoolSize = /*temporalCounter == 0 ? 16 :*/ 10101;
+	uint sampleStep = samplePoolSize / 32;
 	uint sampleStart = temporalCounter % sampleStep;
-	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, temporalCounter);
+	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, globalData.frameIndex);
+
 	for (uint idx = sampleStart; idx < samplePoolSize; idx += sampleStep)
 	{
+		vec3 accumulatedLight = vec3(0.0f);
+
 		vec3 jitter = vec3(Rand(randSeed), Rand(randSeed), Rand(randSeed));
 		jitter = 0.05f * normalize(jitter - vec3(0.5f));
 
@@ -336,12 +298,13 @@ void main()
 			continue;
 		}
 		uint initialInstanceId = payloadGI.instanceCustomId;
+		float hitDistance = payloadGI.hitT;
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		// falloff
 		vec3 pointDistance = rayStart - payloadGI.worldPos;
-		float lightMaxRadiusSqr = 1000000.0;
+		float lightMaxRadiusSqr = 10000.0;
 		float pointDistanceSqr = dot(pointDistance, pointDistance);
 		float initialDistanceFactor = max(lightMaxRadiusSqr - pointDistanceSqr, 0) / max(lightMaxRadiusSqr, 0.001);
 		//------------------------------------------------------------------------------------------------------------------------------------------------
@@ -355,7 +318,23 @@ void main()
 		if (CheckAndAccumulateViewSpaceVisibility(hitPointViewSpace, directColor))
 		{
 			accumulatedLight += directColor;
-			accumulatedLight *= initialDistanceFactor * initialSurfaceCos / 2.0f;
+			accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos / 2.0f;
+			{
+				vec2 probeUV = DirectionToOctahedronUV(direction);
+				ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
+				//vec4 light = imageLoad(lightTex, pixelCoord);
+				vec4 light = imageLoad(lightTex, pixelCoord);
+				light = mix(light, vec4(accumulatedLight, hitDistance), 1.0f / float(sampleStep));
+				imageStore(lightTex, pixelCoord, light);
+
+				ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
+				if (OctahedronReflectBorderPixelIndex(ivec2(6), ivec2(probeUV * vec2(6.0, 6.0)), reflectedPixel))
+				{
+					ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1);
+					imageStore(lightTex, currentPixel, light);
+				}
+			}
+			continue;
 		}
 
 		vec3 gridVector = payloadGI.worldPos - globalData.cameraPos;
@@ -485,7 +464,22 @@ void main()
 			}
 		}
 		
-		accumulatedLight *= initialDistanceFactor * initialSurfaceCos;
+		accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos;
+
+		//vec2 probeUV = HemisphereDirectionToPyramidUV(normalize(hemisphereDir));
+		vec2 probeUV = DirectionToOctahedronUV(direction);
+		ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
+		vec4 light = imageLoad(lightTex, pixelCoord);
+		//vec4 light = imageLoad(previousLightTex, pixelCoord);
+		light = mix(light, vec4(accumulatedLight, hitDistance), 1.0f / float(sampleStep));
+		imageStore(lightTex, pixelCoord, light);
+
+		ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
+		if (OctahedronReflectBorderPixelIndex(ivec2(6), ivec2(probeUV * vec2(6.0, 6.0)), reflectedPixel))
+		{
+			ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1);
+			imageStore(lightTex, currentPixel, light);
+		}
 	}
 
 //	
@@ -504,10 +498,12 @@ void main()
 	}
 //	else
 	{
-		totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
+//		totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
 	}
 
 	++temporalCounter;
 	imageStore(counterTex, ivec2(gl_LaunchIDEXT.xy), uvec4(temporalCounter, 0,0,0));
-	imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(totalLight, 1.0));
+	//imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(totalLight, 1.0));
+	// TODO write to proper probe direction pixel
+	// HemisphereDirectionToPyramidUV
 }

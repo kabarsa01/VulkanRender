@@ -330,7 +330,7 @@ namespace CGE
 
 		PipelineRegistry& pipelineRegistry = *PipelineRegistry::GetInstance();
 		// check pipeline storage and create new pipeline in case it was not created before
-		if (!pipelineRegistry.HasPipeline(m_name, material->GetShaderHash()))
+		if (!pipelineRegistry.HasPipeline(m_name, material->GetHash()))
 		{
 			PipelineData pipelineData;
 
@@ -352,10 +352,10 @@ namespace CGE
 				pipelineData.pipeline = CreateGraphicsPipeline(initContext, material, pipelineData.pipelineLayout);
 			}
 
-			pipelineRegistry.StorePipeline(m_name, material->GetShaderHash(), pipelineData);
+			pipelineRegistry.StorePipeline(m_name, material->GetHash(), pipelineData);
 		}
 
-		return pipelineRegistry.GetPipeline(m_name, material->GetShaderHash());
+		return pipelineRegistry.GetPipeline(m_name, material->GetHash());
 	}
 
 	//-----------------------------------------------------------------------------------------------------------

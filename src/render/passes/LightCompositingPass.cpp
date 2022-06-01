@@ -35,13 +35,7 @@ namespace CGE
 			vk::AccessFlagBits::eShaderRead,
 			vk::ImageAspectFlagBits::eColor,
 			0, 1, 0, 1);
-		ImageMemoryBarrier giBarrier = rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
+		ImageMemoryBarrier giBarrier = rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 		ImageMemoryBarrier giDepthBarrier = rtgiData->giDepthData[rtIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
 			ImageLayout::eShaderReadOnlyOptimal,
@@ -78,7 +72,7 @@ namespace CGE
 
 		std::vector<ImageMemoryBarrier> imageBarriers{ attachmentBarrier, giBarrier, giDepthBarrier, probesTextureBarrier, probesDepthTextureBarrier, depthBarrier };
 		commandBuffer->pipelineBarrier(
-			vk::PipelineStageFlagBits::eAllCommands,
+			vk::PipelineStageFlagBits::eAllCommands | vk::PipelineStageFlagBits::eRayTracingShaderKHR,
 			vk::PipelineStageFlagBits::eFragmentShader,
 			vk::DependencyFlags(),
 			0, nullptr, 
@@ -122,7 +116,7 @@ namespace CGE
 		auto deferredLightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto rtgiData = dataTable.GetPassData<RTGIPassData>();
 
-		compositingData->frameImages = ResourceUtils::CreateColorTextureArray("light_compositing_frame_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Unorm, false);
+		compositingData->frameImages = ResourceUtils::CreateColorTextureArray("light_compositing_frame_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, false);
 		initContext.SetAttachments(0, compositingData->frameImages, true);
 
 		for (uint32_t idx = 0; idx < depthData->depthTextures.size(); ++idx)

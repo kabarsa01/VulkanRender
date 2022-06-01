@@ -21,6 +21,11 @@ namespace CGE
 		static Renderer* GetRendererInstance();
 		static uint32_t GetFrameIndex(uint32_t div);
 		static uint32_t GetPreviousFrameIndex(uint32_t div);
+
+		template<typename T>
+		static T GetForFrame(const std::vector<T>& container);
+		template<typename T>
+		static T GetForPreviousFrame(const std::vector<T>& container);
 	
 		void Run();
 	
@@ -42,8 +47,9 @@ namespace CGE
 		static void FramebufferResizeCallback(GLFWwindow* inWindow, int inWidth, int inHeight);
 	private:
 		static Engine* m_staticInstance;
-
-		uint64_t m_frameCount = 0;
+		// it is not 0 just in case someone will want to step a few frames back
+		// having "-1" for unsigned int will be unfortunate for other calculations
+		uint64_t m_frameCount = 12;
 	
 		GLFWwindow* m_window;
 		int m_windowWidth = 1920;
@@ -54,5 +60,17 @@ namespace CGE
 		void operator=(const Engine& inOther) = delete;
 		~Engine();
 	};
+
+	template<typename T>
+	T Engine::GetForFrame(const std::vector<T>& container)
+	{
+		return container[GetFrameIndex(static_cast<uint32_t>( container.size() ))];
+	}
+
+	template<typename T>
+	T Engine::GetForPreviousFrame(const std::vector<T>& container)
+	{
+		return container[GetPreviousFrameIndex(static_cast<uint32_t>( container.size() ))];
+	}
 
 }

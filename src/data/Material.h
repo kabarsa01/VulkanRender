@@ -25,6 +25,7 @@ namespace CGE
 		virtual ~Material();
 	
 		void LoadResources();
+		HashString GetHash();
 		HashString GetShaderHash();
 	
 		std::vector<DescriptorSet> GetDescriptorSets();
@@ -89,6 +90,7 @@ namespace CGE
 		std::string m_vertexEntrypoint;
 		std::string m_fragmentEntrypoint;
 		std::string m_computeEntrypoint;
+		HashString m_hash;
 		HashString m_shaderHash;
 	
 		ShaderPtr m_vertexShader;

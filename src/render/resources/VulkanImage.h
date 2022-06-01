@@ -79,6 +79,19 @@ namespace CGE
 			uint32_t inBaseArrayLayer,
 			uint32_t inArrayLayerCount
 		) const;
+		ImageMemoryBarrier CreateLayoutBarrier(
+			ImageLayout inOldLayout,
+			ImageLayout inNewLayout,
+			AccessFlags inSrcAccessMask,
+			AccessFlags inDstAccessMask,
+			ImageAspectFlags inAspectFlags
+		) const;
+		ImageMemoryBarrier CreateLayoutBarrierDepthStencil(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask) const;
+		ImageMemoryBarrier CreateLayoutBarrierColor(ImageLayout inOldLayout, ImageLayout inNewLayout, AccessFlags inSrcAccessMask, AccessFlags inDstAccessMask) const;
+
+		VulkanImage& ToLayout(ImageLayout inNewLayout, AccessFlags inDstAccessMask);
+		ImageMemoryBarrier CreateCurrentLayoutBarrierDepth();
+		ImageMemoryBarrier CreateCurrentLayoutBarrierColor();
 	
 		Image& GetImage();
 		const Image& GetImage() const;
@@ -98,6 +111,11 @@ namespace CGE
 		uint32_t m_height = 2;
 		uint32_t m_depth = 1;
 		uint32_t m_mips = 1;
+
+		vk::ImageLayout m_previousLayout = vk::ImageLayout::eUndefined;
+		vk::ImageLayout m_currentLayout = vk::ImageLayout::eUndefined;
+		vk::AccessFlags m_previousAccessFlags = vk::AccessFlagBits::eNoneKHR;
+		vk::AccessFlags m_currentAccessFlags = vk::AccessFlagBits::eNoneKHR;
 
 		void BindMemory(MemoryPropertyFlags inMemoryPropertyFlags);
 	};

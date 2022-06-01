@@ -75,6 +75,21 @@ vec2 DirectionToOctahedronUV(in vec3 direction)
 	return vec2(uv.x, 1.0f - uv.y);
 }
 
+// project hemisphere on square, somewhat similar to octahedral mapping but rotated 45 degrees and maps upper hemisphere only
+// +Z is UP for that mapping sphere
+vec2 HemisphereDirectionToPyramidUV(in vec3 direction)
+{
+	// scale xy vector to fit unit quad
+	float scaleFactor = 1.0 / max(abs(direction.x), abs(direction.y));
+	vec2 directionXY = direction.xy * scaleFactor;
+
+	float cosZ = clamp ( dot( direction, vec3(0.0, 0.0, 1.0) ), 0.0, 1.0 );
+	float angleZ = degrees( acos( cosZ ) );
+
+	vec2 uv = (vec2(1.0, 1.0) + directionXY * (angleZ / 90.0)) * vec2(0.5, 0.5);
+	return uv;
+}
+
 bool OctahedronReflectBorderPixelIndex(in ivec2 maxPixels, in ivec2 pixel, out ivec2 newPixel)
 {
 	bool changed = false;

@@ -1,0 +1,89 @@
+#version 450
+#extension GL_EXT_buffer_reference : require
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "CommonFrameData.glsl"
+#include "CommonDepth.glsl"
+
+// current frame RTs
+layout(set = 1, binding = 0) uniform texture2D depthTexture;
+layout(set = 1, binding = 1) uniform texture2D normalTexture;
+layout(set = 1, binding = 2) uniform texture2D velocityTexture;
+// previous frame RTs
+layout(set = 1, binding = 3) uniform texture2D prevDepthTexture;
+layout(set = 1, binding = 4) uniform texture2D prevNormalTexture;
+
+// screen probes
+layout(set = 1, binding = 5, rgba16f) uniform image2D probeTexture;
+layout(set = 1, binding = 6, rgba16f) uniform readonly image2D prevProbeTexture;
+
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+	vec4 totalIllumination = vec4(0.0, 0.0, 0.0, 0.0);
+
+	// screen probe current position and normal
+	vec2 probeUV = (vec2(gl_WorkGroupID.xy) + vec2(0.5, 0.5)) / vec2(gl_NumWorkGroups.xy);
+	float probeDepth = textureLod( sampler2D(depthTexture, borderBlackNearestSampler), probeUV, 0 ).r;
+	vec3 probeNormal = normalize( textureLod( sampler2D(normalTexture, borderBlackNearestSampler), probeUV, 0 ).xyz );
+	vec2 probeVelocity = textureLod( sampler2D(velocityTexture, borderBlackLinearSampler), probeUV, 0 ).xy / 10.0;
+	float probeLinearDepth = LinearizeDepth(probeDepth, globalData.cameraNear, globalData.cameraFar);
+	vec4 probeWorldPos = CalculateWorldPosition(probeLinearDepth, globalData.cameraFov, globalData.cameraAspect, probeUV, globalData.worldToView);
+
+	// previous probe pos and normal
+	vec2 prevProbeUV = probeUV + probeVelocity; // pixel velocity is fullscreen, and we have 8 times less probes for each side
+	float prevProbeDepth = textureLod( sampler2D(prevDepthTexture, borderBlackNearestSampler), prevProbeUV, 0 ).r;
+	vec3 prevProbeNormal = normalize( textureLod( sampler2D(prevNormalTexture, borderBlackNearestSampler), prevProbeUV, 0 ).xyz );
+	float prevProbeLinearDepth = LinearizeDepth(prevProbeDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
+	vec4 prevProbeWorldPos = CalculateWorldPosition(prevProbeLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, prevProbeUV, globalPreviousData.worldToView);
+
+	// pixel position
+	ivec2 pixelInProbeIndex = ivec2(gl_LocalInvocationIndex / 8, mod(gl_LocalInvocationIndex, 8));
+	ivec2 pixelPos = ivec2(floor(probeUV * vec2(gl_NumWorkGroups.xy)) * vec2(8.0, 8.0)) + pixelInProbeIndex;
+
+	// reject by depth, position or normal
+	float normalDiff = dot(prevProbeNormal, probeNormal);
+	float posDiff = length(prevProbeWorldPos.xyz - probeWorldPos.xyz);
+	float linearDepthDiff = abs(probeLinearDepth - prevProbeLinearDepth);
+	
+	// reject based on normal and world position diff
+	// TODO retest with moving geometry
+	if (posDiff > 0.25 || normalDiff < 0.9)
+	{
+		imageStore(probeTexture, pixelPos, totalIllumination);
+		return;
+	}
+
+	// get baseline for interpolating last frame probes
+	vec2 prevProbeBase = floor(prevProbeUV * vec2(gl_NumWorkGroups.xy) - vec2(0.5,0.5)) + vec2(0.5,0.5);
+
+	// clamp is needed because oddities like -0.0 causes NaN, be wary of NaN ahead
+	vec2 alpha = clamp(prevProbeUV * vec2(gl_NumWorkGroups.xy) - prevProbeBase, vec2(0.0, 0.0), vec2(1.0, 1.0));
+
+	float probeCount = 0.0;
+	for (uint idx = 0; idx < 4; idx++)
+	{
+		ivec2 offset = ivec2(idx / 2, idx) & ivec2(1,1);
+		vec2 bilinear = mix(vec2(1.0,1.0) - alpha, alpha, vec2(offset));
+
+		vec2 currentProbe = prevProbeBase + vec2(offset);
+		vec2 currentProbeUV = currentProbe / vec2(gl_NumWorkGroups.xy);
+
+		float currentProbeDepth = textureLod( sampler2D(prevDepthTexture, borderBlackLinearSampler), currentProbeUV, 0 ).r;
+		vec3 currentProbeNormal = normalize(textureLod( sampler2D(prevNormalTexture, borderBlackLinearSampler), currentProbeUV, 0 ).xyz);
+		float currentProbeLinearDepth = LinearizeDepth(currentProbeDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
+		vec4 currentProbeWorldPos = CalculateWorldPosition(currentProbeLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, currentProbeUV, globalPreviousData.worldToView);
+
+		// TODO look if there's a need to reject some of probes during this reprojection step
+
+		ivec2 currentProbePixel = ivec2(floor(currentProbe) * vec2(8.0, 8.0)) + pixelInProbeIndex;
+		totalIllumination += imageLoad(prevProbeTexture, currentProbePixel) * bilinear.x * bilinear.y;
+
+		probeCount += 1.0;
+	}
+	
+	imageStore(probeTexture, pixelPos, totalIllumination);
+}

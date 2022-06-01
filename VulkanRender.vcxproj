@@ -284,6 +284,7 @@ exit /b</Command>
     <ClCompile Include="src\render\passes\RenderPassDataTable.cpp" />
     <ClCompile Include="src\render\passes\RTGIPass.cpp" />
     <ClCompile Include="src\render\passes\RTShadowPass.cpp" />
+    <ClCompile Include="src\render\passes\UpdateGIProbesPass.cpp" />
     <ClCompile Include="src\render\PerFrameData.cpp" />
     <ClCompile Include="src\render\PipelineRegistry.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
@@ -365,6 +366,7 @@ exit /b</Command>
     <ClInclude Include="src\render\passes\RenderPassDataTable.h" />
     <ClInclude Include="src\render\passes\RTGIPass.h" />
     <ClInclude Include="src\render\passes\RTShadowPass.h" />
+    <ClInclude Include="src\render\passes\UpdateGIProbesPass.h" />
     <ClInclude Include="src\render\PerFrameData.h" />
     <ClInclude Include="src\render\PipelineRegistry.h" />
     <ClInclude Include="src\render\Renderer.h" />
@@ -424,6 +426,7 @@ exit /b</Command>
     <None Include="content\shaders\RayMissGI.rmiss" />
     <None Include="content\shaders\RayMissShadows.rmiss" />
     <None Include="content\shaders\ScreenSpaceVert.vert" />
+    <None Include="content\shaders\UpdateGIProbes.comp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

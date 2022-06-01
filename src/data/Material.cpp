@@ -42,6 +42,7 @@ namespace CGE
 		m_computeShader = DataManager::RequestResourceType<Shader>(m_computeShaderPath);
 	
 		m_shaderHash = HashString(m_vertexShaderPath + m_fragmentShaderPath + m_computeShaderPath);
+		m_hash = GetResourceId() + m_shaderHash;
 
 		m_resourceMapper.SetShaders({ m_vertexShader, m_fragmentShader, m_computeShader });
 		for (auto& pair : m_sampledImages2D)
@@ -87,11 +88,16 @@ namespace CGE
 		m_resourceMapper.Update();
 	}
 	
+	HashString Material::GetHash()
+	{
+		return m_hash;
+	}
+	
 	HashString Material::GetShaderHash()
 	{
 		return m_shaderHash;
 	}
-	
+
 	std::vector<DescriptorSet> Material::GetDescriptorSets()
 	{
 		std::vector<vk::DescriptorSet> sets;
