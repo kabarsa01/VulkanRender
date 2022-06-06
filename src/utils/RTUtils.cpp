@@ -36,7 +36,7 @@ namespace CGE
 		mat = glm::transpose(mat);
 		memcpy(&instance.transform, &mat, sizeof(instance.transform));
 
-		instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
+		instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque | vk::GeometryInstanceFlagBitsKHR::eTriangleFacingCullDisable);
 		instance.setMask(0xFFFFFFFF);
 
 		return instance;

@@ -136,7 +136,7 @@ vec3 SampleIllumination(vec3 worldPos, vec2 uvCoord)
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 
-bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 color)
+bool CheckAndAccumulateViewSpaceVisibility(vec4 worldSpacePos, vec4 viewSpacePosition, inout vec3 color)
 {
 	// view z reject check
 	if (viewSpacePosition.z < globalData.cameraNear || viewSpacePosition.z > globalData.cameraFar)
@@ -155,7 +155,7 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 	vec2 uv = (viewSpacePosition.xy + halfScreenOffset) / (halfScreenOffset * 2.0f);
 
 	// compare depth in this point
-	float depth = texture(sampler2D( depthTex, repeatLinearSampler ), uv).r;
+	float depth = texture(sampler2D( depthTex, borderBlackNearestSampler ), uv).r;
 	if (depth == 0.0 || depth >= 1.0)
 	{
 		return false;
@@ -165,30 +165,33 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 viewSpacePosition, inout vec3 co
 	float far = globalData.cameraFar;
 	float linearDepth = LinearizeDepth(depth, near, far);
 
-	if (abs(linearDepth - viewSpacePosition.z) >= 0.01f)
+	vec4 pixelCoordWorld = CalculateWorldPosition(linearDepth, globalData.cameraFov, globalData.cameraAspect, uv, globalData.worldToView);
+
+	if (length(pixelCoordWorld.xyz - worldSpacePos.xyz) > 0.75)
 	{
 		return false;
 	}
 
-	vec2 uvPrev = uv + texture(sampler2D( velocityTex, repeatLinearSampler ), uv).xy / 10.0;
-	float prevDepth = texture(sampler2D( previousDepthTex, repeatLinearSampler ), uv).r;
-	float prevLinearDepth = LinearizeDepth(prevDepth, near, far);
+//	vec2 uvPrev = uv + texture(sampler2D( velocityTex, repeatLinearSampler ), uv).xy / 10.0;
+//	float prevDepth = texture(sampler2D( previousDepthTex, repeatLinearSampler ), uv).r;
+//	float prevLinearDepth = LinearizeDepth(prevDepth, near, far);
 
-	if (abs(linearDepth - prevLinearDepth) >= 0.01f)
+	//if (abs(linearDepth - prevLinearDepth) >= 0.01f)
 	{
-		return false;
+//		return false;
 	}
 
 	// TODO sample direct light at this point
-	color = texture(sampler2D(directLightTex, repeatLinearSampler), uvPrev).xyz;
-	if (length(color) < 0.005)
+	color = texture(sampler2D(directLightTex, repeatLinearSampler), uv).xyz;
+//	if (length(color) > 0.005)
 	{
-		return false;
+//		color = vec3(0.0, 0.0, 1.0);
+		return true;
 	}
 	//color = texture(sampler2D(previousLightTex, repeatLinearSampler), uvPrev).xyz;
 	//color = imageLoad(previousLightTex, ivec2(imageSize(previousLightTex) * uvPrev)).xyz;
-
-	return true;
+	
+//	return false;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -199,7 +202,7 @@ void main()
 {
 	float tMin = 0.1f;
 	float tMax = 100.f;
-    uint rayFlags = gl_RayFlagsOpaqueEXT;
+    uint rayFlags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT;
 	uint temporalCounter = 0;
 	vec3 totalLight = vec3(0.0f, 0.0f, 0.0f);
 	//vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
@@ -210,7 +213,7 @@ void main()
 	// extract UVs 
 	const vec2 screenProbeCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5, 0.5);
     const vec2 uv = screenProbeCenter/vec2(gl_LaunchSizeEXT.xy);
-	const vec2 velocity = texture( sampler2D( velocityTex, borderBlackLinearSampler ), uv ).xy / 10.0f;
+	const vec2 velocity = texture( sampler2D( velocityTex, borderBlackNearestSampler ), uv ).xy / 10.0f;
 	const vec2 prevUV = uv + velocity;
 
 	//----------------------------------------------------------------------------------------------------------------------------------
@@ -237,7 +240,7 @@ void main()
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract normal
-	vec3 N = normalize( texture( sampler2D( normalTex, borderBlackLinearSampler ), uv ).xyz );
+	vec3 N = normalize( texture( sampler2D( normalTex, borderBlackNearestSampler ), uv ).xyz );
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// reproject previous illumination
@@ -260,7 +263,7 @@ void main()
 	tangent = normalize(tangent);
 	bitangent = normalize(bitangent);
 	// ray start
-	vec3 rayStart = pixelCoordWorld.xyz + (N * 0.05f);
+	vec3 rayStart = pixelCoordWorld.xyz;// + (N * 0.05f);
 
 	uint samplePoolSize = /*temporalCounter == 0 ? 16 :*/ 10101;
 	uint sampleStep = samplePoolSize / 32;
@@ -315,7 +318,7 @@ void main()
 		hitPointViewSpace.z *= -1.0f; // my coordinate systems and LH-RH shennanigans, sorry
 
 		vec3 directColor = vec3(0.0f);
-		if (CheckAndAccumulateViewSpaceVisibility(hitPointViewSpace, directColor))
+		if (CheckAndAccumulateViewSpaceVisibility(vec4(payloadGI.worldPos, 1.0f), hitPointViewSpace, directColor))
 		{
 			accumulatedLight += directColor;
 			accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos / 2.0f;

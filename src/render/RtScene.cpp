@@ -108,7 +108,7 @@ namespace CGE
 			vk::Device& device = Engine::GetRendererInstance()->GetDevice();
 			vk::DeviceAddress accelAddr = device.getAccelerationStructureAddressKHR(m_blasTable[meshComp->meshData->GetResourceId()].accelerationStructure);
 			instance.setAccelerationStructureReference(accelAddr);
-			instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque);
+			instance.setFlags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque | vk::GeometryInstanceFlagBitsKHR::eTriangleFacingCullDisable);
 			instance.setInstanceCustomIndex(instanceIndex++);
 			uint32_t sbtOffset = sbt.GetGroupTypeOffset(ERtShaderType::RST_ANY_HIT, meshComp->rtMaterial->GetResourceId());
 			instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);

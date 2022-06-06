@@ -72,8 +72,8 @@ void main()
 		vec2 currentProbe = prevProbeBase + vec2(offset);
 		vec2 currentProbeUV = currentProbe / vec2(gl_NumWorkGroups.xy);
 
-		float currentProbeDepth = textureLod( sampler2D(prevDepthTexture, borderBlackLinearSampler), currentProbeUV, 0 ).r;
-		vec3 currentProbeNormal = normalize(textureLod( sampler2D(prevNormalTexture, borderBlackLinearSampler), currentProbeUV, 0 ).xyz);
+		float currentProbeDepth = textureLod( sampler2D(prevDepthTexture, borderBlackNearestSampler), currentProbeUV, 0 ).r;
+		vec3 currentProbeNormal = normalize(textureLod( sampler2D(prevNormalTexture, borderBlackNearestSampler), currentProbeUV, 0 ).xyz);
 		float currentProbeLinearDepth = LinearizeDepth(currentProbeDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
 		vec4 currentProbeWorldPos = CalculateWorldPosition(currentProbeLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, currentProbeUV, globalPreviousData.worldToView);
 

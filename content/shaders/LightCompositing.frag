@@ -101,7 +101,8 @@ void main() {
 			//continue;
 		}
 		// normals reject
-		if (dot(normalize(probeToPixel), probeNormal) < -0.5f)
+		// TODO make proper check
+		if (dot(normalize(probeToPixel), probeNormal) < -1.0f)
 		{
 			accumulatedGI += accumulatedGI / probeCount;
 			continue;
