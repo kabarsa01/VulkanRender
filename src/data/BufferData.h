@@ -28,6 +28,7 @@ namespace CGE
 
 		VulkanBuffer& GetBuffer() { return m_buffer; }
 		vk::Buffer GetNativeBuffer() { return m_buffer.GetNativeBuffer(); }
+		vk::Buffer* GetNativeBufferPtr() { return m_buffer.GetNativeBufferPtr(); }
 		vk::DeviceAddress GetDeviceAddress() { return m_buffer.GetDeviceAddress(); }
 		std::shared_ptr<BufferData> GetStaging() { return m_staging; }
 		void DiscardStaging() { m_staging->DestroyHint(); m_staging = nullptr; }

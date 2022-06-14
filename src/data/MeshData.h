@@ -17,7 +17,7 @@ namespace CGE
 {
 	using VULKAN_HPP_NAMESPACE::VertexInputAttributeDescription;
 	using VULKAN_HPP_NAMESPACE::VertexInputBindingDescription;
-	using VULKAN_HPP_NAMESPACE::BufferUsageFlags;
+	//using vk::BufferUsageFlags;
 	
 	//packing should probably be considered, maybe in the future someday
 	//#pragma pack(push, 1)
@@ -74,7 +74,7 @@ namespace CGE
 		MeshData() : Resource(HashString::NONE) {}
 	
 		template<class T>
-		BufferDataPtr SetupBuffer(HashString name, std::vector<T>& inDataVector, BufferUsageFlags usage);
+		BufferDataPtr SetupBuffer(HashString name, std::vector<T>& inDataVector, vk::BufferUsageFlags usage);
 	};
 	
 	typedef std::shared_ptr<MeshData> MeshDataPtr;
@@ -84,11 +84,11 @@ namespace CGE
 	//--------------------------------------------------------------------------------------------------------------------------
 	
 	template<class T>
-	BufferDataPtr MeshData::SetupBuffer(HashString name, std::vector<T>& inDataVector, BufferUsageFlags usage)
+	BufferDataPtr MeshData::SetupBuffer(HashString name, std::vector<T>& inDataVector, vk::BufferUsageFlags usage)
 	{	
 		DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 	
-		usage |= BufferUsageFlagBits::eTransferDst | BufferUsageFlagBits::eShaderDeviceAddress;
+		usage |= vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress;
 		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(GetResourceId() + name, size, usage, true);
 		buffer->Create();
 		buffer->CopyTo(size, reinterpret_cast<const char*>(inDataVector.data()));

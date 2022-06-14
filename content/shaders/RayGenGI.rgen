@@ -136,7 +136,7 @@ vec3 SampleIllumination(vec3 worldPos, vec2 uvCoord)
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 
-bool CheckAndAccumulateViewSpaceVisibility(vec4 worldSpacePos, vec4 viewSpacePosition, inout vec3 color)
+bool CheckAndAccumulateViewSpaceVisibility(vec3 rayOrigin, vec4 worldSpacePos, vec4 viewSpacePosition, inout vec3 color)
 {
 	// view z reject check
 	if (viewSpacePosition.z < globalData.cameraNear || viewSpacePosition.z > globalData.cameraFar)
@@ -183,15 +183,21 @@ bool CheckAndAccumulateViewSpaceVisibility(vec4 worldSpacePos, vec4 viewSpacePos
 
 	// TODO sample direct light at this point
 	color = texture(sampler2D(directLightTex, repeatLinearSampler), uv).xyz;
-//	if (length(color) > 0.005)
+
+	vec2 probeIndex = uv * vec2(gl_LaunchSizeEXT.xy);
+	vec3 N = normalize( texture( sampler2D( normalTex, borderBlackNearestSampler ), uv ).xyz );
+	//for (uint idx = 0; idx < 4; idx++)
 	{
-//		color = vec3(0.0, 0.0, 1.0);
-		return true;
+		vec3 rayVector = worldSpacePos.xyz - rayOrigin;
+		vec2 probeUV = DirectionToOctahedronUV(normalize( reflect(rayVector, N) ));
+		ivec2 pixelCoord = ivec2(probeIndex) * ivec2(8,8) + ivec2(1,1) + ivec2(probeUV * 6.0);
+		vec3 light = imageLoad(lightTex, pixelCoord).xyz;		
+		float distanceFactor = clamp(1.0 - length(rayVector) / 100.0, 0.0, 1.0);
+		distanceFactor *= distanceFactor;
+		color += light * distanceFactor;
 	}
-	//color = texture(sampler2D(previousLightTex, repeatLinearSampler), uvPrev).xyz;
-	//color = imageLoad(previousLightTex, ivec2(imageSize(previousLightTex) * uvPrev)).xyz;
-	
-//	return false;
+
+	return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -241,16 +247,6 @@ void main()
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// extract normal
 	vec3 N = normalize( texture( sampler2D( normalTex, borderBlackNearestSampler ), uv ).xyz );
-
-	//----------------------------------------------------------------------------------------------------------------------------------
-	// reproject previous illumination
-	vec2 prevScreenProbePos = prevUV * vec2(gl_LaunchSizeEXT.xy);
-	vec2 prevScreenProbeMin = floor(prevScreenProbePos - vec2(0.5,0.5));
-	for (int probeOffsetIdx = 0; probeOffsetIdx < 4; probeOffsetIdx++)
-	{
-		
-	}
-
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// load temporal counter
 	temporalCounter = imageLoad(counterTex, ivec2(tempCounterTexSize * prevUV)).r;
@@ -265,8 +261,8 @@ void main()
 	// ray start
 	vec3 rayStart = pixelCoordWorld.xyz;// + (N * 0.05f);
 
-	uint samplePoolSize = /*temporalCounter == 0 ? 16 :*/ 10101;
-	uint sampleStep = samplePoolSize / 32;
+	uint samplePoolSize = /*temporalCounter == 0 ? 16 :*/ 31101;
+	uint sampleStep = samplePoolSize / 256;
 	uint sampleStart = temporalCounter % sampleStep;
 	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, globalData.frameIndex);
 
@@ -307,9 +303,9 @@ void main()
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		// falloff
 		vec3 pointDistance = rayStart - payloadGI.worldPos;
-		float lightMaxRadiusSqr = 10000.0;
-		float pointDistanceSqr = dot(pointDistance, pointDistance);
-		float initialDistanceFactor = max(lightMaxRadiusSqr - pointDistanceSqr, 0) / max(lightMaxRadiusSqr, 0.001);
+		float lightMaxRadius = 100.0;
+		float initialDistanceFactor = clamp(1.0 - length(pointDistance) / lightMaxRadius, 0.0, 1.0);
+		initialDistanceFactor *= initialDistanceFactor;
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -318,7 +314,7 @@ void main()
 		hitPointViewSpace.z *= -1.0f; // my coordinate systems and LH-RH shennanigans, sorry
 
 		vec3 directColor = vec3(0.0f);
-		if (CheckAndAccumulateViewSpaceVisibility(vec4(payloadGI.worldPos, 1.0f), hitPointViewSpace, directColor))
+		if (CheckAndAccumulateViewSpaceVisibility(rayStart, vec4(payloadGI.worldPos, 1.0f), hitPointViewSpace, directColor))
 		{
 			accumulatedLight += directColor;
 			accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos / 2.0f;
@@ -327,7 +323,7 @@ void main()
 				ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
 				//vec4 light = imageLoad(lightTex, pixelCoord);
 				vec4 light = imageLoad(lightTex, pixelCoord);
-				light = mix(light, vec4(accumulatedLight, hitDistance), 1.0f / float(sampleStep));
+				light = mix(light, vec4(accumulatedLight, hitDistance), 3.0f / float(sampleStep));
 				imageStore(lightTex, pixelCoord, light);
 
 				ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
@@ -428,9 +424,8 @@ void main()
 				);
 				if (payloadGI.instanceCustomId == 0xffffffff)
 				{
-					float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-					float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-					float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
+					float distanceFactor = clamp(1.0 - length(pixelToLightDir) / lightInfo.rai.x, 0.0, 1.0);
+					distanceFactor *= distanceFactor;
 					accumulatedLight += angleFactor * distanceFactor * lightInfo.color.xyz;
 				}
 			}
@@ -459,22 +454,20 @@ void main()
 				);
 				if (payloadGI.instanceCustomId == 0xffffffff)
 				{
-					float lightRadiusSqr = lightInfo.rai.x * lightInfo.rai.x;
-					float pixelDistanceSqr = dot(pixelToLightDir, pixelToLightDir);
-					float distanceFactor = max(lightRadiusSqr - pixelDistanceSqr, 0) / max(lightRadiusSqr, 0.001);
+					float distanceFactor = clamp(1.0 - length(pixelToLightDir) / lightInfo.rai.x, 0.0, 1.0);
+					distanceFactor *= distanceFactor;
 					accumulatedLight += distanceFactor * lightInfo.color.xyz;
 				}
 			}
 		}
 		
-		accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos;
+		accumulatedLight *= initialDistanceFactor;
 
-		//vec2 probeUV = HemisphereDirectionToPyramidUV(normalize(hemisphereDir));
 		vec2 probeUV = DirectionToOctahedronUV(direction);
 		ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
+
 		vec4 light = imageLoad(lightTex, pixelCoord);
-		//vec4 light = imageLoad(previousLightTex, pixelCoord);
-		light = mix(light, vec4(accumulatedLight, hitDistance), 1.0f / float(sampleStep));
+		light = mix(light, vec4(accumulatedLight, hitDistance), 3.0f / float(sampleStep));
 		imageStore(lightTex, pixelCoord, light);
 
 		ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
@@ -485,28 +478,6 @@ void main()
 		}
 	}
 
-//	
-	{
-//		float lightValue = length(accumulatedLight);
-//		totalLight = normalize(totalLight) * lightValue;
-//		float totalValue = length(totalLight);
-
-//		float minLight = min(accumulatedLight.x, min(accumulatedLight.y, accumulatedLight.z));
-//		float maxLight = max(accumulatedLight.x, max(accumulatedLight.y, accumulatedLight.z));
-		//totalLight = accumulatedLight;//clamp(totalLight, vec3(minLight), vec3(maxLight));
-	}
-//	if (temporalCounter < 1)
-	{
-//		totalLight += accumulatedLight * 0.5f;
-	}
-//	else
-	{
-//		totalLight = mix(totalLight, /*albedo */ accumulatedLight, 1.0f / float(sampleStep));
-	}
-
 	++temporalCounter;
 	imageStore(counterTex, ivec2(gl_LaunchIDEXT.xy), uvec4(temporalCounter, 0,0,0));
-	//imageStore(lightTex, ivec2(gl_LaunchIDEXT.xy), vec4(totalLight, 1.0));
-	// TODO write to proper probe direction pixel
-	// HemisphereDirectionToPyramidUV
 }

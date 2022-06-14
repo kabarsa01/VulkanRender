@@ -37,8 +37,9 @@ namespace CGE
 		DescriptorBufferInfo& GetDescriptorInfo();
 		DescriptorBufferInfo GetDescriptorInfo() const;
 	
-		Buffer& GetNativeBuffer();
-		Buffer GetNativeBuffer() const;
+		vk::Buffer& GetNativeBuffer();
+		vk::Buffer GetNativeBuffer() const;
+		vk::Buffer* GetNativeBufferPtr() { return &m_buffer; }
 		MemoryRequirements GetMemoryRequirements() const;
 		MemoryRecord GetMemoryRecord() const;
 		vk::DeviceAddress GetDeviceAddress();

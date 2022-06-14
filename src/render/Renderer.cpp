@@ -336,9 +336,11 @@ namespace CGE
 	
 		// buffers
 		std::vector<BufferMemoryBarrier> buffersTransferBarriers;
+		std::vector<vk::BufferCopy> bufferCopies;
 		for (BufferDataPtr buffer : buffers)
 		{
-			inCmdBuffer.copyBuffer(buffer->GetStaging()->GetNativeBuffer(), buffer->GetNativeBuffer(), 1, &buffer->GetStaging()->GetBuffer().CreateBufferCopy());
+			vk::BufferCopy copy = buffer->GetStaging()->GetBuffer().CreateBufferCopy();
+			inCmdBuffer.copyBuffer(buffer->GetStaging()->GetNativeBuffer(), buffer->GetNativeBuffer(), 1, &copy);
 			buffersTransferBarriers.push_back(buffer->GetBuffer().CreateMemoryBarrier(
 				VK_QUEUE_FAMILY_IGNORED, 
 				VK_QUEUE_FAMILY_IGNORED, 
@@ -383,10 +385,11 @@ namespace CGE
 		for (TextureDataPtr image : images)
 		{
 			// copy
+			vk::BufferImageCopy copy = image->GetImage().CreateBufferImageCopy();
 			inCmdBuffer.copyBufferToImage(
 				image->GetStagingBuffer()->GetNativeBuffer(),
 				image->GetImage(), ImageLayout::eTransferDstOptimal, 
-				1, &image->GetImage().CreateBufferImageCopy());
+				1, &copy);
 			image->DiscardStaging();
 		}
 	

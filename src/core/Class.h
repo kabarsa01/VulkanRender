@@ -7,6 +7,8 @@
 
 #include "common/HashString.h"
 
+#include <cstdlib>
+
 namespace CGE
 {
 	class ObjectBase;
@@ -28,15 +30,15 @@ namespace CGE
 		bool operator>=(const Class& Other) const;
 	private:
 		friend class ObjectBase;
-		friend class std::shared_ptr<Class>;
-		friend class std::_Ref_count_obj<Class>;
+		//friend class std::shared_ptr<Class>;
+		friend void ClassDeleteFunc(Class* clazz);
 	
 		static std::map<size_t, std::shared_ptr<Class>> Classes;
 		HashString Name;
 	
-		constexpr Class();
-		constexpr Class(const std::string& InName);
-		constexpr Class(const HashString& InName);
+		Class();
+		Class(const std::string& InName);
+		Class(const HashString& InName);
 		Class(const Class& InClass);
 		~Class();
 	

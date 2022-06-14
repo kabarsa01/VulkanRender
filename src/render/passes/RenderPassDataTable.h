@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "utils/Identifiable.h"
+#include "core/ObjectBase.h"
 
 namespace CGE
 {

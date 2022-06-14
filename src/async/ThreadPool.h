@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <deque>
+#include <vector>
 
 namespace CGE
 {

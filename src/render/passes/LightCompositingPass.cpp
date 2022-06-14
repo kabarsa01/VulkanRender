@@ -101,7 +101,7 @@ namespace CGE
 		commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineData.pipeline);
 		commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
-		commandBuffer->bindVertexBuffers(0, 1, &meshData->GetVertexBuffer()->GetNativeBuffer(), &offset);
+		commandBuffer->bindVertexBuffers(0, 1, meshData->GetVertexBuffer()->GetNativeBufferPtr(), &offset);
 		commandBuffer->bindIndexBuffer(meshData->GetIndexBuffer()->GetNativeBuffer(), 0, vk::IndexType::eUint32);
 		commandBuffer->drawIndexed(meshData->GetIndexCount(), 1, 0, 0, 0);
 		commandBuffer->endRenderPass();

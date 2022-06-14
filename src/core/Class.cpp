@@ -3,7 +3,13 @@
 
 namespace CGE
 {
+
 	std::map<size_t, std::shared_ptr<Class>> Class::Classes { };
+
+	void ClassDeleteFunc(Class* clazz)
+	{
+		delete clazz;
+	}
 	
 	const Class & Class::Get(ObjectBase * InObject)
 	{
@@ -45,17 +51,17 @@ namespace CGE
 		return this->Name >= Other.Name;
 	}
 	
-	constexpr Class::Class()
+	Class::Class()
 		: Name( HashString::NONE )
 	{
 	}
 	
-	constexpr Class::Class(const std::string & InName)
+	Class::Class(const std::string & InName)
 		: Name( InName )
 	{
 	}
 	
-	constexpr Class::Class(const HashString & InName)
+	Class::Class(const HashString & InName)
 		: Name( InName )
 	{
 	}
@@ -83,7 +89,7 @@ namespace CGE
 	{
 		if (Classes.find(InName.GetHash()) == Classes.end())
 		{
-			Classes.insert(std::pair<size_t, std::shared_ptr<Class>>(InName.GetHash(), std::make_shared<Class>(InName)));
+			Classes.insert(std::pair<size_t, std::shared_ptr<Class>>(InName.GetHash(), std::shared_ptr<Class>(new Class(InName), ClassDeleteFunc)));
 		}
 	
 		return Classes.at(InName.GetHash());
