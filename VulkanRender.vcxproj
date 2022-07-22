@@ -429,6 +429,7 @@ exit /b</Command>
     <None Include="content\shaders\RayMissShadows.rmiss" />
     <None Include="content\shaders\ScreenSpaceVert.vert" />
     <None Include="content\shaders\UpdateGIProbes.comp" />
+    <None Include="content\shaders\UpdateIrradiance.comp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

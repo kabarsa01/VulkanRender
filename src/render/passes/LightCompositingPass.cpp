@@ -26,51 +26,22 @@ namespace CGE
 
 		uint32_t rtIndex = Engine::GetFrameIndex(lightingData->hdrRenderTargets.size());
 
+		std::vector<ImageMemoryBarrier> imageBarriers;
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		// image barriers 
-		ImageMemoryBarrier attachmentBarrier = lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrier(
-			vk::ImageLayout::eUndefined,
-			vk::ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eColorAttachmentWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		ImageMemoryBarrier giBarrier = rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
-		ImageMemoryBarrier giDepthBarrier = rtgiData->giDepthData[rtIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		ImageMemoryBarrier probesTextureBarrier = rtgiData->probeGridTexture->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		ImageMemoryBarrier probesDepthTextureBarrier = rtgiData->probeGridDepthTexture->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eShaderReadOnlyOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eColor,
-			0, 1, 0, 1);
-		ImageMemoryBarrier depthBarrier = depthData->depthTextures[rtIndex]->GetImage().CreateLayoutBarrier(
-			ImageLayout::eUndefined,
-			ImageLayout::eDepthAttachmentOptimal,
-			vk::AccessFlagBits::eShaderWrite,
-			vk::AccessFlagBits::eShaderRead,
-			vk::ImageAspectFlagBits::eDepth,
-			0, 1, 0, 1);
+		imageBarriers.emplace_back(lightingData->hdrRenderTargets[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(rtgiData->lightingData[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(rtgiData->irradianceData[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(rtgiData->giDepthData[rtIndex]->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(rtgiData->probeGridTexture->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(rtgiData->probeGridDepthTexture->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
+		imageBarriers.emplace_back(depthData->depthTextures[rtIndex]->GetImage().CreateLayoutBarrierDepthStencil(ImageLayout::eUndefined, ImageLayout::eDepthAttachmentOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
 		// buffer barriers
 		vk::BufferMemoryBarrier probesBufferBarrier = rtgiData->probeGridBuffer->GetBuffer().CreateMemoryBarrier(
 			0, 0, 
 			vk::AccessFlagBits::eShaderWrite, 
 			vk::AccessFlagBits::eShaderRead);
 
-		std::vector<ImageMemoryBarrier> imageBarriers{ attachmentBarrier, giBarrier, giDepthBarrier, probesTextureBarrier, probesDepthTextureBarrier, depthBarrier };
 		commandBuffer->pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands | vk::PipelineStageFlagBits::eRayTracingShaderKHR,
 			vk::PipelineStageFlagBits::eFragmentShader,
@@ -131,6 +102,7 @@ namespace CGE
 			mat->SetTexture("albedoTex", gbufferData->albedos[idx]);
 			mat->SetTexture("frameDirectLight", deferredLightingData->hdrRenderTargets[idx]);
 			mat->SetTexture("giLight", rtgiData->lightingData[idx]);
+			mat->SetTexture("irradianceTexture", rtgiData->irradianceData[idx]);
 			mat->SetTexture("probesImage", rtgiData->probeGridTexture);
 			mat->SetTexture("probesDepthImage", rtgiData->probeGridDepthTexture);
 			mat->SetStorageBufferExternal("probesBuffer", rtgiData->probeGridBuffer);

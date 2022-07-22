@@ -16,6 +16,7 @@ namespace CGE
 	struct UpdateGIProbesData : public Identifiable<UpdateGIProbesData>
 	{
 		std::vector<Texture2DPtr> screenProbesData;
+		std::vector<Texture2DPtr> irradianceData;
 	};
 
 	class UpdateGIProbesPass : public RenderPassBase
@@ -24,7 +25,8 @@ namespace CGE
 		UpdateGIProbesPass(HashString name);
 		~UpdateGIProbesPass();
 	protected:
-		std::vector<MaterialPtr> m_computeMaterials;
+		std::vector<MaterialPtr> m_giProbesComputeMaterials;
+		std::vector<MaterialPtr> m_irradianceComputeMaterials;
 
 		struct FrameData
 		{
@@ -35,6 +37,8 @@ namespace CGE
 			Texture2DPtr prevNormal;
 			Texture2DPtr screenProbes;
 			Texture2DPtr prevScreenProbes;
+			Texture2DPtr irradiance;
+			Texture2DPtr prevIrradiance;
 		};
 		std::vector<FrameData> m_frameData;
 

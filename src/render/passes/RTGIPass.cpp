@@ -91,7 +91,7 @@ namespace CGE
 		imageBarriers.push_back(prevDepthTextureBarrier);
 		for (auto tex : rtShadowData->visibilityTextures)
 		{
-			imageBarriers.push_back( tex->GetImage().CreateLayoutBarrierColor(ImageLayout::eGeneral, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead) );
+			imageBarriers.push_back( tex->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead) );
 		}
 		vk::ImageMemoryBarrier albedoBarrier = gbufferData->albedos[depthIndex]->GetImage().CreateLayoutBarrier(
 			ImageLayout::eUndefined,
@@ -212,11 +212,13 @@ namespace CGE
 		auto giProbesData = dataTable.GetPassData<UpdateGIProbesData>();
 
 		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Uint, true);
-		m_lightingData = giProbesData->screenProbesData; //ResourceUtils::CreateColorTextureArray("RTGI_light_texture_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);//
+		m_lightingData = giProbesData->screenProbesData;
+		m_irradianceData = giProbesData->irradianceData;
 		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Sfloat, true);
 
 		auto passData = dataTable.CreatePassData<RTGIPassData>();
 		passData->lightingData = m_lightingData;
+		passData->irradianceData = m_irradianceData;
 		passData->giDepthData = m_giDepthData;
 		passData->probeGridBuffer = m_probeGridBuffer;
 		passData->probeGridTexture = m_probeGridTexture;
@@ -241,8 +243,11 @@ namespace CGE
 			resMapper.AddSampledImage("normalTex", gbufferData->normals[idx]);
 			resMapper.AddSampledImage("previousNormalTex", gbufferData->normals[(idx - 1 + gbufferData->normals.size()) % gbufferData->normals.size()]);
 			resMapper.AddSampledImage("velocityTex", gbufferData->velocity[idx]);
+			// RTGI data
 			resMapper.AddSampledImage("previousLightTex", m_lightingData[(idx + m_lightingData.size() - 1) % m_lightingData.size()]);
 			resMapper.AddStorageImage("lightTex", m_lightingData[idx]);
+			//resMapper.AddSampledImage("previousIrradianceTex", m_irradianceData[(idx + m_irradianceData.size() - 1) % m_irradianceData.size()]);
+			resMapper.AddStorageImage("irradianceTex", m_irradianceData[idx]);
 			resMapper.AddStorageImage("counterTex", m_temporalCounter);
 			// light clustering data
 			//resMapper.AddStorageBuffer("clusterLightsData", clusterData->clusterLightsData);

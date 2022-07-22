@@ -90,6 +90,9 @@ layout(set = 2, binding = 7) uniform texture2D albedoTex;
 layout(set = 2, binding = 8, r32ui) uniform uimage2D counterTex;
 layout(set = 2, binding = 9, r32f) uniform image2D giDepthTex;
 
+layout(set = 3, binding = 0, rgba16f) uniform image2D irradianceTex;
+//layout(set = 2, binding = 11, rgba16f) uniform image2D irradianceTex;
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -191,10 +194,17 @@ bool CheckAndAccumulateViewSpaceVisibility(vec3 rayOrigin, vec4 worldSpacePos, v
 		vec3 rayVector = worldSpacePos.xyz - rayOrigin;
 		vec2 probeUV = DirectionToOctahedronUV(normalize( reflect(rayVector, N) ));
 		ivec2 pixelCoord = ivec2(probeIndex) * ivec2(8,8) + ivec2(1,1) + ivec2(probeUV * 6.0);
-		vec3 light = imageLoad(lightTex, pixelCoord).xyz;		
+		vec3 light = imageLoad(lightTex, pixelCoord).xyz;
+//		for (int x = 0; x < 8; x++) 
+//		{
+//			ivec2 offset = ivec2(x / 3 - 1, x % 3 - 1);
+//			light += imageLoad(lightTex, pixelCoord + offset).xyz;
+//		}
+//		light /= 9.0f;
 		float distanceFactor = clamp(1.0 - length(rayVector) / 100.0, 0.0, 1.0);
 		distanceFactor *= distanceFactor;
-		color += light * distanceFactor;
+		color += imageLoad(irradianceTex, ivec2(gl_LaunchIDEXT.xy)).xyz;//light;
+		color *= distanceFactor;
 	}
 
 	return true;
@@ -210,7 +220,6 @@ void main()
 	float tMax = 100.f;
     uint rayFlags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT;
 	uint temporalCounter = 0;
-	vec3 totalLight = vec3(0.0f, 0.0f, 0.0f);
 	//vec3 accumulatedLight = vec3(0.0f, 0.0f, 0.0f);
 	ivec2 lightTexSize = imageSize(lightTex);
 	ivec2 tempCounterTexSize = imageSize(counterTex);
@@ -266,6 +275,8 @@ void main()
 	uint sampleStart = temporalCounter % sampleStep;
 	uint randSeed = InitRNG(gl_LaunchIDEXT.xy, gl_LaunchSizeEXT.xy, globalData.frameIndex);
 
+	vec3 integratedLight = vec3(0.0f);
+
 	for (uint idx = sampleStart; idx < samplePoolSize; idx += sampleStep)
 	{
 		vec3 accumulatedLight = vec3(0.0f);
@@ -298,6 +309,7 @@ void main()
 		}
 		uint initialInstanceId = payloadGI.instanceCustomId;
 		float hitDistance = payloadGI.hitT;
+		vec3 hitPosBiased = rayStart + direction * clamp(hitDistance - 0.5f, hitDistance * 0.2f, hitDistance);
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------
 		//------------------------------------------------------------------------------------------------------------------------------------------------
@@ -313,28 +325,29 @@ void main()
 		hitPointViewSpace /= hitPointViewSpace.w;
 		hitPointViewSpace.z *= -1.0f; // my coordinate systems and LH-RH shennanigans, sorry
 
-		vec3 directColor = vec3(0.0f);
-		if (CheckAndAccumulateViewSpaceVisibility(rayStart, vec4(payloadGI.worldPos, 1.0f), hitPointViewSpace, directColor))
-		{
-			accumulatedLight += directColor;
-			accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos / 2.0f;
-			{
-				vec2 probeUV = DirectionToOctahedronUV(direction);
-				ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
-				//vec4 light = imageLoad(lightTex, pixelCoord);
-				vec4 light = imageLoad(lightTex, pixelCoord);
-				light = mix(light, vec4(accumulatedLight, hitDistance), 3.0f / float(sampleStep));
-				imageStore(lightTex, pixelCoord, light);
-
-				ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
-				if (OctahedronReflectBorderPixelIndex(ivec2(6), ivec2(probeUV * vec2(6.0, 6.0)), reflectedPixel))
-				{
-					ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1);
-					imageStore(lightTex, currentPixel, light);
-				}
-			}
-			continue;
-		}
+//		vec3 directColor = vec3(0.0f);
+//		if (CheckAndAccumulateViewSpaceVisibility(rayStart, vec4(payloadGI.worldPos, 1.0f), hitPointViewSpace, directColor))
+//		{
+//			accumulatedLight += directColor;
+//			//accumulatedLight *= initialDistanceFactor;// * initialSurfaceCos / 2.0f;
+//			integratedLight += accumulatedLight * initialSurfaceCos;
+//			{
+//				vec2 probeUV = DirectionToOctahedronUV(direction);
+//				ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
+//				//vec4 light = imageLoad(lightTex, pixelCoord);
+//				vec4 light = imageLoad(lightTex, pixelCoord);
+//				light = mix(light, vec4(accumulatedLight, hitDistance), 3.0f / float(sampleStep));
+//				imageStore(lightTex, pixelCoord, light);
+//
+//				ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
+//				if (OctahedronReflectBorderPixelIndex(ivec2(6), ivec2(probeUV * vec2(6.0, 6.0)), reflectedPixel))
+//				{
+//					ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1);
+//					imageStore(lightTex, currentPixel, light);
+//				}
+//			}
+//			continue;
+//		}
 
 		vec3 gridVector = payloadGI.worldPos - globalData.cameraPos;
 		float maxExtent = 2.0f * max(abs(gridVector.x), max(abs(gridVector.y), abs(gridVector.z)));
@@ -385,7 +398,8 @@ void main()
 					  1,								// sbtRecordOffset
 					  0,								// sbtRecordStride
 					  0,								// missIndex
-					  payloadGI.worldPos,				// ray origin
+					  //payloadGI.worldPos,				// ray origin
+					  hitPosBiased,
 					  tMin,								// ray min range
 					  normalize(pixelToLightDir.xyz),	// ray direction
 					  tMax,								// ray max range
@@ -416,7 +430,8 @@ void main()
 					  1,									// sbtRecordOffset
 					  0,									// sbtRecordStride
 					  0,									// missIndex
-					  payloadGI.worldPos,					// ray origin
+					  //payloadGI.worldPos,					// ray origin
+					  hitPosBiased,
 					  tMin,									// ray min range
 					  normalize(pixelToLightDir.xyz),		// ray direction
 					  length(pixelToLightDir),				// ray max range
@@ -446,7 +461,8 @@ void main()
 					  1,										// sbtRecordOffset
 					  0,										// sbtRecordStride
 					  0,										// missIndex
-					  payloadGI.worldPos,						// ray origin
+					  //payloadGI.worldPos,						// ray origin
+					  hitPosBiased,
 					  tMin,										// ray min range
 					  normalize(pixelToLightDir.xyz),			// ray direction
 					  length(pixelToLightDir),					// ray max range
@@ -462,6 +478,7 @@ void main()
 		}
 		
 		accumulatedLight *= initialDistanceFactor;
+		integratedLight += accumulatedLight * initialSurfaceCos;
 
 		vec2 probeUV = DirectionToOctahedronUV(direction);
 		ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
@@ -477,6 +494,10 @@ void main()
 			imageStore(lightTex, currentPixel, light);
 		}
 	}
+
+	vec4 totalLight = imageLoad(irradianceTex, ivec2(gl_LaunchIDEXT.xy));
+	totalLight = mix(totalLight, vec4(integratedLight, 1.0), 3.0f / float(sampleStep));
+	imageStore(irradianceTex, ivec2(gl_LaunchIDEXT.xy), totalLight);
 
 	++temporalCounter;
 	imageStore(counterTex, ivec2(gl_LaunchIDEXT.xy), uvec4(temporalCounter, 0,0,0));

@@ -17,6 +17,7 @@ namespace CGE
 	struct RTGIPassData : public Identifiable<RTGIPassData>
 	{
 		std::vector<Texture2DPtr> lightingData;
+		std::vector<Texture2DPtr> irradianceData;
 		std::vector<Texture2DPtr> giDepthData;
 		BufferDataPtr probeGridBuffer;
 		Texture2DPtr probeGridTexture;
@@ -43,6 +44,7 @@ namespace CGE
 
 		std::vector<RTGIPassFrameData> m_frameData;
 		std::vector<Texture2DPtr> m_lightingData;
+		std::vector<Texture2DPtr> m_irradianceData;
 		std::vector<Texture2DPtr> m_giDepthData;
 		BufferDataPtr m_probeGridBuffer;
 		Texture2DPtr m_probeGridTexture;

@@ -33,8 +33,9 @@ namespace CGE
 		imageBarriers.push_back(frameData.normal->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
 		imageBarriers.push_back(frameData.prevNormal->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
 		imageBarriers.push_back(frameData.velocity->GetImage().CreateLayoutBarrierColor(ImageLayout::eUndefined, ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
-		// screen probes
+		// screen probes and irradiance
 		imageBarriers.push_back(frameData.screenProbes->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral, vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite));
+		imageBarriers.push_back(frameData.irradiance->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral, vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite));
 		//imageBarriers.push_back(frameData.prevScreenProbes->GetImage().CreateLayoutBarrierColor(vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal, vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead));
 
 		commandBuffer->pipelineBarrier(
@@ -46,12 +47,20 @@ namespace CGE
 			static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 
 		{
-			PipelineData& pipelineData = executeContext.FindPipeline(Engine::GetForFrame<MaterialPtr>(m_computeMaterials));
+			PipelineData& pipelineData = executeContext.FindPipeline(Engine::GetForFrame<MaterialPtr>(m_giProbesComputeMaterials));
 
 			commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
 			commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
 			commandBuffer->dispatch(executeContext.GetWidth() / 8, executeContext.GetHeight() / 8, 1);
+		}
+		{
+			PipelineData& pipelineData = executeContext.FindPipeline(Engine::GetForFrame<MaterialPtr>(m_irradianceComputeMaterials));
+
+			commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
+			commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
+
+			commandBuffer->dispatch(glm::ceil((executeContext.GetWidth() / 8) / 8.0f), glm::ceil((executeContext.GetHeight() / 8) / 8.0), 1);
 		}
 	}
 
@@ -63,11 +72,10 @@ namespace CGE
 		auto probesData = dataTable.CreatePassData<UpdateGIProbesData>();
 
 		probesData->screenProbesData = ResourceUtils::CreateColorTextureArray("RTGI_screen_probes_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);
+		probesData->irradianceData = ResourceUtils::CreateColorTextureArray("RTGI_irradiance_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR16G16B16A16Sfloat, true);
 
 		for (uint32_t idx = 0; idx < 2; idx++)
 		{
-//			probesData->screenProbesData[idx]->GetImage().ToLayout(vk::ImageLayout::eGeneral, vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite);
-
 			uint32_t prevIdx = (idx + 1) % 2;
 
 			FrameData frameData;
@@ -81,6 +89,9 @@ namespace CGE
 			// screen probes
 			frameData.screenProbes = probesData->screenProbesData[idx];
 			frameData.prevScreenProbes = probesData->screenProbesData[prevIdx];
+			// screen irradiance
+			frameData.irradiance = probesData->irradianceData[idx];
+			frameData.prevIrradiance = probesData->irradianceData[prevIdx];
 			// push frame data
 			m_frameData.push_back(frameData);
 
@@ -96,10 +107,35 @@ namespace CGE
 			// screen probes textures
 			computeMaterial->SetStorageTexture("probeTexture", frameData.screenProbes);
 			computeMaterial->SetTexture("prevProbeTexture", frameData.prevScreenProbes);
+			// irradiance textures
+			computeMaterial->SetStorageTexture("irradianceTexture", frameData.irradiance);
+			computeMaterial->SetTexture("prevIrradianceTexture", frameData.prevIrradiance);
 			// finally load
 			computeMaterial->LoadResources();
 
-			m_computeMaterials.push_back(computeMaterial);
+			m_giProbesComputeMaterials.push_back(computeMaterial);
+
+			//--------------------------------------------------------------------------------------------------------------------------------
+
+			MaterialPtr irradianceComputeMaterial = DataManager::RequestResourceType<Material>("UpdateIrradianceComputeMaterial_" + std::to_string(idx));
+			irradianceComputeMaterial->SetComputeShaderPath("content/shaders/UpdateIrradiance.spv");
+			// frame data textures
+			irradianceComputeMaterial->SetTexture("depthTexture", frameData.depth);
+			irradianceComputeMaterial->SetTexture("normalTexture", frameData.normal);
+			irradianceComputeMaterial->SetTexture("velocityTexture", frameData.velocity);
+			// previous frame textures
+			irradianceComputeMaterial->SetTexture("prevDepthTexture", frameData.prevDepth);
+			irradianceComputeMaterial->SetTexture("prevNormalTexture", frameData.prevNormal);
+			// screen probes textures
+			irradianceComputeMaterial->SetStorageTexture("probeTexture", frameData.screenProbes);
+			irradianceComputeMaterial->SetTexture("prevProbeTexture", frameData.prevScreenProbes);
+			// irradiance textures
+			irradianceComputeMaterial->SetStorageTexture("irradianceTexture", frameData.irradiance);
+			irradianceComputeMaterial->SetTexture("prevIrradianceTexture", frameData.prevIrradiance);
+			// finally load
+			irradianceComputeMaterial->LoadResources();
+
+			m_irradianceComputeMaterials.push_back(irradianceComputeMaterial);
 		}
 
 		initContext.compute = true;

@@ -17,6 +17,8 @@ layout(set = 1, binding = 4) uniform texture2D prevNormalTexture;
 // screen probes
 layout(set = 1, binding = 5, rgba16f) uniform image2D probeTexture;
 layout(set = 1, binding = 6, rgba16f) uniform readonly image2D prevProbeTexture;
+layout(set = 1, binding = 7, rgba16f) uniform image2D irradianceTexture;
+layout(set = 1, binding = 8, rgba16f) uniform readonly image2D prevIrradianceTexture;
 
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

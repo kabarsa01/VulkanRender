@@ -1,0 +1,106 @@
+#version 450
+#extension GL_EXT_buffer_reference : require
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "CommonFrameData.glsl"
+#include "CommonDepth.glsl"
+
+// current frame RTs
+layout(set = 1, binding = 0) uniform texture2D depthTexture;
+layout(set = 1, binding = 1) uniform texture2D normalTexture;
+layout(set = 1, binding = 2) uniform texture2D velocityTexture;
+// previous frame RTs
+layout(set = 1, binding = 3) uniform texture2D prevDepthTexture;
+layout(set = 1, binding = 4) uniform texture2D prevNormalTexture;
+
+// screen probes
+layout(set = 1, binding = 5, rgba16f) uniform image2D probeTexture;
+layout(set = 1, binding = 6, rgba16f) uniform readonly image2D prevProbeTexture;
+layout(set = 1, binding = 7, rgba16f) uniform image2D irradianceTexture;
+layout(set = 1, binding = 8, rgba16f) uniform readonly image2D prevIrradianceTexture;
+
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+	vec4 totalIllumination = vec4(0.0, 0.0, 0.0, 1.0);
+
+	ivec2 irradianceImageSize = imageSize(irradianceTexture);
+	ivec2 pixelIndex = ivec2(gl_LocalInvocationIndex / 8, mod(gl_LocalInvocationIndex, 8));
+	pixelIndex += ivec2(gl_WorkGroupID.xy) * ivec2(8,8);
+	if ((pixelIndex.x >= irradianceImageSize.x) || (pixelIndex.y >= irradianceImageSize.y))
+	{
+//		return;
+	}
+
+	// current position and normal
+	vec2 uv = (vec2(pixelIndex) + vec2(0.5,0.5)) / vec2(irradianceImageSize);
+	float depth = textureLod( sampler2D(depthTexture, borderBlackNearestSampler), uv, 0 ).r;
+	vec3 normal = normalize( textureLod( sampler2D(normalTexture, borderBlackNearestSampler), uv, 0 ).xyz );
+	vec2 velocity = textureLod( sampler2D(velocityTexture, borderBlackLinearSampler), uv, 0 ).xy / 10.0;
+	float linearDepth = LinearizeDepth(depth, globalData.cameraNear, globalData.cameraFar);
+	vec4 worldPos = CalculateWorldPosition(linearDepth, globalData.cameraFov, globalData.cameraAspect, uv, globalData.worldToView);
+
+	// previous pos and normal
+	vec2 prevuv = uv + velocity;
+	float prevDepth = textureLod( sampler2D(prevDepthTexture, borderBlackNearestSampler), prevuv, 0 ).r;
+	vec3 prevNormal = normalize( textureLod( sampler2D(prevNormalTexture, borderBlackNearestSampler), prevuv, 0 ).xyz );
+	float prevLinearDepth = LinearizeDepth(prevDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
+	vec4 prevWorldPos = CalculateWorldPosition(prevLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, prevuv, globalPreviousData.worldToView);
+
+	// reject by depth, position or normal
+	float normalDiff = dot(prevNormal, normal);
+	float posDiff = length(prevWorldPos.xyz - worldPos.xyz);
+	float linearDepthDiff = abs(linearDepth - prevLinearDepth);
+	
+	// reject based on normal and world position diff
+	// TODO retest with moving geometry
+	if (posDiff > 0.1 || normalDiff < 0.95)
+	{
+		imageStore(probeTexture, pixelIndex, totalIllumination);
+		//imageStore(irradianceTexture, pixelIndex, vec4(uv, posDiff, 1.0));
+		return;
+	}
+
+	// get baseline for interpolating last frame probes
+	vec2 prevBasePixelIndex = floor(prevuv * vec2(irradianceImageSize.xy) - vec2(0.5,0.5)) + vec2(0.5,0.5);
+
+	// clamp is needed because oddities like -0.0 causes NaN, be wary of NaN ahead
+	vec2 alpha = clamp(prevuv * vec2(irradianceImageSize.xy) - prevBasePixelIndex, vec2(0.0, 0.0), vec2(1.0, 1.0));
+
+	float probeCount = 0.01;
+	for (uint idx = 0; idx < 4; idx++)
+	{
+		ivec2 offset = ivec2(idx / 2, idx) & ivec2(1,1);
+		vec2 bilinear = mix(vec2(1.0,1.0) - alpha, alpha, vec2(offset));
+
+		vec2 currentPixelIndex = prevBasePixelIndex + vec2(offset);
+		vec2 currentuv = currentPixelIndex / vec2(irradianceImageSize.xy);
+
+		float currentDepth = textureLod( sampler2D(prevDepthTexture, borderBlackNearestSampler), currentuv, 0 ).r;
+		vec3 currentNormal = normalize(textureLod( sampler2D(prevNormalTexture, borderBlackNearestSampler), currentuv, 0 ).xyz);
+		float currentLinearDepth = LinearizeDepth(currentDepth, globalPreviousData.cameraNear, globalPreviousData.cameraFar);
+		vec4 currentWorldPos = CalculateWorldPosition(currentLinearDepth, globalPreviousData.cameraFov, globalPreviousData.cameraAspect, currentuv, globalPreviousData.worldToView);
+
+		// reject by depth, position or normal
+		float normalDiff = dot(prevNormal, currentNormal);
+		float posDiff = length(prevWorldPos.xyz - currentWorldPos.xyz);
+		float linearDepthDiff = abs(currentLinearDepth - prevLinearDepth);
+		// reject based on normal and world position diff
+		// TODO retest with moving geometry
+		if (posDiff > 1.0 || normalDiff < -0.25)
+		{
+//			continue;
+		}
+
+		//ivec2 currentPixelIndexPixel = ivec2(floor(currentPixelIndex) * vec2(8.0, 8.0)) + pixelInProbeIndex;
+		totalIllumination += imageLoad(prevIrradianceTexture, ivec2(currentPixelIndex)) * bilinear.x * bilinear.y;
+
+		probeCount += 1.0;
+	}
+	totalIllumination *= 4.0 / probeCount;
+	
+	imageStore(irradianceTexture, pixelIndex, totalIllumination);
+}

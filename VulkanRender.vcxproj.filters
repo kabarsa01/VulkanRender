@@ -634,5 +634,8 @@
     <None Include="content\shaders\UpdateGIProbes.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="content\shaders\UpdateIrradiance.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
