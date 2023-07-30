@@ -53,7 +53,7 @@ namespace CGE
 		m_tlasBuildInfo.scratchBuffer = ResourceUtils::CreateBufferData(
 			"RtScene_TLAS_scratch",
 			TLAS_SCRATCH_SIZE_BYTES,
-			vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
+			vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR | vk::BufferUsageFlagBits::eShaderDeviceAddress,
 			true
 		);
 

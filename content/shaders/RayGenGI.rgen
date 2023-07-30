@@ -193,7 +193,7 @@ bool CheckAndAccumulateViewSpaceVisibility(vec3 rayOrigin, vec4 worldSpacePos, v
 	{
 		vec3 rayVector = worldSpacePos.xyz - rayOrigin;
 		vec2 probeUV = DirectionToOctahedronUV(normalize( reflect(rayVector, N) ));
-		ivec2 pixelCoord = ivec2(probeIndex) * ivec2(8,8) + ivec2(1,1) + ivec2(probeUV * 6.0);
+		ivec2 pixelCoord = ivec2(probeIndex) * ivec2(4,4) + ivec2(1,1) + ivec2(probeUV * 6.0);
 		vec3 light = imageLoad(lightTex, pixelCoord).xyz;
 //		for (int x = 0; x < 8; x++) 
 //		{
@@ -481,7 +481,7 @@ void main()
 		integratedLight += accumulatedLight * initialSurfaceCos;
 
 		vec2 probeUV = DirectionToOctahedronUV(direction);
-		ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
+		ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy) * ivec2(4,4) + ivec2(1,1) + clamp(ivec2(probeUV * 6.0), 0, 5);
 
 		vec4 light = imageLoad(lightTex, pixelCoord);
 		light = mix(light, vec4(accumulatedLight, hitDistance), 3.0f / float(sampleStep));
@@ -490,7 +490,7 @@ void main()
 		ivec2 reflectedPixel = ivec2(probeUV * vec2(6.0, 6.0));
 		if (OctahedronReflectBorderPixelIndex(ivec2(6), ivec2(probeUV * vec2(6.0, 6.0)), reflectedPixel))
 		{
-			ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(8,8) + ivec2(1,1);
+			ivec2 currentPixel = reflectedPixel + ivec2(gl_LaunchIDEXT.xy) * ivec2(4,4) + ivec2(1,1);
 			imageStore(lightTex, currentPixel, light);
 		}
 	}

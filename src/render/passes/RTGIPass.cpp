@@ -172,7 +172,7 @@ namespace CGE
 		vk::StridedDeviceAddressRegionKHR rayHitRegion = sbt.GetRegion(ERtShaderType::RST_ANY_HIT, HashString::NONE);
 
 		// screen space probe tracing
-		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 8, executeContext.GetHeight() / 8, 1);
+		commandBuffer->traceRaysKHR(rayGenRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, executeContext.GetWidth() / 4, executeContext.GetHeight() / 4, 1);
 		// dispatch ddgi tracing
 		//commandBuffer->traceRaysKHR(rayGenDDGIRegion, rayMissRegion, rayHitRegion, { 0,0,0 }, 32, 16, 32);
 
@@ -211,10 +211,10 @@ namespace CGE
 		auto directLightingData = dataTable.GetPassData<DeferredLightingData>();
 		auto giProbesData = dataTable.GetPassData<UpdateGIProbesData>();
 
-		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Uint, true);
+		m_temporalCounter = ResourceUtils::CreateColorTexture("RTGI_counter_texture_", initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Uint, true);
 		m_lightingData = giProbesData->screenProbesData;
 		m_irradianceData = giProbesData->irradianceData;
-		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR32Sfloat, true);
+		m_giDepthData = ResourceUtils::CreateColorTextureArray("RTGI_gi_depth_texture_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR32Sfloat, true);
 
 		auto passData = dataTable.CreatePassData<RTGIPassData>();
 		passData->lightingData = m_lightingData;

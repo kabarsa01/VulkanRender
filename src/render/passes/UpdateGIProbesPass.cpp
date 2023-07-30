@@ -60,7 +60,7 @@ namespace CGE
 			commandBuffer->bindPipeline(vk::PipelineBindPoint::eCompute, pipelineData.pipeline);
 			commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineData.pipelineLayout, 0, pipelineData.descriptorSets, {});
 
-			commandBuffer->dispatch(glm::ceil((executeContext.GetWidth() / 8) / 8.0f), glm::ceil((executeContext.GetHeight() / 8) / 8.0), 1);
+			commandBuffer->dispatch(glm::ceil((executeContext.GetWidth() / 4) / 8.0f), glm::ceil((executeContext.GetHeight() / 4) / 8.0), 1);
 		}
 	}
 
@@ -72,7 +72,7 @@ namespace CGE
 		auto probesData = dataTable.CreatePassData<UpdateGIProbesData>();
 
 		probesData->screenProbesData = ResourceUtils::CreateColorTextureArray("RTGI_screen_probes_", 2, initContext.GetWidth(), initContext.GetHeight(), vk::Format::eR16G16B16A16Sfloat, true);
-		probesData->irradianceData = ResourceUtils::CreateColorTextureArray("RTGI_irradiance_", 2, initContext.GetWidth() / 8, initContext.GetHeight() / 8, vk::Format::eR16G16B16A16Sfloat, true);
+		probesData->irradianceData = ResourceUtils::CreateColorTextureArray("RTGI_irradiance_", 2, initContext.GetWidth() / 4, initContext.GetHeight() / 4, vk::Format::eR16G16B16A16Sfloat, true);
 
 		for (uint32_t idx = 0; idx < 2; idx++)
 		{

@@ -35,13 +35,13 @@ void main() {
 
 	ivec2 texSize = textureSize( sampler2D( depthTex, repeatLinearSampler ), 0 );
 	//ivec2 giTexSize = textureSize( sampler2D( giLight, repeatLinearSampler ), 0 );
-	vec2 giScale = vec2(8.0, 8.0);//vec2(texSize) / vec2(giTexSize);
+	vec2 giScale = vec2(4.0, 4.0);//vec2(texSize) / vec2(giTexSize);
 	vec2 pixelSizeUV = vec2(1.0) / texSize;
 
 	float depth = texture( sampler2D( depthTex, borderBlackNearestSampler ), uv ).r;
 	if (depth <= 0.0f || depth >= 1.0f)
 	{
-		outColor = vec4(0.0f, 0.1f, 0.0f, 1.0f);
+		outColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		return;
 	}
 	float linearDepth = LinearizeDepth(depth, globalData.cameraNear, globalData.cameraFar);

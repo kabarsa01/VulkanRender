@@ -89,6 +89,7 @@ namespace CGE
 		DeviceSize size = static_cast<DeviceSize>(sizeof(T) * inDataVector.size());
 	
 		usage |= vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+		usage |= vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR;
 		BufferDataPtr buffer = ObjectBase::NewObject<BufferData>(GetResourceId() + name, size, usage, true);
 		buffer->Create();
 		buffer->CopyTo(size, reinterpret_cast<const char*>(inDataVector.data()));

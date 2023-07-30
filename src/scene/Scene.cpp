@@ -131,6 +131,7 @@ namespace CGE
 	
 	void Scene::Init()
 	{
+		// test shit
 		//for (int i = 0; i < 100; i++)
 		//{
 		//	ThreadPool::GetInstance()->AddJob(std::make_shared<Job<void()>>([]() { for (int idx = 0; idx < 10; idx++)
@@ -207,10 +208,10 @@ namespace CGE
 		Renderer* renderer = Engine::GetRendererInstance();
 		// hardcoding dirty sample scene 
 		CameraObjectPtr cameraObj = ObjectBase::NewObject<CameraObject>();
-		cameraObj->transform.SetLocation({ 0.0f, -5.0f, 15.0f }); // -25 55
-		//cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
-		//cameraObj->transform.SetLocation({ 0.0f, 0.0f, -45.0f });
-		cameraObj->transform.SetRotation({ -15.0f, -180.0f, 0.0f });
+		//cameraObj->transform.SetLocation({ 0.0f, -5.0f, 15.0f }); // -25 55
+		cameraObj->transform.SetRotation({ -10.0f, -180.0f, 0.0f });
+		cameraObj->transform.SetLocation({ 0.0f, -25.0f, 55.0f });
+		//cameraObj->transform.SetRotation({ -15.0f, -180.0f, 0.0f });
 		cameraObj->GetCameraComponent()->SetFov(60.0f);
 		cameraObj->GetCameraComponent()->SetNearPlane(0.1f);
 		cameraObj->GetCameraComponent()->SetFarPlane(5000.0f);
@@ -220,7 +221,7 @@ namespace CGE
 		lightObj->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
 		lightObj->transform.SetRotation({ -20.0f, -85.0f, 0.0f });
 		lightObj->GetLightComponent()->type = LT_Directional;
-		lightObj->GetLightComponent()->intensity = 1.6f;
+		lightObj->GetLightComponent()->intensity = 1.5f;
 		lightObj->GetLightComponent()->color = { 1.0f, 1.0f, 1.0f };
 	
 		//LightObjectPtr lightObj01 = ObjectBase::NewObject<LightObject>();
@@ -253,14 +254,14 @@ namespace CGE
 				glm::vec3 color = counter % 2 == 0 ? glm::vec3{1.0f, 0.2f, 0.2f} : (counter % 3 == 2) ? glm::vec3{0.2f, 1.0f, 0.2f} : glm::vec3{0.2f, 0.2f, 1.0f};
 				bool isSpot = false;// counter % 2;
 	
-				//LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
-				//lightObj02->transform.SetLocation({ -width * 0.5f + ((indexX + 0.5f) * width / float(countX - 1)), -10.0f, -1.0 * (indexY) * depth / float(countY - 1) });
-				//lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
-				//lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
-				//lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
-				//lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
-				//lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
-				//lightObj02->GetLightComponent()->color = color;
+				LightObjectPtr lightObj02 = ObjectBase::NewObject<LightObject>();
+				lightObj02->transform.SetLocation({ -width * 0.5f + ((indexX + 0.5f) * width / float(countX - 1)), -10.0f, -1.0 * (indexY) * depth / float(countY - 1) });
+				lightObj02->transform.SetRotation({ 90.0f, 0.0f, 0.0f });
+				lightObj02->GetLightComponent()->type = isSpot ? LT_Spot : LT_Point;
+				lightObj02->GetLightComponent()->radius = isSpot ? 60.0f : 35.0f;
+				lightObj02->GetLightComponent()->spotHalfAngle = 20.0f;
+				lightObj02->GetLightComponent()->intensity = isSpot ? 35.0f : 1.0f;
+				lightObj02->GetLightComponent()->color = color;
 	
 				++counter;
 			}
@@ -275,84 +276,84 @@ namespace CGE
 			rtMat2->SetShader(ERtShaderType::RST_CLOSEST_HIT, "content/shaders/RayClosestHitDefault2.spv", "main");
 			rtMat2->LoadResources();
 
-			{
-				MeshImporter importer;
-				importer.Import("./content/meshes/rooms/room_01.fbx");
-				MeshDataPtr meshData = importer.GetMeshes()[0];
-				meshData->CreateBuffer();
-				MeshObjectPtr room_01 = ObjectBase::NewObject<MeshObject>();
-				room_01->GetMeshComponent()->meshData = meshData;
-				room_01->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-				room_01->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-				room_01->transform.SetScale({ 0.3f, 0.3f, 0.3f });
-				room_01->GetMeshComponent()->SetMaterial(mat);
-				room_01->GetMeshComponent()->SetRtMaterial(rtMat1);
-			}
+			//{
+			//	MeshImporter importer;
+			//	importer.Import("./content/meshes/rooms/room_01.fbx");
+			//	MeshDataPtr meshData = importer.GetMeshes()[0];
+			//	meshData->CreateBuffer();
+			//	MeshObjectPtr room_01 = ObjectBase::NewObject<MeshObject>();
+			//	room_01->GetMeshComponent()->meshData = meshData;
+			//	room_01->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+			//	room_01->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+			//	room_01->transform.SetScale({ 0.3f, 0.3f, 0.3f });
+			//	room_01->GetMeshComponent()->SetMaterial(mat);
+			//	room_01->GetMeshComponent()->SetRtMaterial(rtMat1);
+			//}
 
 			{
-				//MeshImporter woodImporter;
-				////importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
-				//woodImporter.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
-				////importer.Import("./content/meshes/cube/cube.fbx");
-				////importer.Import("./content/meshes/rooms/room_01.fbx");
-				//for (unsigned int MeshIndex = 0; MeshIndex < woodImporter.GetMeshes().size(); MeshIndex++)
-				//{
-				//	MeshDataPtr meshData = woodImporter.GetMeshes()[MeshIndex];
-				//	meshData->CreateBuffer();
-
-				//	float width = 500.0f;
-				//	float depth = 500.0f;
-				//	uint32_t countX = 15;
-				//	uint32_t countY = 15;
-				//	for (uint32_t indexX = 0; indexX < countX; indexX++)
-				//	{
-				//		for (uint32_t indexY = 0; indexY < countY; indexY++)
-				//		{
-				//			float randomY = std::rand() / float(RAND_MAX);
-				//			float randomZ = std::rand() / float(RAND_MAX);
-
-				//			MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
-				//			mo3->GetMeshComponent()->meshData = meshData;
-				//			mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
-				//			//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-				//			mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
-				//			//mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-				//			mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
-				//			mo3->GetMeshComponent()->SetMaterial(woodMat);
-				//			mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
-				//		}
-				//	}
-				//}
-			}
-
-			{
-				MeshImporter cubeImporter;
-				cubeImporter.Import("./content/meshes/cube/cube.fbx");
-				MeshDataPtr cubeMeshData = cubeImporter.GetMeshes()[0];
-				cubeMeshData->CreateBuffer();
-
-				float width = 5.0f;
-				float depth = 5.0f;
-				uint32_t countX = 1;
-				uint32_t countY = 1;
-				for (uint32_t indexX = 0; indexX < countX; indexX++)
+				MeshImporter woodImporter;
+				//importer.Import("./content/meshes/gun/Cerberus_LP.FBX");
+				woodImporter.Import("./content/meshes/root/Aset_wood_root_M_rkswd_LOD0.FBX");
+				//importer.Import("./content/meshes/cube/cube.fbx");
+				//importer.Import("./content/meshes/rooms/room_01.fbx");
+				for (unsigned int MeshIndex = 0; MeshIndex < woodImporter.GetMeshes().size(); MeshIndex++)
 				{
-					for (uint32_t indexY = 0; indexY < countY; indexY++)
-					{
-						float randomY = std::rand() / float(RAND_MAX);
-						float randomZ = std::rand() / float(RAND_MAX);
+					MeshDataPtr meshData = woodImporter.GetMeshes()[MeshIndex];
+					meshData->CreateBuffer();
 
-						MeshObjectPtr cubeMeshObject = ObjectBase::NewObject<MeshObject>();
-						cubeMeshObject->GetMeshComponent()->meshData = cubeMeshData;
-						//cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
-						cubeMeshObject->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
-						cubeMeshObject->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
-						cubeMeshObject->transform.SetScale({ 0.5f, 0.5f, 0.5f });
-						cubeMeshObject->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
-						cubeMeshObject->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
+					float width = 500.0f;
+					float depth = 500.0f;
+					uint32_t countX = 15;
+					uint32_t countY = 15;
+					for (uint32_t indexX = 0; indexX < countX; indexX++)
+					{
+						for (uint32_t indexY = 0; indexY < countY; indexY++)
+						{
+							float randomY = std::rand() / float(RAND_MAX);
+							float randomZ = std::rand() / float(RAND_MAX);
+
+							MeshObjectPtr mo3 = ObjectBase::NewObject<MeshObject>();
+							mo3->GetMeshComponent()->meshData = meshData;
+							mo3->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
+							//mo3->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+							mo3->transform.SetRotation({ randomZ * 180.0f, 0.0f, 90.0 });
+							//mo3->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+							mo3->transform.SetScale({ 1.0f, 1.0f, 1.0f });
+							mo3->GetMeshComponent()->SetMaterial(woodMat);
+							mo3->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
+						}
 					}
 				}
 			}
+
+			//{
+			//	MeshImporter cubeImporter;
+			//	cubeImporter.Import("./content/meshes/cube/cube.fbx");
+			//	MeshDataPtr cubeMeshData = cubeImporter.GetMeshes()[0];
+			//	cubeMeshData->CreateBuffer();
+
+			//	float width = 5.0f;
+			//	float depth = 5.0f;
+			//	uint32_t countX = 1;
+			//	uint32_t countY = 1;
+			//	for (uint32_t indexX = 0; indexX < countX; indexX++)
+			//	{
+			//		for (uint32_t indexY = 0; indexY < countY; indexY++)
+			//		{
+			//			float randomY = std::rand() / float(RAND_MAX);
+			//			float randomZ = std::rand() / float(RAND_MAX);
+
+			//			MeshObjectPtr cubeMeshObject = ObjectBase::NewObject<MeshObject>();
+			//			cubeMeshObject->GetMeshComponent()->meshData = cubeMeshData;
+			//			//cubeMeshObject->transform.SetLocation({ -width * 0.5f + (indexX * width / float(countX - 1)), -5.0f, -1.0 * indexY * depth / float(countY - 1) });
+			//			cubeMeshObject->transform.SetLocation({ 0.0f, 0.0f, 0.0f });
+			//			cubeMeshObject->transform.SetRotation({ 0.0f, 0.0f, 0.0 });
+			//			cubeMeshObject->transform.SetScale({ 0.5f, 0.5f, 0.5f });
+			//			cubeMeshObject->GetMeshComponent()->SetMaterial(mat);//indexX % 2 ? mat_red : mat_green);
+			//			cubeMeshObject->GetMeshComponent()->SetRtMaterial(indexY % 2 ? rtMat1 : rtMat2);
+			//		}
+			//	}
+			//}
 		}
 	
 		MeshData::FullscreenQuad()->CreateBuffer();
@@ -484,20 +485,21 @@ namespace CGE
 		{
 			float multiplierY = deltaTime * 10.0f;
 			float multiplierZ = deltaTime * 10.0f;
-//			meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
+			meshComp->GetParent()->transform.AddRotation({ multiplierY, 0.0f, 0.0f });
 		}
 
-		std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
-		for (LightComponentPtr light : lights)
-		{
-//			light->GetParent()->transform.AddRotation({ 0.0f, 0.025f, 0.0f });
-		}
+		//std::vector<LightComponentPtr> lights = GetSceneComponentsCast<LightComponent>();
+		//for (LightComponentPtr light : lights)
+		//{
+		//	light->GetParent()->transform.AddRotation({ 0.0f, 0.05f, 0.0f });
+		//}
 
 		double time = TimeManager::GetInstance()->GetTime();
 		CameraComponentPtr cam = GetSceneComponent<CameraComponent>(m_primaryPack);
 		if (cam)
 		{
-//			cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time * 2.0f), 0.0f});
+			//cam->GetParent()->transform.SetRotation({-15.0f, 180.0f + 25.0f * glm::sin(time * 2.0f), 0.0f});
+			cam->GetParent()->transform.SetRotation({ -10.0f, -180.0f + 25.0f * glm::sin(time * 0.075f), 0.0f });
 		}
 	
 		PrepareObjectsLists();
