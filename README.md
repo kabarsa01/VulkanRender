@@ -48,11 +48,12 @@ RT GI
    Realtime ray traced global illumination or RTGI used a separate pass and grid storage for lights to accumulate lighting.
 Grid hierarchy consists of a series of grids each 5 times bigger than a previous one, it's used in the same way clustering data
 used for light influencing screen space, but covering the entire area around camera in world space instead of frustum dependent
-view space division in clustering. Hemisphere ray distribution for now is baked in a buffer to give predictable amount of rays 
-and directions, maybe some noise/jitter will be introduced later and proper filtering to minimize visual artifacts. RTGI tries
-to check if hemisphere ray hit a pixel in screenspace and in this case skips light visibility traces and just relies on direct
-lighting data from a previous pass where light visibility was already solved with visibility buffers from RT Shadows Pass.
-Still need temporal accumulation and reprojection to save time and reuse data.
+view space division in clustering. Ray distribution is Fibonacci-distributed sphere, maybe some noise/jitter will be introduced
+later and proper filtering to minimize visual artifacts. RTGI tries to check if hemisphere ray hit a pixel in screenspace and in
+this case skips light visibility traces and just relies on direct lighting data from a previous pass where light visibility was
+already solved with visibility buffers from RT Shadows Pass.
+RTGI pass has temporal counter buffer, but ray budget management for now is not implemented based on how fresh the pixel is, so
+pass simply do normal reprojection and accumulate stuff uniformly.
 
 ![alt text](https://github.com/kabarsa01/VulkanRender/blob/master/2022-01-16%2000_36_23-Vulkan%20renderer.png)
 ![alt text](https://github.com/kabarsa01/VulkanRender/blob/master/2022-01-16%2000_38_47-Vulkan%20renderer.png)
